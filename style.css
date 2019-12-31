@@ -1,0 +1,70 @@
+h1{
+	color: green;
+}
+li span{
+
+
+}
+
+#germany{	
+	background: url(https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/Flag_of_Germany.svg/1280px-Flag_of_Germany.svg.png) no-repeat;
+	background-size:100% 100%;
+	border: 3px solid grey;
+	text-align: center;
+	margin: 5em auto;
+    width:500px;
+    height:200px;
+}
+#flagspan{
+	color: yellow;
+	font-weight: 800;
+	font-size: 3em;
+    /* float:left;  remove */
+      display: inline-block;
+    margin: 70px 0px;
+  
+
+
+}
+.centerDiv{
+	width: 50%;
+	height: 5vw;
+	font-size: 3.9vw;
+	text-align: center;
+			background: rgba(100,100,100,0.2);
+			margin: 0 auto;
+
+}
+.header span{
+
+	text-align: center;
+	 text-align: center;
+}
+.Images{
+	margin: 0vw 5vw 0vw 5vw;
+	width: 25vw;
+	height: 25vw;
+
+}
+.Images img{
+	width: 100%;
+	height: 80%;
+border: 5px grey solid;
+
+}
+.Images span{
+	font-size: 1.2vw;
+	font-style: italic;
+	text-decoration:underline;
+}
+.flagsGroup{
+	display: flex;
+}
+/*body{
+	background: url(https://www.gatesflag.com/wp-content/uploads/2017/11/germany-eagle1.jpg) no-repeat center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+ 
+}*/
