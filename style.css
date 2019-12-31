@@ -69,7 +69,7 @@ border: 6px grey solid;
 .flagsGroup{
 	position: absolute;
 	transform: translate(0,-50vh);
-	transition: transform 1s ease-in-out;
+	transition: transform 8s ease-in-out;
 	display: flex;
 	bottom: -53vh;
 
