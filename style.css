@@ -1,3 +1,6 @@
+body{
+	background: url(GermanFireworks.jpg)
+}
 h1{
 	color: green;
 }
@@ -14,6 +17,7 @@ li span{
 	margin: 5vh auto 3vh;
     width:500px;
     height:200px;
+    animation: upandDown 2s linear infinite;
 }
 #flagspan{
 	color: yellow;
@@ -31,7 +35,7 @@ li span{
 	height: 5vw;
 	font-size: 3.9vw;
 	text-align: center;
-	background: rgba(100,100,100,0.2);
+	background: grey;
 	margin-left: auto;
 	margin-right: auto;
 
@@ -42,7 +46,8 @@ li span{
 	 text-align: center;
 }
 .Images{
-	margin: 0vw 5vw 0vw 5vw;
+
+	margin: 0vw 2.5vw 0vw 5vw;
 	width: 25vw;
 	height: 25vw;
 
@@ -50,29 +55,33 @@ li span{
 .Images img{
 	width: 100%;
 	height: 80%;
-border: 5px grey solid;
+border: 6px grey solid;
 
 }
 .Images span{
+	color: white;
+	font-weight: 800;
 	font-size: 1.2vw;
 	font-style: italic;
 	text-decoration:underline;
 }
 
 .flagsGroup{
-
-	animation: flyin 2s linear;
+	position: absolute;
+	transform: translate(0,-50vh);
+	transition: transform 5s ease-in-out;
 	display: flex;
-}
-@keyframes flyin{
-  from {
-    margin-top: 100vh;
-   
-  }
+	bottom: -53vh;
 
-  to {
+}
+@keyframes upandDown{
+ 0%,100%{
+ 	margin-top: 10px;
+ }
+
+  50% {
  
- 
+ margin-top : 30px;
   }
 }
 /*body{
