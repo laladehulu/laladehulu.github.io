@@ -1,6 +1,6 @@
 body{
-	background: url(GermanFireworks.jpg)
-}
+	background: url(GermanFireworks.jpg) no-repeat center center fixed;
+	background-size: cover;}
 h1{
 	color: green;
 }
@@ -17,7 +17,7 @@ li span{
 	margin: 5vh auto 3vh;
     width:500px;
     height:200px;
-    animation: upandDown 2s linear infinite;
+    animation: upandDown 1.5s linear infinite;
 }
 #flagspan{
 	color: yellow;
@@ -69,19 +69,19 @@ border: 6px grey solid;
 .flagsGroup{
 	position: absolute;
 	transform: translate(0,-50vh);
-	transition: transform 5s ease-in-out;
+	transition: transform 1s ease-in-out;
 	display: flex;
 	bottom: -53vh;
 
 }
 @keyframes upandDown{
  0%,100%{
- 	margin-top: 10px;
+ 	margin-top: 20px;
  }
 
   50% {
  
- margin-top : 30px;
+ margin-top : 55px;
   }
 }
 /*body{
