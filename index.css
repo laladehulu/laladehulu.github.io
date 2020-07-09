@@ -1,0 +1,95 @@
+body{
+    padding: 0;
+    overflow: auto;
+
+}
+section{
+    overflow: auto;
+}
+.header-section{
+    height: 100vh;
+    color: #ECF0F1;}
+    .header-div{
+        height: 100%;
+    }
+    .typewrite{
+        position: relative;
+        
+        overflow: hidden;
+        letter-spacing: 5px;
+        padding: 0 10px;
+      color: transparent;
+      text-transform: uppercase;
+    }
+    .typewrite-text{
+        font-weight: 200;
+        content: "Hello, Nice to Meet you";
+        position: absolute;
+        visibility: visible;
+        color: #ECF0F1;
+        text-align: left;
+        animation: typing-animation 5s steps(41,end) forwards;
+        border-right: 1px solid wheat;
+        height: 100%;
+        width: 0%;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+        white-space: nowrap;
+       
+     
+    }
+    @media screen and (max-width: 800px) {
+        .typewrite {
+          font-size: 13px;
+         
+        }
+      }
+    .typewrite-text-change-vocab{
+        animation: change-word-animation 2s steps(10,end) forwards;
+    }
+    @keyframes typing-animation{
+     0%{
+         width: 0%;
+     }
+        50%,60%{
+            width: 100%;
+        }
+        100%{
+            width: 67%;
+        }
+    }
+    @keyframes change-word-animation{
+        0%{
+            width: 67%;
+        }
+        50%,60%{
+            width: 100%;
+        }
+        100%{
+            width: 67%;
+        }
+    }
+.projects-section{
+
+}
+.projects-section div img{
+    border-radius: 20px;
+    max-width: 100%;
+}
+.project-media{
+    border-radius: 20px;
+}
+.about-me-section{
+    height: 100vh;
+}
+.about-me-section-div{
+    height: 100%
+}
+.about-me-section div img{
+    height: 100%;
+    width: 100%;
+}
+.about-me-section .french-div{
+    
+}
