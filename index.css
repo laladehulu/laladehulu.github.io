@@ -21,6 +21,18 @@ html{
 section{
     
 }
+iframe{
+    max-width: 100%;
+}
+.videowrapper {
+    float: none;
+    clear: both;
+    width: 100%;
+    position: relative;
+    padding-bottom: 56.25%;
+    padding-top: 25px;
+    height: 0;
+}
 .header-section{
     scroll-snap-align: start;
     height: 100vh;
