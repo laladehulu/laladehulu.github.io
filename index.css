@@ -6,7 +6,23 @@ body{
 section{
     overflow: auto;
 }
+.h3{
+    font-weight: 400;
+}
+.h4{
+    font-weight: 400;
+}
+.h5{
+    font-weight: 600;
+}
+html{
+    scroll-snap-type:y proximity ;
+}
+section{
+    
+}
 .header-section{
+    scroll-snap-align: start;
     height: 100vh;
     color: #ECF0F1;}
     .header-div{
@@ -91,5 +107,5 @@ section{
     width: 100%;
 }
 .about-me-section .french-div{
-    
+
 }
