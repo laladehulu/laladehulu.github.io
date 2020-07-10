@@ -116,7 +116,7 @@ iframe{
     border-radius: 20px;
 }
 .about-me-section{
-    height: 100vh;
+ padding-bottom: 20vh;
 }
 .about-me-section-div{
     height: 100%
