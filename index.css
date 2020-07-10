@@ -22,12 +22,18 @@ section{
     
 }
 iframe{
-    max-width: 100%;
+   position: absolute;
+   height: 100%;
+   width: 100%;
+   top: 0;
+   left: 0;
 }
 .videowrapper {
     float: none;
     clear: both;
     width: 100%;
+    box-sizing: border-box;
+ 
     position: relative;
     padding-bottom: 56.25%;
     padding-top: 25px;
@@ -106,6 +112,7 @@ iframe{
     max-width: 100%;
 }
 .project-media{
+    box-sizing: border-box;
     border-radius: 20px;
 }
 .about-me-section{
