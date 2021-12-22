@@ -16,7 +16,7 @@ section{
     font-weight: 600;
 }
 html{
-    scroll-snap-type:y proximity ;
+   
 }
 section{
     
@@ -40,7 +40,7 @@ iframe{
     height: 0;
 }
 .header-section{
-    scroll-snap-align: start;
+   
     height: 100vh;
     color: #ECF0F1;}
     .header-div{
