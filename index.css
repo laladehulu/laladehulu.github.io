@@ -15,32 +15,39 @@ section{
 .h5{
     font-weight: 600;
 }
-html{
-   
+
+.cta{
+    width: fit-content; height: fit-content;
+    padding: 7px 20px 7px 20px;
+    background-color: #14A085;
+    color: white;
+    font-size: 16px;
+    border-radius: 8px;
 }
-section{
-    
+.cta:hover{
+    background-color: #07856c;
+    color: white;
 }
+
 iframe{
-   position: absolute;
-   height: 100%;
-   width: 100%;
-   top: 0;
-   left: 0;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
 }
 .videowrapper {
     float: none;
     clear: both;
     width: 100%;
     box-sizing: border-box;
- 
+
     position: relative;
     padding-bottom: 56.25%;
     padding-top: 25px;
     height: 0;
 }
 .header-section{
-   
     height: 100vh;
     color: #ECF0F1;}
     .header-div{
@@ -52,8 +59,8 @@ iframe{
         overflow: hidden;
         letter-spacing: 5px;
         padding: 0 10px;
-      color: transparent;
-      text-transform: uppercase;
+        color: transparent;
+        text-transform: uppercase;
     }
     .typewrite-text{
         font-weight: 200;
@@ -70,22 +77,19 @@ iframe{
         left: 0;
         overflow: hidden;
         white-space: nowrap;
-       
-     
     }
     @media screen and (max-width: 800px) {
         .typewrite {
-          font-size: 13px;
-         
+            font-size: 13px;
         }
-      }
+    }
     .typewrite-text-change-vocab{
         animation: change-word-animation 2s steps(10,end) forwards;
     }
     @keyframes typing-animation{
-     0%{
-         width: 0%;
-     }
+        0%{
+            width: 0%;
+        }
         50%,60%{
             width: 100%;
         }
@@ -104,9 +108,7 @@ iframe{
             width: 67%;
         }
     }
-.projects-section{
 
-}
 .projects-section div img{
     border-radius: 20px;
     max-width: 100%;
@@ -124,7 +126,4 @@ iframe{
 .about-me-section div img{
     height: 100%;
     width: 100%;
-}
-.about-me-section .french-div{
-
 }
