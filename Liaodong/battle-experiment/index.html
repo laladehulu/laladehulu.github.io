@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v10</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v11</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -319,6 +319,9 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 @keyframes hmPulse { to { box-shadow: 0 0 10px 3px rgba(255,220,120,.85); } }
 #hudmarks .hm.sq b { width: 24px; height: 24px; font-size: 13px; background: rgba(10,40,18,.82); border-color: #6fe08a; color: #b6f7c3; }
 #hudmarks .hm.sq.on b { background: #bff2c9; color: #0c3a1a; }
+#hudmarks .hm.file b { width: 30px; height: 30px; font: 700 15px serif; background: rgba(10,46,20,.88); border: 2px solid #8ff0a4; color: #c6f9d0; }
+#hudmarks .hm.place b { width: 22px; height: 22px; border-radius: 3px; transform: rotate(45deg); background: rgba(120,240,150,.25); border: 2px solid #9ff5b0; color: transparent; }
+#hudmarks .hm.place i { color: #b9f7c6; }
 #hudmarks .hm i { font: 600 10px sans-serif; font-style: normal; color: #fff; text-shadow: 0 1px 2px #000; margin-top: 1px; }
 #hudmarks .hm.edge.l b::before, #hudmarks .hm.edge.r b::after { content: ''; position: absolute; border: 6px solid transparent; }
 #hudmarks .hm.edge.l b::before { margin-left: -36px; border-right-color: rgba(255,255,255,.85); }
@@ -624,7 +627,7 @@ const YY_PLAY = { brush: ['Wolf-brush (Langxian)', '狼筅手'], shield: ['Ratta
 { const b = DEFS.yuanyang; const mk = (o) => Object.assign({}, b, o);
   YYDEF.lead = mk({ weapons: ['katana'], reach: 2.2, dmg: [54, 44, 36, 44], block: 0.5, windup: 0.4 });
   YYDEF.shield = mk({ weapons: ['katana'], reach: 2.0, dmg: [40, 34, 30, 34], block: 0.85, shield: true, hp: 150, windup: 0.4 });
-  YYDEF.brush = mk({ weapons: ['yari'], reach: 4.1, dmg: [16, 0, 18, 0], block: 0.35, brush: true, windup: 0.4 });
+  YYDEF.brush = mk({ weapons: ['yari'], reach: 5.0, dmg: [16, 0, 18, 0], block: 0.35, brush: true, windup: 0.4 });
   YYDEF.spear = mk({ weapons: ['yari'], reach: 4.4, dmg: [46, 0, 52, 0], block: 0.15 });
   YYDEF.trident = mk({ weapons: ['yari'], reach: 2.9, dmg: [44, 0, 42, 0], block: 0.4, trident: true });
   YYDEF.cook = mk({ weapons: ['katana'], reach: 2.0, dmg: [34, 28, 24, 28], block: 0.2, hp: 100 }); }
@@ -1271,6 +1274,7 @@ class Sim {
     if (this.phase === 1 && this.wx && this.wx.lift && this.tick >= this.wx.lift) this.weatherLift();
     if (this.phase === 1) { if (this.tick % 15 === 0) { this.objectivesThink(); this.fireThink(); } this.navalThink(); if (this.rain) this.stormThink(); if (this.duels.length) this.duelThink(); if (this.heroMode) this.heroThink(); }
     for (let i = 0; i < units.length; i++) { const u = units[i]; if (!u.dead && !u.inactive) this.updateUnit(u); }
+    if (this.phase === 1 && this.tick % 3 === 0) this.brushThink();
     if (this.waves.length && this.phase === 1 && this.tick % 15 === 0) this.wavesThink();
     if (this.mission && this.phase === 1 && this.tick % 15 === 0) this.missionThink();
     if (this.real && this.tick % 5 === 0) this.soldierThink();
@@ -1474,6 +1478,7 @@ class Sim {
     if (this.mode === 'assault' && type === ORD_DIRECTIVE) return; // in an assault you are a soldier: the generals are not yours to command
     if (this.chaos && type !== ORD_CONTROL) return; // no orders in chaos: only body-hopping
     if (this.real && (!p.squads.length || type === ORD_CONTROL || type === ORD_NAVAL || type === ORD_WAVE)) return; // a soldier gives no orders; officers only to their own squads
+    if (this.mission && (this.mission.soldier || this.mission.camp) && type !== ORD_SPAWN && (!p.squads.length || type === ORD_CONTROL || type === ORD_NAVAL || type === ORD_WAVE || type === ORD_DIRECTIVE || type === ORD_AUTO)) return; // a story chapter: one man in the ranks; once the file is yours, only its own drill
     if (!c[6] && type >= ORD_MOVE && type <= ORD_FIRE && this.phase === 1) { const sq = this.squads[c[0] | 0];
       if (sq && sq.owner === p.idx && sq.alive) { const h = this.units[p.heroId]; let d = h && !h.dead ? len(h.x - sq.cx, h.z - sq.cz) : 200;
         if (h && !h.dead && h.mount >= 0) d *= 0.8; const delay = 0; // couriers removed: orders take effect immediately
@@ -1532,7 +1537,7 @@ class Sim {
     let k = 0;
     for (let i = 0; i < sq.unitIds.length; i++) {
       const u = units[sq.unitIds[i]]; if (u.dead) continue;
-      let [lat, dep] = slotOffset(sq.formation, k++, n, s, sq.cols); if (sq.def.yuanyang && sq.formation !== FORM_COLUMN) { const r = YY_SLOT[i % 12]; lat = r[0] * 1.15; dep = r[1] * 1.0; }
+      let [lat, dep] = slotOffset(sq.formation, k++, n, s, sq.cols); if (sq.def.yuanyang && sq.formation !== FORM_COLUMN) { const r = YY_SLOT[i % 12]; lat = r[0] * 0.92; dep = r[1] * 0.82; }
       u.slotX = clamp(sq.tx + rx * lat + fx * dep, -HALF, HALF); u.slotZ = clamp(sq.tz + rz * lat + fz * dep, -HALF, HALF);
       u.x = u.px = u.slotX; u.z = u.pz = u.slotZ; u.y = u.py = terrainH(u.x, u.z); u.yaw = u.pyaw = sq.facing; u.hyaw = u.phyaw = sq.facing; u.mx = 0; u.mz = 0; u.hspeed = 0;
     }
@@ -1574,7 +1579,7 @@ class Sim {
     const ox = sq.sepX || 0, oz = sq.sepZ || 0;
     for (let i = 0; i < sq.unitIds.length; i++) {
       const u = units[sq.unitIds[i]]; if (u.dead) continue;
-      let [lat, dep] = slotOffset(sq.formation, k++, n, s, sq.cols); if (sq.def.yuanyang && sq.formation !== FORM_COLUMN) { const r = YY_SLOT[i % 12]; lat = r[0] * 1.15; dep = r[1]; }
+      let [lat, dep] = slotOffset(sq.formation, k++, n, s, sq.cols); if (sq.def.yuanyang && sq.formation !== FORM_COLUMN) { const r = YY_SLOT[i % 12]; lat = r[0] * 0.92; dep = r[1] * 0.82; }
       u.slotX = clamp(sq.tx + ox + rx * lat + fx * dep, -HALF, HALF); u.slotZ = clamp(sq.tz + oz + rz * lat + fz * dep, -HALF, HALF);
       for (const p of this.players) { if (p.ai || p.team !== sq.team) continue; const h = units[p.heroId]; if (!h || h.dead || h === u) continue; const hx = u.slotX - h.x, hz = u.slotZ - h.z, hd = len(hx, hz); if (hd < 1.9) { const e = hd > 0.05 ? 1.9 / hd : 0; u.slotX = h.x + (hd > 0.05 ? hx * e : rx * 1.9); u.slotZ = h.z + (hd > 0.05 ? hz * e : rz * 1.9); } } // leave the player room to move
       if (sq.def.ai === 'ranged' && sq.order === ORD_HOLD) this.coverSlot(u, fx, fz);
@@ -2891,10 +2896,22 @@ class Sim {
     for (const id of ids) { const v = this.units[id]; if (v.dead) continue; const d = len(v.x - x, v.z - z); if (d > 4) continue; v.downT = Math.max(v.downT, 1.2); this.applyDamage(v, 95 * (1 - d / 5), -1, (v.x - x) * 2, 4, (v.z - z) * 2, 'lightning'); }
     if (t.squad >= 0) { const sq = this.squads[t.squad]; if (!sq.def.fearless) sq.morale = Math.max(0, sq.morale - 15); }
   }
+  brushThink() { // 狼筅: a horse that runs onto the layered, spiked branches of a wolf-brush is snared and stopped — no swing needed
+    for (let t = 0; t < 2; t++) for (const b of this.teamAlive[t]) {
+      if (!b.def.brush || b.wounded || b.downT > 0 || b.st === ST_STUN || b.airborne || (b.brushT || 0) > this.tick) continue;
+      const sq = b.squad >= 0 ? this.squads[b.squad] : null; if (sq && sq.routing) continue;
+      const fx = sin(b.yaw), fz = cos(b.yaw), L = b.def.reach + 0.5;
+      for (const v of this.teamAlive[1 - t]) { if (!(v.mounted || (v.type === 'horse' && v.rider >= 0))) continue; const sp = Math.abs(v.hspeed || 0); if (sp < 2.2) continue;
+        const dx = v.x - b.x, dz = v.z - b.z, d2 = dx * dx + dz * dz; if (d2 > L * L) continue; const d = Math.sqrt(d2) || 1; if ((dx * fx + dz * fz) / d < 0.5) continue;
+        b.brushT = this.tick + 21; v.hspeed *= 0.1; v.mx = 0; v.mz = 0; const rider = v.type === 'horse' ? this.units[v.rider] : v;
+        this.applyDamage(v, 12 + sp * 2.5, b.id, fx * 2, 0.4, fz * 2, 'spear', v.x, v.y + 1.4, v.z);
+        if (rider && !rider.dead) { rider.st = ST_STUN; rider.stT = 0; rider.stunDur = 0.9; rider.blocking = false; }
+        this.events.push({ t: 'brushsnare', x: b.x + fx * L * 0.7, y: b.y + 1.6, z: b.z + fz * L * 0.7, by: b.id, att: v.id }); break; } }
+  }
   trample(a, b, nx, nz) {
     const sp0 = a.speedNow, front = -(nx * sin(b.yaw) + nz * cos(b.yaw)); // > 0: the horse comes at b's face
     if (b.iframe > 0 || b.airborne) { if (b.hitT > 0.1) return; b.hitT = 0.4; this.events.push({ t: 'evade', id: b.id, x: b.x, y: b.y, z: b.z }); return; }
-    const spearOut = b.weapon === 'yari' && front > 0.3 && b.st !== ST_STUN && (b.ctrlActive ? (b.blocking || b.st === ST_WINDUP || b.st === ST_RELEASE) : (b.squad >= 0 && !this.squads[b.squad].routing && this.squads[b.squad].order === ORD_HOLD));
+    const spearOut = b.weapon === 'yari' && front > 0.3 && b.st !== ST_STUN && (b.def.brush ? !b.wounded : b.ctrlActive ? (b.blocking || b.st === ST_WINDUP || b.st === ST_RELEASE) : (b.squad >= 0 && !this.squads[b.squad].routing && this.squads[b.squad].order === ORD_HOLD));
     if (spearOut && sp0 > 3) { // a braced spear stops a horse dead
       if (b.hitT > 0.1) return; b.hitT = 0.4; const rider = a.rider >= 0 ? this.units[a.rider] : a;
       this.applyDamage(a, 25 + sp0 * 11, b.id, -nx * 3, 1, -nz * 3, 'spear', a.x, a.y + 1.2, a.z); a.hspeed = 0; a.mx = 0; a.mz = 0; if (rider && !rider.dead) { rider.st = ST_STUN; rider.stT = 0; rider.stunDur = 0.9; }
@@ -3051,9 +3068,9 @@ const MISSIONS = {
       liu: { team: 0, name: 'Liu Ting', zh: '劉綎', army: ['yuanyang', 'yuanyang', 'rifle_imp', 'yuanyang', 'rifle_imp'], at: [0, -100, 0], dir: ['hold', 0, -64] },
       tusi: { team: 0, name: 'Sichuan and Miao levies', zh: '川黔土兵', army: ['ashigaru', 'ashigaru', 'samurai'], at: [0, -72, 0], dir: ['hold', 0, -40] },
       kang: { team: 0, name: 'Kang Yingqian\'s rearguard', zh: '康應乾', army: ['rifle_imp', 'armstrong', 'ashigaru'], at: [0, -128, 0], dir: ['hold', 0, -112] },
-      daisan: { team: 1, name: 'Daišan', zh: '代善', army: ['cavalry', 'samurai', 'samurai', 'archer', 'archer', 'cavalry'], at: [0, 138, PI], reserve: true },
-      hong: { team: 1, name: 'Hong Taiji', zh: '皇太極', army: ['cavalry', 'cavalry', 'samurai', 'byakkotai', 'archer'], at: [-104, 0, PI / 2], reserve: true },
-      ridge: { team: 1, name: 'Archers on the east ridge', army: ['archer', 'archer'], at: [72, -20, -PI / 2], reserve: true, stay: true, dir: ['hold', 34, -24] },
+      daisan: { team: 1, name: 'Daišan', zh: '代善', army: ['cavalry', 'samurai', 'samurai', 'archer', 'cavalry'], at: [0, 138, PI], reserve: true },
+      hong: { team: 1, name: 'Hong Taiji', zh: '皇太極', army: ['cavalry', 'cavalry', 'samurai', 'samurai', 'byakkotai', 'archer'], at: [-104, 0, PI / 2], reserve: true },
+      ridge: { team: 1, name: 'Archers on the east ridge', army: ['archer'], at: [72, -20, -PI / 2], reserve: true, stay: true, dir: ['hold', 34, -24] },
       chase: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'cavalry', 'byakkotai'], at: [-92, -104, PI / 2], reserve: true },
       chase2: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'samurai'], at: [92, -118, -PI / 2], reserve: true },
     },
@@ -3068,7 +3085,7 @@ const MISSIONS = {
           [40, 'fang', 'A rider from Du Song, come this way through Jin country? Who let him through the passes?', '杜總兵的人，怎麼從金人地界過來的？'],
           [50, 'chief', 'Double pace, and the guns half a li behind. This is how a column gets cut in pieces.', '倍道而進，砲落後半里……這是找死。']] },
       { title: '二 · 代善 · The first charge', text: 'Banners in the pass ahead. The duck teams must hold the head of the column.', start: [['release', 'daisan'], ['dir', 'liu', 'hold', 0, -14], ['dir', 'tusi', 'hold', 0, -26]],
-        obj: { survive: 80 },
+        obj: { survive: 66 },
         say: [[1, 'lookout', 'Banners in the pass ahead — red, and red bordered in white! Those are no Ming riders!', '前面有旗！紅旗，鑲紅！不是我們的人！'],
           [4, 'liu', 'Duck teams to the front! Let them break on us!', '鴛鴦陣向前！'],
           [7, 'chief', 'Shields down! Brushes up! Spears behind me — as Marshal Qi taught us!', '藤牌在前，狼筅次之，長槍隨後！'],
@@ -3140,7 +3157,9 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     const h = this.units[p.heroId]; if (h && G.officer) { h.def = Object.assign({}, h.def, { hp: h.def.hp * G.officer, name: G.name, dmg: h.def.dmg.map(x => x * 1.4) }); h.hp = h.def.hp; h.officer = true; }
     if (G.reserve) { p.inactive = true; for (const id of p.squads) { const q = this.squads[id]; q.inactive = true; for (const uid of q.unitIds) this.units[uid].inactive = true; } for (const uid of [p.heroId, p.horseId]) if (uid >= 0) this.units[uid].inactive = true; }
     this.mDir(p.gid, G.dir); }
-  if (!ass) { // campaign balance: the enemy rank and file are a little softer, your allies a little harder (officers excepted)
+  if (M.soldier) { const cache = new Map(); const tune = (d, k, m) => { if (!cache.has(d)) cache.set(d, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return cache.get(d); }; // a story chapter: the Jin at near full strength, their generals no one-man armies
+    for (const u of this.units) { if (u.type === 'horse' || u.def.ai === 'cannon' || u.team === M.side) continue; u.def = u.type === 'hero' ? tune(u.def, 0.75, 0.5) : tune(u.def, 0.85, 0.85); u.hp = u.def.hp; } }
+  if (!ass && !M.soldier) { // campaign balance: the enemy rank and file are a little softer, your allies a little harder (officers excepted)
     const cache = new Map(); const tune = (d, k, m) => { const key = d; if (!cache.has(key)) cache.set(key, new Map()); const c = cache.get(key); if (!c.has(k)) c.set(k, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return c.get(k); };
     for (const u of this.units) { if (u.type === 'horse' || u.officer || u.def.ai === 'cannon') continue; const foe = u.team !== M.side; u.def = foe ? tune(u.def, 0.82, 0.82) : tune(u.def, 1.12, 1.05); u.hp = u.def.hp; } }
   if (ass) { let n = 0; for (const u of this.units) if (u.team === M.attacker && u.type !== 'horse' && u.type !== 'hero') n++; this.tickets = Math.round(n * 0.8); for (const o of this.objectives) o.rate *= 0.6; this.sector = 0; M.sectors[0].forEach(k => this.missionZone(k).hidden = false); this.assaultDirs(); this.mv.ph = 0; }
@@ -3148,7 +3167,8 @@ Sim.prototype.setupMission = function (teams, aiPl) {
   if (M.soldier) { // a story chapter: you are one man in a mandarin duck team of the named group
     const g = this.mg[M.soldier.group], gp = g ? this.players[g.p] : null;
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; p.team = M.side; p.auto = false; p.ready = true; p.heroId = -1; p.commanderId = -1; p.squads = [];
-      const sq = gp ? gp.squads.map(id => this.squads[id]).filter(q => q.def.yuanyang)[i] || this.squads[gp.squads[0]] : null; p.soldierSq = sq ? sq.id : 0; this.possess(p, sq, c.yyRole || 'shield'); });
+      const sq = gp ? gp.squads.map(id => this.squads[id]).filter(q => q.def.yuanyang)[i] || this.squads[gp.squads[0]] : null; p.soldierSq = sq ? sq.id : 0; this.possess(p, sq, c.yyRole || 'shield');
+      if (sq) for (const id of sq.unitIds) { const u = this.units[id]; u.def = Object.assign({}, u.def, { hp: u.def.hp * 1.7 }); u.hp = u.def.hp; } }); // your file: hardened Yiwu men, and the story's heart
   } else if (!ass) {
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; const t = roleType(c.role, M.side); p.team = M.side; p.army = humans.length === 1 ? [t, M.soloExtra || 'ashigaru'] : [t];
       const s = M.start; const px = s[0] + (i - (humans.length - 1) / 2) * 26; this.placeArmy({ player: p, army: p.army }, M.side, px, s[1], s[2]); p.auto = false; p.ready = true;
@@ -4751,7 +4771,7 @@ class Renderer {
     this.buildTrails();
     this.hitstop = 0; this.speedLines = 0; this.speedLinesT = 0;
     this.shells = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 8, 6), new THREE.MeshLambertMaterial({ color: 0x222222 }), 64); this.shells.frustumCulled = false; this.shells.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(this.shells);
-    this.arrows = new THREE.InstancedMesh(new THREE.BoxGeometry(0.03, 0.03, 0.9), new THREE.MeshLambertMaterial({ color: 0x8a6a3a }), 128); this.arrows.frustumCulled = false; this.arrows.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(this.arrows);
+    this.arrows = new THREE.InstancedMesh(new THREE.BoxGeometry(0.04, 0.04, 0.95), new THREE.MeshLambertMaterial({ color: 0xb08a50 }), 128); this.arrows.frustumCulled = false; this.arrows.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(this.arrows);
     this.debrisN = 160; this.debris = []; this.debrisNext = 0;
     this.debrisMesh = {}; for (const [k, geo] of [['b', new THREE.BoxGeometry(1, 1, 1)], ['c', new THREE.ConeGeometry(0.5, 1, 10)], ['y', new THREE.CylinderGeometry(0.5, 0.5, 1, 10)]]) { const m = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0xffffff }), this.debrisN); m.frustumCulled = false; m.castShadow = true; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); for (let i = 0; i < this.debrisN; i++) { m.setMatrixAt(i, this.tmp.zero); m.setColorAt(i, this.tmp.c.set(0xffffff)); } this.scene.add(m); this.debrisMesh[k] = m; }
     for (let i = 0; i < this.debrisN; i++) this.debris.push({ life: 0, m: 'b', p: new THREE.Vector3(), v: new THREE.Vector3(), q: new THREE.Quaternion(), w: new THREE.Vector3(), s: new THREE.Vector3(1, 1, 1), rest: false });
@@ -4801,9 +4821,9 @@ class Renderer {
     const yari = new THREE.Group(); yari.add(bx(0.026, 2.3, 0.026, new THREE.MeshLambertMaterial({ color: 0x8b6b4a }), 0, 0.95, 0)); yari.add(bx(0.014, 0.3, 0.05, blade, 0, 2.24, 0)); yari.add(bx(0.09, 0.12, 0.09, red, 0, 2.05, 0)); vm.add(yari); this.vmYari = yari;
     { // 狼筅 wolf-brush: a long bamboo with its side branches left on, trimmed into layered, iron-tipped spikes
       const brush = new THREE.Group(), bam = new THREE.MeshLambertMaterial({ color: 0x8a8a4c }), twig = new THREE.MeshLambertMaterial({ color: 0x6f7438 });
-      brush.add(bx(0.036, 2.7, 0.036, bam, 0, 1.1, 0)); brush.add(bx(0.016, 0.22, 0.04, blade, 0, 2.55, 0));
-      for (let k = 0; k < 6; k++) brush.add(bx(0.044, 0.02, 0.044, bam, 0, 0.3 + k * 0.38, 0)); // bamboo nodes
-      for (let k = 0; k < 11; k++) { const y = 1.35 + k * 0.1, L = 0.5 - k * 0.032; const piv = new THREE.Group(); piv.position.y = y; piv.rotation.y = k * 2.4; const tilt = new THREE.Group(); tilt.rotation.x = 0.75 + (k % 3) * 0.12; const m = bx(0.012, L, 0.012, twig, 0, L / 2, 0); tilt.add(m); const tip = bx(0.01, 0.05, 0.02, blade, 0, L + 0.02, 0); tilt.add(tip); piv.add(tilt); brush.add(piv); }
+      brush.add(bx(0.038, 3.5, 0.038, bam, 0, 1.5, 0)); brush.add(bx(0.016, 0.24, 0.04, blade, 0, 3.36, 0));
+      for (let k = 0; k < 8; k++) brush.add(bx(0.046, 0.02, 0.046, bam, 0, 0.3 + k * 0.38, 0)); // bamboo nodes
+      for (let k = 0; k < 13; k++) { const y = 1.75 + k * 0.12, L = 0.56 - k * 0.03; const piv = new THREE.Group(); piv.position.y = y; piv.rotation.y = k * 2.4; const tilt = new THREE.Group(); tilt.rotation.x = 0.75 + (k % 3) * 0.12; const m = bx(0.012, L, 0.012, twig, 0, L / 2, 0); tilt.add(m); const tip = bx(0.01, 0.05, 0.02, blade, 0, L + 0.02, 0); tilt.add(tip); piv.add(tilt); brush.add(piv); }
       brush.visible = false; vm.add(brush); this.vmBrush = brush; }
     { // 鏜鈀 trident-rake: a long centre spike and two horns curving up from the crossbar
       const fork = new THREE.Group(), iron = new THREE.MeshLambertMaterial({ color: 0x7a7f84 });
@@ -5102,6 +5122,7 @@ class Renderer {
           const snd = ev.kind === 'kiai' || ev.kind === 'wedge' ? 'kiai' : ev.kind === 'spearwall' ? 'brace' : ev.kind === 'aimed' ? 'drum' : 'ui'; AUDIO.play(snd, ev.x, gy + 1.5, ev.z, 1.2);
           for (const id of sq.unitIds) { const v = units[id]; if (v.dead) continue; this.sparks.spawn(v.x, v.y + 2.1, v.z, 0, 1.2, 0, 0.6, 0.5, 0.1, 1, 0.82, 0.35, 1, 1, -0.5, 1, 0.5, 0.1); }
           if (ev.kind === 'kiai' || ev.kind === 'wedge') this.dust(ev.x, gy + 0.2, ev.z, 20, 0, 1.5, 0, 6, 1.4, 0.6, 3); break; }
+        case 'brushsnare': { this.dust(ev.x, ev.y - 1.2, ev.z, 10, 0, 1.2, 0, 2, 1, 0.4, 1.6); this.blood(ev.x, ev.y, ev.z, 6, 0, 0.8, 0); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.2); AUDIO.play('neigh', ev.x, ev.y, ev.z, 0.9); if (ev.by === heroId) this.hitQ = { text: '狼筅 · the brush stops the horse', t: 1.2, c: '#9fe07a' }; break; }
         case 'spearwall': { this.burstSparks(ev.x, ev.y, ev.z, 14, 6, 1, 0.85, 0.5, 0.35, 0.1); this.blood(ev.x, ev.y, ev.z, 10, 0, 1, 0); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.4); AUDIO.play('clang', ev.x, ev.y, ev.z, 0.8); break; }
         case 'misfire': { this.puffSmoke(ev.x, ev.y, ev.z, 5, 0, 0.8, 0, 0.3, 2.2, 0.3, 1.2, 0.7, 0.45); this.sparks.spawn(ev.x, ev.y, ev.z, 0, 0.4, 0, 0.2, 0.3, 0.05, 1, 0.7, 0.3, 1, 1, 0, 1, 0.4, 0.1); AUDIO.play('misfire', ev.x, ev.y, ev.z, ev.id === heroId ? 1.5 : 1); break; }
         case 'lightning': {
@@ -5434,8 +5455,8 @@ class Renderer {
     { // the mandarin duck's special arms: 狼筅 wolf-brush (a bamboo trunk left bristling with branches) and 镗钯 tangba (three-pronged fork)
       const role = u.role, brush = w === 'yari' && role === 'brush', fork = w === 'yari' && role === 'trident'; let n = 0;
       if (brush || fork) { let ex = dy * 0 - dz * 1, ey = 0, ez = dx * 1 - dy * 0; let el = Math.hypot(ex, ey, ez); if (el < 1e-3) { ex = 1; ey = 0; ez = 0; el = 1; } ex /= el; ey /= el; ez /= el; const fx = dy * ez - dz * ey, fy = dz * ex - dx * ez, fz = dx * ey - dy * ex;
-        if (brush) { segW(f.yari, -0.8, 2.45, 0.05, 0.05); f.blade.setMatrixAt(slot, Z); f.hilt.setMatrixAt(slot, Z);
-          for (let k = 0; k < 9; k++) { const sk = 1.05 + k * 0.15, a = k * 2.4 + 0.5, L = 0.42 - k * 0.025; const bx = P(sk, 0), by = P(sk, 1), bz = P(sk, 2); const ox = (ex * Math.cos(a) + fx * Math.sin(a)) * L, oy = (ey * Math.cos(a) + fy * Math.sin(a)) * L, oz = (ez * Math.cos(a) + fz * Math.sin(a)) * L;
+        if (brush) { segW(f.yari, -0.8, 3.3, 0.055, 0.05); f.blade.setMatrixAt(slot, Z); f.hilt.setMatrixAt(slot, Z);
+          for (let k = 0; k < 9; k++) { const sk = 1.6 + k * 0.2, a = k * 2.4 + 0.5, L = 0.5 - k * 0.03; const bx = P(sk, 0), by = P(sk, 1), bz = P(sk, 2); const ox = (ex * Math.cos(a) + fx * Math.sin(a)) * L, oy = (ey * Math.cos(a) + fy * Math.sin(a)) * L, oz = (ez * Math.cos(a) + fz * Math.sin(a)) * L;
             this.seg(f.twig, slot * 9 + k, bx, by, bz, bx + ox + dx * 0.18, by + oy + dy * 0.18, bz + oz + dz * 0.18, 0.022, 0.022); } n = 9; }
         else { const cx = P(1.88, 0), cy = P(1.88, 1), cz = P(1.88, 2); this.seg(f.twig, slot * 9, cx - ex * 0.2, cy - ey * 0.2, cz - ez * 0.2, cx + ex * 0.2, cy + ey * 0.2, cz + ez * 0.2, 0.03, 0.03);
           for (const sd of [-1, 1]) { const bx = cx + ex * 0.19 * sd, by = cy + ey * 0.19 * sd, bz = cz + ez * 0.19 * sd; this.seg(f.twig, slot * 9 + (sd > 0 ? 1 : 2), bx, by, bz, bx + dx * 0.3, by + dy * 0.3, bz + dz * 0.3, 0.025, 0.025); } n = 3; } }
@@ -5761,6 +5782,7 @@ class Renderer {
     for (let i = n; i < this.omSpr.length; i++) this.omSpr[i].visible = false;
   }
   render(alpha, dt, view) {
+    this.alpha = alpha; // overlays (speech captions) read positions interpolated the same way the bodies are
     if (this.hitstop > 0 && !this.studio) { this.hitstop -= dt; this.present(this.camera); return; }
     this.time += dt; const sim = this.sim, units = sim.units, T = this.tmp; if (this.campFires && this.campFires.length) this.updateCamp(dt);
     this.fdt = Math.min(0.05, Math.max(0.001, dt)); this.speedLines = 0;
@@ -5839,7 +5861,7 @@ class Renderer {
       const u = units[i];
       if (u.dead || u.inactive) continue;
       const x = lerp(u.px, u.x, alpha), y = lerp(u.py, u.y, alpha), z = lerp(u.pz, u.z, alpha);
-      if (om && u.squad >= 0 && i !== heroId && u.type !== 'horse') { const q = sim.squads[u.squad]; if (q && q.owner === this.localIdx) { const top = y + (u.mounted ? 2.75 : 2.05); om.push(x, top, z); if (capt[u.squad] === undefined) capt[u.squad] = [x, top, z]; } }
+      if (om && u.squad >= 0 && i !== heroId && u.type !== 'horse') { const q = sim.squads[u.squad]; if (q && (q.owner === this.localIdx || (q.id === sim.players[this.localIdx].soldierSq && sim.mission && sim.mission.soldier))) { const top = y + (u.mounted ? 2.75 : 2.05); om.push(x, top, z); if (capt[u.squad] === undefined) capt[u.squad] = [x, top, z]; } }
       const far = (x - cx) * (x - cx) + (z - cz) * (z - cz) > 330 * 330;
       if (this.fog && u.team !== this.localTeam && !this.seen[i]) { if (this.wasSeen[i]) { this.wasSeen[i] = 0; this.hideFigure(i); const hs = this.horseSlot.get(u.id); if (hs !== undefined) this.hideHorse(hs); const cs = this.cannonSlot.get(u.id); if (cs !== undefined) for (const k in this.cannon) this.cannon[k].setMatrixAt(cs, T.zero); } continue; }
       if (this.fog) this.wasSeen[i] = 1;
@@ -5904,6 +5926,9 @@ class Renderer {
       if (p.kind === 'arrow') { if (ai >= 128) continue; T.v.set(p.vx, p.vy, p.vz).normalize(); T.q.setFromUnitVectors(T.v2.set(0, 0, 1), T.v); T.m.compose(T.v3.set(p.x, p.y, p.z), T.q, T.v4.set(1, 1, 1)); this.arrows.setMatrixAt(ai++, T.m); }
       else { if (si >= 64) continue; const sc = p.kind === 'solid' ? 1.6 : 1; T.m.compose(T.v.set(p.x, p.y, p.z), T.q.identity(), T.v2.set(sc, sc, sc)); this.shells.setMatrixAt(si++, T.m); if (p.kind === 'shell' && Math.random() < 0.6) this.smoke.spawn(p.x, p.y, p.z, rnd(-0.3, 0.3), rnd(0, 0.4), rnd(-0.3, 0.3), 0.8, 0.3, 1.2, 0.6, 0.6, 0.6, 0.4, 0.9, -0.05); }
     }
+    if (!this.arrowTrails) { this.arrowTrails = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xd8d4c8, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }), 128); this.arrowTrails.frustumCulled = false; this.arrowTrails.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(this.arrowTrails); }
+    { let ti = 0; for (const p of sim.projectiles) { if (p.kind !== 'arrow' || ti >= 128) continue; const sp = Math.hypot(p.vx, p.vy, p.vz); if (sp < 1) continue; const L = Math.min(5, sp * 0.09); T.v.set(p.vx / sp, p.vy / sp, p.vz / sp); T.q.setFromUnitVectors(T.v2.set(0, 0, 1), T.v); T.m.compose(T.v3.set(p.x - T.v.x * (L / 2 + 0.35), p.y - T.v.y * (L / 2 + 0.35), p.z - T.v.z * (L / 2 + 0.35)), T.q, T.v4.set(0.035, 0.035, L)); this.arrowTrails.setMatrixAt(ti++, T.m); }
+      for (let i = ti; i < 128; i++) this.arrowTrails.setMatrixAt(i, T.zero); this.arrowTrails.instanceMatrix.needsUpdate = true; } // a pale streak behind each arrow so a volley can be read in flight
     for (let i = si; i < 64; i++) this.shells.setMatrixAt(i, T.zero); for (let i = ai; i < 128; i++) this.arrows.setMatrixAt(i, T.zero);
     this.shells.instanceMatrix.needsUpdate = true; this.arrows.instanceMatrix.needsUpdate = true;
     if (this.deployBand) this.deployBand.visible = sim.phase === 0;
@@ -5915,13 +5940,13 @@ class Renderer {
       const f = clamp(t.life / t.max, 0, 1);
       const dir = T.v.subVectors(t.to, t.from); const L = dir.length(); if (L < 0.01) { t.life = 0; continue; }
       dir.multiplyScalar(1 / L);
-      const prog = (t.max - t.life) / Math.max(0.01, t.max - 0.06); const headT = clamp(prog, 0, 1), tailT = clamp(prog - 6 / L, 0, 1);
+      const prog = (t.max - t.life) / Math.max(0.01, t.max - 0.06); const headT = clamp(prog, 0, 1), tailT = clamp(prog - 13 / L, 0, 1);
       const a = T.v2.copy(t.from).addScaledVector(dir, L * tailT), b = T.v3.copy(t.from).addScaledVector(dir, L * headT);
       const seg = b.distanceTo(a); T.v4.addVectors(a, b).multiplyScalar(0.5);
       T.q.setFromUnitVectors(T.v.set(0, 0, 1), dir);
-      T.m.compose(T.v4, T.q, T.v.set(0.05, 0.05, Math.max(0.25, seg))); this.tracerMesh.setMatrixAt(i, T.m);
+      const wd = prog < 1 ? 0.065 : 0.03 * f; T.m.compose(T.v4, T.q, T.v.set(wd, wd, Math.max(0.25, seg))); this.tracerMesh.setMatrixAt(i, T.m);
       if (prog < 1 && Math.random() < dt * 30) this.smoke.spawn(b.x, b.y, b.z, 0, 0.1, 0, 0.6, 0.05, 0.35, 0.82, 0.8, 0.78, 0.18, 0.5, 0);
-      const br = (prog < 1 ? 1 : f * 4) * (t.bright || 1); this.tracerMesh.setColorAt(i, T.c.setRGB(br, br * 0.78, br * 0.4));
+      const br = (prog < 1 ? 1.25 : f * 2.5) * (t.bright || 1); this.tracerMesh.setColorAt(i, T.c.setRGB(br, br * 0.82, br * 0.5));
     }
     this.tracerMesh.instanceMatrix.needsUpdate = true; this.tracerMesh.instanceColor.needsUpdate = true;
     // particles
@@ -6199,7 +6224,7 @@ return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, leg
           c = mix(c, low, (1.0 - smoothstep(0.0, 0.12, h)) * 0.6);
           gl_FragColor = vec4(c, 1.0); }` });
     // tracers and blade trails: in daylight a musket ball is barely seen; keep them faint so they do not bloom into streaks of light
-    if (this.tracerMesh) { this.tracerMesh.material = this.tracerMesh.material.clone(); this.tracerMesh.material.transparent = true; this.tracerMesh.material.opacity = 0.1; }
+    if (this.tracerMesh) { this.tracerMesh.material = this.tracerMesh.material.clone(); this.tracerMesh.material.transparent = true; this.tracerMesh.material.opacity = 0.42; }
     if (this.trailMesh) { this.trailMesh.material.opacity = 0.3; }
     // distant towns burning: columns of smoke on the horizon and drifting palls over the field
     this.buildSmokeColumns();
@@ -6477,14 +6502,14 @@ function realGear(u) {
     case 'rifle_imp': gunnerKui(0x5a6168, 0x7a1a16); gunnerArmour(0xa8261e, gold); kyahanW(); break;
     case 'rifle_spencer': gunnerKui(0x4a5056, 0x3a2a24); gunnerArmour(0x7a2a22, 0xc9c0a8); kyahanW(); break;
     case 'jinshotai': gunnerKui(0x5a6168, 0x1c2438); gunnerArmour(0x24304a, gold); kyahanW(); break;
-    case 'jigen': mingKui(0x2a2c30, 0x3a3a40, 0x9a9ea6); dingjia(0x4a2024, 0x9a9ea6, [0.15, 0.06, -0.03, -0.12]); mirror(); break;
+    case 'jigen': mingKui(0x6e757c, 0x3a3a40, brass); dingjia(0x4a2024, 0x9a9ea6, [0.15, 0.06, -0.03, -0.12]); mirror(); break;
     case 'horokutai': mingHair(); hachimaki(red); robe(0x7a3422, 0x2a2a34); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); b('p', [0.24, 0.07, 0.06], [0.03, 0.06, 0.03], 0xe8e2cc); y('c', [0.12, -0.02, -0.17], [0.2, 0.2, 0.2], 0x2a2a2e); break;
     case 'ronin': if (vr % 2 === 0) hatOn(() => c('h', [0, 0.16, 0], [0.8, 0.18, 0.8], 0x9a8058)); else mingHair(); robe(torsoColor(u), 0x5a4a3a); break;
   } else switch (u.type) {
     case 'hero': jinHelm(0xc9a03a, 0xe8c040, red, 1.35); queue(); dingjia(0xe8c040, 0xa8201a, [0.15, 0.06, -0.03, -0.12]); hoof(0xe8c040); b('c', [0, -0.08, -0.18], [0.6, 0.95, 0.03], 0xa8201a, [-0.06, 0, 0]); break; // the Khan's yellow, under a red cloak
     case 'samurai': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8); hoof(bc); break;
     case 'cavalry': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8, [0.12, -0.04]); hoof(bc); sadai(); backflag(bc); break;
-    case 'shinsengumi': jinHelm(0x8a6a2a, 0xd8b03c, 0xe8e4da, 1.2); queue(); dingjia(0xd8b03c, 0x8a2a1a, [0.15, 0.06, -0.03, -0.12]); hoof(0xd8b03c); backflag(0xd8b03c, red); break;
+    case 'shinsengumi': jinHelm(0x8a6a2a, 0xd8b03c, 0xe8e4da, 1.2); queue(); dingjia(0xd8b03c, 0x8a2a1a, [0.15, 0.03, -0.09]); hoof(0xd8b03c); backflag(0xd8b03c, red); break;
     case 'ashigaru': liangmao(); queue(); robe(bc, 0x26262c); hoof(bc); break;
     case 'rifle_sho': jinHelm(iron, bc, red); queue(); robe(bc, 0x26262c); hoof(bc); belts(0x6a4a30); flask(); break; // Ujen Cooha gunners: Han bannermen in helmets
     case 'archer': liangmao(); queue(); robe(0x2c3f6a, bc); hoof(0x2c3f6a); sadai(); break;
@@ -6743,7 +6768,7 @@ document.addEventListener('keydown', (e) => {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   const c = e.code;
   if (c === 'Tab') e.preventDefault();
-  if (state.sim && state.sim.mode === 'campaign') { if (DEP.open) { depKey(c, e); return; } if (c === 'KeyP' && state.sim.phase === 1) { depOpen(true); DEP.t = 0; return; } }
+  if (state.sim && state.sim.mode === 'campaign' && !storyLock()) { if (DEP.open) { depKey(c, e); return; } if (c === 'KeyP' && state.sim.phase === 1) { depOpen(true); DEP.t = 0; return; } }
   if (state.sim && state.sim.mode === 'assault') { if (DEP.open) { depKey(c, e); return; } if (c === 'KeyP') { depOpen(true); DEP.t = 0; return; } if (c === 'KeyO' || c === 'Backquote') { toast('In an assault you are a soldier: press P to change soldier or spawn point'); return; } }
   if (!e.repeat && (c === 'KeyA' || c === 'KeyD' || c === 'KeyS') && state.sim && !Input.cmdMode) { const now = performance.now(); const T = Input.tapT || (Input.tapT = {}); if (now - (T[c] || 0) < 260) { const h = localHero(); if (h && !h.dead && !(h.mount >= 0 || h.mounted)) Input.pressed |= c === 'KeyA' ? S.A_DASHL : c === 'KeyD' ? S.A_DASHR : S.A_DODGE; T[c] = 0; } else T[c] = now; }
   if (KEYMAP[c]) { Input.keys |= KEYMAP[c]; e.preventDefault(); }
@@ -6784,8 +6809,8 @@ document.addEventListener('keydown', (e) => {
     case 'KeyH': if (fpReady()) fpFollowToggle(); return;
     case 'KeyN': if (fpReady()) { const sim = state.sim; const on = !state.fpSel.some(id => sim.squads[id].fire); withFpSel(() => toggleFire()); shout(`${names()}: ${on ? 'fire at will!' : 'hold your fire!'}`); } return;
     case 'KeyB': if (fpReady()) useAbility(state.fpSel); return;
-    case 'KeyK': { const g = fpAimPoint(); if (g) callNaval(g.x, g.z); else toast('Look at the ground to call the war junks'); return; }
-    case 'KeyJ': Input.pressed |= S.A_DUEL; return;
+    case 'KeyK': { if (storyLock()) return; const g = fpAimPoint(); if (g) callNaval(g.x, g.z); else toast('Look at the ground to call the war junks'); return; }
+    case 'KeyJ': if (storyLock()) return; Input.pressed |= S.A_DUEL; return;
   }
   switch (c) {
     case 'Space': Input.pressed |= S.A_JUMP; e.preventDefault(); break;
@@ -6797,8 +6822,8 @@ document.addEventListener('keydown', (e) => {
     case 'Digit3': Input.wsel = 3; Input.ads = false; break;
     case 'KeyV': Input.pressed |= S.A_RALLY; break;
     case 'Enter': Input.pressed |= S.A_READY; break;
-    case 'KeyY': toggleAuto(); break;
-    case 'Backspace': returnToCommander(); e.preventDefault(); break;
+    case 'KeyY': if (!storyLock()) toggleAuto(); break;
+    case 'Backspace': if (!storyLock()) returnToCommander(); e.preventDefault(); break;
   }
 });
 document.addEventListener('keyup', (e) => { if (KEYMAP[e.code]) Input.keys &= ~KEYMAP[e.code]; Input.shift = e.shiftKey; if (e.code === 'KeyG' && Input.orderMode && performance.now() - (state.gDownT || 0) > 350) closeOrders(); if (e.code === 'KeyZ' && state.zHeld) { state.zHeld = false; state.fpGhost = null; if (fpReady()) fpMove(); } });
@@ -6810,7 +6835,7 @@ function openOrders() {
   if (!state.fpSel.length) state.fpSel = own.map(s => s.id);
   Input.orderMode = true; Input.lmb = false; Input.rmb = false; $('ordermenu').hidden = false; renderOrderMenu();
 }
-function fpReady() { if (Input.cmdMode || state.replayMode || !state.sim) return false; if (noOrders()) return false; const own = fpSquads(); if (!own.length) { toast('You have no squads left to command'); return false; } if (!state.fpSel.length) state.fpSel = own.map(s => s.id); return true; }
+function fpReady() { if (Input.cmdMode || state.replayMode || !state.sim) return false; if (noOrders()) return false; const own = fpSquads(); if (!own.length) { toast(storyLock() ? 'Chief Wu gives the orders here. Keep your place in the file' : 'You have no squads left to command'); return false; } if (!state.fpSel.length) state.fpSel = own.map(s => s.id); return true; }
 function quickSelect(n) { if (Input.cmdMode) return; const own = fpSquads(); if (!own.length) return; if (n === 0 || !own[n - 1]) state.fpSel = own.map(s => s.id); else state.fpSel = [own[n - 1].id]; AUDIO.play('ui'); toast(`Orders to: ${names()}`); }
 function fpFollowToggle() { const sim = state.sim; const following = state.fpSel.some(id => sim.squads[id].order === S.ORD_FOLLOW); if (following) { withFpSel(() => order(S.ORD_HOLD)); shout(`${names()}: halt!`); } else { withFpSel(() => order(S.ORD_FOLLOW)); shout(`${names()}: follow me!`); } }
 function closeOrders() { if (!Input.orderMode) return; Input.orderMode = false; $('ordermenu').hidden = true; state.fpGhost = null; }
@@ -6988,9 +7013,11 @@ document.addEventListener('pointerlockchange', () => {
   if (!Input.locked) { Input.lmb = false; Input.rmb = false; Input.keys = 0; }
 });
 $('pause').addEventListener('click', () => { if (state.screen === 'game') requestLock(); });
+function storyLock() { const s = state.sim; return !!(s && s.mission && (s.mission.soldier || s.mission.camp)); } // story chapters: no overview, no other men's bodies, no fleets
 function toggleCmd(force) {
   closeOrders();
   const want = force === undefined ? !Input.cmdMode : force;
+  if (want && storyLock()) { Input.cmdMode = false; $('cmdui').hidden = true; const now = performance.now(); if (now - (state.lockToast || 0) > 3000) { state.lockToast = now; toast('You are one man in the ranks: there is no overview here. Your file follows your F / C / H / Z once it is yours'); } return; }
   Input.cmdMode = want; $('cmdui').hidden = !want;
   if (want) { if (document.pointerLockElement) document.exitPointerLock(); $('pause').hidden = true; const h = localHero(), r = state.renderer; if (h && r) { const sqs = ownSquads(); let ax = h.x, az = h.z; if (sqs.length) { let sx = 0, sz = 0; for (const sq of sqs) { sx += sq.cx; sz += sq.cz; } ax = (h.x + sx / sqs.length) / 2; az = (h.z + sz / sqs.length) / 2; } r.cmdCam.x = ax; r.cmdCam.z = az; r.cmdCam.h = Math.max(r.cmdCam.h, 70); } Input.lmb = false; Input.rmb = false; Input.ads = false; Input.mouseMoved = false; }
   else { requestLock(); const h = localHero(); if (h) { Input.yaw = h.yaw; } }
@@ -7293,6 +7320,9 @@ function hudMarks() {
     sim.objectives.forEach((o, i) => { if (o.hidden) return; const m = /^([A-Z]) ·/.exec(o.name || ''); const own = o.owner === me.team, foe = o.owner >= 0 && !own; const contested = (o.n0 > 0) && (o.n1 > 0);
       items.push({ x: o.x, z: o.z, y: 2.5, txt: m ? m[1] : sim.mission ? '◆' : 'ABCDEFG'[i], cls: 'obj' + (own ? ' own' : foe ? ' foe' : '') + (contested ? ' hot' : ''), name: (o.name || '').replace(/^[A-Z] · /, ''), always: true }); });
     const sel = state.fpSel || [];
+    { const fq = me.soldierSq !== undefined && !(me.squads || []).includes(me.soldierSq) ? sim.squads[me.soldierSq] : null, h = localHero(); // your file, and your own place in it, before you command it
+      if (fq && fq.alive && h && !h.dead) { if (Math.hypot(fq.cx - h.x, fq.cz - h.z) > 7) items.push({ x: fq.cx, z: fq.cz, y: 2.4, txt: '伍', cls: 'sq file', always: false });
+        if (h.squad === fq.id && h.slotX !== undefined && Math.hypot(h.slotX - h.x, h.slotZ - h.z) > 3) items.push({ x: h.slotX, z: h.slotZ, y: 0.4, txt: '◇', cls: 'place', name: 'your place', always: true }); } }
     (me.squads || []).forEach((id, k) => { const q = sim.squads[id]; if (!q || !q.alive || q.inactive) return; const h = localHero(); if (h && Math.hypot(q.cx - h.x, q.cz - h.z) < 6) return; items.push({ x: q.cx, z: q.cz, y: 2.2, txt: String(k + 1), cls: 'sq' + (sel.includes(id) ? ' on' : ''), always: false }); });
   }
   const cam = r ? r.camera : null, W = window.innerWidth, H = window.innerHeight, h = localHero(); const used = { l: [], r: [] };
@@ -7306,7 +7336,8 @@ function hudMarks() {
     else { const right = cv.x > 0; edge = right ? ' edge r' : ' edge l'; sx = right ? W - 34 : 34; const yy = behind ? 0 : Math.max(-0.7, Math.min(0.7, v.y)); sy = (-yy * 0.5 + 0.5) * H; const U = used[right ? 'r' : 'l']; for (let k = 0; k < 8 && U.some(y0 => Math.abs(y0 - sy) < 40); k++) sy += 42; U.push(sy); }
     el.className = 'hm ' + it.cls + edge; el.firstChild.textContent = it.txt;
     const d = h ? Math.round(Math.hypot(it.x - h.x, it.z - h.z)) : 0; el.lastChild.textContent = d > 4 ? d + ' m' : '';
-    el.style.transform = `translate(${sx.toFixed(0)}px,${sy.toFixed(0)}px)`; el.style.display = '';
+    if (el._k === it.txt + edge && el._x !== undefined && Math.abs(el._x - sx) < 200 && Math.abs(el._y - sy) < 200) { sx = el._x + (sx - el._x) * 0.35; sy = el._y + (sy - el._y) * 0.35; } el._k = it.txt + edge; el._x = sx; el._y = sy; // smooth: company centres move in 30 Hz steps
+    el.style.transform = `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px)`; el.style.display = '';
   }
   for (let i = n; i < MARKS.pool.length; i++) MARKS.pool[i].style.display = 'none';
 }
@@ -7962,7 +7993,7 @@ const SPEECH = (() => {
     const cam = r.camera, W = canvas.clientWidth, H = canvas.clientHeight;
     for (let i = live.length - 1; i >= 0; i--) { const l = live[i]; l.t += dt; const u = unit(l.id);
       if (l.t > l.dur || !u || (u.dead && l.t > 0.8)) { kill(i); continue; }
-      v3.set(u.x, u.y + (u.mounted ? 2.9 : 2.15), u.z); const d = cam.position.distanceTo(v3); v3.project(cam);
+      const al = r.alpha === undefined ? 1 : Math.max(0, Math.min(1, r.alpha)); v3.set(u.px + (u.x - u.px) * al, u.py + (u.y - u.py) * al + (u.mounted ? 2.9 : 2.15), u.pz + (u.z - u.pz) * al); // the caption rides the drawn body, not the 30 Hz sim position const d = cam.position.distanceTo(v3); v3.project(cam);
       if (v3.z > 1 || Math.abs(v3.x) > 1.15 || Math.abs(v3.y) > 1.2) { l.e.style.opacity = 0; continue; }
       const sx = (v3.x + 1) / 2 * W, sy = (1 - v3.y) / 2 * H; const k = Math.max(0.62, Math.min(1.15, 9 / Math.max(3, d)));
       l.e.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -100%) scale(${k.toFixed(3)})`;
