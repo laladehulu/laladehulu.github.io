@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v25</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v26</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -128,6 +128,7 @@ kbd { font-family: var(--font-ui); font-size: 11px; background: var(--ink); colo
 #objbar .sc { font-family: var(--font-display); font-weight: 700; font-size: 15px; min-width: 30px; text-align: center; } #objbar .sc.t0 { color: #ff8a92; } #objbar .sc.t1 { color: #92afff; }
 #objbar small { color: var(--muted); font-size: 10px; }
 @media (max-width: 900px) { #objbar .obj { padding: 2px 4px; font-size: 10px; } }
+#status .goal { font: 600 15px Georgia, 'Noto Serif CJK TC', serif; color: #f2cf6a; text-shadow: 0 1px 3px #000, 0 0 10px rgba(0,0,0,.6); letter-spacing: .02em; }
 #status { left: 50%; top: max(14px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); display: flex; gap: 14px; align-items: center; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .06em; white-space: nowrap; }
 #status .t0 { color: #ff8a92; } #status .t1 { color: #92afff; }
 #status .vs { color: var(--muted); font-size: 11px; letter-spacing: .2em; }
@@ -3258,6 +3259,7 @@ const MISSIONS = {
         say: [[3, 'qi', 'Take your file to the bridge. If the Sichuan men must come back, they come back over it.', '帶你的隊到橋頭去。川兵要退，就從這座橋退。'],
           [30, 'lookout', 'Guns on the far bank — they are firing the Shenyang cannon into the Sichuan camp!', '北岸有砲！他們拿瀋陽的大砲轟川營！'],
           [34, 'fang', 'They say Li Yongfang found our gunners among the prisoners and paid them to serve the guns.', '聽說李永芳在俘虜裡找出我們的砲手，賞了銀子讓他們開砲。'],
+          [70, 'lookout', 'The white banners are going down on the far bank, one after another.', '北岸的白旗一面一面倒了。'],
           [73, 'lookout', 'Qin Bangping is down! Zhou Dunji is down! The Sichuan men are coming back over the bridge!', '秦邦屏陣亡！周敦吉陣亡！川兵退過橋來了！']] },
       { title: '三 · 車營 · The wagon camp', text: 'The Jin left wing is over the river. Get your file back inside the camp and hold the line of wagons and palisades.', show: ['camp'], hide: ['sbridge'],
         start: [['release', 'lw'], ['dir', 'lw', 'hold', 58, -58], ['dir', 'chen', 'hold', 64, -56], ['dir', 'zhe', 'hold', 58, -60]],
@@ -3270,11 +3272,13 @@ const MISSIONS = {
         start: [['release', 'night'], ['dir', 'night', 'hold', 58, -60], ['kill', 'chen']],
         obj: { extract: 'road' }, limit: 420, fail: 'The ring closed around the camp.',
         waves: [[14, 'cut', ['attack']]], at: [[55, ['kill', 'zhe']]],
-        say: [[2, 'soldier', 'General Chen Ce is dead!', '陳總兵陣亡了！'],
+        say: [[1, 'lookout', 'The big banner on the east side — it\'s down!', '東邊的大旗倒了！'], [2, 'soldier', 'General Chen Ce is dead!', '陳總兵陣亡了！'],
+          [4, 'fang', 'The general who asked about our feet last night...', '昨晚問我們腳冷不冷的那個總兵……'],
           [6, 'qi', 'A man repays his country today, of all days.', '大丈夫報國，就在今日。'],
           [12, 'qi', 'You — take your file and your wounded down the Liaoyang road. Someone must live to tell them what happened here.', '你——帶你的人和傷兵走遼陽大路。總得有人活著，把這裡的事說出去。'],
           [16, 'lookout', 'Horsemen on the road ahead!', '前面路上有馬兵！'],
-          [56, 'lookout', 'General Qi has fallen!', '戚副將陣亡了！']] },
+          [55, 'lookout', 'The drum... listen. The drum has stopped.', '鼓……你聽，鼓停了。'], [56, 'lookout', 'General Qi has fallen!', '戚副將陣亡了！'],
+          [60, 'he', 'He sat at our fire last night. He knew our names.', '他昨晚還跟我們烤火。他記得我們的名字。']] },
     ],
     win: 'You got out by the Liaoyang road.',
   },
@@ -8082,7 +8086,8 @@ function updateHUD(dt) {
     if (sim.phase === 1 && hero && !state.ended) { let near = 0; for (const v of sim.teamAlive[1 - me.team]) if (Math.abs(v.x - hero.x) + Math.abs(v.z - hero.z) < 40) near++; MUSIC.setIntensity(near > 3 ? 1 : 0.6); }
     const a0 = sim.teamAlive[0].length, a1 = sim.teamAlive[1].length;
     $('status').innerHTML = `<span class="t0">${S.FACTION[0].jp} ${a0}</span><span class="vs">·</span><span class="t1">${a1} ${S.FACTION[1].jp}</span>`;
-    { const ob = sim.objectives.filter(o => !o.hidden); if (ob.length) { const chips = ob.map(o => `<span class="obj ${o.owner === 0 ? 'o0' : o.owner === 1 ? 'o1' : ''}${(o.n0 > 0) !== (o.n1 > 0) && o.owner !== (o.n0 > 0 ? 0 : 1) ? ' cap' : ''}" style="background:${objBg(o.ctrl)}">${o.name}</span>`).join(''); $('objbar').innerHTML = sim.heroMode || sim.mission ? chips : `<span class="sc t0">${sim.score[0]}</span>${chips}<span class="sc t1">${sim.score[1]}</span><small>first to ${S.SCORE_WIN}</small>`; $('objbar').hidden = false; } else $('objbar').hidden = true; }
+    if (sim.mission && sim.mission.soldier && typeof zGoal === 'function') $('status').innerHTML = `<span class="goal">${escapeHtml(zGoal())}</span>`; // the story: no head count, one line of what you should be doing now
+    { const ob = sim.objectives.filter(o => !o.hidden); if (ob.length) { const chips = ob.map(o => `<span class="obj ${o.owner === 0 ? 'o0' : o.owner === 1 ? 'o1' : ''}${(o.n0 > 0) !== (o.n1 > 0) && o.owner !== (o.n0 > 0 ? 0 : 1) ? ' cap' : ''}" style="background:${objBg(o.ctrl)}">${o.name}</span>`).join(''); $('objbar').innerHTML = sim.mission && sim.mission.soldier ? '' : sim.heroMode || sim.mission ? chips : `<span class="sc t0">${sim.score[0]}</span>${chips}<span class="sc t1">${sim.score[1]}</span><small>first to ${S.SCORE_WIN}</small>`; $('objbar').hidden = false; } else $('objbar').hidden = true; }
     const rows = []; const mySq = me.squads.map(id => sim.squads[id]);
     rows.push(`<h4>Your army${me.auto ? ' · AI general' : ''}</h4>`);
     for (const sq of mySq) rows.push(`<div class="sqrow${sq.alive ? '' : ' dead'}${state.selected.includes(sq.id) ? ' sel' : ''}${sq.routing ? ' rout' : ''}"><span>${sq.def.name}${sq.stars ? ' <b class="vet">' + '★'.repeat(sq.stars) + '</b>' : ''}${sq.pendAt > sim.tick ? ' <small class="m-mid">⏳' + Math.ceil((sq.pendAt - sim.tick) / 30) + 's</small>' : ''}</span><span>${sq.aliveCount}/${sq.count}</span><span class="ord ${moraleCls(sq)}">${sq.alive ? (sq.routing ? 'ROUTING' : ORDN[sq.order] + (sq.def.ai === 'ranged' && !sq.fire ? ' ·hold fire' : '') + (sq.fat > 85 ? ' ·exhausted' : sq.fat > 60 ? ' ·winded' : '') + ((sq.def.ai === 'ranged' || sq.def.ai === 'cannon') ? (sq.dry ? ' ·no shot' : ' ·' + Math.round(sq.shots) + (sq.supplied ? '+' : '')) : '')) : ''}</span><span class="ab${sq.abOn > 0 ? ' on' : sq.abT > 0 ? '' : ' ready'}">${sq.alive ? (sq.abOn > 0 ? S.ABILITY[sq.ability].name : sq.abT > 0 ? Math.ceil(sq.abT / 30) + 's' : 'Q') : ''}</span></div>`);
@@ -9069,9 +9074,11 @@ document.addEventListener('keydown', (e) => { // the dialogue panel takes the ke
 // ---------- in battle ----------
 function zheSay(ev) { // scripted lines come out of a man's mouth when you are near enough to hear him; otherwise by runner
   const sim = state.sim, h = localHero(); if (!ZB) return false;
-  const W = { liu: ['劉綎', 'General Liu Ting'], chief: ['吳老栓', 'Chief Wu'], fang: ['方秀才', 'Fang the Scholar'], lookout: ['', 'Lookout'], soldier: ['', 'A soldier'], rider: ['', 'A rider in Ming colours'], qi: ['戚金', 'General Qi Jin'], chen: ['陳策', 'General Chen Ce'], sichuan: ['周敦吉', 'Zhou Dunji of the White Poles'] }[ev.who] || ['', ev.who];
-  let id = -1;
-  if (ev.who === 'liu') { const g = sim.mg.liu; id = g ? sim.players[g.p].heroId : -1; }
+  const W = { liu: ['劉綎', 'General Liu Ting'], chief: ['吳老栓', 'Chief Wu'], fang: ['方秀才', 'Fang the Scholar'], lookout: ['', 'Lookout'], soldier: ['', 'A soldier'], rider: ['', 'A rider in Ming colours'], qi: ['戚金', 'General Qi Jin'], chen: ['陳策', 'General Chen Ce'], sichuan: ['周敦吉', 'Zhou Dunji of the White Poles'], col: ['', 'The column officer'], folk: ['', 'A woman from Kaiyuan'] }[ev.who] || ['', ev.who];
+  let id = -1; const zi = ZR.findIndex(r => r.k === ev.who && r.k !== 'me' && !r.guest);
+  if (zi >= 0) { for (const uid in ZB.map) if (ZB.map[uid] === zi && sim.units[uid] && !sim.units[uid].dead && !sim.units[uid].wounded) id = +uid; if (id >= 0) { W[0] = ZR[zi].zh; W[1] = ZR[zi].en; } else { W[0] = ''; W[1] = 'A soldier'; } }
+  else if (ev.who === 'qi' && sim.mg.zhe && sim.mission.ch === 2) id = sim.players[sim.mg.zhe.p].heroId;
+  else if (ev.who === 'liu') { const g = sim.mg.liu; id = g ? sim.players[g.p].heroId : -1; }
   else if (sim.mg[ev.who]) { const g = sim.mg[ev.who]; id = sim.players[g.p].heroId; }
   else if (ev.who === 'chief' || ev.who === 'fang') { const want = ev.who === 'chief' ? 0 : 8; for (const uid in ZB.map) if (ZB.map[uid] === want) id = +uid; }
   if (id >= 0 && sim.units[id] && sim.units[id].dead) id = -1;
@@ -9082,6 +9089,7 @@ function zheSay(ev) { // scripted lines come out of a man's mouth when you are n
 }
 function zheEvent(ev) {
   const sim = state.sim; if (!ZB || !sim || !sim.mission || !sim.mission.soldier) return; const me = sim.players[state.localIdx];
+  if (ev.t === 'mkill' && ev.gid === 'zhe' && ZB.ch2 && !ZB.chK) { MUSIC.stop(); setTimeout(() => { if (state.sim === sim && !state.ended) { MUSIC.play('battle'); MUSIC.setIntensity(0.35); } }, 12000); } // Qi Jin falls: the war drums stop, and for a while there is only the fighting
   if (ev.t === 'zpromote' && ev.p === state.localIdx && ZB.ch2) { state.fpSel = null; banner('你領隊 · Your file', 'You lead the file: F follow me / H halt / C charge / Z form up where you look', 6); }
   else if (ev.t === 'zpromote' && ev.p === state.localIdx) { state.fpSel = null; const q = sim.squads[ev.sq]; const w = q.unitIds.map(id => sim.units[id]).find(u => !u.dead && u.ctrl < 0 && !u.wounded);
     if (w) setTimeout(() => SPEECH.say(w.id, `隊長沒了！${ZS.name.zh}，你說怎麼走？`, `The chief is dead! ${ZS.name.en}, you're senior now — what do we do?`, { prio: 3, dur: 5 }), 1600);
@@ -9151,6 +9159,14 @@ function zGrid(dt) {
   }
 }
 function setFaceZ(el, u) { el.classList.add('facebox'); el._uid = u ? u.id : -1; el.classList.toggle('none', !u); el.classList.toggle('live', !!u); el._t0 = -1e9; }
+// the current objective in a handful of words (phase.goal when the mission gives one, else the first sentence of its text), with the distance when it is a place
+function zGoal() {
+  const sim = state.sim, M = sim.mission, P = M && M.phases[Math.max(0, sim.mv.ph)]; if (!P) return '';
+  let g = P.goal || (P.text || '').split(/(?<=[.!?])\s/)[0]; if (g.length > 70) g = g.slice(0, 67).replace(/\s\S*$/, '') + '…';
+  const z = P.obj && (P.obj.extract || P.obj.reach) ? sim.missionZone(P.obj.extract || P.obj.reach) : null, h = localHero();
+  if (z && h && !h.dead) g += ` · ${Math.round(Math.hypot(z.x - h.x, z.z - h.z))} m`;
+  return g;
+}
 function zheHUD(dt) {
   zTags(); zGrid(dt);
   const sim = state.sim; let pr = $('zhePrompt');
@@ -9182,13 +9198,15 @@ ZR.push(
   { k: 'bao', zh: '鮑二', en: 'Bao Er', role: 'spear', t: 'long spear · new draft · a Ningbo boatman', ch: 2 },
   { k: 'shao', zh: '邵阿福', en: 'Shao Afu', role: 'brush', t: 'wolf-brush · new draft · 17', ch: 2 },
   { k: 'ran', zh: '冉家虎', en: 'Ran Jiahu', role: 'spear', t: 'White Pole of Shizhu · 白杆兵', ch: 2, guest: true },
-  { k: 'qijin', zh: '戚金', en: 'Qi Jin', role: 'lead', t: 'deputy general of the Zhejiang men · 副將', ch: 2, guest: true });
+  { k: 'qijin', zh: '戚金', en: 'Qi Jin', role: 'lead', t: 'deputy general of the Zhejiang men · 副將', ch: 2, guest: true },
+  { k: 'chence', zh: '陳策', en: 'Chen Ce', role: 'lead', t: 'regional commander of the relief army · 總兵', ch: 2, guest: true });
 Object.assign(ZLOOK, {
   xiaoman: { hat: 'rattan', brows: 'thick', young: true, skin: 0xd6a880 },
   bao: { hat: 'wrap', wrap: 0x3a3a3a, brows: 'thin', beard: 'stubble', skin: 0xb48a62 },
   shao: { hat: 'band', brows: 'high', young: true, rosy: true, skin: 0xe2bc96 },
   ran: { hat: 'wrap', wrap: 0xe8e2d0, brows: 'thick', beard: 'mous', skin: 0xb8865e },
   qijin: { h: 1.04, hat: 'chief', brows: 'knit', beard: 'full', grey: true, longBeard: true, skin: 0xc49a74 },
+  chence: { h: 1.1, hat: 'chief', brows: 'thick', beard: 'longmous', longBeard: true, bulk: true, skin: 0xb88c66 },
 });
 const ZP2 = [['北邊的冰還沒化。', 'The ice up north hasn\'t melted yet.'], ['聽說瀋陽的城牆矮。', 'They say Shenyang\'s walls are low.'], ['川兵吃辣子，冬天也不怕冷。', 'The Sichuan men eat chillies. Cold doesn\'t touch them.'], ['火藥多領一包，總沒錯。', 'Draw an extra bag of powder. Never hurts.'], ['又是三月，又在打仗。', 'March again, and war again.']];
 const ZP3 = [['……', '...'], ['遼陽那邊有消息沒？', 'Any word from Liaoyang?'], ['別往北看了。', 'Stop looking north.'], ['火小一點，別讓他們看見。', 'Keep the fire low. Don\'t let them see it.']];
@@ -9204,12 +9222,12 @@ const INTRO2 = [
 ];
 // ---------- the camp, night before and night after ----------
 const ZSPOT2 = { lou: [-2.5, -0.9, 'squat'], liu6: [-0.9, 2.4, 'squat'], luo: [1.0, 2.4, 'squat'], jin: [2.6, -0.6, 'squat'], ye: [-1.9, 1.6, 'squat'], wang: [7.0, -3.4, 'stand'], fang: [2.1, 1.7, 'squat'], he: [-6.8, -2.6, 'stand'], du: [3.1, -2.4, 'stand'], zhu: [8.9, -3.7, 'stand'],
-  xiaoman: [-2.9, 0.6, 'squat'], bao: [5.2, -6.6, 'stand'], shao: [0.1, 2.8, 'squat'], ran: [-1.6, -2.8, 'stand'], qijin: [-4.4, -4.6, 'stand'] };
+  xiaoman: [-2.9, 0.6, 'squat'], bao: [5.2, -6.6, 'stand'], shao: [0.1, 2.8, 'squat'], ran: [-1.6, -2.8, 'stand'], qijin: [-4.4, -4.6, 'stand'], chence: [5.6, -1.2, 'stand'] };
 function zCampCfg2(night) {
   const npcs = [], beds = [], file = zFile2(), rows = [{ k: 'me' }].concat(file), n = rows.length;
   rows.forEach((r, i) => { const a = -0.5 + (i / Math.max(8, n)) * Math.PI * 1.55 + Math.PI * 0.55; const bx = Math.sin(a) * 6.3, bz = Math.cos(a) * 6.3; const alive = r.k === 'me' || ZS.alive[r.k];
     beds.push([+bx.toFixed(2), +bz.toFixed(2), +(a + Math.PI).toFixed(3), !alive]); });
-  for (const r of file.concat(night === 2 ? [zRow('ran'), zRow('qijin')] : [])) { if (!ZS.alive[r.k] && !r.guest) continue; const sp = ZSPOT2[r.k] || [4, 4, 'stand']; const [x, z] = sp; const tx = r.k === 'zhu' || r.k === 'wang' || r.k === 'bao' ? 8 : 0, tz = r.k === 'zhu' || r.k === 'wang' || r.k === 'bao' ? -5 : 0;
+  for (const r of file.concat(night === 2 ? [zRow('ran'), zRow('qijin'), zRow('chence')] : [])) { if (!ZS.alive[r.k] && !r.guest) continue; const sp = ZSPOT2[r.k] || [4, 4, 'stand']; const [x, z] = sp; const tx = r.k === 'zhu' || r.k === 'wang' || r.k === 'bao' ? 8 : 0, tz = r.k === 'zhu' || r.k === 'wang' || r.k === 'bao' ? -5 : 0;
     npcs.push({ role: r.role, x, z, yaw: +Math.atan2(tx - x, tz - z).toFixed(3), ci: ZR.indexOf(r), pose: night === 3 && r.k !== 'zhu' ? 'squat' : sp[2] }); }
   const mb = beds[0]; ZC = { bed: [mb[0], mb[1]] };
   return { fires: ZCAMP.fires, tents: ZCAMP.tents, props: ZCAMP.props, bedrolls: beds, npcs, me: { x: 0.4, z: -3.4, yaw: 0, role: 'lead' } };
@@ -9236,6 +9254,7 @@ function zStart2(scene) {
     const left = []; for (const r of zFile2()) { const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role === r.role); if (id !== undefined) { used[id] = 1; ZB.map[id] = ZR.indexOf(r); } else left.push(r); }
     for (const r of left) { const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role !== 'lead'); if (id !== undefined) { used[id] = 1; ZB.map[id] = ZR.indexOf(r); } } // a place for every man, even if it is not his usual trade
     for (const uid in ZB.map) zDress(sim.units[uid], ZB.map[uid]);
+    for (const [g, k] of [['zhe', 'qijin'], ['chen', 'chence']]) { const G = sim.mg[g]; if (G) zDress(sim.units[sim.players[G.p].heroId], ZR.findIndex(r => r.k === k)); }
     setTimeout(() => storyCard('Spring 1621. You lead your file in Qi Jin\'s wagon camp south of the Hun River. F follow me · H halt · C charge · Z form up where you look. The flag on your back is the file\'s.', '渾河 · The Hun River'), 700);
   }
 }
@@ -9276,6 +9295,15 @@ function zTalk2(k, night) {
     ye: { g: ['我女兒七歲了。我還沒見過七歲的她。', 'My daughter is seven. I\'ve never seen her at seven.'], t: [{ q: 'You\'ll see her at eight.', bond: 1, a: [['……你答應我？', '...You promise?']] }] },
     wang: { g: ['我現在一頓吃三個餅。長力氣。', 'I eat three cakes a meal now. Building strength.'], t: [{ q: 'Stay by me tomorrow.', bond: 1, a: [['你在前頭，我就在你左邊。誰都別想過去。', 'You\'re at the front, I\'m at your left. Nobody gets through.']] }] },
     du: { g: ['五十兩一顆首級。兩年了，我一顆也沒拿到。', 'Fifty taels a head. Two years, and I haven\'t taken one.'], t: [{ q: 'Chunhua?', bond: 1, a: [['她嫁人了。去年。……不提了。', 'She married. Last year. ...Let\'s not talk about it.']] }] },
+    qijin: { g: [`你就是從阿布達里岡出來的那個隊長？${nm.zh}，是吧。坐，坐。`, `You're the chief who came out of Abudali Pass? ${nm.en}, isn't it. Sit, sit.`], t: [
+      { q: 'You know about Abudali?', a: [['劉總兵的浙兵，我認得好幾個。都是義烏人。', 'Liu Ting\'s Zhejiang men — I knew a good few of them. Yiwu men, all of them.'], ['你帶出來的人，名字記住。我也記。', 'The men you brought out — keep their names. I keep them too.']] },
+      { q: 'Are you kin to Marshal Qi?', a: [['他是我叔父。', 'He was my uncle.'], ['人人都說戚家軍。可戚家軍從來不是姓戚的人，是你們這些人。', 'Everyone talks about the Qi family army. It was never the men named Qi. It was men like you.']] },
+      { q: 'What do they think of us here?', a: [['熊經略頭一回見我們，說南兵虛而猾。', 'The first time Commissioner Xiong saw us, he said the southern troops were hollow and sly.'], ['（他笑了一聲。）明天讓他們看看。', '(He gives a short laugh.) Tomorrow we let them see.']] },
+      { q: 'Will we cross the river?', a: [['陳總兵要回遼陽，川兵要過河。不管誰對，總得有個地方讓人退回來。', 'General Chen wants to go back to Liaoyang; the Sichuan men want to cross. Whoever is right, there has to be somewhere for men to fall back to.'], ['所以我們挖壕、立柵、排車。聽我的鼓。鼓在響，營就在。', 'So we dig the ditch, raise the palisade, line up the wagons. Listen for my drum. While it beats, the camp holds.']] },
+      { q: 'Eat with us.', a: [['（他從懷裡掏出一塊乾餅，掰成兩半，一半遞給你，一半遞給樓小滿。）', '(He takes a dry cake from inside his coat, breaks it in two, and hands one half to you and the other to Lou Xiaoman.)']] }] },
+    chence: { g: ['南兵？這麼冷的天，腳還好吧？', 'Southern men? In this cold — how are your feet?'], t: [
+      { q: 'Will we cross the river?', a: [['瀋陽已經丟了。過河去救一座空城，是白白送死。', 'Shenyang is already lost. Crossing to save an empty city is throwing men away.'], ['可底下的人不肯走。……明早再說。', 'But the officers won\'t turn back. ...We\'ll see in the morning.']] },
+      { q: 'Where do you want us?', a: [['跟著戚副將。他的車營比城牆還結實。', 'Stay with Deputy General Qi. His wagon camp is sturdier than a city wall.'], ['看見東邊那面大旗沒有？那是我的。旗在，兵就在。', 'See the big banner on the east side? That\'s mine. While it stands, the army stands.']] }] },
     zhu: { g: ['今天有鹽。川兵分給我們的。', 'Salt today. The Sichuan men shared theirs.'], t: [{ q: 'Any news?', a: [['陳總兵要回遼陽，底下的將爺不肯，說來都來了。', 'General Chen wants to march back to Liaoyang. His officers won\'t have it — we\'ve come this far, they say.'], ['朱萬良、姜弼的馬兵在白塔鋪，說是接應。……接應誰，誰知道。', 'Zhu Wanliang and Jiang Bi have cavalry at Baitapu, to support us, they say. ...Support whom, who knows.']] }] },
   })[k];
   // the night after
