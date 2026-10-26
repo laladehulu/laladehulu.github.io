@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v8</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v9</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -310,6 +310,19 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 #labels .lab:not(.own):not(.enemy) { border-color: #8fe08a !important; }
 #labels .lab.enemy { border-color: #ff5a4a !important; }
 #labels .lab.own.sel { background: #e8c25a !important; color: #1a1206 !important; border-color: #fff2c4 !important; }
+#hudmarks { position: fixed; inset: 0; pointer-events: none; z-index: 19; }
+#hudmarks .hm { position: absolute; left: 0; top: 0; margin: -15px 0 0 -15px; display: flex; flex-direction: column; align-items: center; transition: opacity .2s; }
+#hudmarks .hm b { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 700 15px Georgia, serif; color: #eaf2ff; background: rgba(30,70,150,.82); border: 2px solid #8fb8ff; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
+#hudmarks .hm.own b { background: rgba(30,90,190,.9); border-color: #cfe0ff; }
+#hudmarks .hm.foe b { background: rgba(170,40,32,.88); border-color: #ffb0a0; }
+#hudmarks .hm.hot b { animation: hmPulse .6s infinite alternate; }
+@keyframes hmPulse { to { box-shadow: 0 0 10px 3px rgba(255,220,120,.85); } }
+#hudmarks .hm.sq b { width: 24px; height: 24px; font-size: 13px; background: rgba(10,40,18,.82); border-color: #6fe08a; color: #b6f7c3; }
+#hudmarks .hm.sq.on b { background: #bff2c9; color: #0c3a1a; }
+#hudmarks .hm i { font: 600 10px sans-serif; font-style: normal; color: #fff; text-shadow: 0 1px 2px #000; margin-top: 1px; }
+#hudmarks .hm.edge.l b::before, #hudmarks .hm.edge.r b::after { content: ''; position: absolute; border: 6px solid transparent; }
+#hudmarks .hm.edge.l b::before { margin-left: -36px; border-right-color: rgba(255,255,255,.85); }
+#hudmarks .hm.edge.r b::after { margin-left: 36px; border-left-color: rgba(255,255,255,.85); }
 </style>
 <div id="app">
   <canvas id="c"></canvas>
@@ -5727,8 +5740,8 @@ class Renderer {
   // in-world markers over the men you command: a small gold lozenge over each head, the company number over its captain
   ownMarkStart(fp) {
     if (!this.omPts) { const N = this.sim.units.length; const g = new THREE.BufferGeometry(); this.omPos = new Float32Array(N * 3); g.setAttribute('position', new THREE.BufferAttribute(this.omPos, 3)); g.setDrawRange(0, 0);
-      const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'); c.translate(32, 32); c.beginPath(); c.moveTo(0, 26); c.lineTo(15, 2); c.lineTo(0, -14); c.lineTo(-15, 2); c.closePath(); c.fillStyle = 'rgba(20,14,6,.55)'; c.lineWidth = 7; c.strokeStyle = 'rgba(20,14,6,.55)'; c.stroke(); c.fillStyle = '#f0c24c'; c.fill();
-      const tex = new THREE.CanvasTexture(cv); this.omPts = new THREE.Points(g, new THREE.PointsMaterial({ map: tex, size: 0.55, sizeAttenuation: true, transparent: true, depthWrite: false, alphaTest: 0.08, fog: false })); this.omPts.frustumCulled = false; this.omPts.renderOrder = 5; this.scene.add(this.omPts); this.omSpr = []; this.omTex = {}; }
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'); c.translate(32, 32); c.beginPath(); c.moveTo(0, 26); c.lineTo(15, 2); c.lineTo(0, -14); c.lineTo(-15, 2); c.closePath(); c.fillStyle = 'rgba(6,20,10,.6)'; c.lineWidth = 7; c.strokeStyle = 'rgba(6,20,10,.6)'; c.stroke(); c.fillStyle = '#6fe08a'; c.fill();
+      const tex = new THREE.CanvasTexture(cv); this.omPts = new THREE.Points(g, new THREE.PointsMaterial({ map: tex, size: 0.85, sizeAttenuation: true, transparent: true, depthWrite: false, alphaTest: 0.08, fog: false })); this.omPts.frustumCulled = false; this.omPts.renderOrder = 5; this.scene.add(this.omPts); this.omSpr = []; this.omTex = {}; }
     if (!fp) { this.omPts.visible = false; for (const sp of this.omSpr) sp.visible = false; return null; }
     this.omN = 0; const P = this.omPos, self = this; return { push(x, y, z) { const k = self.omN++ * 3; if (k + 2 < P.length) { P[k] = x; P[k + 1] = y; P[k + 2] = z; } } };
   }
@@ -5736,10 +5749,10 @@ class Renderer {
     if (!om) return; const g = this.omPts.geometry; g.setDrawRange(0, this.omN); g.attributes.position.needsUpdate = true; this.omPts.visible = this.omN > 0;
     const own = this.sim.players[this.localIdx].squads, sel = view.fpSel || []; let n = 0;
     for (let k = 0; k < own.length; k++) { const id = own[k], c = capt[id]; if (!c) continue; const on = sel.includes(id); const key = (k + 1) + (on ? 's' : '');
-      let tex = this.omTex[key]; if (!tex) { const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64; const x = cv.getContext('2d'); x.fillStyle = on ? '#f3e2a0' : 'rgba(24,17,8,.72)'; x.strokeStyle = '#f0c24c'; x.lineWidth = 4; x.beginPath(); x.arc(32, 32, 24, 0, 7); x.fill(); x.stroke(); x.fillStyle = on ? '#2a1a06' : '#f6dc86'; x.font = 'bold 32px Georgia,serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(k + 1), 32, 34); tex = this.omTex[key] = new THREE.CanvasTexture(cv); }
+      let tex = this.omTex[key]; if (!tex) { const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64; const x = cv.getContext('2d'); x.fillStyle = on ? '#c8f5d0' : 'rgba(8,26,14,.78)'; x.strokeStyle = '#6fe08a'; x.lineWidth = 5; x.beginPath(); x.arc(32, 32, 25, 0, 7); x.fill(); x.stroke(); x.fillStyle = on ? '#0c3a1a' : '#a8f5b8'; x.font = 'bold 32px Georgia,serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(k + 1), 32, 34); tex = this.omTex[key] = new THREE.CanvasTexture(cv); }
       let sp = this.omSpr[n]; if (!sp) { sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthWrite: false, transparent: true, fog: false })); sp.renderOrder = 6; this.scene.add(sp); this.omSpr[n] = sp; }
       if (sp.material.map !== tex) { sp.material.map = tex; sp.material.needsUpdate = true; }
-      const d = this.camera.position.distanceTo(this.tmp.v.set(c[0], c[1], c[2])); const sc = Math.max(0.62, d * 0.032); sp.scale.set(sc, sc, 1); sp.position.set(c[0], c[1] + 0.35 + sc * 0.5, c[2]); sp.visible = true; n++; }
+      const d = this.camera.position.distanceTo(this.tmp.v.set(c[0], c[1], c[2])); const sc = Math.max(0.9, d * 0.045); sp.scale.set(sc, sc, 1); sp.position.set(c[0], c[1] + 0.35 + sc * 0.5, c[2]); sp.visible = true; n++; }
     for (let i = n; i < this.omSpr.length; i++) this.omSpr[i].visible = false;
   }
   render(alpha, dt, view) {
@@ -6395,7 +6408,7 @@ function realGear(u) {
     b('h', [0, -0.19, -0.18], [0.34, 0.03, 0.035], brass, [0.1, 0, 0]); });
   // Ming 明盔 with 頓項: iron bowl, brass band, tall gilt spike over a red tassel, drooping studded neck-and-ear guard
   const mingKui = (col, flap, stud) => hatOn(() => {
-    y('h', [0, 0.12, 0], [0.31, 0.15, 0.31], col); c('h', [0, 0.23, 0], [0.31, 0.1, 0.31], col); y('h', [0, 0.06, 0], [0.33, 0.035, 0.33], brass);
+    y('h', [0, 0.1, 0], [0.32, 0.12, 0.32], col); c('h', [0, 0.23, 0], [0.33, 0.17, 0.33], col); y('h', [0, 0.05, 0], [0.34, 0.035, 0.34], brass);
     c('h', [0, 0.41, 0], [0.045, 0.26, 0.045], gold); b('h', [0, 0.31, 0], [0.17, 0.09, 0.17], red); b('h', [0, 0.27, 0], [0.21, 0.05, 0.21], 0xa01a14);
     b('h', [0.175, -0.1, 0.02], [0.035, 0.27, 0.26], flap, [0, 0, -0.16]); b('h', [-0.175, -0.1, 0.02], [0.035, 0.27, 0.26], flap, [0, 0, 0.16]); b('h', [0, -0.1, -0.172], [0.34, 0.27, 0.035], flap, [0.14, 0, 0]);
     b('h', [0, -0.12, -0.192], [0.3, 0.02, 0.01], stud, [0.14, 0, 0]); b('h', [0.196, -0.12, 0.02], [0.01, 0.02, 0.22], stud, [0, 0, -0.16]); b('h', [-0.196, -0.12, 0.02], [0.01, 0.02, 0.22], stud, [0, 0, 0.16]); });
@@ -6445,12 +6458,12 @@ function realGear(u) {
     case 'horokutai': mingHair(); hachimaki(red); robe(0x7a3422, 0x2a2a34); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); b('p', [0.24, 0.07, 0.06], [0.03, 0.06, 0.03], 0xe8e2cc); y('c', [0.12, -0.02, -0.17], [0.2, 0.2, 0.2], 0x2a2a2e); break;
     case 'ronin': if (vr % 2 === 0) hatOn(() => c('h', [0, 0.16, 0], [0.8, 0.18, 0.8], 0x9a8058)); else mingHair(); robe(torsoColor(u), 0x5a4a3a); break;
   } else switch (u.type) {
-    case 'hero': jinHelm(0xc9a03a, 0xc9a03a, red, 1.35); queue(); dingjia(0xc9a03a, 0x8a5a20, [0.15, 0.06, -0.03, -0.12]); hoof(0xc9a03a); b('c', [0, -0.08, -0.18], [0.6, 0.95, 0.03], 0xd8b03c, [-0.06, 0, 0]); break;
+    case 'hero': jinHelm(0xc9a03a, 0xe8c040, red, 1.35); queue(); dingjia(0xe8c040, 0xa8201a, [0.15, 0.06, -0.03, -0.12]); hoof(0xe8c040); b('c', [0, -0.08, -0.18], [0.6, 0.95, 0.03], 0xa8201a, [-0.06, 0, 0]); break; // the Khan's yellow, under a red cloak
     case 'samurai': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8); hoof(bc); break;
-    case 'cavalry': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8); hoof(bc); sadai(); backflag(bc, trim); break;
+    case 'cavalry': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8, [0.12, -0.04]); hoof(bc); sadai(); backflag(bc); break;
     case 'shinsengumi': jinHelm(0x8a6a2a, 0xd8b03c, 0xe8e4da, 1.2); queue(); dingjia(0xd8b03c, 0x8a2a1a, [0.15, 0.06, -0.03, -0.12]); hoof(0xd8b03c); backflag(0xd8b03c, red); break;
     case 'ashigaru': liangmao(); queue(); robe(bc, 0x26262c); hoof(bc); break;
-    case 'rifle_sho': liangmao(); queue(); robe(bc, 0x26262c); hoof(bc); belts(0x6a4a30); flask(); break;
+    case 'rifle_sho': jinHelm(iron, bc, red); queue(); robe(bc, 0x26262c); hoof(bc); belts(0x6a4a30); flask(); break; // Ujen Cooha gunners: Han bannermen in helmets
     case 'archer': liangmao(); queue(); robe(0x2c3f6a, bc); hoof(0x2c3f6a); sadai(); break;
     case 'horokutai': liangmao(); queue(); robe(bc, 0x26262c); hoof(bc); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); break;
     case 'byakkotai': case 'ronin': furHat(vr % 2 ? red : 0x2a4a8a); queue(); robe(torsoColor(u), [0xc8281e, 0x2a4a8a, 0xd8b03c][vr % 3]); b('c', [0.08, 0.04, 0.158], [0.08, 0.5, 0.012], 0xd8b03c, [0, 0, -0.5]); b('c', [0, 0.2, 0.06], [0.32, 0.06, 0.26], 0x6a4426); break; // the deel's slanting lapel and fur collar
@@ -7246,6 +7259,34 @@ function toast(text) { const t = $('toast'); t.textContent = text; t.classList.a
 const DIRN = ['overhead', 'right swing', 'thrust', 'left swing'], BLKN = ['up', 'right', 'down', 'left'], ORDN = ['move', 'charge', 'hold', 'follow'];
 function moraleCls(sq) { if (!sq.alive) return ''; if (sq.routing) return 'm-rout'; const m = sq.morale / sq.moraleMax; return m < 0.35 ? 'm-low' : m < 0.6 ? 'm-mid' : ''; }
 function moraleWord(sq) { if (sq.routing) return 'routing'; if (sq.def.fearless) return 'fearless'; const m = sq.morale / sq.moraleMax; return m < 0.35 ? 'wavering' : m < 0.6 ? 'shaken' : 'steady'; }
+// ---------- screen markers: objectives (lettered circles) and your companies (numbered), pinned to the screen edge when out of view ----------
+const MARKS = { el: null, pool: [], v: null };
+function hudMarks() {
+  const sim = state.sim, r = state.renderer; if (!MARKS.el) { MARKS.el = document.createElement('div'); MARKS.el.id = 'hudmarks'; document.body.appendChild(MARKS.el); MARKS.v = new THREE.Vector3(); }
+  const show = sim && r && state.screen === 'game' && !state.ended && r.lastMode === 'fp' && !(sim.mission && sim.mission.camp) && !(typeof DEP !== 'undefined' && DEP.open);
+  let n = 0; const items = [];
+  if (show) {
+    const me = sim.players[state.localIdx];
+    sim.objectives.forEach((o, i) => { if (o.hidden) return; const m = /^([A-Z]) ·/.exec(o.name || ''); const own = o.owner === me.team, foe = o.owner >= 0 && !own; const contested = (o.n0 > 0) && (o.n1 > 0);
+      items.push({ x: o.x, z: o.z, y: 2.5, txt: m ? m[1] : sim.mission ? '◆' : 'ABCDEFG'[i], cls: 'obj' + (own ? ' own' : foe ? ' foe' : '') + (contested ? ' hot' : ''), name: (o.name || '').replace(/^[A-Z] · /, ''), always: true }); });
+    const sel = state.fpSel || [];
+    (me.squads || []).forEach((id, k) => { const q = sim.squads[id]; if (!q || !q.alive || q.inactive) return; const h = localHero(); if (h && Math.hypot(q.cx - h.x, q.cz - h.z) < 6) return; items.push({ x: q.cx, z: q.cz, y: 2.2, txt: String(k + 1), cls: 'sq' + (sel.includes(id) ? ' on' : ''), always: false }); });
+  }
+  const cam = r ? r.camera : null, W = window.innerWidth, H = window.innerHeight, h = localHero(); const used = { l: [], r: [] };
+  for (const it of items) {
+    const v = MARKS.v.set(it.x, S.terrainH(it.x, it.z) + it.y, it.z); const cv = v.clone().applyMatrix4(cam.matrixWorldInverse); v.project(cam);
+    const behind = cv.z > 0, on = !behind && Math.abs(v.x) < 0.94 && Math.abs(v.y) < 0.9;
+    if (on && !it.always) continue;
+    let el = MARKS.pool[n]; if (!el) { el = document.createElement('div'); el.innerHTML = '<b></b><i></i>'; MARKS.el.appendChild(el); MARKS.pool[n] = el; } n++;
+    let sx, sy, edge = '';
+    if (on) { sx = (v.x * 0.5 + 0.5) * W; sy = (-v.y * 0.5 + 0.5) * H; }
+    else { const right = cv.x > 0; edge = right ? ' edge r' : ' edge l'; sx = right ? W - 34 : 34; const yy = behind ? 0 : Math.max(-0.7, Math.min(0.7, v.y)); sy = (-yy * 0.5 + 0.5) * H; const U = used[right ? 'r' : 'l']; for (let k = 0; k < 8 && U.some(y0 => Math.abs(y0 - sy) < 40); k++) sy += 42; U.push(sy); }
+    el.className = 'hm ' + it.cls + edge; el.firstChild.textContent = it.txt;
+    const d = h ? Math.round(Math.hypot(it.x - h.x, it.z - h.z)) : 0; el.lastChild.textContent = d > 4 ? d + ' m' : '';
+    el.style.transform = `translate(${sx.toFixed(0)}px,${sy.toFixed(0)}px)`; el.style.display = '';
+  }
+  for (let i = n; i < MARKS.pool.length; i++) MARKS.pool[i].style.display = 'none';
+}
 function updateHUD(dt) {
   const sim = state.sim, r = state.renderer; const hero = localHero(); const me = sim.players[state.localIdx];
   if (state.toastT > 0) { state.toastT -= dt; if (state.toastT <= 0) $('toast').classList.remove('show'); }
@@ -7258,7 +7299,7 @@ function updateHUD(dt) {
     const hb = state.hitBy; if (hb && hb.t > 0) { hb.t -= dt; $('hitby').textContent = hb.text; $('hitby').style.opacity = Math.min(1, hb.t); } else $('hitby').style.opacity = 0; }
   if (sim.real && typeof soldierHUD === 'function') soldierHUD(dt); else { $('fallen').hidden = true; }
   if (sim.mission && typeof missionHUD === 'function') missionHUD(dt); else $('mobj').hidden = true;
-  depHUD(dt);
+  depHUD(dt); hudMarks();
   if (sim.real && !state.replayMode) { const plain = !me.squads.length; $('cmdpanel').hidden = plain; $('fury').hidden = true; }
   { const bl = $('bombs') && $('bombs').parentNode; if (bl) bl.hidden = true; } // grenades removed
   { const hq = $('hitq'); if (r.hitQ) { hq.textContent = r.hitQ.text; hq.style.color = r.hitQ.c; hq.style.opacity = Math.min(1, r.hitQ.t * 2.5); } else hq.style.opacity = 0;
