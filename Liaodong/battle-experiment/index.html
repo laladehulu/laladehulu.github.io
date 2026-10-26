@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v5</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v6</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1863,7 +1863,7 @@ class Sim {
         if (d <= range && (sq ? sq.fire : true)) {
           let inPlace = true; if (!def.skirmish) { if (u.mounted) this.cavSteer(u, u.x, u.z, 0); else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z, sd = len(sdx, sdz); if (sq && order !== ORD_CHARGE && sd > 1.3 && u.st === ST_IDLE) { this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.8); inPlace = false; } else { u.mx = 0; u.mz = 0; } } }
           else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z; if (len(sdx, sdz) > 0.6) this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.7); else { u.mx = 0; u.mz = 0; } }
-          if (!u.mounted && (u.mx !== 0 || u.mz !== 0)) { const my = atan2(u.mx, u.mz), off = Math.abs(wrap(my - ang)); if (off > 1.9 && len(u.slotX - u.x, u.slotZ - u.z) > 2.5) wantYaw = my; else if (off > 1.6) { u.mx *= 0.5; u.mz *= 0.5; } } // a long way back to his place: turn and walk it, don't skate backward; a step or two back is a slow backpedal
+          if (!u.mounted && (u.mx !== 0 || u.mz !== 0)) { const my = atan2(u.mx, u.mz), off = Math.abs(wrap(my - ang)), turner = (u.id * 37) % 10 < 7; if (off > 1.9 && len(u.slotX - u.x, u.slotZ - u.z) > (turner ? 1.2 : 4)) wantYaw = my; else if (off > 1.6) { u.mx *= 0.5; u.mz *= 0.5; } } // a long way back to his place: turn and walk it, don't skate backward; a step or two back is a slow backpedal
           if (inPlace && u.st === ST_IDLE && u.ammo > 0 && u.flinchT <= 0 && Math.abs(wrap(ang - u.yaw)) < 0.7) {
             u.st = ST_AIM; u.stT = 0; u.aimTarget = tgt.id; u.blocking = false;
             const g0 = gunOf(def, u.weapon); const aimT = Math.round((g0 ? g0.aim : 0.8) * 30);
@@ -4973,7 +4973,7 @@ class Renderer {
     const r = clamp((spd - 2.6) / 1.6, 0, 1), mv = clamp(spd / 1.2, 0, 1);
     const back = a.mfz < -0.3;
     const beta = clamp(back ? Math.atan2(-a.mfx, -a.mfz) : Math.atan2(a.mfx, Math.max(0.05, a.mfz)), -1.1, 1.1);
-    a.ph += (back ? -1 : 1) * spd * dt * 6.2832 / (1.35 + r * 0.95);
+    a.ph += (back ? -1.3 : 1) * spd * dt * 6.2832 / (1.35 + r * 0.95); // backpedalling is short, quick steps
     const ph = a.ph;
     // ---------- pose targets ----------
     const w = u.weapon, KW = KF[w];
@@ -4981,6 +4981,12 @@ class Renderer {
     const runH = uhash(u.id, 9), runLean = 0.34 + 0.18 * uhash(u.id, 4); // every man runs a little differently: some bent low and driving, some upright
     let lean = 0.03 * mv + runLean * r, twist = -(0.1 + 0.08 * r) * Math.sin(ph) * mv, roll = 0, lunge = 0, crouch = 0.05 * r * uhash(u.id, 5);
     let stance = (1 - mv) * (melee ? 1 : 0.5);
+    if (back && mv > 0.05) { // running backward: the weight goes back over the heels to keep from falling; three very different ways of doing it
+      const bk = clamp(spd / 2.2, 0, 1) * mv, bs = Math.floor(uhash(u.id, 13) * 3), sp = Math.sin(ph);
+      if (bs === 0) { lean = -0.36 * bk + 0.06 * Math.abs(sp) * bk; crouch = 0.07 * bk; twist *= 1.5; } // stumbling back, rocking on each step
+      else if (bs === 1) { lean = -0.2 * bk; crouch = 0.18 * bk; roll = 0.14 * sp * bk; stance = Math.max(stance, 0.55 * bk); } // low wide crab-shuffle, swaying side to side
+      else { lean = -0.46 * bk - 0.07 * Math.abs(Math.cos(ph)) * bk; twist = -0.28 * sp * bk; roll = -0.05 * bk; } // bolt upright, pedalling hard, shoulders thrashing
+    }
     let rateW = 13, rateB = 10, anchor = 'R', two = true, fkR = false, fkL = false, rod = -1, arrowVis = 0, bowDraw = 0;
     const atkSet = KW && KW.atk ? (KW.atk[u.atkDir] || KW.atk[2]) : null;
     const B = BODY[u.atkDir] || BODY[2];
@@ -5040,15 +5046,25 @@ class Renderer {
       else if (r > 0.05) { // running: a real stride, weapon carried the way a soldier actually carries it at the double
         const sw = Math.sin(ph), sw2 = Math.cos(2 * ph), charge = sq && sq.order === S.ORD_CHARGE;
         let G, D;
-        if (w === 'katana') { const st2 = charge && runH > 0.35 ? 1 : runH < 0.55 ? 0 : 2;
+        const rv = uhash(u.id, 17); // which way this man carries his weapon at the run
+        if (w === 'katana') { const st2 = charge && runH > 0.35 ? 1 : [0, 2, 3, 4][Math.floor(rv * 4)];
           if (st2 === 0) { two = false; G = [-0.27, -0.3 + 0.04 * sw2, -0.02 - 0.24 * sw]; D = N3(-0.12, -0.38 - 0.25 * sw, -1); } // blade trailing low behind, sword arm swinging
           else if (st2 === 1) { two = false; G = [-0.25, 0.14 + 0.03 * sw2, 0.08]; D = N3(0.12, 0.78, -0.62); } // blade cocked back over the shoulder for the first cut
-          else { G = [-0.1, -0.32 + 0.04 * sw2, 0.3 + 0.04 * sw]; D = N3(0.3, 0.42, 0.85); } }
-        else if (w === 'yari') { if (charge || runH < 0.5) { G = [-0.2, -0.27 + 0.04 * sw2, 0.06 + 0.05 * sw]; D = N3(0.05, 0.03 + 0.04 * sw2, 1); } // point levelled for the charge
-          else { G = [-0.15, -0.1 + 0.04 * sw2, 0.18]; D = N3(0.35, 0.85, 0.22); } }
-        else if (w === 'rifle') { if (runH < 0.45) { G = [-0.14, -0.17 + 0.04 * sw2, 0.24 + 0.05 * sw]; D = N3(0.62, 0.74, 0.16); } // port arms across the chest
-          else if (runH < 0.8) { two = false; G = [-0.25, -0.5 + 0.03 * sw2, 0.04 - 0.18 * sw]; D = N3(0.04, 0.12 + 0.1 * sw, 1); } // trail arms, swinging at the side
-          else { two = false; G = [-0.21, 0.03 + 0.03 * sw2, 0.04]; D = N3(0.16, 0.95, -0.24); } } // shouldered
+          else if (st2 === 2) { G = [-0.1, -0.32 + 0.04 * sw2, 0.3 + 0.04 * sw]; D = N3(0.3, 0.42, 0.85); } // both hands, blade slanted across the body
+          else if (st2 === 3) { G = [-0.12, -0.04 + 0.03 * sw2, 0.26 + 0.03 * sw]; D = N3(0.12, 0.93, 0.25); } // both hands, blade held upright before the face
+          else { two = false; G = [-0.24, -0.3 + 0.03 * sw2, 0.3 + 0.06 * sw]; D = N3(0.05, -0.22, 1); } // one hand, point thrust out ahead, low and eager
+          if (u.def.shield) two = false; }
+        else if (w === 'yari') { const st2 = charge ? 0 : Math.floor(runH * 4);
+          if (st2 === 0) { G = [-0.2, -0.27 + 0.04 * sw2, 0.06 + 0.05 * sw]; D = N3(0.05, 0.03 + 0.04 * sw2, 1); } // point levelled for the charge
+          else if (st2 === 1) { G = [-0.15, -0.1 + 0.04 * sw2, 0.18]; D = N3(0.35, 0.85, 0.22); } // sloped on the shoulder
+          else if (st2 === 2) { two = false; G = [-0.25, -0.45 + 0.03 * sw2, 0.02 - 0.12 * sw]; D = N3(0.02, 0.2, 1); } // trailed in one hand at the balance, swinging with the stride
+          else { G = [-0.18, -0.38 + 0.03 * sw2, 0.12 + 0.04 * sw]; D = N3(0.08, 0.5, 0.86); } } // low at the hip in both hands, point angled up
+        else if (w === 'rifle') { const st2 = Math.floor(runH * 5);
+          if (st2 === 0) { G = [-0.14, -0.17 + 0.04 * sw2, 0.24 + 0.05 * sw]; D = N3(0.62, 0.74, 0.16); } // port arms across the chest
+          else if (st2 === 1) { two = false; G = [-0.25, -0.5 + 0.03 * sw2, 0.04 - 0.18 * sw]; D = N3(0.04, 0.12 + 0.1 * sw, 1); } // trail arms, swinging at the side
+          else if (st2 === 2) { two = false; G = [-0.21, 0.03 + 0.03 * sw2, 0.04]; D = N3(0.16, 0.95, -0.24); } // shouldered
+          else if (st2 === 3) { G = [-0.16, -0.3 + 0.04 * sw2, 0.2 + 0.04 * sw]; D = N3(0.1, 0.3, 0.95); } // both hands at the hip, muzzle forward, ready to drop and fire
+          else { G = [-0.1, -0.06 + 0.03 * sw2, 0.25]; D = N3(0.2, 0.97, 0.1); } } // high port: held upright before the chest
         else { G = KW.carry.g.slice(); D = KW.carry.d.slice(); }
         const kr = clamp((r - 0.05) / 0.5, 0, 1);
         for (let j = 0; j < 3; j++) { tg.wp[j] = lerp(lerp(KW.guard.g[j], KW.carry.g[j], r), G[j], kr); tg.wd[j] = lerp(lerp(KW.guard.d[j], KW.carry.d[j], r), D[j], kr); } nrm3(tg.wd);
