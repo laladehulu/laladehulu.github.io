@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v52</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v53</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -3870,7 +3870,7 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; p.team = M.side; p.auto = false; p.ready = true; p.heroId = -1; p.commanderId = -1; p.squads = [];
       const sq = gp ? gp.squads.map(id => this.squads[id]).filter(q => q.def.yuanyang)[i] || this.squads[gp.squads[0]] : null; p.soldierSq = sq ? sq.id : 0; this.possess(p, sq, c.yyRole || 'shield');
       if (sq) for (const id of sq.unitIds) { const u = this.units[id]; u.def = Object.assign({}, u.def, { hp: u.def.hp * 1.5 }); u.hp = u.def.hp; u.zfile = true; }
-      if (c.kit && c.kit.length && p.heroId >= 0) this.kitGive(this.units[p.heroId], c.kit); });
+      if (c.wkit && c.wkit.length && p.heroId >= 0) this.kitGive(this.units[p.heroId], c.wkit); });
     this.story = true; // your file: hardened Yiwu men, and the story's heart
   } else if (!ass) {
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; const t = roleType(c.role, M.side); p.team = M.side; p.army = humans.length === 1 ? [t, M.soloExtra || 'ashigaru'] : [t];
@@ -5098,7 +5098,7 @@ const AUDIO = (() => {
     const L = listener, dx = x - L.x, dz = z - L.z, dist = Math.sqrt(dx * dx + dz * dz + (y - L.y) * (y - L.y));
     if (dist > 950) return;
     const rx = -Math.cos(L.yaw), rz = Math.sin(L.yaw), pan = dist > 0.5 ? Math.max(-1, Math.min(1, (dx * rx + dz * rz) / dist * 0.7)) : 0;
-    const g = vol / (1 + dist / 85), near = Math.max(0, 1 - dist / 70), air = 14000 / (1 + dist / 55);
+    const g = vol * 0.8 / (1 + dist / 85), near = Math.max(0, 1 - dist / 70), air = 14000 / (1 + dist / 55);
     const sp = { gain: g, pan, dist, wet: Math.min(0.9, 0.25 + dist / 250) }, t = ctx.currentTime + Math.min(2.8, dist / 343);
     const big = kind === 'hit' ? 0.55 : 1, S = SAMPLES.count ? SAMPLES : null;
     if (near > 0) noise(sp, t, 0.045, 'highpass', 2200, 0.7, g * near * 1.4 * big, 0.001);                                   // crack
@@ -7464,7 +7464,7 @@ class Renderer {
     // ---------- legs (root-local; +x left, +z forward) ----------
     const LT = 0.46, LS = 0.46;
     const legs = this._legs || (this._legs = new Float64Array(18)); // hipL,kneeL,footL,hipR,kneeR,footR
-    let pel, wdp = null, woy = 0;
+    let pel, wdp = null, woy = 0, lie = null; a.hK = 0.5;
     const legPlane = (o, side, th, kn, bb) => {
       const fx = Math.sin(bb), fz = Math.cos(bb);
       const f1 = LT * Math.sin(th), v1 = LT * Math.cos(th), f2 = f1 + LS * Math.sin(th - kn), v2 = v1 + LS * Math.cos(th - kn);
@@ -7478,23 +7478,39 @@ class Renderer {
       for (let i = 0; i < 2; i++) { const o = i * 9, s = sx[i]; legs[o] = s * 0.1; legs[o + 1] = 0; legs[o + 2] = 0; legs[o + 3] = s * 0.34; legs[o + 4] = -0.3; legs[o + 5] = 0.28; legs[o + 6] = s * 0.32; legs[o + 7] = -0.78; legs[o + 8] = 0.1; }
       pel = 1.47 + (u.mount >= 0 ? this.anim(u.mount).hbob : a.hbob);
     } else if (down && wnd && a.dw !== undefined) { // the fall of a wounded man: stagger, knees buckle, one knee, down on his back, up on an elbow
-      const g = u.crawling ? 1.22 + Math.sin((this.time || 0) * 5 + u.id) * 0.07 : -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1);
-      if (a.dpG === undefined || a.dw < 0.75) a.dpG = g; else a.dpG += (g - a.dpG) * (1 - Math.exp(-3.5 * dt));
-      const gp = a.dpG, kw = clamp(1 - Math.abs(gp) / 0.6, 0, 1), sv = a.dV || 1;
-      // each key: thigh/knee of the kneeling-side leg, thigh/knee of the other, pelvis height, body pitch, lift
-      const KS = [0.05, 0.1, -0.05, 0.1, 0.91, 0, 0], KG = [lerp(0.12, 1.1, kw), lerp(0.2, 1.5, kw), lerp(-0.05, 0.1, kw), lerp(0.3, 1.6, kw), lerp(0.92, 0.5, kw), gp, 0.15 * (1 - kw)];
-      const KN = [1.1, 1.5, 0.1, 1.6, 0.5, 0.18, 0], KT = [0.35, 0.5, -0.25, 0.25, 0.84, sv > 0 ? -0.22 : 0.2, 0], KB = [0.3, 0.6, 0.1, 0.5, 0.92, -1.3, 0.15];
-      const KEYS = a.dUp ? [[0, KS], [0.45, KN], [1, KG]] : [[0, KS], [0.22, KT], [0.5, KN], [0.78, KB], [1, KG]];
-      const w = a.dw, Q = this._dwq || (this._dwq = new Float64Array(7)); let i = 0; while (i < KEYS.length - 2 && w > KEYS[i + 1][0]) i++;
+      // keys: [thigh A, knee A, thigh B, knee B, pelvis height, torso lean, lift, roll, leg-plane A, leg-plane B]; A is the
+      // knee-up / kneeling leg. The body is jointed, not tipped over: the pelvis comes down to the ground and the chest
+      // bends back (or forward) from it, so the legs, the trunk and the head each find the ground on their own.
+      const sv = a.dV || 1, sA = sv > 0 ? 1 : -1, tt = (this.time || 0) + u.id * 1.37;
+      a.cw = (a.cw || 0) + ((u.crawling ? 1 : 0) - (a.cw || 0)) * (1 - Math.exp(-2.5 * dt));
+      const KG = this._lieKG || (this._lieKG = new Float64Array(10)), KC = this._lieKC || (this._lieKC = new Float64Array(10)), KD = this._lieKD || (this._lieKD = new Float64Array(10));
+      { const br = 0.025 * Math.sin(tt * 1.9), sh = 0.04 * Math.sin(tt * 0.37); // on his back, up on an elbow, one knee up; breathing hard, shifting
+        KG[0] = 2.05 + sh; KG[1] = 1.42 + sh; KG[2] = 1.42; KG[3] = 0.28 + 0.08 * Math.sin(tt * 0.23); KG[4] = 0.17; KG[5] = -1.02 + br; KG[6] = 0; KG[7] = -0.2 * sA; KG[8] = -0.1 * sA; KG[9] = 0.12 * sA; }
+      { a.crPh = (a.crPh || 0) + dt * (a.spd > 0.12 ? 3.4 : 0.5); const c = a.crPh, s1 = Math.sin(c); // face down: the arms pull in turn, one leg drawn up to push, the other dragging
+        KC[0] = -1.32 + 0.38 * s1; KC[1] = 0.55 + 0.75 * Math.max(0, s1); KC[2] = -1.38 - 0.12 * s1; KC[3] = 0.3 + 0.75 * Math.max(0, -s1); KC[4] = 0.17; KC[5] = 1.36; KC[6] = 0; KC[7] = 0.1 * s1; KC[8] = -sA * (0.3 + 0.3 * Math.max(0, s1)); KC[9] = sA * (0.3 + 0.3 * Math.max(0, -s1)); }
+      for (let j = 0; j < 10; j++) KD[j] = KG[j] + (KC[j] - KG[j]) * a.cw;
+      const KS = [0.05, 0.1, -0.05, 0.1, 0.91, 0, 0, 0, 0, 0], KT = [0.35, 0.5, -0.25, 0.25, 0.84, 0.32, 0, 0.12 * sA, 0, 0], KN = [1.1, 1.5, 0.1, 1.6, 0.5, 0.25, 0, 0.1 * sA, 0, 0];
+      const KB = [1.3, 0.55, 1.45, 0.3, 0.2, -1.25, 0.05, -0.12 * sA, 0, 0]; // sat down hard and going over backwards
+      const KEYS = a.dUp ? [[0, KS], [0.45, KN], [1, KD]] : [[0, KS], [0.22, KT], [0.5, KN], [0.78, KB], [1, KD]];
+      const w = a.dw, Q = this._dwq || (this._dwq = new Float64Array(10)); let i = 0; while (i < KEYS.length - 2 && w > KEYS[i + 1][0]) i++;
       const k0 = KEYS[i], k1 = KEYS[i + 1]; let s = clamp((w - k0[0]) / Math.max(1e-4, k1[0] - k0[0]), 0, 1); s = s * s * (3 - 2 * s);
-      for (let j = 0; j < 7; j++) Q[j] = k0[1][j] + (k1[1][j] - k0[1][j]) * s;
-      const oA = sv > 0 ? 0 : 9, oB = sv > 0 ? 9 : 0; legPlane(oA, oA ? -1 : 1, Q[0], Q[1], 0); legPlane(oB, oB ? -1 : 1, Q[2], Q[3], 0);
-      pel = Q[4]; wdp = Q[5]; woy = Q[6];
+      for (let j = 0; j < 10; j++) Q[j] = k0[1][j] + (k1[1][j] - k0[1][j]) * s;
+      const oA = sv > 0 ? 0 : 9, oB = sv > 0 ? 9 : 0; legPlane(oA, oA ? -1 : 1, Q[0], Q[1], Q[8]); legPlane(oB, oB ? -1 : 1, Q[2], Q[3], Q[9]);
+      pel = Q[4]; woy = Q[6]; a.lean = Q[5]; a.roll = Q[7]; a.twist *= 0.5; a.lunge = 0;
+      const lk = clamp((0.62 - pel) / 0.42, 0, 1); a.hK = lerp(0.5, a.cw > 0.5 ? 0.85 : 0.55, lk);
+      // lying on a slope: tilt with the ground between his head and his feet so neither end sinks into it
+      { const hb = terrainH(x - sy * 0.9, z - cy * 0.9), hf = terrainH(x + sy * 0.6, z + cy * 0.6); wdp = clamp(Math.atan2(hb - hf, 1.5), -0.4, 0.4) * lk; }
+      lie = { k: lk, kind: a.cw > 0.5 ? 'crawl' : 'back', sA, c: a.crPh || 0, call: u.downed && u.reviveBy < 0, tt };
     } else if (down) {
       legPlane(0, 1, 0.12, 0.2, 0); legPlane(9, -1, -0.05, 0.3, 0); pel = 0.92;
-    } else if (u.camp && a.cl > 0.02) { legPlane(0, 1, 0.06, 0.12, 0); legPlane(9, -1, 0.02, 0.2, 0); pel = 0.92;
+    } else if (u.camp && a.cl > 0.02) { // asleep: down on his back, a knee drawn up (or both legs out), an arm under his head
+      const k = a.cl, ss = a.cSl === undefined ? (a.cSl = uhash(u.id, 41) < 0.5 ? 1 : -1) : a.cSl, kv = uhash(u.id, 43) < 0.55, tt = (this.time || 0) + u.id;
+      const k2 = clamp((k - 0.15) / 0.85, 0, 1), sk = k2 * k2 * (3 - 2 * k2);
+      legPlane(0, 1, lerp(0.06, kv && ss > 0 ? 1.9 : 1.47, k), lerp(0.12, kv && ss > 0 ? 1.15 : 0.18, k), lerp(0, -0.06, k)); legPlane(9, -1, lerp(0.02, kv && ss < 0 ? 1.9 : 1.5, k), lerp(0.2, kv && ss < 0 ? 1.15 : 0.22, k), lerp(0, 0.1, k));
+      pel = lerp(0.92, 0.14, k); a.lean = lerp(a.lean, -1.5 + 0.018 * Math.sin(tt * 1.25), sk); a.roll = lerp(a.roll, 0.1 * ss, sk); a.twist *= 1 - sk; a.hK = lerp(0.5, 0.08, sk);
+      lie = { k: sk, kind: 'sleep', sA: ss, c: 0, call: false, tt };
       // lying on a slope: tilt with the ground between his feet and his head so neither end sinks into it
-      { const hx = x - sy * 1.6, hz = z - cy * 1.6; a.cTilt = clamp(Math.atan2(terrainH(hx, hz) - terrainH(x, z), 1.6), -0.4, 0.4); }
+      { const hb = terrainH(x - sy * 0.95, z - cy * 0.95), hf = terrainH(x + sy * 0.6, z + cy * 0.6); a.cTilt = clamp(Math.atan2(hb - hf, 1.55), -0.4, 0.4); }
     } else if (u.camp && a.cs > 0.02) { // seated on the ground (knees up, or legs out) or on a log, rising when someone comes to talk
       const k = a.cs, g0 = terrainH(x, z); let v = a.cSv;
       if (v === 1 && terrainH(x + sy * 0.85, z + cy * 0.85) - g0 > 0.03) v = 0; // ground rising in front: knees up rather than legs pushed into it
@@ -9791,8 +9807,10 @@ function cmdCamUpdate(dt) {
 // ---------- game ----------
 function startGame(msg, me, net, delay) {
   if (msg.mode === 'beacon') msg = Object.assign({}, msg, { mode: 'campaign', mission: 'beacon' });
+  // a story battle: the weapons you chose from your arsenal come with you (solo; the choice rides in the config)
+  if (!net && msg.mode === 'campaign' && typeof arsKitFor === 'function' && S.MISSIONS[msg.mission] && S.MISSIONS[msg.mission].soldier) { const wk = arsKitFor(msg.mission); if (wk && msg.players[me | 0]) msg = Object.assign({}, msg, { players: msg.players.map((p, i) => i === (me | 0) ? Object.assign({}, p, { wkit: wk }) : p) }); }
   if (msg.mode === 'siege') msg = Object.assign({}, msg, { mode: 'assault', op: S.OPS[msg.op] && S.OPS[msg.op].siege ? msg.op : 'ningyuan_siege' }); // the Siege menu mode is an assault operation fought over a walled town
-  const cfg = { seed: msg.seed, battle: msg.battle || 'field', mode: msg.mode || 'standard', chapter: msg.chapter | 0, scen: msg.scen || 'ningyuan', players: msg.players.map(p => ({ name: p.name, team: p.team, army: p.army, mounted: p.mounted, hclass: p.hclass | 0, veterans: p.veterans, recruits: p.recruits, role: p.role, kit: p.kit, command: p.command | 0, arms: p.arms || null })) };
+  const cfg = { seed: msg.seed, battle: msg.battle || 'field', mode: msg.mode || 'standard', chapter: msg.chapter | 0, scen: msg.scen || 'ningyuan', players: msg.players.map(p => ({ name: p.name, team: p.team, army: p.army, mounted: p.mounted, hclass: p.hclass | 0, veterans: p.veterans, recruits: p.recruits, role: p.role, kit: p.kit, wkit: p.wkit, command: p.command | 0, arms: p.arms || null })) };
   if (msg.soldier) cfg.soldier = msg.soldier; if (msg.mission) cfg.mission = msg.mission; if (msg.op) cfg.op = msg.op; if (msg.camp) cfg.camp = msg.camp;
   msg.players.forEach((p, i) => { if (p.yyRole) cfg.players[i].yyRole = p.yyRole; });
   state.localIdx = me; state.delay = delay; state.peerNames = msg.players.map(p => p.name);
@@ -10602,6 +10620,7 @@ function missionHUD(dt) {
   $('mobj').innerHTML = h; $('mobj').hidden = !!M.soldier;
 }
 function missionFinish(winner) {
+  if (state.sim.mission.soldier && typeof arsRecord === 'function') { try { arsRecord(); } catch (e) { } }
   if (state.sim.mission.soldier && typeof zheFinish === 'function') { $('mobj').hidden = true; $('radio').hidden = true; return zheFinish(winner); }
   const sim = state.sim, me = sim.players[state.localIdx]; const won = winner === me.team; $('mobj').hidden = true; $('radio').hidden = true;
   if (MIS && MIS.endText) $('resultText').textContent = sim.mode === 'assault' ? `${MIS.endText} ${won ? 'Your side carries the day.' : 'Your side is beaten.'} You killed ${me.kills}.` : `${MIS.endText} You killed ${me.kills}.`;
@@ -13332,6 +13351,70 @@ setInterval(() => {
 }, 250);
 { const q = new URLSearchParams(location.search).get('debug'); if (q === '1') dbgEnable(true); else if (q === '0') dbgEnable(false); else if (dbgLS('mingDebug') === '1') dbgEnable(true); }
 dbgBoot();
+
+// ===================== the arsenal: weapons you carried off the field =====================
+// In the story campaigns a weapon you pick up and still carry when the battle ends goes into your arsenal (kept in the
+// campaign's save). In camp, I opens it: choose up to three to carry into the next battle, whatever your place in the
+// team; the sim gives them to you when the battle starts (cfg.players[].kit), so it is the same on every machine.
+function arsWhich() {
+  const sim = state.sim, M = sim && sim.mission, key = (sim && sim.cfg && sim.cfg.mission) || '';
+  if (/^jin/.test(key) || (M && M.camp && sim.cfg.camp && (sim.cfg.camp.team | 0) === 1)) return 'jin';
+  if (/^sj/.test(key) || (typeof ZKEY !== 'undefined' && ZKEY === 'mingShenji')) return 'sj';
+  return 'zhe';
+}
+function arsSave(which) {
+  which = which || arsWhich();
+  if (which === 'jin') { if (typeof JS === 'undefined' || !JS) return null; return { s: JS, put: () => { if (typeof jSave === 'function') jSave(); } }; }
+  if (typeof ZS === 'undefined' || !ZS) return null; return { s: ZS, put: () => { if (typeof zSave === 'function') zSave(); } };
+}
+// the battle ends: whatever extra weapons the man you play still has go into the arsenal
+function arsRecord() {
+  const sim = state.sim; if (!sim || !sim.mission || !sim.mission.soldier) return; const A = arsSave(); if (!A) return;
+  const me = sim.players[state.localIdx], h = me && sim.units[me.heroId]; if (!h || h.dead || !h.kit) return;
+  const got = h.kit.filter(sl => !sl.o).map(sl => sl.k); if (h.kitSh) got.push(h.team === 1 ? 'jshield' : 'shield');
+  if (!got.length) return; const ars = A.s.arsenal || (A.s.arsenal = []);
+  const fresh = []; for (const k of got) if (ars.indexOf(k) < 0 && ars.length < 16) { ars.push(k); fresh.push(k); }
+  A.put(); if (fresh.length && typeof toast === 'function') toast('Into your arsenal: ' + fresh.map(k => (S.WPN[k] || {}).n || k).join(', '));
+}
+// the battle starts: the loadout you chose rides in the battle config
+function arsKitFor(missionKey) {
+  const which = /^jin/.test(missionKey) ? 'jin' : /^sj/.test(missionKey) ? 'sj' : 'zhe'; const A = arsSave(which); if (!A) return null;
+  const ars = A.s.arsenal || [], lo = (A.s.loadout || []).filter(k => ars.indexOf(k) >= 0 && S.WPN[k]); return lo.length ? lo.slice(0, 4) : null;
+}
+// in camp: the weapon rack
+function arsPanel(show) {
+  let el = document.getElementById('arsPanel'); if (show === false) { if (el) el.hidden = true; return; }
+  const A = arsSave(); if (!A) return; const ars = A.s.arsenal || [], lo = A.s.loadout || (A.s.loadout = []);
+  if (!el) { el = document.createElement('div'); el.id = 'arsPanel'; document.body.appendChild(el);
+    const st = document.createElement('style'); st.textContent = '#arsPanel{position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:60;min-width:300px;max-width:440px;background:rgba(18,14,10,.92);border:1px solid #6a5a44;color:#e8dcc0;font:13px/1.45 "IBM Plex Sans",sans-serif;padding:12px 16px;border-radius:3px}#arsPanel h3{margin:0 0 4px;font:600 16px "Shippori Mincho",serif;color:#d2a94c}#arsPanel small{color:#a39880}#arsPanel .w{display:flex;align-items:center;gap:8px;padding:4px 6px;margin:3px 0;border:1px solid rgba(255,255,255,.12);cursor:pointer}#arsPanel .w.on{border-color:#d2a94c;background:rgba(210,169,76,.16)}#arsPanel .w kbd{min-width:14px}#arsPanel .x{margin-top:8px;text-align:right}';
+    document.head.appendChild(st);
+    el.addEventListener('click', (e) => { const w = e.target.closest('.w'); if (w) { arsToggle(w.dataset.k); return; } if (e.target.closest('.x')) arsPanel(false); }); }
+  el.hidden = false;
+  el.innerHTML = '<h3>兵器 · Your arsenal</h3><small>Weapons you carried off the field. Choose up to 3 to take into the next battle (1–9 to toggle, I or Esc to close).</small>' +
+    (ars.length ? ars.map((k, i) => `<div class="w${lo.indexOf(k) >= 0 ? ' on' : ''}" data-k="${k}"><kbd>${i + 1}</kbd>${(S.WPN[k] || {}).n || k}${lo.indexOf(k) >= 0 ? ' · <small>carried</small>' : ''}</div>`).join('') : '<p><small>Nothing yet. Pick up weapons in battle (E) and keep them to the end.</small></p>') +
+    '<div class="x"><kbd>I</kbd> close</div>';
+}
+function arsToggle(k) {
+  const A = arsSave(); if (!A) return; const lo = A.s.loadout || (A.s.loadout = []); const i = lo.indexOf(k);
+  if (i >= 0) lo.splice(i, 1); else { const shields = lo.filter(x => (S.WPN[x] || {}).sh).length, arms = lo.length - shields; if ((S.WPN[k] || {}).sh ? shields >= 1 : arms >= 3) return; lo.push(k); }
+  A.put(); arsPanel(true);
+}
+function arsOpen() { const el = document.getElementById('arsPanel'); return !!(el && !el.hidden); }
+function arsInCamp() { const sim = state.sim; return !!(state.screen === 'game' && sim && sim.mission && sim.mission.camp); }
+document.addEventListener('keydown', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  if (e.code === 'KeyI' && arsInCamp()) { e.preventDefault(); e.stopImmediatePropagation(); arsOpen() ? arsPanel(false) : arsPanel(true); return; }
+  if (!arsOpen()) return;
+  if (e.code === 'Escape') { arsPanel(false); e.stopImmediatePropagation(); return; }
+  const m = /^Digit([1-9])$/.exec(e.code); if (m) { const A = arsSave(), ars = (A && A.s.arsenal) || []; const k = ars[+m[1] - 1]; if (k) arsToggle(k); e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
+// a quiet hint in camp so the rack can be found
+function arsHint() {
+  let el = document.getElementById('arsHint'); const show = arsInCamp() && !arsOpen() && !state.zheDlg;
+  if (!el) { if (!show) return; el = document.createElement('div'); el.id = 'arsHint'; el.style.cssText = 'position:fixed;right:14px;bottom:12px;z-index:30;font:12px "IBM Plex Sans",sans-serif;color:#cfc6b4;background:rgba(20,16,12,.6);border:1px solid #5a4a36;padding:3px 8px;border-radius:2px;pointer-events:none'; document.body.appendChild(el); }
+  el.hidden = !show; if (show) { const A = arsSave(), n = (A && A.s.arsenal || []).length; el.innerHTML = `<kbd>I</kbd> your arsenal${n ? ' · ' + n : ''}`; }
+}
+setInterval(arsHint, 500);
 
 })();
 </script>
