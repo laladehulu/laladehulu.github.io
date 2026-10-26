@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v16</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v17</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -326,6 +326,12 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 #hudmarks .hm.edge.l b::before, #hudmarks .hm.edge.r b::after { content: ''; position: absolute; border: 6px solid transparent; }
 #hudmarks .hm.edge.l b::before { margin-left: -36px; border-right-color: rgba(255,255,255,.85); }
 #hudmarks .hm.edge.r b::after { margin-left: 36px; border-left-color: rgba(255,255,255,.85); }
+.ztag { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 18; font: 600 13px "Noto Serif CJK TC", Georgia, serif; color: #f3e6c8; text-shadow: 0 1px 3px #000, 0 0 2px #000; text-align: center; white-space: nowrap; transition: opacity .15s; }
+.ztag span { font: 600 11px sans-serif; opacity: .85; }
+.ztag small { display: block; font: 10px sans-serif; opacity: .75; }
+.ztag i { font-style: normal; } .ztag i.w { color: #f0c060; } .ztag i.d { color: #ff7a6a; }
+.zroster { display: flex; flex-wrap: wrap; gap: 3px 6px; margin: 4px 0 2px 22px; max-width: 300px; }
+.zroster .zr { font: 600 11px sans-serif; font-weight: 600; white-space: nowrap; } .zroster .zr.a { color: #9fe0a8; } .zroster .zr.w { color: #f0c060; } .zroster .zr.d { color: #ff7a6a; } .zroster .zr.x { color: #8a8680; text-decoration: line-through; }
 </style>
 <div id="app">
   <canvas id="c"></canvas>
@@ -4000,9 +4006,46 @@ const GEAR_K = { b: 40, c: 4, y: 5 };
 const uhash = (id, k) => (((id + 1) * 2654435761 + (k || 0) * 40503) >>> 0) % 1000 / 1000;
 const GEAR_CACHE = new Map();
 const GEAR_HOOK = { fn: null }; // an edition may supply its own uniforms (the realism edition does)
+// ---- the named men of the story file: each his own face and headgear (u.look is set by the story module; render-only) ----
+function lookGear(L, b, c, y, hatOn, part) {
+  const ink = 0x1a1410, hair = L.hair || 0x201a16, bh = L.grey ? 0x8a8680 : hair, fz = 0.146, red = 0xc8281e, gold = 0xd8b03c;
+  if (part === 'head') hatOn(() => { switch (L.hat) {
+    case 'chief': y('h', [0, 0.13, 0], [0.32, 0.13, 0.32], 0x4a4e54); b('h', [0, 0.2, 0], [0.27, 0.07, 0.27], 0x4a4e54); y('h', [0, 0.07, 0], [0.37, 0.025, 0.37], gold); c('h', [0, 0.29, 0], [0.05, 0.12, 0.05], gold); b('h', [0, 0.37, 0], [0.11, 0.08, 0.11], red); b('h', [0, 0.32, 0], [0.15, 0.05, 0.15], red); b('h', [0, -0.04, -0.14], [0.3, 0.15, 0.04], 0x5a2a24); break;
+    case 'wrap': { const w = L.wrap || 0x2a3a5a; b('h', [0, 0.1, 0], [0.31, 0.12, 0.31], w); b('h', [0, 0.17, -0.02], [0.21, 0.08, 0.21], w); b('h', [0.03, 0.04, -0.19], [0.05, 0.16, 0.03], w, [0.3, 0, 0.2]); b('h', [-0.03, 0.04, -0.19], [0.05, 0.14, 0.03], w, [0.3, 0, -0.25]); break; }
+    case 'straw': c('h', [0, 0.15, 0], [0.62, 0.16, 0.62], 0xc2a666); b('h', [0, 0.235, 0], [0.05, 0.04, 0.05], 0x8a6a30); break;
+    case 'band': b('h', [0, 0.13, -0.01], [0.27, 0.06, 0.27], hair); b('h', [0, 0.18, -0.02], [0.09, 0.08, 0.09], hair); b('h', [0, 0.065, 0], [0.295, 0.05, 0.295], L.bandCol || red); b('h', [0.04, 0.04, -0.17], [0.035, 0.035, 0.16], L.bandCol || red, [0.7, 0, 0.2]); break;
+    case 'scholar': b('h', [0, 0.15, 0], [0.29, 0.17, 0.29], 0x18161a); b('h', [0, 0.25, 0], [0.31, 0.03, 0.31], 0x18161a); b('h', [0, 0.1, -0.16], [0.13, 0.13, 0.02], 0x18161a); break;
+    case 'felt': y('h', [0, 0.12, 0], [0.33, 0.13, 0.33], 0x6a4a2c); y('h', [0, 0.06, 0], [0.38, 0.03, 0.38], 0x4a3220); b('h', [0, 0.2, 0], [0.06, 0.05, 0.06], red); break;
+    case 'cookcap': b('h', [0, 0.12, 0], [0.3, 0.12, 0.3], 0xe8e2d0); b('h', [0, 0.19, 0], [0.25, 0.07, 0.25], 0xe8e2d0); break;
+    default: { const tall = L.hat === 'rattanTall' ? 1.35 : 1; c('h', [0, 0.17 * tall, 0], [0.4, 0.2 * tall, 0.4], 0xb8964e); y('h', [0, 0.07, 0], [0.4, 0.045, 0.4], 0x8a6a30); b('h', [0, 0.27 * tall + 0.03, 0], [0.07, L.plume ? 0.12 : 0.05, 0.07], L.plume || red); if (L.band) y('h', [0, 0.11, 0], [0.37, 0.035, 0.37], L.band); }
+  } });
+  if (part === 'face') {
+    const ew = L.young ? 0.04 : 0.045, eh = L.young ? 0.028 : 0.02;
+    b('h', [0.058, 0.0, fz], [ew, eh, 0.012], ink); if (L.patch) { b('h', [-0.058, 0.004, fz + 0.004], [0.075, 0.065, 0.016], 0x111111); b('h', [0, 0.03, fz - 0.004], [0.3, 0.016, 0.012], 0x111111, [0, 0, -0.32]); } else b('h', [-0.058, 0.0, fz], [ew, eh, 0.012], ink);
+    const BR = { thick: [0.08, 0.028, 0.06, 0.035], thin: [0.06, 0.012, 0.1, 0.04], knit: [0.075, 0.022, 0.32, 0.03], high: [0.065, 0.016, -0.18, 0.055], sad: [0.065, 0.018, -0.3, 0.035] }[L.brows || 'thin'] || [0.065, 0.016, 0.12, 0.035];
+    b('h', [0.06, BR[3], fz], [BR[0], BR[1], 0.014], bh, [0, 0, -BR[2]]); b('h', [-0.06, BR[3], fz], [BR[0], BR[1], 0.014], bh, [0, 0, BR[2]]);
+    b('h', [0, -0.045, fz + 0.006], [L.bigNose ? 0.045 : 0.03, L.bigNose ? 0.06 : 0.05, 0.022], 0xd2aa84);
+    b('h', [0, -0.085, fz], [L.grin ? 0.09 : 0.06, L.grin ? 0.018 : 0.012, 0.012], L.grin ? 0x5a2a24 : 0x6a3a30);
+    if (L.beard === 'mous' || L.beard === 'longmous') b('h', [0, -0.066, fz + 0.004], [0.11, 0.022, 0.014], bh);
+    if (L.beard === 'longmous') { b('h', [0.055, -0.1, fz + 0.002], [0.02, 0.08, 0.014], bh); b('h', [-0.055, -0.1, fz + 0.002], [0.02, 0.08, 0.014], bh); }
+    if (L.beard === 'goatee' || L.beard === 'longmous') b('h', [0, -0.135, fz - 0.005], [0.05, L.longBeard ? 0.14 : 0.07, 0.02], bh);
+    if (L.beard === 'full') { b('h', [0, -0.12, fz - 0.01], [0.24, 0.07, 0.03], bh); b('h', [0.12, -0.07, 0.06], [0.03, 0.1, 0.12], bh); b('h', [-0.12, -0.07, 0.06], [0.03, 0.1, 0.12], bh); }
+    if (L.beard === 'stubble') b('h', [0, -0.1, fz - 0.002], [0.2, 0.08, 0.006], 0x7a6a5a);
+    if (L.scar) b('h', [0.085, -0.03, fz + 0.002], [0.012, 0.09, 0.008], 0x8a3a30, [0, 0, 0.5]);
+    if (L.rosy) { b('h', [0.088, -0.05, fz], [0.035, 0.02, 0.006], 0xd88a7a); b('h', [-0.088, -0.05, fz], [0.035, 0.02, 0.006], 0xd88a7a); }
+  }
+  if (part === 'body') {
+    const coat = L.coat || 0xc4381e;
+    if (L.belly) b('c', [0, -0.13, 0.13], [0.42, 0.32, 0.12], coat);
+    if (L.apron) { b('p', [0, -0.28, 0.175], [0.38, 0.5, 0.02], 0xe8e2d0); b('c', [0, 0.1, 0.17], [0.3, 0.03, 0.012], 0xe8e2d0); }
+    if (L.bulk) { b('sl', [0.06, -0.02, 0], [0.15, 0.13, 0.31], coat); b('sr', [-0.06, -0.02, 0], [0.15, 0.13, 0.31], coat); b('c', [0, 0.06, 0], [0.56, 0.3, 0.34], coat); }
+    if (L.charm) { b('c', [0.09, 0.12, 0.162], [0.05, 0.07, 0.012], gold); b('c', [0.09, 0.17, 0.16], [0.012, 0.05, 0.01], red); }
+    if (L.brush) b('c', [-0.16, -0.02, 0.15], [0.03, 0.2, 0.03], 0x3a2a1a, [0, 0, 0.3]);
+  }
+}
 function gearFor(u) {
   if (GEAR_HOOK.fn) { const g = GEAR_HOOK.fn(u); if (g) return g; }
-  const vr = u.type === 'byakkotai' ? (u.id % 2) * 4 : u.id % 6; const key = u.type + ':' + (u.role || '') + ':' + u.team + ':' + vr + ':' + (u.team === 1 ? ((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4 : 0); let g = GEAR_CACHE.get(key); if (g) return g;
+  const vr = u.type === 'byakkotai' ? (u.id % 2) * 4 : u.id % 6; const key = u.type + ':' + (u.role || '') + ':' + u.team + ':' + vr + ':' + (u.team === 1 ? ((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4 : 0) + (u.look ? ':L' + u.look.id : ''); let g = GEAR_CACHE.get(key); if (g) return g;
   const imp = u.team === 0, team = imp ? 0xb3262f : 0x2f55b8, P = [];
   let HAT = false; const b = (f, o, s, k, r) => P.push({ m: 'b', f, o, s, k, r, hat: HAT && f === 'h' }), c = (f, o, s, k, r) => P.push({ m: 'c', f, o, s, k, r, hat: HAT && f === 'h' }), y = (f, o, s, k, r) => P.push({ m: 'y', f, o, s, k, r, hat: HAT && f === 'h' });
   const hatOn = (fn) => { HAT = true; fn(); HAT = false; };
@@ -4074,7 +4117,7 @@ function gearFor(u) {
   if (imp) switch (u.type) {
     case 'hero': phoenixHelm(); dingjia(0x8a1a1e, gold); mirror(); b('c', [0, -0.02, -0.17], [0.56, 0.78, 0.03], 0xb02a24); b('sl', [0.06, 0.0, 0], [0.12, 0.05, 0.16], gold); b('sr', [-0.06, 0.0, 0], [0.12, 0.05, 0.16], gold); break;
     case 'samurai': rattanHelm(); coat(verm, 0xe8e2d0); kyahan(0xe8e2d0); yaopai(); break;
-    case 'yuanyang': rattanHelm(); coat(verm, 0xe8e2d0); kyahan(0xe8e2d0); yaopai(); if (u.role === 'lead') backflag(0xe8c25a); break;
+    case 'yuanyang': if (u.look) lookGear(u.look, b, c, y, hatOn, 'head'); else rattanHelm(); coat(verm, 0xe8e2d0); kyahan(0xe8e2d0); yaopai(); if (u.role === 'lead') backflag(0xe8c25a); if (u.look) lookGear(u.look, b, c, y, hatOn, 'body'); break;
     case 'cavalry': petalHelm(iron, red); dingjia(0x9a2222, gold); mirror(); backflag(verm); break;
     case 'ashigaru': hatOn(() => { c('h', [0, 0.13, 0], [0.62, 0.2, 0.62], 0xc8a868); b('h', [0, 0.26, 0], [0.06, 0.05, 0.06], red); }); coat(verm, 0x2a2622); kyahan(0xe8e2d0); break;
     case 'rifle_imp': liKui(); buMian(0xa8261e, gold); kyahan(0xe8e2d0); yaopai(); break;
@@ -4095,7 +4138,8 @@ function gearFor(u) {
     case 'byakkotai': case 'ronin': furHat(vr % 2 ? red : 0x2a4a8a); queue(); robe(torsoColor(u), [0xc8281e, 0x2a4a8a, 0xd8b03c][vr % 3]); break;
   }
   // faces: eyes, brows, mouth, and a moustache or beard on some of the older men
-  if (u.type !== 'horse' && !u.def.cannon && !u.def.gun) {
+  if (u.look) lookGear(u.look, b, c, y, hatOn, 'face');
+  else if (u.type !== 'horse' && !u.def.cannon && !u.def.gun) {
     const ink = 0x1a1410, hair = 0x201a16, fz = 0.146;
     b('h', [0.058, 0.0, fz], [0.045, 0.02, 0.012], ink); b('h', [-0.058, 0.0, fz], [0.045, 0.02, 0.012], ink);
     const bt = vr === 5 ? 0.12 : 0; b('h', [0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, -0.12 - bt]); b('h', [-0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, 0.12 + bt]);
@@ -4738,7 +4782,7 @@ class Renderer {
     for (const k of ['torso', 'uarmL', 'uarmR']) f[k].setColorAt(slot, c.set(tc));
     c.set(tc).multiplyScalar(0.82); f.farmL.setColorAt(slot, c); f.farmR.setColorAt(slot, c);
     for (const k of ['thighL', 'thighR', 'shinL', 'shinR', 'hips']) f[k].setColorAt(slot, c.set(lc));
-    { const t = uhash(u.id, 3); c.setRGB(0.9 - t * 0.14, 0.76 - t * 0.16, 0.6 - t * 0.17); if (u.type === 'byakkotai') c.setRGB(0.92, 0.79, 0.66); f.head.setColorAt(slot, c); f.hand.setColorAt(slot * 2, c); f.hand.setColorAt(slot * 2 + 1, c); }
+    { const t = uhash(u.id, 3); c.setRGB(0.9 - t * 0.14, 0.76 - t * 0.16, 0.6 - t * 0.17); if (u.type === 'byakkotai') c.setRGB(0.92, 0.79, 0.66); if (u.look && u.look.skin) c.set(u.look.skin); f.head.setColorAt(slot, c); f.hand.setColorAt(slot * 2, c); f.hand.setColorAt(slot * 2 + 1, c); }
     if (u.type === 'hero') f.kabuto.setColorAt(slot, c.set(PAL.gold));
     f.hilt.setColorAt(slot, c.set(u.weapon === 'yari' ? 0xc8281e : 0x5a1a1a)); f.pistol.setColorAt(slot, c.set(0x5a4a2a)); f.barrel.setColorAt(slot, c.set(u.type === 'rifle_spencer' ? 0x3a3a3a : 0x55595e));
     for (const k of ['torso', 'hips', 'uarmL', 'uarmR', 'farmL', 'farmR', 'thighL', 'thighR', 'shinL', 'shinR', 'head', 'kabuto', 'hand', 'hilt', 'pistol', 'barrel']) f[k].instanceColor.needsUpdate = true;
@@ -6192,7 +6236,7 @@ class Renderer {
     return { x: clamp(px, -HALF, HALF), z: clamp(pz, -HALF, HALF) };
   }
 }
-return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor };
+return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear };
 })();
 </script>
 <script>
@@ -6474,7 +6518,7 @@ if (!window.MING_REAL) return;
 const R = RENDER, HPI = Math.PI / 2, BANNER = R.BANNER, torsoColor = R.torsoColor;
 const RG_CACHE = new Map();
 function realGear(u) {
-  const vr = u.type === 'byakkotai' ? (u.id % 2) * 4 : u.id % 6; const key = u.type + ':' + (u.role || '') + ':' + u.team + ':' + vr + ':' + (u.team === 1 ? ((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4 : 0); let g = RG_CACHE.get(key); if (g) return g;
+  const vr = u.type === 'byakkotai' ? (u.id % 2) * 4 : u.id % 6; const key = u.type + ':' + (u.role || '') + ':' + u.team + ':' + vr + ':' + (u.team === 1 ? ((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4 : 0) + (u.look ? ':L' + u.look.id : ''); let g = RG_CACHE.get(key); if (g) return g;
   const imp = u.team === 0, team = imp ? 0xb3262f : 0x2f55b8, P = [];
   let HAT = false; const b = (f, o, s, k, r) => P.push({ m: 'b', f, o, s, k, r, hat: HAT && f === 'h' }), c = (f, o, s, k, r) => P.push({ m: 'c', f, o, s, k, r, hat: HAT && f === 'h' }), y = (f, o, s, k, r) => P.push({ m: 'y', f, o, s, k, r, hat: HAT && f === 'h' });
   const hatOn = (fn) => { HAT = true; fn(); HAT = false; };
@@ -6584,7 +6628,7 @@ function realGear(u) {
   if (imp) switch (u.type) {
     case 'hero': phoenixHelm(); dingjia(0x8a1a1e, gold); mirror(); b('c', [0, -0.08, -0.18], [0.62, 0.95, 0.03], 0xb02a24, [-0.06, 0, 0]); b('c', [0, 0.18, -0.17], [0.5, 0.06, 0.05], gold); break;
     case 'samurai': rattanHelm(); coat(verm, 0xe8e2d0, 0x2a2622); kyahanW(); yaopai(); b('p', [-0.24, -0.1, 0.05], [0.06, 0.4, 0.07], 0x2a1e14, [0.3, 0, -0.1]); break;
-    case 'yuanyang': rattanHelm(); coat(verm, 0xe8e2d0, 0x2a2622); kyahanW(); yaopai(); if (u.role === 'lead') backflag(0xe8c25a, red); break;
+    case 'yuanyang': if (u.look) R.lookGear(u.look, b, c, y, hatOn, 'head'); else rattanHelm(); coat(verm, 0xe8e2d0, 0x2a2622); kyahanW(); yaopai(); if (u.role === 'lead') backflag(0xe8c25a, red); if (u.look) R.lookGear(u.look, b, c, y, hatOn, 'body'); break;
     case 'cavalry': mingKui(iron, 0x9a2222, gold); dingjia(0x9a2222, gold); mirror(); tallFlag(verm, gold); hoof(0x9a2222); break;
     case 'ashigaru': hatOn(() => { c('h', [0, 0.13, 0], [0.66, 0.2, 0.66], 0xc8a868); y('h', [0, 0.07, 0], [0.5, 0.02, 0.5], 0x9a7a40); b('h', [0, 0.26, 0], [0.07, 0.06, 0.07], red); }); coat(verm, 0x2a2622); kyahanW(); break;
     case 'rifle_imp': gunnerKui(0x5a6168, 0x7a1a16); gunnerArmour(0xa8261e, gold); kyahanW(); yaopai(); break;
@@ -6605,7 +6649,8 @@ function realGear(u) {
     case 'byakkotai': case 'ronin': furHat(vr % 2 ? red : 0x2a4a8a); queue(); robe(torsoColor(u), [0xc8281e, 0x2a4a8a, 0xd8b03c][vr % 3]); b('c', [0.08, 0.04, 0.158], [0.08, 0.5, 0.012], 0xd8b03c, [0, 0, -0.5]); b('c', [0, 0.2, 0.06], [0.32, 0.06, 0.26], 0x6a4426); break; // the deel's slanting lapel and fur collar
   }
   // faces: eyes, brows, mouth, and a moustache or beard on some of the older men
-  if (u.type !== 'horse' && !u.def.cannon && !u.def.gun) {
+  if (u.look) R.lookGear(u.look, b, c, y, hatOn, 'face');
+  else if (u.type !== 'horse' && !u.def.cannon && !u.def.gun) {
     const ink = 0x1a1410, hair = 0x201a16, fz = 0.146;
     b('h', [0.058, 0.0, fz], [0.045, 0.02, 0.012], ink); b('h', [-0.058, 0.0, fz], [0.045, 0.02, 0.012], ink);
     const bt = vr === 5 ? 0.12 : 0; b('h', [0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, -0.12 - bt]); b('h', [-0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, 0.12 + bt]);
@@ -8141,12 +8186,49 @@ const SPEECH = (() => {
       const men = q.unitIds.map(unit).filter(u => u && !u.dead && u.ctrl < 0 && u !== chief && !u.wounded); for (let k = 0; k < Math.min(2, men.length); k++) { const m = men[Math.floor(Math.random() * men.length)], A = pick(T[2]); setTimeout(() => say(m.id, A[0], A[1], { prio: 1, cool: 0.5, dur: 1.6 }), 1150 + k * 260 + i * 350); } });
     if (!heard && sqIds && sqIds.length) AUDIO.play(type === S.ORD_HOLD ? 'gong' : 'drum', undefined, 0, 0, 0.5);
   }
-  return { say, frame, event, orderChain, nameOf };
+  const speaking = (id) => live.some(l => l.id === id);
+  return { say, frame, event, orderChain, nameOf, speaking };
 })();
 
 // ===== 浙兵 · The Zhejiang Company: a story campaign =====
 // One mandarin duck team of Yiwu miners, marched north in 1619. Camp at night among named men, then the battles as
 // they happened. You cannot change the history; you can only change who comes home.
+// each man of the file has his own face and headgear, the same at the fire and in the pass (render-only: u.look)
+const ZLOOK = {
+  wu: { hat: 'chief', brows: 'knit', beard: 'longmous', grey: true, scar: true, skin: 0xbf9670 },
+  lou: { hat: 'rattan', brows: 'thick', beard: 'stubble', bulk: true, skin: 0xcd9f78 },
+  me: { hat: 'rattan', brows: 'thin', band: 0xe8e2d0 },
+  liu6: { hat: 'band', brows: 'high', young: true, rosy: true, skin: 0xe8c6a2 },
+  luo: { hat: 'wrap', wrap: 0x2a3a5a, brows: 'high', beard: 'mous', grin: true },
+  jin: { hat: 'straw', brows: 'thick', beard: 'goatee', charm: true, skin: 0xc49a72 },
+  ye: { hat: 'rattan', band: 0xe8e2d0, brows: 'sad', beard: 'mous' },
+  wang: { hat: 'rattanTall', brows: 'thick', bulk: true, rosy: true, bigNose: true },
+  fang: { hat: 'scholar', brows: 'thin', beard: 'goatee', longBeard: true, brush: true, skin: 0xe2c4a0 },
+  he: { hat: 'felt', brows: 'thick', beard: 'full', patch: true, scar: true, skin: 0xb88c66 },
+  du: { hat: 'rattan', plume: 0xd02a1c, brows: 'knit', skin: 0xd8b088 },
+  zhu: { hat: 'cookcap', brows: 'thick', beard: 'full', grey: true, belly: true, apron: true, bigNose: true, skin: 0xd8a07a },
+};
+function zDress(u, ci) { const r = ZR[ci]; if (!u || !r) return; u.look = Object.assign({ id: r.k }, ZLOOK[r.k] || {}); if (state.renderer) state.renderer.colorFigure(u.id, u); }
+// name tags: who a man is, over his head, when you look at him or he is close
+const ZTAG = { pool: [], v: null };
+function zTags() {
+  const sim = state.sim, r = state.renderer, map = ZB ? ZB.map : ZC ? ZC.map : null;
+  if (!ZTAG.v) ZTAG.v = new THREE.Vector3(); let n = 0;
+  if (sim && r && map && state.screen === 'game' && !state.zheDlg && r.lastMode === 'fp') {
+    const cam = r.camera, W = canvas.clientWidth, H = canvas.clientHeight, h = localHero(), al = r.alpha === undefined ? 1 : Math.max(0, Math.min(1, r.alpha));
+    for (const uid in map) { const u = sim.units[uid]; if (!u || u.dead || (h && +uid === h.id)) continue; const rr = ZR[map[uid]]; if (!rr || rr.k === 'me') continue;
+      if (typeof SPEECH !== 'undefined' && SPEECH.speaking && SPEECH.speaking(+uid)) continue;
+      const v = ZTAG.v.set(u.px + (u.x - u.px) * al, u.py + (u.y - u.py) * al + (u.mounted ? 2.7 : 1.95), u.pz + (u.z - u.pz) * al); const d = cam.position.distanceTo(v); v.project(cam);
+      if (v.z > 1 || Math.abs(v.x) > 1 || Math.abs(v.y) > 1) continue; const look = Math.abs(v.x) < 0.07 && Math.abs(v.y) < 0.2 && d < 32;
+      if (d > 12 && !look) continue;
+      let e = ZTAG.pool[n]; if (!e) { e = document.createElement('div'); e.className = 'ztag'; document.body.appendChild(e); ZTAG.pool[n] = e; } n++;
+      const st = u.wounded ? (u.helpedBy >= 0 ? ' · <i class="w">wounded</i>' : ' · <i class="d">down</i>') : u.hp < u.def.hp * 0.5 ? ' · <i class="w">hurt</i>' : '';
+      const html = `${rr.zh} <span>${rr.en}</span><small>${rr.t}${st}</small>`; if (e._h !== html) { e.innerHTML = html; e._h = html; }
+      const sx = (v.x + 1) / 2 * W, sy = (1 - v.y) / 2 * H, k = Math.max(0.7, Math.min(1, 8 / Math.max(4, d)));
+      e.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -100%) scale(${k.toFixed(3)})`; e.style.opacity = (look ? 1 : Math.max(0.25, 1 - (d - 4) / 10)).toFixed(2); e.style.display = ''; }
+  }
+  for (let i = n; i < ZTAG.pool.length; i++) ZTAG.pool[i].style.display = 'none';
+}
 const ZR = [ // the file, in the order of the duck team's places (YY_ROLE)
   { k: 'wu', zh: '吳老栓', en: 'Wu Laoshuan', role: 'lead', t: 'section chief · 隊長' },
   { k: 'lou', zh: '樓阿根', en: 'Lou Agen', role: 'shield', t: 'rattan shield' },
@@ -8272,7 +8354,7 @@ function zStart(scene) {
   if (scene === 'camp0' || scene === 'camp1') {
     const night = scene === 'camp1' ? 1 : 0; const camp = zCampCfg(night);
     startGame({ seed, battle: 'zcamp', mode: 'campaign', mission: 'zcamp', camp, players: pl }, 0, null, 1);
-    ZC.night = night; ZC.map = {}; for (const u of state.sim.units) if (u.camp) ZC.map[u.id] = u.ci; ZC.chatT = 6;
+    ZC.night = night; ZC.map = {}; for (const u of state.sim.units) if (u.camp) { ZC.map[u.id] = u.ci; zDress(u, u.ci); } { const me = state.sim.units[state.sim.players[0].heroId]; zDress(me, 2); } ZC.chatT = 6;
     MUSIC.play('menu'); MUSIC.setIntensity(0.15); AUDIO.setFire(0.6); $('army').hidden = true;
     setTimeout(() => storyCard(night ? 'The survivors make camp in a ravine south of the pass. Nobody sings. Walk among them (E to talk), and when you are ready, lie down on your bedroll.' : 'The night before. Walk among your file and talk with them (look at a man and press E). When you are ready, lie down on your bedroll (E) to sleep until the march.', night ? '夜 · The night after' : '營 · Camp, April 1619'), 900);
   } else if (scene === 'battle1') {
@@ -8280,6 +8362,7 @@ function zStart(scene) {
     const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq]; ZB = { map: {}, sq: q.id, first: me.heroId, cur: 'me', fell: false };
     const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = 2;
     ZR.forEach((r, i) => { if (r.k === 'me') return; const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role === r.role); if (id !== undefined) { used[id] = 1; ZB.map[id] = i; } });
+    for (const uid in ZB.map) zDress(sim.units[uid], ZB.map[uid]);
     setTimeout(() => storyCard('Dawn, April 1619. The column breaks camp and climbs into the valleys toward Hetu Ala. Stay with your duck team: the chief calls the drill. Shield up with the right mouse button.', '阿布達里岡 · Abudali Pass'), 700);
   }
 }
@@ -8357,6 +8440,7 @@ function zheObjLines() {
   const sim = state.sim; if (!ZB) return ''; const h = localHero(); let n = 0, all = 0;
   for (const uid in ZB.map) { const u = sim.units[uid]; if (+uid === (h && h.id)) continue; all++; if (!u.dead && h && Math.hypot(u.x - h.x, u.z - h.z) < 24) n++; }
   let s = `<div class="ob"><i>伍</i><span>Your file with you: ${n} of ${all}</span></div>`;
+  { let row = ''; for (const uid in ZB.map) { const u = sim.units[uid], rr = ZR[ZB.map[uid]]; if (!rr || +uid === (h && h.id)) continue; const cls = u.dead ? 'x' : u.wounded ? (u.helpedBy >= 0 ? 'w' : 'd') : u.hp < u.def.hp * 0.5 ? 'w' : 'a'; row += `<b class="zr ${cls}" title="${rr.en} · ${rr.t}">${u.dead ? '✕' : u.wounded ? (u.helpedBy >= 0 ? '✚' : '▼') : '●'} ${rr.zh}</b>`; } s += `<div class="zroster">${row}</div>`; } // every man of the file by name: ● fighting, ✚ wounded, ▼ down, ✕ dead
   if (ZB.wounded !== undefined) { const u = sim.units[ZB.wounded]; s += `<div class="ob${u.helpedBy >= 0 ? ' done' : ''}"><i>!</i><span>${u.dead ? 'Chen Xiaoliu is dead' : u.helpedBy >= 0 ? 'Chen Xiaoliu is on his feet' : 'Get Chen Xiaoliu up (E beside him)'}</span></div>`; }
   return s;
 }
@@ -8386,6 +8470,7 @@ function zheFinish(winner) {
   ], () => zGo('camp1')); };
 }
 function zheHUD(dt) {
+  zTags();
   const sim = state.sim; let pr = $('zhePrompt');
   if (sim && sim.mission && sim.mission.camp) $('status').style.visibility = 'hidden';
   if (!sim || !sim.mission || !sim.mission.camp || !ZC || state.zheDlg) { if (pr) pr.hidden = true; return; }
