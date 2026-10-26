@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v1</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v2</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2182,6 +2182,7 @@ class Sim {
     const m = 1 / u.mass;
     u.vx += ix * m; u.vz += iz * m;
     if (iy > 0 && u.mass < 5) { u.vy += iy * m; u.y += 0.05; u.airborne = true; }
+    if (u.ctrl >= 0 && !this.xc && !u.mounted && attackerId >= 0 && (cause === 'melee' || cause === 'shot' || cause === 'arrow' || cause === 'spear')) { const a = this.units[attackerId]; const dx = u.x - a.x, dz = u.z - a.z, d = len(dx, dz) || 1, kb = cause === 'melee' || cause === 'spear' ? 1.8 : 1.1; u.vx += dx / d * kb; u.vz += dz / d * kb; u.flinchT = Math.max(u.flinchT, 0.3); } // a blow that lands staggers you
     this.events.push({ t: 'hit', id: u.id, x: hx === undefined ? u.x : hx, y: hy === undefined ? u.y + 1.1 : hy, z: hz === undefined ? u.z : hz, dmg: dmg * mult, cause, att: attackerId, killed: u.hp <= 0 });
     if (u.hp <= 0) { this.kill(u, ix * m + (u.mx * 0.3), iy * m + 1.5, iz * m + (u.mz * 0.3), cause, attackerId); return true; }
     return false;
@@ -2712,7 +2713,7 @@ class Sim {
   dry(u) { return u.shots <= 0 && !u.champ && u.type !== 'hero' && u.ctrl < 0; }
   fatMul(u) { const f = u.fat || 0; return f > 85 ? 0.72 : f > 60 ? 0.86 : 1; }
   speedBoost(u) { return this.speedBoost0(u) * this.fatMul(u); }
-  speedBoost0(u) { if (u.dashT > 0) return 1; if (u.guardT > 0) return 0.45; if (u.frenzyT > 0) return 1.25; if (u.cryT > 0) return 1.15; if (u.squad < 0) return 1; const sq = this.squads[u.squad]; if (sq.abOn <= 0) return 1; return sq.ability === 'kiai' ? 1.3 : sq.ability === 'wedge' ? 1.2 : 1; }
+  speedBoost0(u) { if (u.dashT > 0) return 1; if (u.flinchT > 0 && u.ctrl >= 0 && !u.mounted) return 0.6; if (u.guardT > 0) return 0.45; if (u.frenzyT > 0) return 1.25; if (u.cryT > 0) return 1.15; if (u.squad < 0) return 1; const sq = this.squads[u.squad]; if (sq.abOn <= 0) return 1; return sq.ability === 'kiai' ? 1.3 : sq.ability === 'wedge' ? 1.2 : 1; }
   canister(u, sq) {
     let best = null, bd = 50 * 50; const en = this.teamAlive[1 - u.team];
     for (let i = 0; i < en.length; i++) { const v = en[i]; const dx = v.x - u.x, dz = v.z - u.z, d2 = dx * dx + dz * dz; if (d2 < bd) { bd = d2; best = v; } }
@@ -4131,7 +4132,7 @@ class Renderer {
     this.camera = new THREE.PerspectiveCamera(75, 1, 0.05, 700);
     this.scene.add(this.camera);
     this.fov = 75; this.fovTarget = 75;
-    this.shake = 0; this.recoil = 0; this.recoilRoll = 0; this.hitFlash = 0; this.hitMark = 0; this.hitMarkHead = false; this.parryFlash = 0;
+    this.shake = 0; this.recoil = 0; this.recoilRoll = 0; this.hitFlash = 0; this.imp = { p: 0, y: 0, r: 0, vp: 0, vy: 0, vr: 0, x: 0, vx: 0, fov: 0, jolt: 0, blur: 0 }; this.hitMark = 0; this.hitMarkHead = false; this.parryFlash = 0;
     this.cmdCam = { x: 0, z: 0, h: 70, yaw: 0 };
     this.tmp = { m: new THREE.Matrix4(), m2: new THREE.Matrix4(), m3: new THREE.Matrix4(), t: new THREE.Matrix4(), r: new THREE.Matrix4(), s: new THREE.Matrix4(), e: new THREE.Euler(), q: new THREE.Quaternion(), v: new THREE.Vector3(), v2: new THREE.Vector3(), v3: new THREE.Vector3(), v4: new THREE.Vector3(), c: new THREE.Color(), zero: new THREE.Matrix4().makeScale(0, 0, 0) };
     this.pose = new Float32Array(7);
@@ -4779,7 +4780,7 @@ class Renderer {
           else if (ev.kind === 'ground') { this.dust(tx, ty + 0.05, tz, 10, 0, 1.5, 0, 1.6, 1.0, 0.25, 1.3); this.burstSparks(tx, ty + 0.05, tz, 5, 5, 1, 0.75, 0.3, 0.25, 0.08); this.decal(tx, ty, tz, 0.32, 0x2a2218); AUDIO.play('dirt', tx, ty, tz, 0.7); }
           else if (ev.kind === 'rock' || ev.kind === 'wood') { this.burstSparks(tx, ty, tz, 16, 7, 1, 0.8, 0.35, 0.35, 0.09); this.puffSmoke(tx, ty, tz, 4, 0, 0.5, 0, 0.6, 1.2, 0.2, 0.9, 0.6, 0.5); AUDIO.play('ricochet', tx, ty, tz, 1); }
           else if (ev.kind === 'tree') { this.burstSparks(tx, ty, tz, 10, 4, 0.75, 0.55, 0.3, 0.5, 0.1); this.puffSmoke(tx, ty, tz, 3, 0, 0.3, 0, 0.4, 1, 0.2, 0.6, 0.5, 0.5); AUDIO.play('dirt', tx, ty, tz, 0.6); }
-          if (ev.victim === heroId) { this.hitFlash = 0.5; this.shake = Math.max(this.shake, 0.5); }
+          if (ev.victim === heroId) { this.hitFlash = 0.5; this.shake = Math.max(this.shake, 0.5); const hh = units[heroId]; if (hh) this.impact(hh.x - d[0] * 10, hh.z - d[2] * 10, 0.9, ev.head); }
           else if (ev.team !== this.localTeam) { // closest approach of the bullet to your head
             const cp = this.camera.position; const sx = to[0] - f[0], sy = to[1] - f[1], sz = to[2] - f[2]; const L2 = sx * sx + sy * sy + sz * sz || 1; let k = ((cp.x - f[0]) * sx + (cp.y - f[1]) * sy + (cp.z - f[2]) * sz) / L2; k = clamp(k, 0, 1);
             const qx = f[0] + sx * k - cp.x, qy = f[1] + sy * k - cp.y, qz = f[2] + sz * k - cp.z; const dd = Math.sqrt(qx * qx + qy * qy + qz * qz);
@@ -4813,7 +4814,7 @@ class Renderer {
         case 'windup': { const u = units[ev.id]; if (u && ev.id !== heroId && u.team !== this.localTeam) { const dc = Math.hypot(u.x - this.camera.position.x, u.z - this.camera.position.z); if (dc < 14) { const fx = Math.sin(u.yaw), fz = Math.cos(u.yaw); this.sparks.spawn(u.x + fx * 0.5 - Math.cos(u.yaw) * 0.3, u.y + 1.9, u.z + fz * 0.5 + Math.sin(u.yaw) * 0.3, 0, 0.3, 0, 0.18, 0.9, 0.2, 1, 0.45, 0.35, 1, 1, 0, 1, 0.2, 0.1); } } break; }
         case 'hit': {
           if (ev.cause === 'melee' || ev.cause === 'trample') { this.blood(ev.x, ev.y, ev.z, 10, 0, 1, 0); AUDIO.play('flesh', ev.x, ev.y, ev.z, 1); }
-          if (ev.id === heroId) { this.hitFlash = 0.6; this.shake = Math.max(this.shake, 0.6); }
+          if (ev.id === heroId) { this.hitFlash = 0.6; this.shake = Math.max(this.shake, 0.6); const hh = units[heroId], a = ev.att >= 0 ? units[ev.att] : null; if (hh && ev.cause !== 'fire') { const k = clamp((ev.dmg || 20) / Math.max(40, hh.def.hp * 0.45), 0.25, 1.4) * (ev.cause === 'trample' || ev.cause === 'explosion' ? 1.4 : 1); this.impact(a ? a.x : ev.x, a ? a.z : ev.z + 0.01, k, ev.cause === 'trample' || ev.cause === 'explosion'); } }
           if (ev.att === heroId && ev.cause === 'melee') { this.hitMark = 0.3; this.hitMarkHead = false; AUDIO.play('hitmark', undefined, 0, 0, 0.8); this.hitstop = Math.max(this.hitstop, ev.killed ? 0.05 : 0.03); }
           break;
         }
@@ -5349,6 +5350,28 @@ class Renderer {
     const k0 = keys[i], k1 = keys[i + 1]; let s = clamp((t - k0[0]) / Math.max(1e-4, k1[0] - k0[0]), 0, 1); s = s * s * (3 - 2 * s);
     return out.copy(k0[1]).lerp(k1[1], s);
   }
+  // being hit has weight: the head snaps away from the blow on a damped spring, the view is shoved back,
+  // the field of view tightens for a heartbeat, the arms jolt down and hearing dulls on heavy blows
+  impact(sx, sz, k, heavy) {
+    const sim = this.sim, local = sim.players[this.localIdx]; const h = local ? sim.units[local.heroId] : null; if (!h) return;
+    const yaw = this._viewYaw !== undefined ? this._viewYaw : h.yaw; let dx = sx - h.x, dz = sz - h.z; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
+    const fwd = dx * Math.sin(yaw) + dz * Math.cos(yaw), right = dx * -Math.cos(yaw) + dz * Math.sin(yaw); // where the blow came from, in view space
+    const I = this.imp, r = () => Math.random() - 0.5; k = Math.min(1.6, k);
+    I.vp += (0.9 * fwd + 0.25 + r() * 0.3) * 9 * k;          // struck from the front: head snaps back and up
+    I.vy += (-right * 0.9 + r() * 0.3) * 7 * k;               // struck from the side: head turns away
+    I.vr += (right * 1.1 + r() * 0.4) * 9 * k;                // and the horizon tilts
+    I.vx += (0.35 + 0.65 * Math.max(0, fwd)) * 6 * k;         // shoved back
+    I.fov = Math.min(9, I.fov + 6 * k); I.jolt = Math.min(1.4, I.jolt + k); I.blur = Math.min(1, I.blur + 0.6 * k);
+    this.hitstop = Math.max(this.hitstop || 0, heavy ? 0.07 : 0.035 * k);
+    if (heavy || k > 0.9) { AUDIO.shellshock(Math.min(0.75, 0.3 * k)); this.shake = Math.max(this.shake, 0.9 * k); }
+    AUDIO.play('thud', undefined, 0, 0, 0.5 + 0.6 * k);
+  }
+  impStep(dt) { // critically-damped-ish springs, sub-stepped so a long frame can't explode them
+    const I = this.imp, n = Math.max(1, Math.ceil(dt / 0.008)), h = dt / n;
+    for (let i = 0; i < n; i++) { for (const [a, v, kk, c] of [['p', 'vp', 170, 15], ['y', 'vy', 150, 14], ['r', 'vr', 130, 12], ['x', 'vx', 160, 16]]) { I[v] += (-kk * I[a] - c * I[v]) * h; I[a] += I[v] * h; } }
+    I.p = clamp(I.p, -0.35, 0.35); I.y = clamp(I.y, -0.3, 0.3); I.r = clamp(I.r, -0.35, 0.35); I.x = clamp(I.x, -0.2, 0.45);
+    I.fov *= Math.exp(-dt * 7); I.jolt *= Math.exp(-dt * 6); I.blur *= Math.exp(-dt * 4);
+  }
   updateViewmodel(hero, alpha, dt, moveF, mounted) {
     const vm = this.vm, st = this.vmState; const stT = hero.st === ST_IDLE ? 0 : hero.stT + alpha * DT;
     const P = (px, py, pz, rx, ry, rz) => ({ px, py, pz, rx, ry, rz });
@@ -5421,7 +5444,7 @@ class Renderer {
       this.vmRunK = (this.vmRunK || 0) + ((idleish ? clamp((hero.speedNow - 2.8) / 1.3, 0, 1) : 0) - (this.vmRunK || 0)) * Math.min(1, dt * 7);
       const rk = this.vmRunK; if (rk > 0.01) { const ph = st.ph, s1 = Math.sin(ph), c2 = Math.cos(2 * ph);
         let RP;
-        if (w === 'rifle') RP = P(0.06, -0.3 + 0.025 * c2, -0.36, 0.25 + 0.04 * s1, -0.7, 0.95 + 0.06 * s1);
+        if (w === 'rifle') RP = P(0.14 + 0.015 * s1, -0.32 + 0.025 * c2, -0.34, 0.42 + 0.04 * s1, 0.75, -0.9 - 0.06 * s1); // port arms: butt low on the right hip, muzzle up past the left shoulder
         else if (w === 'katana') RP = P(0.3 + 0.03 * s1, -0.36 + 0.03 * c2, -0.3 - 0.1 * s1, -0.9 + 0.25 * s1, -0.3, -0.25);
         else if (w === 'yari') RP = P(0.2, -0.3 + 0.025 * c2, -0.36 - 0.04 * s1, -0.18, -0.12, 0.12);
         else if (w === 'revolver') RP = P(0.24, -0.34 + 0.03 * c2, -0.3 - 0.08 * s1, -0.7, -0.2, 0.1);
@@ -5449,8 +5472,8 @@ class Renderer {
       this.camBob = bob * 2.3; this.camRoll += sway * 0.5;
       const settle = hero.aiming ? Math.max(0, 1 - (hero.aimHold || 0) / 1.4) : 0.4, amp = (hero.aiming ? 0.004 + 0.016 * settle : 0.002) + (this.suppress || 0) * 0.012;
       this.camPitch += Math.sin(this.time * 1.6) * amp + Math.sin(this.time * 3.7) * amp * 0.3; this.camRoll += Math.sin(this.time * 1.1 + 1) * amp * 0.8; }
-    vm.position.set(st.pos.x + (sway + st.lagX) * ads, st.pos.y + (bob * 0.6 + st.lagY) * ads + shake, st.pos.z + this.recoil * 0.12);
-    vm.rotation.set(st.rot.x + this.recoil * 0.3 + st.lagY * 2 * ads, st.rot.y + st.lagX * 1.5 * ads, st.rot.z + this.recoilRoll * 0.1);
+    const jo = this._jolt || 0, jr = this._joltR || 0; vm.position.set(st.pos.x + (sway + st.lagX) * ads + jr * 0.2, st.pos.y + (bob * 0.6 + st.lagY) * ads + shake - jo * 0.07, st.pos.z + this.recoil * 0.12 + jo * 0.03);
+    vm.rotation.set(st.rot.x + this.recoil * 0.3 + st.lagY * 2 * ads - jo * 0.22, st.rot.y + st.lagX * 1.5 * ads, st.rot.z + this.recoilRoll * 0.1 + jr * 0.5);
     // moving parts
     this.vmBreech.rotation.z = -2.0 * breechOpen;
     this.vmCyl.position.x = -0.04 * cylOut;
@@ -5513,14 +5536,16 @@ class Renderer {
       const eyeH = mounted ? 2.35 : (hero.downT > 0 ? 0.5 : 1.6 - slideK * 0.55);
       const sh = this.shake; const sx = (Math.random() - 0.5) * sh * 0.1, sy = (Math.random() - 0.5) * sh * 0.1;
       cam.position.set(hx + sx, hy + eyeH + sy + this.camBob, hz); this._viewYaw = view.yaw; this._viewPitch = view.pitch;
-      const pitch = view.pitch + this.recoil * 0.06 + (Math.random() - 0.5) * sh * 0.02; const yaw = view.yaw + (Math.random() - 0.5) * sh * 0.02;
+      this.impStep(dt); const IM = this.imp; const flin = hero.flinchT > 0 ? Math.min(1, hero.flinchT / 0.35) : 0; cam.position.y -= flin * 0.07; cam.position.x -= Math.sin(view.yaw) * IM.x; cam.position.z -= Math.cos(view.yaw) * IM.x;
+      const pitch = view.pitch + this.recoil * 0.06 + (Math.random() - 0.5) * sh * 0.02 + IM.p; const yaw = view.yaw + (Math.random() - 0.5) * sh * 0.02 + IM.y;
       const cp = Math.cos(pitch); T.v.set(cam.position.x + Math.sin(yaw) * cp, cam.position.y + Math.sin(pitch), cam.position.z + Math.cos(yaw) * cp);
       { const big = hero.champ && (hero.spinT > 0 || hero.dashT > 0 || hero.castT > 0 || hero.vault || hero.plunge); this.tp = (this.tp || 0) + ((big ? 1 : 0) - (this.tp || 0)) * (1 - Math.exp(-dt * (big ? 9 : 4)));
         if (this.tp > 0.01) { const k = this.tp * this.tp * (3 - 2 * this.tp); const back = 4.6 * k, up = 1.1 * k, side = 0.9 * k; const fx = Math.sin(yaw), fz = Math.cos(yaw);
           cam.position.set(cam.position.x - fx * back - fz * side, cam.position.y + up, cam.position.z - fz * back + fx * side); T.v.y -= 0.4 * k; T.v.x = lerp(T.v.x, hx + fx * 3, k); T.v.z = lerp(T.v.z, hz + fz * 3, k); T.v.y = lerp(T.v.y, hy + 1.4, k); } }
-      cam.lookAt(T.v); this.dodgeRoll = (this.dodgeRoll || 0) * Math.exp(-dt * 7); cam.rotateZ(this.recoilRoll * 0.03 + (hero.downT > 0 ? 0.6 : 0) + this.camRoll + this.dodgeRoll + (this.slideRoll || 0)); cam.rotateX(this.camPitch); cam.translateZ(-this.camPush);
+      cam.lookAt(T.v); this.dodgeRoll = (this.dodgeRoll || 0) * Math.exp(-dt * 7); cam.rotateZ(this.recoilRoll * 0.03 + (hero.downT > 0 ? 0.6 : 0) + this.camRoll + this.dodgeRoll + (this.slideRoll || 0) + IM.r + flin * 0.03); cam.rotateX(this.camPitch); cam.translateZ(-this.camPush);
       this.fov += (this.fovTarget - this.fov) * (1 - Math.exp(-dt * 14));
-      if (Math.abs(cam.fov - this.fov) > 0.05) { cam.fov = this.fov; cam.updateProjectionMatrix(); }
+      { const f = this.fov - IM.fov; if (Math.abs(cam.fov - f) > 0.05) { cam.fov = f; cam.updateProjectionMatrix(); } }
+      this._jolt = IM.jolt + flin * 0.5; this._joltR = IM.r;
       this.updateViewmodel(hero, alpha, dt, clamp(hero.speedNow / 3.5, 0, 1), mounted);
       this.vm.visible = hero.downT <= 0 && (this.tp || 0) < 0.3; this.vmArms.visible = this.vm.visible; if (!this.vm.visible) { this.vmShield.visible = false; this.vmBow.visible = false; }
     } else {
@@ -6862,7 +6887,7 @@ function moraleWord(sq) { if (sq.routing) return 'routing'; if (sq.def.fearless)
 function updateHUD(dt) {
   const sim = state.sim, r = state.renderer; const hero = localHero(); const me = sim.players[state.localIdx];
   if (state.toastT > 0) { state.toastT -= dt; if (state.toastT <= 0) $('toast').classList.remove('show'); }
-  $('vignette').style.opacity = r.hitFlash > 0 ? Math.min(1, r.hitFlash * 1.6) : 0;
+  $('vignette').style.opacity = r.hitFlash > 0 || r.imp.blur > 0.02 ? Math.min(1, r.hitFlash * 1.6 + r.imp.blur * 0.4) : 0; $('vignette').style.transform = r.imp.blur > 0.02 ? `scale(${1 + r.imp.blur * 0.06})` : '';
   $('parry').style.opacity = r.parryFlash > 0 ? r.parryFlash : 0;
   if (hero && !hero.dead && !Input.cmdMode && sim.phase === 1) { // a horseman bearing down on you: warn in time to dodge or brace
     state.cavT = (state.cavT || 0) - dt; if (state.cavT <= 0) { for (const v of sim.teamAlive[1 - hero.team]) { if (!v.mounted || Math.abs(v.hspeed || 0) < 5.5) continue; const dx = hero.x - v.x, dz = hero.z - v.z, d = Math.hypot(dx, dz); if (d > 28 || d < 3) continue; if ((dx * Math.sin(v.yaw) + dz * Math.cos(v.yaw)) / d < 0.9) continue;
@@ -7472,4 +7497,5 @@ function depHUD(dt) {
 
 })();
 </script>
+
 </body></html>
