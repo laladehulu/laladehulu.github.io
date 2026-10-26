@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v50</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v51</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1360,7 +1360,7 @@ class Sim {
   }
   // ---------- main step ----------
   step(inputs) {
-    this.tick++; this.events.length = 0; this.flowBudget = 3;
+    this.tick++; this.events.length = 0; this.flowBudget = 6;
     const units = this.units;
     for (let i = 0; i < units.length; i++) { const u = units[i]; u.px = u.x; u.py = u.y; u.pz = u.z; u.pyaw = u.yaw; u.phyaw = u.hyaw; }
     this.teamAlive[0].length = 0; this.teamAlive[1].length = 0;
@@ -1882,6 +1882,7 @@ class Sim {
     if (u.downT > 0 && u.type !== 'horse') { const k = u.downT; u.downT = 0; if (!u.dead && u.st !== ST_RELOAD) { u.st = ST_STUN; u.stT = 0; u.stunDur = Math.min(0.55, 0.25 + k * 0.15); u.blocking = false; u.aiming = false; } u.mx *= 0.3; u.mz *= 0.3; }
     if (u.downT > 0) { u.downT -= DT; u.blocking = false; u.aiming = false; if (u.st !== ST_RELOAD) { u.st = ST_IDLE; u.stT = 0; } u.mx = 0; u.mz = 0; if (u.mounted || u.type === 'horse') u.hspeed *= 0.8; }
     if (!u.ctrlActive) this.unitAI(u);
+    if (!u.ctrlActive && u.mount < 0 && !u.mounted && u.type !== 'horse' && !u.airborne && u.def.ai !== 'cannon') this.steerAround(u);
     this.updateCombatState(u);
     this.integrate(u);
   }
@@ -2695,7 +2696,7 @@ class Sim {
         while (id >= 0) {
           if (id > i) {
             const v = us[id];
-            if (!v.dead && v.mount < 0) {
+            if (!v.dead && v.mount < 0 && !(u.team === v.team && ((u.ghostT || 0) > 0 || (v.ghostT || 0) > 0))) {
               const dx = v.x - u.x, dz = v.z - u.z, rr = r + v.def.r; const d2 = dx * dx + dz * dz;
               if (d2 < rr * rr && Math.abs(v.y - u.y) < 2) {
                 let d = Math.sqrt(d2), nx, nz;
@@ -4025,7 +4026,7 @@ Sim.prototype.kitSwitch = function (u, i) {
   if (!(u.st === ST_IDLE || u.st === ST_RELOAD || u.st === ST_AIM)) return false;
   const cur = u.kit[u.kitI]; if (cur) cur.am = u.ammo;
   const sl = u.kit[i]; u.kitI = i; u.def = this.kitDef(u, sl); const w = sl.o ? sl.w : WPN[sl.k].w;
-  u.role = WPN[sl.k].role || u.baseRole; u.club = false;
+  u.kitRole = sl.o ? undefined : (WPN[sl.k].role || ''); u.club = false; // his place in the team (u.role) never changes; kitRole only says which long weapon he holds
   const g = gunOf(u.def, w); u.ammo = sl.am !== undefined ? sl.am : g ? (g.mag || 1) : 0; if (g) u.shots = Math.max(u.shots || 0, 20);
   u.nextWeapon = w; u.st = ST_SWAP; u.stT = 0; u.blocking = false; u.aiming = false; u.fireQ = 0;
   this.events.push({ t: 'kitswap', id: u.id, k: sl.k }); return true;
@@ -4067,6 +4068,49 @@ Sim.prototype.assaultCap = function () {
   // the defenders' reserves count against the same field: garrison plus reserves never exceed the cap
   // (an assault needs odds: the attackers field the full cap, the defenders about 70% of it, as before the cap)
   fit(groups(1 - A, false).concat(groups(1 - A, true)), Math.max(16, Math.round(CAP * 0.7) - humanDef));
+};
+// ---------- getting round things instead of pushing into them ----------
+// Every walking AI man looks a few paces ahead along the way he means to go. A tree, rock, stake or the corner of a
+// house in his path: he bends his course to pass it on the roomy side, early and smoothly, instead of walking into it
+// and being shoved back. A comrade standing in the way, or coming head-on: step round him (head-on, both keep right).
+// And if for all that he has hardly moved for half a second while meaning to, he is stuck: he side-steps, re-plans his
+// route, and if it keeps happening he squeezes past his own men for a moment. Deterministic: no randomness, ids only.
+Sim.prototype.steerAround = function (u) {
+  if (u.ghostT > 0) u.ghostT -= DT; if (u.unstickT > 0) u.unstickT -= DT;
+  const sp = len(u.mx, u.mz);
+  if (sp < 0.35) { u.stkX = u.x; u.stkZ = u.z; u.stkK = this.tick; u.stkN = 0; return; }
+  let dx = u.mx / sp, dz = u.mz / sp; const nx = dz, nz = -dx, r = u.def.r; let ax = 0, az = 0;
+  // 1. trees, rocks and stakes
+  { const look = clamp(sp * 0.6, 1.4, 3.4), cs = this.cellSize, W = this.gridW; const cx = Math.floor((u.x + HALF + 5) / cs), cz = Math.floor((u.z + HALF + 5) / cs);
+    let bt = 1e9, bs = 0, br = 0;
+    for (let oz = -1; oz <= 1; oz++) for (let ox = -1; ox <= 1; ox++) { const gx = cx + ox, gz = cz + oz; if (gx < 0 || gz < 0 || gx >= W || gz >= W) continue;
+      let oid = this.obsHead[gz * W + gx];
+      while (oid >= 0) { const o = this.obstacles[oid]; oid = this.obsNext[oid]; const rx = o.x - u.x, rz = o.z - u.z; const t = rx * dx + rz * dz; if (t < -0.1 || t > look + o.r) continue;
+        const s = rx * nx + rz * nz, clr = r + o.r + 0.15; if (s >= clr || s <= -clr) continue; if (t < bt) { bt = t; bs = s; br = clr; } } }
+    if (bt < 1e9) { const side = bs > 0.02 ? -1 : bs < -0.02 ? 1 : ((u.id & 1) ? 1 : -1); const w = 1 - clamp(bt / (look + 0.5), 0, 1); const k = (0.7 + 1.6 * w) * clamp((br - Math.abs(bs)) / br + 0.3, 0.3, 1.3); ax += nx * side * k; az += nz * side * k; } }
+  // 2. the corner or face of a house, wall or palisade just ahead: slide along it toward the nearer end
+  { const look = clamp(sp * 0.45, 1.0, 2.4), px = u.x + dx * look, pz = u.z + dz * look; const bl = this.boxCells[this.cellOf(px, pz)];
+    if (bl) for (let k = 0; k < bl.length; k++) { const b = this.boxes[bl[k]]; if (b.hw < 0.1 || b.kind === 'gate' || (b.lad && b.lad.up)) continue; const ex = b.hw + r + 0.1, ez = b.hd + r + 0.1;
+      if (Math.abs(px - b.x) >= ex || Math.abs(pz - b.z) >= ez) continue;
+      if (Math.abs(u.x - b.x) >= ex - 0.05) { const tz = Math.abs(dz) > 0.15 ? Math.sign(dz) : (u.z >= b.z ? 1 : -1); ax += -dx * 0.9; az += tz * 1.1; }
+      else { const tx = Math.abs(dx) > 0.15 ? Math.sign(dx) : (u.x >= b.x ? 1 : -1); ax += tx * 1.1; az += -dz * 0.9; }
+      break; } }
+  // 3. a comrade in the way
+  { const n = this.gatherNear(u.x, u.z, 1.8); let bt = 1e9, bs = 0, head = false;
+    for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.team !== u.team || v.mount >= 0 || v.type === 'horse') continue;
+      const rx = v.x - u.x, rz = v.z - u.z, t = rx * dx + rz * dz; if (t <= 0.05 || t > 1.7) continue; const s = rx * nx + rz * nz, clr = r + v.def.r + 0.05; if (s >= clr || s <= -clr) continue;
+      const vv = len(v.mx, v.mz), along = vv > 0.3 ? (v.mx * dx + v.mz * dz) / vv : 0; if (along > 0.6 && vv > sp * 0.6) continue; // he is walking the same way: follow him
+      if (t < bt) { bt = t; bs = s; head = along < -0.4; } }
+    if (bt < 1e9) { const side = head ? 1 : bs > 0.02 ? -1 : bs < -0.02 ? 1 : ((u.id & 1) ? 1 : -1); const k = 0.9 * (1 - clamp(bt / 1.8, 0, 1)) + 0.25; ax += nx * side * k; az += nz * side * k; } }
+  // 4. stuck: meaning to move, hardly moving
+  if (u.stkK === undefined || this.tick - u.stkK > 30) { u.stkX = u.x; u.stkZ = u.z; u.stkK = this.tick; u.stkN = 0; }
+  else if (this.tick - u.stkK >= 15) { const moved = len(u.x - u.stkX, u.z - u.stkZ), want = sp * 0.5;
+    if (moved < want * 0.22) { u.stkN = (u.stkN || 0) + 1; u.unstickT = 0.6; u.unstickS = ((u.id + u.stkN) & 1) ? 1 : -1; u.navT = 0; if (u.stkN >= 2) u.ghostT = 0.7; } else u.stkN = 0;
+    u.stkX = u.x; u.stkZ = u.z; u.stkK = this.tick; }
+  if (u.unstickT > 0) { ax += nx * u.unstickS * 1.3 - dx * 0.2; az += nz * u.unstickS * 1.3 - dz * 0.2; }
+  if (ax === 0 && az === 0) return;
+  let fx = dx + ax, fz = dz + az; const fl = len(fx, fz); if (fl < 1e-4) { fx = nx; fz = nz; } else { fx /= fl; fz /= fl; }
+  u.mx = fx * sp; u.mz = fz * sp;
 };
 // a man you play gets his breath and some strength back once he's out of the fight: nobody hurt him for 6 s and no
 // enemy within 12 m; he mends about 4% of his health a second, up to full
@@ -7507,12 +7551,12 @@ class Renderer {
     else if (w === 'katana' && arm === 'mace') { segW(f.hilt, -0.2, 0.03, 0.045, 0.045); segW(f.blade, 0.03, 0.62, 0.07, 0.07); }
     else if (w === 'katana' && arm === 'jian') { segW(f.hilt, -0.2, 0.03, 0.035, 0.08); segW(f.blade, 0.03, 0.86, 0.018, 0.045); }
     else if (w === 'katana') { if (big) { segW(f.hilt, -0.55, 0.03, 0.045, 0.05); segW(f.blade, 0.03, 1.2, 0.03, 0.085); } else { segW(f.hilt, -0.2, 0.03, 0.04, 0.045); segW(f.blade, 0.03, 0.72, 0.026, 0.075); } }
-    else if (w === 'yari') { if (u.role === 'spear') segW(f.hilt, 3.55, 3.7, 0.1, 0.1); else segW(f.hilt, 1.7, 1.86, 0.11, 0.11); } else f.hilt.setMatrixAt(slot, Z);
-    if (w === 'yari') { if (u.role === 'spear') { segW(f.yari, -0.9, 3.7, 0.042, 0.042); segW(f.blade, 3.7, 4.0, 0.02, 0.06); } else { segW(f.yari, -0.8, 1.85, 0.045, 0.045); segW(f.blade, 1.85, 2.15, 0.02, 0.06); } } // the duck team's 長槍 is about 1丈5尺, near 5 m
+    else if (w === 'yari') { if ((u.kitRole !== undefined ? u.kitRole : u.role) === 'spear') segW(f.hilt, 3.55, 3.7, 0.1, 0.1); else segW(f.hilt, 1.7, 1.86, 0.11, 0.11); } else f.hilt.setMatrixAt(slot, Z);
+    if (w === 'yari') { if ((u.kitRole !== undefined ? u.kitRole : u.role) === 'spear') { segW(f.yari, -0.9, 3.7, 0.042, 0.042); segW(f.blade, 3.7, 4.0, 0.02, 0.06); } else { segW(f.yari, -0.8, 1.85, 0.045, 0.045); segW(f.blade, 1.85, 2.15, 0.02, 0.06); } } // the duck team's 長槍 is about 1丈5尺, near 5 m
     else if (w !== 'katana') f.blade.setMatrixAt(slot, Z);
     if (w !== 'yari' && !(w === 'katana' && arm === 'guandao')) f.yari.setMatrixAt(slot, Z);
     { // the mandarin duck's special arms: 狼筅 wolf-brush (a bamboo trunk left bristling with branches) and 镗钯 tangba (three-pronged fork)
-      const role = u.role, brush = w === 'yari' && role === 'brush', fork = w === 'yari' && role === 'trident'; let n = 0;
+      const role = (u.kitRole !== undefined ? u.kitRole : u.role), brush = w === 'yari' && role === 'brush', fork = w === 'yari' && role === 'trident'; let n = 0;
       if (brush || fork) { let ex = dy * 0 - dz * 1, ey = 0, ez = dx * 1 - dy * 0; let el = Math.hypot(ex, ey, ez); if (el < 1e-3) { ex = 1; ey = 0; ez = 0; el = 1; } ex /= el; ey /= el; ez /= el; const fx = dy * ez - dz * ey, fy = dz * ex - dx * ez, fz = dx * ey - dy * ex;
         if (brush) { segW(f.yari, -0.8, 3.3, 0.055, 0.05); f.blade.setMatrixAt(slot, Z); f.hilt.setMatrixAt(slot, Z);
           for (let k = 0; k < 9; k++) { const sk = 1.6 + k * 0.2, a = k * 2.4 + 0.5, L = 0.5 - k * 0.03; const bx = P(sk, 0), by = P(sk, 1), bz = P(sk, 2); const ox = (ex * Math.cos(a) + fx * Math.sin(a)) * L, oy = (ey * Math.cos(a) + fy * Math.sin(a)) * L, oz = (ez * Math.cos(a) + fz * Math.sin(a)) * L;
@@ -7552,7 +7596,7 @@ class Renderer {
     // blade trail while the cut is moving
     if (melee && (u.st === ST_RELEASE || (u.st === ST_RECOVER && stT < 0.06))) {
       const cx = this.camera.position.x - x, cz = this.camera.position.z - z;
-      if (cx * cx + cz * cz < 45 * 45) { const t0 = w === 'yari' ? (u.role === 'spear' ? 3.2 : 1.4) : 0.25, t1 = w === 'yari' ? (u.role === 'spear' ? 4.0 : 2.15) : 0.8; this.trailPush(u.id, P(t0, 0), P(t0, 1), P(t0, 2), P(t1, 0), P(t1, 1), P(t1, 2), u.team === this.localTeam); }
+      if (cx * cx + cz * cz < 45 * 45) { const t0 = w === 'yari' ? ((u.kitRole !== undefined ? u.kitRole : u.role) === 'spear' ? 3.2 : 1.4) : 0.25, t1 = w === 'yari' ? ((u.kitRole !== undefined ? u.kitRole : u.role) === 'spear' ? 4.0 : 2.15) : 0.8; this.trailPush(u.id, P(t0, 0), P(t0, 1), P(t0, 2), P(t1, 0), P(t1, 1), P(t1, 2), u.team === this.localTeam); }
     }
   }
   // ---------- blade trails ----------
@@ -7706,7 +7750,7 @@ class Renderer {
     if (this.vmBow.visible) { const dr = hero.st === ST_AIM || hero.aiming ? 1 : 0; this.vmBow.position.set(-0.05 + dr * 0.04, -0.12 + dr * 0.08, -0.55); this.vmBow.rotation.set(0, 0, 0.2 - dr * 0.15); }
     { const arm = hero.def.arm, K = this.vmKatana.scale; if (arm === 'guandao') K.set(1.1, 1.8, 2.2); else if (arm === 'mace') K.set(3, 0.72, 1.3); else if (arm === 'jian') K.set(0.75, 1.15, 0.6); else K.set(1, 1, 1); }
     { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * 14); const k = this.vmShieldK; tp.set(-0.42 + k * 0.15, -0.36 + k * 0.05, -0.55 - k * 0.07); this.vmShield.rotation.set(0.1 + k * 0.12, 0.5 - k * 0.3, k * 0.12); } }
-    const yrole = w === 'yari' ? hero.role : null; this.vmYari.scale.y = yrole === 'spear' ? 1.75 : 1; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
+    const yrole = w === 'yari' ? (hero.kitRole !== undefined ? hero.kitRole : hero.role) : null; this.vmYari.scale.y = yrole === 'spear' ? 1.75 : 1; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
     // a three-eyed gun model added by a campaign (vmSj) replaces the musket parts every frame, whoever you now are
     { const cl = !!hero.club && w === 'rifle'; this.vmRifle.rotation.y = cl ? Math.PI : 0; this.vmRifle.rotation.x = cl ? -0.25 : 0; this.vmRifle.position.z = cl ? -1.05 : 0; this.vmRifle.position.y = cl ? 0.05 : 0; }
     if (this.vmSj) { const on = hero.type === 'rifle_spencer'; this.vmSj.visible = on; for (const c of this.vmRifle.children) { if (c === this.vmSj) continue; if (c === this.vmXbar) { if (on) c.visible = false; continue; } c.visible = !on; } }
@@ -10681,7 +10725,8 @@ const SPEECH = (() => {
     const range = o.loud ? 48 : 26;
     const mine = (v) => { const sim = state.sim, me = sim && sim.players[state.localIdx]; if (!v || !me) return false; if (nameOf(v.id)) return true; const sq = v.squad >= 0 ? sim.squads[v.squad] : null; return !!sq && (v.squad === me.soldierSq || sq.owner === state.localIdx); };
     // the stack is for your own men, and for the named commanders whose words carry the story; everyone else speaks only where he stands
-    if (prio >= 2 && u && !u.dead && (mine(u) || (prio >= 3 && o.who))) { const n0 = o.who || nameOf(id); comms(u, prio >= 3 ? 'story' : 'alert', typeof n0 === 'string' ? n0 : n0 ? n0.zh + ' ' + n0.en : '', zh, en, o.dur || (prio >= 3 ? Math.min(8, 3 + (en || '').length / 20) : 4.5)); if (prio >= 3 && (!L || Math.hypot(u.x - L.x, u.z - L.z) > range)) return true; }
+    const self = typeof localHero === 'function' && localHero() && localHero().id === id; // your own words: only the caption at the bottom, not the stack
+    if (prio >= 2 && u && !u.dead && !self && (mine(u) || (prio >= 3 && o.who))) { const n0 = o.who || nameOf(id); comms(u, prio >= 3 ? 'story' : 'alert', typeof n0 === 'string' ? n0 : n0 ? n0.zh + ' ' + n0.en : '', zh, en, o.dur || (prio >= 3 ? Math.min(8, 3 + (en || '').length / 20) : 4.5)); if (prio >= 3 && (!L || Math.hypot(u.x - L.x, u.z - L.z) > range)) return true; }
     if (!u || u.dead || !L || Math.hypot(u.x - L.x, u.z - L.z) > range) { if (o.radio && typeof radio === 'function' && typeof MIS !== 'undefined' && MIS) radio(o.who || 'Voice', `${zh ? zh + '  ' : ''}${en}`); return false; }
     if (prio < 2 && (cool[id] || 0) > now) return false; cool[id] = now + (o.cool || 6);
     for (let i = live.length - 1; i >= 0; i--) if (live[i].id === id) { kill(i); }
