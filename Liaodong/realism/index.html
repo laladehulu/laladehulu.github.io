@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v17</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v18</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1862,7 +1862,7 @@ class Sim {
     const eng = (!ranged && !u.mounted) ? this.engaged() : null; // men already swarming a foe make him a worse pick: spread out along the enemy line
     for (let i = 0; i < enemies.length; i++) { const v = enemies[i]; if (v.inactive || (v.duelWith >= 0 && v.duelWith !== undefined)) continue; const dx = v.x - u.x, dz = v.z - u.z; let d2 = dx * dx + dz * dz;
       if (eng) { const n = eng[v.id] - (u.target === v.id ? 1 : 0); if (n >= 3) d2 *= 5; else if (n === 2) d2 *= 2.2; else if (n === 1) d2 *= 1.25; }
-      if (this.xc && ranged && v.ctrl >= 0 && !this.players[v.ctrl].ai) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 3) d2 *= 8; } if (v.wounded) d2 *= 6; if (this.story && v.zfile && ranged) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 2) d2 *= 4; else if (sh === 1) d2 *= 1.8; } if (v.squad >= 0 && this.squads[v.squad].routing && !u.mounted) d2 *= 1.6; if (sq && sq.focus >= 0 && v.squad === sq.focus && ranged) d2 *= 0.45; if (d2 < bd) { bd = d2; best = v.id; } }
+      if (this.xc && ranged && v.ctrl >= 0 && !this.players[v.ctrl].ai) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 3) d2 *= 8; } if (v.wounded) d2 *= v.downed ? 40 : 6; if (this.story && v.zfile && ranged) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 2) d2 *= 4; else if (sh === 1) d2 *= 1.8; } if (v.squad >= 0 && this.squads[v.squad].routing && !u.mounted) d2 *= 1.6; if (sq && sq.focus >= 0 && v.squad === sq.focus && ranged) d2 *= 0.45; if (d2 < bd) { bd = d2; best = v.id; } }
     return best;
   }
   aimedAt(id) { if (this.aimTick !== this.tick) { this.aimTick = this.tick; if (!this.aimN || this.aimN.length < this.units.length) this.aimN = new Int16Array(this.units.length + 64); else this.aimN.fill(0); for (const v of this.units) if (!v.dead && v.target >= 0 && isGun(v.def, v.weapon)) this.aimN[v.target]++; } return this.aimN[id]; }
@@ -2267,7 +2267,8 @@ class Sim {
       if (a && Math.abs(wrap(atan2(a.x - u.x, a.z - u.z) - u.yaw)) < 1.4) { dmg *= 0.1; ix *= 0.1; iz *= 0.1; iy = 0;
         if ((cause === 'melee' || cause === 'dash' || cause === 'counter') && len(a.x - u.x, a.z - u.z) < 4.5 && a.type !== 'horse') { a.st = ST_STUN; a.stT = 0; a.stunDur = 1.3; a.blocking = false; a.dashT = 0; this.events.push({ t: 'guardcounter', x: u.x, y: u.y + 1.3, z: u.z, by: u.id, att: a.id }); } } }
     if (u.champ) { u.lastHitTick = this.tick; const a = attackerId >= 0 ? this.units[attackerId] : null; if (a && !a.champ && cause !== 'explosion') dmg *= 0.4; if (u.ironT > 0 && cause !== 'fire' && cause !== 'explosion') { dmg *= 0.3; ix *= 0.2; iz *= 0.2; iy = 0; } }
-    const mult = u.downT > 0 ? 1.5 : 1;
+    if (u.downed && attackerId >= 0 && this.units[attackerId].target !== u.id && dmg < 1e5) return false; // a man on the ground is only finished on purpose, not by a swing meant for someone else
+    const mult = u.downT > 0 && !u.downed ? 1.5 : 1;
     u.hp -= dmg * mult; u.hitT = 0.3;
     const m = 1 / u.mass;
     u.vx += ix * m; u.vz += iz * m;
@@ -3145,6 +3146,63 @@ const MISSIONS = {
     ],
     win: 'You came out of the pass.',
   },
+  // ===== 浙兵 · Chapter Two: the Hun River, spring 1621. The Sichuan White Poles stand north of the bridge, the
+  // Zhejiang men in their wagon camp south of it. History says both are destroyed; your task is your own file.
+  hunz: {
+    title: '渾河 · The Hun River', year: 'Spring 1621', battle: 'toba', side: 0, soldier: { group: 'zhe' }, hidden: true, ch: 2,
+    brief: 'Shenyang has fallen. The relief army from Liaoyang has come too late: the Sichuan White Poles are across the bridge on the north bank, the Zhejiang men dug in five li south of it. You lead your file in Qi Jin\'s camp.',
+    start: [56, -64, 0],
+    zones: [{ key: 'sbridge', x: 74, zr: -15, r: 10, name: 'South end of the bridge' }, { key: 'camp', x: 58, z: -62, r: 20, name: 'The Zhejiang camp', owner: 0, rate: 0.5 },
+      { key: 'road', x: -62, z: -134, r: 15, name: 'The Liaoyang road' }],
+    forts: [[44, -62, 0.5, 12, 1.6, 'palisade'], [72, -62, 0.5, 12, 1.6, 'palisade'], [58, -49, 12, 0.5, 1.6, 'palisade'], [49, -75, 5, 0.5, 1.5, 'palisade'], [67, -75, 5, 0.5, 1.5, 'palisade'],
+      [51, -53, 2, 1.1, 1.4, 'mantlet'], [58, -53, 2, 1.1, 1.4, 'mantlet'], [65, -53, 2, 1.1, 1.4, 'mantlet']],
+    groups: {
+      zhe: { team: 0, name: 'Qi Jin', zh: '戚金', army: ['yuanyang', 'rifle_imp', 'yuanyang', 'rifle_imp', 'samurai'], at: [58, -64, 0], dir: ['hold', 58, -60], stay: true },
+      chen: { team: 0, name: 'Chen Ce', zh: '陳策', army: ['samurai', 'rifle_imp'], at: [70, -40, 0], dir: ['hold', 72, -38] },
+      sichuan: { team: 0, name: 'Qin Bangping (White Poles)', zh: '秦邦屏', army: ['ashigaru', 'ashigaru', 'ashigaru', 'ashigaru', 'samurai'], at: [74, 30, 0], dir: ['hold', 74, 32] },
+      bayara: { team: 1, name: 'The red Bayara', zh: '紅巴牙喇', army: ['shinsengumi', 'shinsengumi', 'cavalry'], at: [60, 138, PI], reserve: true, stay: true },
+      rw: { team: 1, name: 'The right wing', army: ['samurai', 'samurai', 'ashigaru', 'archer', 'cavalry'], at: [100, 138, PI], reserve: true, stay: true },
+      guns: { team: 1, name: 'The Shenyang guns', army: ['cannon4', 'rifle_sho'], at: [86, 112, PI], reserve: true, stay: true, dir: ['hold', 86, 92] },
+      lw: { team: 1, name: 'The left wing', army: ['samurai', 'archer', 'cavalry'], at: [-30, 130, PI], reserve: true },
+      east: { team: 1, name: 'Banners from the east', army: ['samurai', 'archer'], at: [140, -40, -PI / 2], reserve: true },
+      night: { team: 1, name: 'Daišan\'s banners', zh: '代善', army: ['shinsengumi', 'samurai', 'samurai', 'cavalry'], at: [140, -110, -PI / 2], reserve: true },
+      cut: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'cavalry', 'byakkotai'], at: [-140, -96, PI / 2], reserve: true },
+    },
+    phases: [
+      { title: '一 · 橋北 · North of the bridge', text: 'The White Poles have crossed to the north bank. Stand to in the Zhejiang camp with your file and watch the far bank.', show: ['camp'],
+        obj: { survive: 66 }, at: [[1, ['promote']]], waves: [[22, 'bayara', ['hold', 74, 34]]],
+        say: [[3, 'qi', 'Shenyang fell yesterday. General He and General You are both dead.', '瀋陽昨日已陷，賀總兵、尤副總兵俱死。'],
+          [10, 'chen', 'The city is lost. There is nothing left to relieve. We march back to Liaoyang.', '城已陷，救無可救。收兵回遼陽。'],
+          [16, 'sichuan', 'If we cannot save Shenyang, what have we been doing here these three years?', '我輩不能救瀋，在此三年何為！'],
+          [24, 'lookout', 'Red banners on the far bank — the Khan\'s own guard, riding at the Sichuan camp alone!', '北岸紅旗！巴牙喇單獨衝川營了！'],
+          [50, 'lookout', 'They threw them back! The White Poles held!', '打退了！白杆兵頂住了！']] },
+      { title: '二 · 白杆 · The White Poles', text: 'The Jin right wing comes on in strength. Take your file to the south end of the bridge and keep it open, so that whoever can get back across, can.', show: ['sbridge'],
+        start: [['release', 'rw'], ['dir', 'rw', 'hold', 74, 34], ['dir', 'bayara', 'hold', 74, 34]],
+        obj: { all: [{ survive: 80 }, { hold: 'sbridge', t: 40 }] }, waves: [[28, 'guns', ['hold', 86, 92]]],
+        at: [[72, ['kill', 'sichuan']], [74, ['dir', 'sichuan', 'hold', 58, -58]]],
+        say: [[3, 'qi', 'Take your file to the bridge. If the Sichuan men must come back, they come back over it.', '帶你的隊到橋頭去。川兵要退，就從這座橋退。'],
+          [30, 'lookout', 'Guns on the far bank — they are firing the Shenyang cannon into the Sichuan camp!', '北岸有砲！他們拿瀋陽的大砲轟川營！'],
+          [34, 'fang', 'They say Li Yongfang found our gunners among the prisoners and paid them to serve the guns.', '聽說李永芳在俘虜裡找出我們的砲手，賞了銀子讓他們開砲。'],
+          [73, 'lookout', 'Qin Bangping is down! Zhou Dunji is down! The Sichuan men are coming back over the bridge!', '秦邦屏陣亡！周敦吉陣亡！川兵退過橋來了！']] },
+      { title: '三 · 車營 · The wagon camp', text: 'The Jin left wing is over the river. Get your file back inside the camp and hold the line of wagons and palisades.', show: ['camp'], hide: ['sbridge'],
+        start: [['release', 'lw'], ['dir', 'lw', 'hold', 58, -58], ['dir', 'chen', 'hold', 64, -56], ['dir', 'zhe', 'hold', 58, -60]],
+        obj: { all: [{ survive: 110 }, { reach: 'camp' }] }, waves: [[40, 'east', ['hold', 58, -60]]],
+        at: [[64, ['wound', 3]]],
+        say: [[3, 'qi', 'Wagons together! Muskets to the palisade — let them come onto the guns.', '車並起來！銃手上柵——讓他們撞上來。'],
+          [36, 'lookout', 'Shield carts! They are pushing shield carts at the ditch!', '盾車！他們推盾車來填壕了！'],
+          [85, 'qi', 'The powder is nearly gone. Spears forward, shields close up!', '火藥快盡了！長槍向前，藤牌靠攏！']] },
+      { title: '四 · 夜 · The last stand', text: 'Night. The camp cannot hold. Qi Jin orders you out: take your file and your wounded down the Liaoyang road, so that someone lives to tell what happened here.', show: ['road'], hide: ['camp'],
+        start: [['release', 'night'], ['dir', 'night', 'hold', 58, -60], ['kill', 'chen']],
+        obj: { extract: 'road' }, limit: 420, fail: 'The ring closed around the camp.',
+        waves: [[40, 'cut', ['attack']]], at: [[55, ['kill', 'zhe']]],
+        say: [[2, 'soldier', 'General Chen Ce is dead!', '陳總兵陣亡了！'],
+          [6, 'qi', 'A man repays his country today, of all days.', '大丈夫報國，就在今日。'],
+          [12, 'qi', 'You — take your file and your wounded down the Liaoyang road. Someone must live to tell them what happened here.', '你——帶你的人和傷兵走遼陽大路。總得有人活著，把這裡的事說出去。'],
+          [42, 'lookout', 'Horsemen on the road ahead!', '前面路上有馬兵！'],
+          [56, 'lookout', 'General Qi has fallen!', '戚副將陣亡了！']] },
+    ],
+    win: 'You got out by the Liaoyang road.',
+  },
   zcamp: { title: '營 · Camp', year: '', battle: 'zcamp', side: 0, camp: true, hidden: true, brief: '', start: [0, 0, 0], zones: [], groups: {}, phases: [{ title: '營 · Camp', text: '', obj: { never: true } }], win: '' },
 };
 const OPS = { // Assault: attackers with limited manpower take sectors of fortified points one by one; defenders fall back
@@ -3354,7 +3412,10 @@ Sim.prototype.mObj = function (o, el) {
   if (o.arrive) { const z = this.missionZone(o.zone), p = this.players[this.mg[o.arrive].p]; let n = 0, a = 0; for (const id of p.squads) { const q = this.squads[id]; if (!q.alive) continue; a++; if (len(q.cx - z.x, q.cz - z.z) < z.r + 8) n++; } if (a === 0) return -1; if (n < a) return 0; }
   if (o.survive) { if (el < o.survive) return 0; }
   if (o.never) return 0;
-  if (o.extract) { const z = this.missionZone(o.extract); let ok = false; for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead && len(h.x - z.x, h.z - z.z) < z.r + 1) ok = true; } if (!ok) return 0; }
+  if (o.extract) { const z = this.missionZone(o.extract); let ok = false; for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead && len(h.x - z.x, h.z - z.z) < z.r + 1) ok = true; } if (!ok) return 0;
+    // you are out: wait (up to 20 s) for the men of your file who are still on their feet and coming
+    if (this.mv.exT === undefined) { this.mv.exT = this.tick; this.events.push({ t: 'zwait', s: 20 }); }
+    if (this.tick - this.mv.exT < 30 * 20) { for (const u of this.units) { if (!u.zfile || u.dead || u.downed || u.ctrl >= 0) continue; if (u.wounded && u.helpedBy < 0) continue; if (len(u.x - z.x, u.z - z.z) > z.r + 10) return 0; } } }
   return 1;
 };
 Sim.prototype.missionThink = function () {
@@ -3374,7 +3435,7 @@ Sim.prototype.missionThink = function () {
   if (M.soldier) { for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId];
       if (!h || h.dead) { if (!p.respawnT) p.respawnT = this.tick + 30 * 4; else if (this.tick >= p.respawnT) { p.respawnT = 0; const q = this.squads[p.soldierSq]; const mine = q && q.owner === p.idx; p.heroId = -1;
           const ok = this.possess(p, q && q.alive ? q : null) || this.possess(p, this.squads.find(s => s.team === p.team && s.alive && !s.inactive && s.def.ai !== 'cannon'));
-          if (!ok) { this.mOver(false, 'There is no one left to carry on.'); return; } if (mine) p.commanderId = p.heroId; this.events.push({ t: 'zcarry', p: p.idx, id: p.heroId }); } } }
+          if (!ok) { this.mOver(false, 'There is no one left to carry on.'); return; } if (mine) { p.commanderId = p.heroId; for (const id of p.squads) { const q2 = this.squads[id]; if (q2.alive) { q2.order = ORD_FOLLOW; q2.fAx = undefined; } } } this.events.push({ t: 'zcarry', p: p.idx, id: p.heroId }); } } }
   }
   else for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId];
     if (h && h.dead) { if (!p.respawnT) p.respawnT = this.tick + 30 * 10; else if (this.tick >= p.respawnT) { const q = p.squads.map(id => this.squads[id]).find(q => q.alive); const sx = q ? q.cx : M.start[0], sz = q ? q.cz - 6 : M.start[1];
@@ -8218,7 +8279,7 @@ function zTags() {
     const cam = r.camera, W = canvas.clientWidth, H = canvas.clientHeight, h = localHero(), al = r.alpha === undefined ? 1 : Math.max(0, Math.min(1, r.alpha));
     for (const uid in map) { const u = sim.units[uid]; if (!u || u.dead || (h && +uid === h.id)) continue; const rr = ZR[map[uid]]; if (!rr || rr.k === 'me') continue;
       if (typeof SPEECH !== 'undefined' && SPEECH.speaking && SPEECH.speaking(+uid)) continue;
-      const v = ZTAG.v.set(u.px + (u.x - u.px) * al, u.py + (u.y - u.py) * al + (u.mounted ? 2.7 : 1.95), u.pz + (u.z - u.pz) * al); const d = cam.position.distanceTo(v); v.project(cam);
+      const v = ZTAG.v.set(u.px + (u.x - u.px) * al, u.py + (u.y - u.py) * al + (u.mounted ? 3.1 : 2.45), u.pz + (u.z - u.pz) * al); const d = cam.position.distanceTo(v); v.project(cam);
       if (v.z > 1 || Math.abs(v.x) > 1 || Math.abs(v.y) > 1) continue; const look = Math.abs(v.x) < 0.07 && Math.abs(v.y) < 0.2 && d < 32;
       if (d > 12 && !look) continue;
       let e = ZTAG.pool[n]; if (!e) { e = document.createElement('div'); e.className = 'ztag'; document.body.appendChild(e); ZTAG.pool[n] = e; } n++;
