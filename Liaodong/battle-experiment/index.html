@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v3</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v4</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -4554,7 +4554,8 @@ class Renderer {
     this.stuckN = 220; this.stuckNext = 0; this.stuck = new THREE.InstancedMesh(new THREE.BoxGeometry(0.03, 0.03, 0.9), new THREE.MeshLambertMaterial({ color: 0x8a6a3a }), this.stuckN); this.stuck.frustumCulled = false; for (let i = 0; i < this.stuckN; i++) this.stuck.setMatrixAt(i, this.tmp.zero); this.scene.add(this.stuck);
   }
   buildViewmodel() {
-    const vm = new THREE.Group(); this.camera.add(vm); this.vm = vm;
+    const vmFov = new THREE.Group(); this.camera.add(vmFov); this.vmFov = vmFov; // squeezes the first-person kit toward the sight line when the view zooms, so a raised musket doesn't fill the screen
+    const vm = new THREE.Group(); vmFov.add(vm); this.vm = vm;
     const wood = new THREE.MeshLambertMaterial({ color: 0x4a2e18 }), steel = new THREE.MeshLambertMaterial({ color: 0x6b7075 }), brass = new THREE.MeshLambertMaterial({ color: 0xb08d3c }), blade = new THREE.MeshLambertMaterial({ color: 0xd8dee3 }), wrap = new THREE.MeshLambertMaterial({ color: 0x1e1b2a }), black = new THREE.MeshLambertMaterial({ color: 0x2a2a2e });
     const bx = (w, h, d, mat, x, y, z, rx, ry, rz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); if (rx) m.rotation.x = rx; if (ry) m.rotation.y = ry; if (rz) m.rotation.z = rz; m.castShadow = false; return m; };
     // niaochong matchlock: origin at rear sight, long slim barrel along -z, bird-beak stock dropping under the cheek
@@ -4574,11 +4575,11 @@ class Renderer {
     // horn bow held out at arm's length, and a rattan shield on the left arm
     const vb = new THREE.Group(); const bw2 = new THREE.MeshLambertMaterial({ color: 0x5a3b1e });
     vb.add(bx(0.03, 0.42, 0.035, bw2, 0, 0.2, -0.02, -0.25)); vb.add(bx(0.03, 0.42, 0.035, bw2, 0, -0.2, -0.02, 0.25)); vb.add(bx(0.006, 0.8, 0.006, new THREE.MeshLambertMaterial({ color: 0xe8e2cc }), 0, 0, 0.07));
-    vb.visible = false; this.camera.add(vb); this.vmBow = vb;
+    vb.visible = false; vmFov.add(vb); this.vmBow = vb;
     const sh = new THREE.Group(); const disk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 18), new THREE.MeshLambertMaterial({ color: 0xa8844a })); disk.rotation.x = Math.PI / 2; sh.add(disk);
     const boss = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 10), new THREE.MeshLambertMaterial({ color: 0x8a2a20 })); boss.rotation.x = Math.PI / 2; boss.position.z = -0.03; sh.add(boss);
     for (let k = 0; k < 4; k++) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.08 + k * 0.055, 0.006, 4, 24), new THREE.MeshLambertMaterial({ color: 0x7a5a2a })); r.position.z = -0.022; sh.add(r); }
-    sh.visible = false; this.camera.add(sh); this.vmShield = sh;
+    sh.visible = false; vmFov.add(sh); this.vmShield = sh;
     // three-eyed hand cannon: three iron barrels round a wooden haft; the cluster turns between shots
     const rev = new THREE.Group();
     const cyl = new THREE.Group(); for (let k = 0; k < 3; k++) { const a = k * 2.094; cyl.add(bx(0.026, 0.026, 0.3, steel, Math.cos(a) * 0.022, Math.sin(a) * 0.022, -0.15)); } cyl.add(bx(0.07, 0.07, 0.03, steel, 0, 0, -0.02)); cyl.add(bx(0.07, 0.07, 0.03, steel, 0, 0, -0.28));
@@ -4598,7 +4599,7 @@ class Renderer {
     this.vmHandR = bx(0.045, 0.06, 0.075, skin, 0, 0, 0); this.vmHandL = bx(0.045, 0.06, 0.075, skin, 0, 0, 0); vm.add(this.vmHandR); vm.add(this.vmHandL);
     this.vmCart = bx(0.014, 0.014, 0.06, brass, 0, 0, 0); this.vmCart.visible = false; vm.add(this.vmCart);
     this.vmRod = bx(0.008, 0.008, 0.9, steel, 0, 0, 0); this.vmRod.visible = false; vm.add(this.vmRod);
-    const arms = new THREE.Group(); this.camera.add(arms); this.vmArms = arms;
+    const arms = new THREE.Group(); this.vmFov.add(arms); this.vmArms = arms;
     this.sleeveMat = new THREE.MeshLambertMaterial({ color: 0x8a1f2d });
     const unit = new THREE.BoxGeometry(1, 1, 1);
     this.vmFore = [new THREE.Mesh(unit, this.sleeveMat), new THREE.Mesh(unit, this.sleeveMat)]; this.vmUpper = [new THREE.Mesh(unit, this.sleeveMat), new THREE.Mesh(unit, this.sleeveMat)];
@@ -5522,7 +5523,7 @@ class Renderer {
     for (let i = n; i < this.omSpr.length; i++) this.omSpr[i].visible = false;
   }
   render(alpha, dt, view) {
-    if (this.hitstop > 0) { this.hitstop -= dt; this.present(this.camera); return; }
+    if (this.hitstop > 0 && !this.studio) { this.hitstop -= dt; this.present(this.camera); return; }
     this.time += dt; const sim = this.sim, units = sim.units, T = this.tmp;
     this.fdt = Math.min(0.05, Math.max(0.001, dt)); this.speedLines = 0;
     const local = sim.players[this.localIdx]; const hero = local ? units[local.heroId] : null;
@@ -5549,7 +5550,7 @@ class Renderer {
           cam.position.set(cam.position.x - fx * back - fz * side, cam.position.y + up, cam.position.z - fz * back + fx * side); T.v.y -= 0.4 * k; T.v.x = lerp(T.v.x, hx + fx * 3, k); T.v.z = lerp(T.v.z, hz + fz * 3, k); T.v.y = lerp(T.v.y, hy + 1.4, k); } }
       cam.lookAt(T.v); this.dodgeRoll = (this.dodgeRoll || 0) * Math.exp(-dt * 7); cam.rotateZ(this.recoilRoll * 0.03 + (hero.downT > 0 ? 0.6 : 0) + this.camRoll + this.dodgeRoll + (this.slideRoll || 0) + IM.r + flin * 0.03); cam.rotateX(this.camPitch); cam.translateZ(-this.camPush);
       this.fov += (this.fovTarget - this.fov) * (1 - Math.exp(-dt * 14));
-      { const f = this.fov - IM.fov; if (Math.abs(cam.fov - f) > 0.05) { cam.fov = f; cam.updateProjectionMatrix(); } }
+      { const f = this.fov - IM.fov; if (Math.abs(cam.fov - f) > 0.05) { cam.fov = f; cam.updateProjectionMatrix(); } const vk = Math.min(1, Math.tan(cam.fov * PI / 360) / Math.tan(64 * PI / 360)); this.vmFov.scale.set(vk, vk, 1); }
       this._jolt = IM.jolt + flin * 0.5; this._joltR = IM.r;
       this.updateViewmodel(hero, alpha, dt, clamp(hero.speedNow / 3.5, 0, 1), mounted);
       this.vm.visible = hero.downT <= 0 && (this.tp || 0) < 0.3; this.vmArms.visible = this.vm.visible; if (!this.vm.visible) { this.vmShield.visible = false; this.vmBow.visible = false; }
