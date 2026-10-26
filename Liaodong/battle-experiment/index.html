@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v4</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v5</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1863,6 +1863,7 @@ class Sim {
         if (d <= range && (sq ? sq.fire : true)) {
           let inPlace = true; if (!def.skirmish) { if (u.mounted) this.cavSteer(u, u.x, u.z, 0); else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z, sd = len(sdx, sdz); if (sq && order !== ORD_CHARGE && sd > 1.3 && u.st === ST_IDLE) { this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.8); inPlace = false; } else { u.mx = 0; u.mz = 0; } } }
           else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z; if (len(sdx, sdz) > 0.6) this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.7); else { u.mx = 0; u.mz = 0; } }
+          if (!u.mounted && (u.mx !== 0 || u.mz !== 0)) { const my = atan2(u.mx, u.mz), off = Math.abs(wrap(my - ang)); if (off > 1.9 && len(u.slotX - u.x, u.slotZ - u.z) > 2.5) wantYaw = my; else if (off > 1.6) { u.mx *= 0.5; u.mz *= 0.5; } } // a long way back to his place: turn and walk it, don't skate backward; a step or two back is a slow backpedal
           if (inPlace && u.st === ST_IDLE && u.ammo > 0 && u.flinchT <= 0 && Math.abs(wrap(ang - u.yaw)) < 0.7) {
             u.st = ST_AIM; u.stT = 0; u.aimTarget = tgt.id; u.blocking = false;
             const g0 = gunOf(def, u.weapon); const aimT = Math.round((g0 ? g0.aim : 0.8) * 30);
@@ -4962,11 +4963,12 @@ class Renderer {
     const sq = u.squad >= 0 ? this.sim.squads[u.squad] : null, routing = !!(sq && sq.routing);
     // ---------- locomotion state ----------
     const k8 = 1 - Math.exp(-8 * dt);
-    a.spd += (u.speedNow - a.spd) * k8;
+    let rvx = 0, rvz = 0; if (!mounted) { rvx = (u.x - u.px) * 30; rvz = (u.z - u.pz) * 30; const rs = Math.hypot(rvx, rvz); if (rs > 12) { rvx = rvz = 0; } } // legs follow how the man actually moves, so a shove or a step back is walked, not skated
+    const rsp = mounted ? u.speedNow : Math.hypot(rvx, rvz); a.spd += (Math.max(rsp, Math.min(u.speedNow, rsp + 0.4)) - a.spd) * k8;
     let ryaw = yaw; // root yaw (legs); mounted riders sit along the horse
     if (u.mounted) ryaw = lerpA(u.phyaw, u.hyaw, alpha); else if (u.mount >= 0) { const h = this.sim.units[u.mount]; ryaw = lerpA(h.pyaw, h.yaw, alpha); }
     const cy = Math.cos(ryaw), sy = Math.sin(ryaw);
-    if (!mounted && u.speedNow > 0.3) { const lx = u.mx * cy - u.mz * sy, lz = u.mx * sy + u.mz * cy, l = Math.hypot(lx, lz) || 1; a.mfx += (lx / l - a.mfx) * k8; a.mfz += (lz / l - a.mfz) * k8; }
+    if (!mounted && rsp > 0.3) { const lx = rvx * cy - rvz * sy, lz = rvx * sy + rvz * cy, l = Math.hypot(lx, lz) || 1; a.mfx += (lx / l - a.mfx) * k8; a.mfz += (lz / l - a.mfz) * k8; }
     const spd = mounted ? 0 : a.spd;
     const r = clamp((spd - 2.6) / 1.6, 0, 1), mv = clamp(spd / 1.2, 0, 1);
     const back = a.mfz < -0.3;
