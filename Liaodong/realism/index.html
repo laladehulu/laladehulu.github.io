@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v71</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v72</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1548,7 +1548,7 @@ class Sim {
     if (u.champ && atkPressed && u.dodgeT > 0 && u.dodgeFwd && u.sta >= 10) { u.sta -= 10; u.staT = 0; u.lunge = true; u.blocking = false; u.st = ST_WINDUP; u.stT = 0; u.atkDir = DIR_DOWN; u.windupId++; u.swingHit = false; this.release(u); u.dodgeT = Math.max(u.dodgeT, 0.18); this.events.push({ t: 'lunge', id: u.id, x: u.x, y: u.y, z: u.z }); u.atkHeld = atk; u.blockHeld = blk; return; }
     if (u.champ && atkPressed && u.sta < 8) { if (!u.tiredT || u.tiredT <= 0) { u.tiredT = 0.8; this.events.push({ t: 'tired', id: u.id }); } u.atkHeld = atk; u.blockHeld = blk; return; }
     if (atkPressed && u.flinchT <= 0 && (u.st === ST_IDLE || (u.st === ST_RECOVER && u.stT > u.def.recover * 0.6))) {
-      u.blocking = false; if (u.champ) { const chain = this.tick - (u.lastSwing || -999) < 40; u.combo = chain ? (u.combo || 0) + 1 : 0; u.lastSwing = this.tick; u.sta -= 6 + u.combo * 3; u.staT = 0; } this.startWindup(u, weaponDir(u.weapon, ad));
+      u.blocking = false; if (u.champ) { const chain = this.tick - (u.lastSwing || -999) < 40; u.combo = chain ? (u.combo || 0) + 1 : 0; u.lastSwing = this.tick; u.sta -= 6 + u.combo * 3; u.staT = 0; } this.startWindup(u, u.weapon === 'rifle' && u.club ? ad : weaponDir(u.weapon, ad));
     } else if (blk && u.st !== ST_WINDUP && u.st !== ST_RELEASE && u.st !== ST_KICK && u.st !== ST_SWAP && u.flinchT <= 0 && (u.st === ST_IDLE || u.st === ST_RECOVER || u.st === ST_RELOAD)) {
       if (!u.blocking) { u.blocking = true; u.blockT = 0; u.blockDir = bd; }
       if (u.st === ST_RECOVER) { u.st = ST_IDLE; u.stT = 0; }
@@ -1556,7 +1556,10 @@ class Sim {
     u.atkHeld = atk; u.blockHeld = blk;
   }
   startWindup(u, dir) { if (u.hrT > 0) return; u.wMul = 1;
-    if (u.def.brush && dir === DIR_UP) dir = (u.windupId & 1) ? DIR_LEFT : DIR_RIGHT; // the wolf-brush pokes and sweeps side to side; it is never chopped down overhead if (this.xc && u.ctrl < 0 && u.target >= 0) { const t = this.units[u.target]; if (t && t.ctrl >= 0 && !this.players[t.ctrl].ai) u.wMul = 1.3; }
+    if (u.def.brush && dir === DIR_UP) dir = (u.windupId & 1) ? DIR_LEFT : DIR_RIGHT; /* the wolf-brush pokes and sweeps side to side; it is never chopped down overhead */
+    /* a gun swung as a club is never thrust: the stab becomes an overhead smash (the player) or a smash and side swings in turn (AI) */
+    if (u.weapon === 'rifle' && (u.club || u.ctrl < 0) && dir !== DIR_UP && dir !== DIR_LEFT && dir !== DIR_RIGHT) dir = u.ctrl >= 0 ? DIR_UP : [DIR_UP, DIR_RIGHT, DIR_LEFT][u.windupId % 3];
+    /* (was swallowed by a comment long ago; left off so combat tuning is unchanged) if (this.xc && u.ctrl < 0 && u.target >= 0) { const t = this.units[u.target]; if (t && t.ctrl >= 0 && !this.players[t.ctrl].ai) u.wMul = 1.3; } */
     if (this.xc && u.ctrl >= 0 && !u.champ) { // mashing: each swing in quick succession costs arm; past three in a breath the windups slow and telegraph
       u.spamR = Math.max(0, (u.spamR || 0) - (this.tick - (u.spamTk || 0)) / 45) + 1; u.spamTk = this.tick; u.wMul *= 1 + clamp(u.spamR - 3, 0, 4) * 0.12; }
     u.heavy = false; u.aiHeavy = u.ctrl < 0 && !u.ctrlActive && this.rng.next() < (u.def.overhead ? 0.4 : 0.18); u.st = ST_WINDUP; u.stT = 0; u.atkDir = dir; u.relQ = false; u.windupId++; u.swingHit = false; u.blocking = false; u.aiming = false; this.events.push({ t: 'windup', id: u.id, dir }); }
@@ -6183,6 +6186,23 @@ const KF = {
     stun: KP([-0.2, -0.36, 0.1], N3(0.6, 0.7, -0.2)),
   },
 };
+// a gun swung as a club (the three-eyed gun by its pole, a musket by its barrel): both hands at the end of the shaft, the heavy end out;
+// no thrust at all: a big overhead smash and wide side swings that carry right round
+KF.club = {
+  off2: -0.14,
+  guard: KP([-0.14, -0.2, 0.28], N3(-0.25, 0.9, 0.22)),
+  carry: KP([-0.2, -0.2, 0.14], N3(-0.22, 0.75, -0.62)),
+  atk: [
+    [KP([-0.08, 0.42, 0.02], N3(0, 0.12, -1)), KP([-0.06, 0.32, 0.4], N3(0, 1, 0.22)), KP([-0.04, -0.34, 0.46], N3(0, -0.62, 0.78))],
+    [KP([-0.42, 0.12, -0.06], N3(-0.75, 0.4, -0.52)), KP([-0.1, -0.04, 0.48], N3(0.05, 0.12, 1)), KP([0.36, -0.16, 0.22], N3(0.92, -0.12, -0.2))],
+    null,
+    [KP([0.3, 0.12, -0.02], N3(0.75, 0.4, -0.52)), KP([0.04, -0.04, 0.48], N3(-0.05, 0.12, 1)), KP([-0.4, -0.16, 0.22], N3(-0.92, -0.12, -0.2))],
+  ],
+  block: KF.katana.block,
+  stun: KF.katana.stun,
+};
+KF.club.atk[2] = KF.club.atk[0];
+const BODYC = [[0.1, -0.26, -0.05, 0.42, 0.28], [-0.8, -0.04, 0.66, 0.16, 0.22], [0.1, -0.26, -0.05, 0.42, 0.28], [0.8, -0.04, -0.66, 0.16, 0.22]];
 // body motion per attack direction: [twist at windup, lean at windup, twist at release, lean at release, lunge]
 const BODY = [[0, -0.12, 0, 0.3, 0.22], [-0.45, 0, 0.42, 0.12, 0.2], [-0.15, -0.04, 0.05, 0.18, 0.34], [0.45, 0, -0.42, 0.12, 0.2]];
 // reload paths for the right hand (time 0..1 → chest-local point)
@@ -7092,6 +7112,16 @@ class Renderer {
         R: L(0, 0.15, 0), Lh: L(0, 0.75, 0),
       },
     };
+    // a gun swung as a club: the shaft's end in both fists, the heavy end (three barrels, or a musket's butt) out at the far end
+    this.VM.club = {
+      idle: P(0.32, -0.46, -0.45, -0.78, 0.25, -0.2),
+      windup: [P(0.2, 0.1, -0.28, 0.5, 0.1, 0.15), P(0.66, -0.06, -0.3, -0.3, 0.3, -1.7), null, P(-0.56, -0.06, -0.3, -0.3, -0.3, 1.7)],
+      mid: [P(0.12, 0.08, -0.6, -0.65, 0.08, 0.1), P(0.15, -0.16, -0.7, -1.3, 0.1, -0.2), null, P(0.0, -0.16, -0.7, -1.3, -0.1, 0.2)],
+      release: [P(0.05, -0.62, -0.72, -2.3, 0.05, 0.05), P(-0.66, -0.32, -0.55, -1.2, -0.2, 1.6), null, P(0.7, -0.32, -0.55, -1.2, 0.2, -1.6)],
+      block: this.VM.katana.block, stun: this.VM.katana.stun,
+      R: L(0, 0, 0), Lh: L(0, -0.14, 0),
+    };
+    this.VM.club.windup[2] = this.VM.club.windup[0]; this.VM.club.mid[2] = this.VM.club.mid[0]; this.VM.club.release[2] = this.VM.club.release[0];
     const R0 = L(0, -0.06, 0.14), B = L(0.035, 0.035, -0.08), PO = L(0.2, -0.32, 0.25), Mz = L(0, 0.02, -0.88), BT = L(0, -0.07, 0.42);
     const o = (v, x, y, z) => v.clone().add(L(x, y, z));
     this.VMR = {
@@ -7294,9 +7324,9 @@ class Renderer {
             const k = vic && vic.def ? clamp((ev.dmg || 20) / Math.max(40, vic.def.hp * 0.5), 0.3, 1.5) * (heavyB ? 1.35 : 1) * (ev.killed ? 1.3 : 1) : 0.6;
             if (melee) {
               this.blood(ev.x, ev.y, ev.z, mine ? (heavyB ? 16 : 11) : 7, dx * 2.2, 1, dz * 2.2);
-              if (mine) for (let i = 0; i < (heavyB ? 6 : 4); i++) this.smoke.spawn(ev.x, ev.y, ev.z, dx * rnd(1, 2.5) + rnd(-0.5, 0.5), rnd(0.2, 1.2), dz * rnd(1, 2.5) + rnd(-0.5, 0.5), rnd(0.22, 0.38), 0.12, heavyB ? 0.6 : 0.42, 0.42, 0.03, 0.04, 0.75, 0.9, 6); // a red mist off the cut, gone in a breath
+              /* hit mist, dust and red sparks on the struck man removed (user: no green/red particles on fallen men) */
               if (armd) this.burstSparks(ev.x, ev.y, ev.z, mine ? 10 : 5, 4, 1, 0.8, 0.45, 0.25, 0.07);
-              if (heavyB && vic) this.dust(vic.x, vic.y + 0.15, vic.z, 4, dx * 1.2, 0.5, dz * 1.2, 0.6, 0.5, 0.25, 0.7);
+              /* hit mist, dust and red sparks on the struck man removed (user: no green/red particles on fallen men) */
               AUDIO.play(armd ? 'strikearmor' : heavyB ? 'strikeheavy' : 'strike', ev.x, ev.y, ev.z, mine ? 1.25 : 0.95);
             } else if (shot && vic) { this.dust(ev.x, ev.y, ev.z, 3, dx * 0.6, 0.4, dz * 0.6, 0.25, 0.45, 0.12, 0.45); this.blood(ev.x, ev.y, ev.z, 4, dx * 2.5, 0.6, dz * 2.5); AUDIO.play('strike', ev.x, ev.y, ev.z, 0.5); }
             if (vic && ev.id !== heroId && (melee || shot)) this.hitImpulse(ev.id, dx, dz, k * (shot ? 0.6 : 1), heavyB);
@@ -7322,7 +7352,7 @@ class Renderer {
         case 'entangle': { this.dust(ev.x, ev.y, ev.z, 5, 0, 0.6, 0, 0.6, 0.4, 0.1, 0.5); if (ev.id === heroId) this.hitQ = { text: 'SNARED by wolf-brush — dodge out', t: 1.2, c: '#9fe07a' }; break; }
         case 'hitq': { if (ev.att === heroId) { const T = { clean: ['CLEAN', '#fff'], tip: ['TIP — perfect measure', '#9fe0ff'], jammed: ['JAMMED — too close for a spear', '#ff9a7a'], graze: ['GRAZE — step in', '#ccc'], pinned: ['PINNED', '#9fe07a'], deathblow: ['致命 DEATHBLOW', '#ffd36a'] }[ev.q] || ['HIT', '#fff'];
             this.hitQ = { text: (ev.heavy ? 'HEAVY · ' : '') + T[0], t: 0.9, c: T[1] }; this.hitstop = Math.max(this.hitstop, ev.heavy || ev.q === 'deathblow' ? 0.09 : ev.q === 'tip' ? 0.05 : 0.03); if (ev.heavy || ev.q === 'deathblow') this.shake = Math.max(this.shake, 0.45); }
-          if (ev.heavy || ev.q === 'deathblow') this.burstSparks(ev.x, ev.y, ev.z, 8, 5, 0.7, 0.05, 0.05, 0.6, 0.12); break; }
+          /* hit mist, dust and red sparks on the struck man removed (user: no green/red particles on fallen men) */ break; }
         case 'obstruct': { AUDIO.play('thud', ev.x, ev.y, ev.z, 0.8); if (ev.id === heroId) { this.hitQ = { text: 'BLADE CAUGHT on a comrade — stab (R) in formation', t: 1.4, c: '#e0b070' }; this.shake = Math.max(this.shake, 0.3); } break; }
         case 'kickhit': { this.dust(ev.x, ev.y, ev.z, 4, 0, 1, 0, 1, 0.5, 0.2, 0.6); AUDIO.play('thud', ev.x, ev.y, ev.z, 1); break; }
         case 'trample': { this.dust(ev.x, ev.y + 0.2, ev.z, 10, 0, 2, 0, 2, 1, 0.4, 1.6); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.2); break; }
@@ -7480,7 +7510,7 @@ class Renderer {
     a.ph += (back ? -1.3 : 1) * spd * dt * 6.2832 / (1.35 + r * 0.95); // backpedalling is short, quick steps
     const ph = a.ph;
     // ---------- pose targets ----------
-    const w = u.weapon, clubbing = w === 'rifle' && (u.club || (u.ctrl < 0 && u.st >= 1 && u.st <= 3)), KW = KF[clubbing ? 'katana' : w]; // a gun turned round swings like a club
+    const w = u.weapon, clubbing = w === 'rifle' && (u.club || (u.ctrl < 0 && u.st >= 1 && u.st <= 3)), KW = KF[clubbing ? 'club' : w]; // a gun turned round swings like a club
     const melee = w === 'katana' || w === 'yari' || clubbing;
     const runH = uhash(u.id, 9), runLean = 0.34 + 0.18 * uhash(u.id, 4); // every man runs a little differently: some bent low and driving, some upright
     let lean = 0.03 * mv + runLean * r, twist = -(0.1 + 0.08 * r) * Math.sin(ph) * mv, roll = 0, lunge = 0, crouch = 0.05 * r * uhash(u.id, 5);
@@ -7493,7 +7523,7 @@ class Renderer {
     }
     let rateW = 13, rateB = 10, anchor = 'R', two = true, fkR = false, fkL = false, rod = -1, arrowVis = 0, bowDraw = 0;
     const atkSet = KW && KW.atk ? (KW.atk[u.atkDir] || KW.atk[2]) : null;
-    const B = BODY[u.atkDir] || BODY[2];
+    const B = (clubbing ? BODYC : BODY)[u.atkDir] || BODY[2];
     const reloading = u.st === ST_RELOAD && u.reloadT > 0.6;
     if (routing && !mounted) {
       fkR = true; fkL = true; lean = 0.22; stance = 0;
@@ -7563,7 +7593,7 @@ class Renderer {
           else if (st2 === 1) { G = [-0.15, -0.1 + 0.04 * sw2, 0.18]; D = N3(0.35, 0.85, 0.22); } // sloped on the shoulder
           else if (st2 === 2) { two = false; G = [-0.25, -0.45 + 0.03 * sw2, 0.02 - 0.12 * sw]; D = N3(0.02, 0.2, 1); } // trailed in one hand at the balance, swinging with the stride
           else { G = [-0.18, -0.38 + 0.03 * sw2, 0.12 + 0.04 * sw]; D = N3(0.08, 0.5, 0.86); } } // low at the hip in both hands, point angled up
-        else if (w === 'rifle') { const st2 = Math.floor(runH * 5);
+        else if (w === 'rifle' && !clubbing) { const st2 = Math.floor(runH * 5);
           if (st2 === 0) { G = [-0.14, -0.17 + 0.04 * sw2, 0.24 + 0.05 * sw]; D = N3(0.62, 0.74, 0.16); } // port arms across the chest
           else if (st2 === 1) { two = false; G = [-0.25, -0.5 + 0.03 * sw2, 0.04 - 0.18 * sw]; D = N3(0.04, 0.12 + 0.1 * sw, 1); } // trail arms, swinging at the side
           else if (st2 === 2) { two = false; G = [-0.21, 0.03 + 0.03 * sw2, 0.04]; D = N3(0.16, 0.95, -0.24); } // shouldered
@@ -8009,7 +8039,8 @@ class Renderer {
     { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * 14); const k = this.vmShieldK; tp.set(-0.42 + k * 0.15, -0.36 + k * 0.05, -0.55 - k * 0.07); this.vmShield.rotation.set(0.1 + k * 0.12, 0.5 - k * 0.3, k * 0.12); } }
     const yrole = w === 'yari' ? (hero.kitRole !== undefined ? hero.kitRole : hero.role) : null; this.vmYari.scale.y = yrole === 'spear' ? 1.75 : 1; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
     // a three-eyed gun model added by a campaign (vmSj) replaces the musket parts every frame, whoever you now are
-    { const cl = !!hero.club && w === 'rifle' && hero.type !== 'rifle_spencer'; this.vmRifle.rotation.y = cl ? Math.PI : 0; this.vmRifle.rotation.x = cl ? -0.25 : 0; this.vmRifle.position.z = cl ? -1.05 : 0; this.vmRifle.position.y = cl ? 0.05 : 0; }
+    /* swung as a club the gun is stood on end in the hands: the three-eyed gun by the end of its pole with the barrels up as the head, a musket by the muzzle with the butt up */
+    { const cl = !!hero.club && w === 'rifle', sj = hero.type === 'rifle_spencer'; this.vmRifle.rotation.set(cl ? (sj ? Math.PI / 2 : -Math.PI / 2) : 0, 0, 0); this.vmRifle.position.set(0, cl ? (sj ? 0.4 : 0.66) : 0, 0); }
     if (this.vmSj) { const on = hero.type === 'rifle_spencer'; this.vmSj.visible = on; for (const c of this.vmRifle.children) { if (c === this.vmSj) continue; if (c === this.vmXbar) { if (on) c.visible = false; continue; } c.visible = !on; } }
     this.sleeveMat.color.setHex(torsoColor(hero));
     let target, speed = 14, two = true, cart = false, rod = false, breechOpen = 0, cylOut = 0, shake = 0;
@@ -8049,7 +8080,7 @@ class Renderer {
       this.fovTarget = (hero.aiming && hero.st !== ST_RELOAD && !hero.blocking) ? 42 : (hero.aiming && style === 'lever' ? 42 : 75);
     } else {
       { let near = 99; const sim = this.sim; for (const v of sim.teamAlive[1 - hero.team] || []) { const d = Math.abs(v.x - hero.x) + Math.abs(v.z - hero.z); if (d < near) near = d; } this.fovTarget = near < 7 ? 86 : near < 12 ? 80 : 75; } // see more of the melee around you
-      const K = (hero.club && w === 'rifle' ? this.VM.katana : this.VM[w]) || this.VM.katana; // turned round, a gun is swung like a club: the blade's cuts and smashes, not a bayonet
+      const K = (hero.club && w === 'rifle' ? this.VM.club : this.VM[w]) || this.VM.katana; // turned round, a gun is swung like a club: the blade's cuts and smashes, not a bayonet
       rhT.copy(K.R); lhT.copy(K.Lh);
       const d = hero.atkDir; const W = K.windup[d] || K.windup[2] || K.idle, M = K.mid[d] || K.mid[2] || W, R = K.release[d] || K.release[2] || K.idle;
       const side = d === DIR_RIGHT ? 1 : d === DIR_LEFT ? -1 : 0;
@@ -8074,7 +8105,8 @@ class Renderer {
       this.vmRunK = (this.vmRunK || 0) + ((idleish ? clamp((hero.speedNow - 2.8) / 1.3, 0, 1) : 0) - (this.vmRunK || 0)) * Math.min(1, dt * 7);
       const rk = this.vmRunK; if (rk > 0.01) { const ph = st.ph, s1 = Math.sin(ph), c2 = Math.cos(2 * ph);
         let RP;
-        if (w === 'rifle') RP = P(0.14 + 0.015 * s1, -0.32 + 0.025 * c2, -0.34, 0.42 + 0.04 * s1, 0.75, -0.9 - 0.06 * s1); // port arms: butt low on the right hip, muzzle up past the left shoulder
+        if (w === 'rifle' && hero.club) RP = P(0.32 + 0.02 * s1, -0.44 + 0.03 * c2, -0.42, -0.6 + 0.08 * s1, 0.25, -0.3);
+        else if (w === 'rifle') RP = P(0.14 + 0.015 * s1, -0.32 + 0.025 * c2, -0.34, 0.42 + 0.04 * s1, 0.75, -0.9 - 0.06 * s1); // port arms: butt low on the right hip, muzzle up past the left shoulder
         else if (w === 'katana') RP = P(0.3 + 0.03 * s1, -0.36 + 0.03 * c2, -0.3 - 0.1 * s1, -0.9 + 0.25 * s1, -0.3, -0.25);
         else if (w === 'yari') RP = P(0.2, -0.3 + 0.025 * c2, -0.36 - 0.04 * s1, -0.18, -0.12, 0.12);
         else if (w === 'revolver') RP = P(0.24, -0.34 + 0.03 * c2, -0.3 - 0.08 * s1, -0.7, -0.2, 0.1);
