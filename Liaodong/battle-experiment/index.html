@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v11</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v12</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -3092,11 +3092,12 @@ const MISSIONS = {
           [52, 'chief', 'They give way! Hold the line — nobody chases!', '他們退了！穩住，不許追！']] },
       { title: '三 · 皇太極 · The ridge', text: 'A second Jin host comes down the west ridge into the side of the column.', start: [['release', 'hong'], ['release', 'ridge'], ['dir', 'hong', 'attack']],
         obj: { survive: 48 },
-        at: [[13, ['kill', 'liu']], [17, ['promote']], [23, ['wound', 3]]],
+        at: [[13, ['kill', 'liu']], [17, ['promote']], [23, ['wound', 3]], [30, ['break', 'tusi']]],
         say: [[1, 'fang', 'The west ridge — more banners! The rider lied. Du Song is not coming!', '西嶺上還有！那人是假的，杜總兵不會來了！'],
           [6, 'lookout', 'Arrows from the east slope!', '東坡有弓手！'],
           [14, 'soldier', 'General Liu has fallen! Liu Ting is dead!', '劉總兵陣亡了！']] },
       { title: '四 · 突圍 · Break out', text: 'The column is broken. Get your file back down the valley to the south gorge, where the Koreans are camped. Leave no one who can still walk.', show: ['mouth'],
+        start: [['break', 'liu'], ['dir', 'kang', 'hold', 0, -122]],
         obj: { extract: 'mouth' }, limit: 420, fail: 'The valley closed behind you.',
         waves: [[3, 'chase', ['attack']], [30, 'chase2', ['attack']]],
         say: [[2, 'fang', 'The way we came — the gorge to the south! The Korean camp is beyond it!', '回頭，往南邊的峽口！朝鮮兵在那邊扎營！'],
@@ -3219,6 +3220,7 @@ Sim.prototype.mAct = function (a) {
   else if (a[0] === 'hide') { const z = this.missionZone(a[1]); if (z) z.hidden = true; }
   else if (a[0] === 'kill') { const g = this.mg[a[1]]; if (g) { const h = this.units[this.players[g.p].heroId]; if (h && !h.dead) { h.officer = false; this.applyDamage(h, 1e6, -1, 0, 0, 0, 'arrow'); } this.events.push({ t: 'mkill', gid: a[1], name: g.G.name, zh: g.G.zh || '' }); } }
   else if (a[0] === 'promote') this.zPromote();
+  else if (a[0] === 'break') this.mBreak(a[1]);
   else if (a[0] === 'wound') this.zWound(a[1] | 0);
 };
 // the section chief falls and the file is yours: his squad passes to the man who is left
