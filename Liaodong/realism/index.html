@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v42</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v43</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -413,7 +413,7 @@ body.zgrid #comms { top: 158px; }
     <div class="panel">
       <div class="title"><h1>明清戰爭</h1><span class="en">Ming Dynasty · 1619</span></div>
       <p class="sub">The Ming Dynasty against the rising Manchu Later Jin. Build an army squad by squad, ride in at its head, fight with dao and rifle in first person, or climb to a bird's-eye view and give orders. Deterministic lockstep keeps every peer's battle identical.</p>
-      <p class="sub" style="font-size:12px">Sound: instrument recordings from the Versilian Community Sample Library and VSCO-2 Community Edition (CC0, Versilian Studios); erhu and suona are physical models written for this game; battle effects and the war-drum recordings and the Han-civilization pieces “Red Dawn” and “Hill of Sorrows” (music by Omri Lahav) from <a href="https://play0ad.com" target="_blank" rel="noopener">0 A.D.</a> © Wildfire Games, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>, trimmed and re-encoded.</p>
+      <p class="sub" style="font-size:12px">Sound: instrument recordings from the Versilian Community Sample Library and VSCO-2 Community Edition (CC0, Versilian Studios); erhu and suona are physical models written for this game; battle effects and the war-drum recordings and the Han-civilization pieces “Red Dawn” and “Hill of Sorrows” (music by Omri Lahav) from <a href="https://play0ad.com" target="_blank" rel="noopener">0 A.D.</a> © Wildfire Games, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>, trimmed and re-encoded. Soldiers' voices: shouts and orders synthesised for this game; grunts, cries of pain and death from Warfork and the “80 CC0 creature SFX” packs via the <a href="https://github.com/lavenderdotpet/CC0-Public-Domain-Sounds" target="_blank" rel="noopener">CC0 Public Domain Sounds</a> collection (CC0). <label style="white-space:nowrap"><input type="checkbox" id="optVoice" checked> soldiers' voices</label></p>
       <div class="row">
         <label class="lbl" for="nameIn">Name</label><input type="text" id="nameIn" maxlength="16" value="Commander">
         <label class="lbl" for="factionSeg">Faction</label>
@@ -2049,7 +2049,7 @@ class Sim {
   unitAI(u) {
     const def = u.def, sq = u.squad >= 0 ? this.squads[u.squad] : null;
     u.atkHeld = false; u.blockHeld = false;
-    if (u.camp) { u.mx = 0; u.mz = 0; u.target = -1; return; } // a man at the fire
+    if (u.camp) { this.campThink(u); return; } // a man at the fire: his own small life (campThink)
     if (u.orderly) { this.orderlyAI(u); return; }
     if (u.wounded) { this.woundedAI(u); return; }
     if (this.story && u.team === this.mission.side && u.ctrl < 0 && !u.mounted && def.ai !== 'cannon' && this.aiMedic(u)) return;
@@ -3993,6 +3993,48 @@ Sim.prototype.aiMedic = function (u) {
 
 // a man down and waiting for help drags himself back toward his own people, slowly, and lies still when the enemy is
 // on top of him (playing dead); he stops once a comrade is within reach so whoever comes for him can find him
+// ---- camp life: what a man at the fire is doing (client draws it; u.cAct, u.cLook, u.cRise) ----
+// activities: 0 stand 1 warm hands 2 drink 3 eat 4 squat 5 sharpen 6 mend 7 sleep 8 stretch 9 talk 10 sentry 11 walk
+// 12 feed the fire 13 stir the pot 14 dice 15 pipe. Seated men stay at their place; a few standing men wander.
+const CAMP_SEAT = [1, 2, 3, 5, 6, 15, 4, 12, 14, 7], CAMP_STAND = [0, 2, 8, 9, 10, 0, 15];
+Sim.prototype.campThink = function (u) {
+  const C = this.cfg.camp || {}, rng = this.rng;
+  if (u.cAct === undefined) { u.cHx = u.x; u.cHz = u.z; u.cYaw0 = u.yaw; u.cSeat = u.campPose === 'squat'; u.cWander = !u.cSeat && rng.next() < 0.55; u.cT = (30 * (2 + rng.next() * 10)) | 0; u.cAct = u.cSeat ? CAMP_SEAT[(rng.next() * 6) | 0] : 0; u.cLook = 0; u.cRise = 0; u.cMate = -1; }
+  u.mx = 0; u.mz = 0; u.target = -1;
+  // a man you walk up to looks at you; a seated man close enough to talk to gets up
+  let h = null; for (const p of this.players) { if (p.ai) continue; const v = this.units[p.heroId]; if (v && !v.dead) { h = v; break; } }
+  if (h) { const dx = u.x - h.x, dz = u.z - h.z, d = len(dx, dz), face = d > 0.01 ? (dx * sin(h.yaw) + dz * cos(h.yaw)) / d : 0;
+    const was = u.cLook; u.cLook = d < 2.9 && face > 0.55 ? 1 : d < 1.7 ? 1 : 0; if (u.cLook && !was && u.cAct === 11) { u.cAct = 0; }
+    u.cRise = u.cLook && d < 2.2 && u.cAct !== 7 ? 1 : 0;
+    if (u.cLook) { this.turnTo(u, atan2(h.x - u.x, h.z - u.z), 3 * DT); return; } }
+  if (--u.cT <= 0) { // time for something else
+    u.cMate = -1;
+    if (u.cSeat) { u.cAct = CAMP_SEAT[(rng.next() * CAMP_SEAT.length) | 0];
+      if (u.cAct === 14) { const m = this.campNear(u, 2.4, true); if (m) { u.cMate = m.id; m.cAct = 14; m.cMate = u.id; m.cT = 30 * 20; } else u.cAct = 1; }
+      if (u.cAct === 7 && rng.next() < 0.6) u.cAct = 1; // not everyone sleeps
+      u.cT = (30 * (u.cAct === 7 ? 40 + rng.next() * 30 : 14 + rng.next() * 22)) | 0; }
+    else if (u.cWander && u.cAct !== 11 && rng.next() < 0.6) { // off for a walk: a fire, a tent, a cart, a friend
+      const T = []; for (const f of C.fires || []) { const a = rng.next() * 6.283; T.push([f[0] + sin(a) * 2.3, f[1] + cos(a) * 2.3]); }
+      for (const t of C.tents || []) T.push([t[0], t[1] + t[3] + 1.4]); for (const p of C.props || []) if (p[0] === 'wagon' || p[0] === 'pot' || p[0] === 'rack' || p[0] === 'cart') T.push([p[1] + 1.2, p[2] + 1.2]);
+      for (const v of this.units) if (v.camp && v !== u && !v.cSeat) T.push([v.x + 1.1, v.z + 0.6]);
+      T.push([u.cHx, u.cHz]); const t = T[(rng.next() * T.length) | 0]; u.cTx = t[0]; u.cTz = t[1]; u.cAct = 11; u.cT = 30 * 25; }
+    else { u.cAct = CAMP_STAND[(rng.next() * CAMP_STAND.length) | 0];
+      if (u.cAct === 9) { const m = this.campNear(u, 3.2, false); if (m && m.cAct !== 11) { u.cMate = m.id; if (!m.cSeat && !m.cLook) { m.cAct = 9; m.cMate = u.id; m.cT = 30 * 14; } } else u.cAct = 0; }
+      u.cT = (30 * (10 + rng.next() * 18)) | 0;
+      // by the pot, a standing man stirs it
+      for (const p of C.props || []) if (p[0] === 'pot' && len(p[1] - u.x, p[2] - u.z) < 2.2 && rng.next() < 0.5) { u.cAct = 13; u.cPot = [p[1], p[2]]; } } }
+  if (u.cAct === 11) { const d = len(u.cTx - u.x, u.cTz - u.z);
+    if (d > 0.6) { const y = this.steerFoot(u, u.cTx, u.cTz, 1.25); this.turnTo(u, y, 3 * DT); }
+    else { u.cAct = 9; const m = this.campNear(u, 3, false); if (m) { u.cMate = m.id; if (!m.cSeat && m.cAct !== 11 && !m.cLook) { m.cAct = 9; m.cMate = u.id; m.cT = 30 * 12; } } else { u.cAct = 0; } u.cT = (30 * (8 + rng.next() * 12)) | 0; }
+    return; }
+  // face: the friend you're talking or playing with, the pot you stir, else the fire (or where you were put)
+  let fy = u.cYaw0; const m = u.cMate >= 0 ? this.units[u.cMate] : null;
+  if (m && !m.dead) fy = atan2(m.x - u.x, m.z - u.z);
+  else if (u.cAct === 13 && u.cPot) fy = atan2(u.cPot[0] - u.x, u.cPot[1] - u.z);
+  else if (!u.cSeat && len(u.x - u.cHx, u.z - u.cHz) > 1.5) { let bd = 1e9, bf = null; for (const f of C.fires || []) { const d = len(f[0] - u.x, f[1] - u.z); if (d < bd) { bd = d; bf = f; } } if (bf && bd < 6) fy = atan2(bf[0] - u.x, bf[1] - u.z); }
+  this.turnTo(u, fy, 2 * DT);
+};
+Sim.prototype.campNear = function (u, r, seated) { let best = null, bd = r; for (const v of this.units) { if (!v.camp || v === u || v.dead || !!v.cSeat !== seated) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } } return best; };
 Sim.prototype.zCrawl = function (u) {
   if (this.tick % 6 === u.id % 6) { let best = null, bd = 45, foe = 99, near = false; const n = this.gatherNear(u.x, u.z, 45);
     for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.type === 'horse' || v.camp || v.noncomb) continue; const d = len(v.x - u.x, v.z - u.z);
@@ -4972,21 +5014,23 @@ const VOICE = (() => {
     const res = () => ({ y1: 0, y2: 0 }); const R = [res(), res(), res(), res()], RN = res();
     const step = (s, x, f, bw) => { const r = Math.exp(-Math.PI * bw / SR), c = 2 * r * Math.cos(2 * Math.PI * f / SR); const y = (1 - r) * x * 2 + c * s.y1 - r * r * s.y2; s.y2 = s.y1; s.y1 = y; return y; };
     let ph = 0, gp = 0, jit = 0, shim = 1; const rasp = o.rasp || 0, breath = o.breath || 0.08;
+    let P = null, pf = 0;
     for (let n = 0; n < N; n++) {
-      const t = n / SR, u = t / dur, P = tgt(t);
+      const t = n / SR, u = t / dur; if ((n & 31) === 0) { P = tgt(t); pf = pitch(u); }
       if (n % 220 === 0) { jit = (rnd() - 0.5) * (0.02 + rasp * 0.08); shim = 1 - rnd() * (0.08 + rasp * 0.3); }
-      const f = pitch(u) * (1 + jit); ph += f / SR; if (ph >= 1) ph -= 1;
+      const f = pf * (1 + jit); ph += f / SR; if (ph >= 1) ph -= 1;
       // the glottal pulse (open for 60% of the cycle) and its derivative as it leaves the lips
       const g = ph < 0.6 ? Math.pow(Math.sin(Math.PI * ph / 0.6), 2) : 0; let src = (g - gp) * 6 * shim; gp = g;
       if (rasp > 0 && ph > 0.5 && ph < 0.55) src += (rnd() - 0.5) * rasp * 0.9;
       const env = Math.min(1, t / 0.012, (dur - 0.06 - t) / 0.05 + 0.02); const e = Math.max(0, env);
       const nz = rnd() * 2 - 1; let v = src * P[3] + nz * breath * P[3] * 0.6;
-      let y = step(R[0], v, P[0], 90); y = step(R[1], y, P[1], 120) + y * 0.2; y = step(R[2], y, P[2], 180) + y * 0.3; y = step(R[3], y, 3400, 260) + y * 0.6;
-      let fr = 0; if (P[4] > 0) { fr = step(RN, nz, P[5], P[5] * 0.35) * P[4] * (P.stop ? 2.2 : 0.9); }
-      out[n] = (y * 0.5 + fr) * e;
+      // parallel formants: each resonance of the tract adds its own peak, so vowels read as vowels
+      const y = step(R[0], v, P[0], 80) * 1.0 + step(R[1], v, P[1], 100) * 0.7 + step(R[2], v, P[2], 150) * 0.4 + step(R[3], v, 3400, 250) * 0.22;
+      let fr = 0; if (P[4] > 0) { fr = step(RN, nz, P[5], P[5] * 0.3) * P[4] * (P.stop ? 1.4 : 0.5); }
+      out[n] = (y * 1.6 + fr) * e;
     }
     // loudness: peak-normalise, then a soft clip so shouts sound strained
-    let pk = 0; for (let n = 0; n < N; n++) pk = Math.max(pk, Math.abs(out[n])); const k = pk > 0 ? 1 / pk : 1, dr = 1.2 + (o.press || 0) * 3;
+    let pk = 0; for (let n = 0; n < N; n++) pk = Math.max(pk, Math.abs(out[n])); const k = pk > 0 ? 1 / pk : 1, dr = 1 + (o.press || 0) * 1.4;
     for (let n = 0; n < N; n++) out[n] = Math.tanh(out[n] * k * dr) / Math.tanh(dr) * (o.gain || 0.9);
     return out;
   }
@@ -5022,9 +5066,13 @@ const VOICE = (() => {
   function build() {
     if (built || !AUDIO.ready) return !!built; ctx = AUDIO.ctx; built = true; rs = 7;
     out = ctx.createGain(); out.gain.value = on ? vol : 0; out.connect(AUDIO.master);
-    for (const cat in BANK) { B[cat] = []; for (const [w, f0, br] of BANK[cat]) for (const sc of [0.86, 1, 1.15]) {
-      const f = f0.map(([u, h]) => [u, h * sc]); const d = synth(W(w), f, { rasp: 0.15 + rnd() * 0.3, breath: br * 0.12, press: cat === 'cry' || cat === 'jcry' || cat.startsWith('o_') ? 0.6 : 0.3 });
-      const buf = ctx.createBuffer(1, d.length, SR); buf.copyToChannel ? buf.copyToChannel(d, 0) : buf.getChannelData(0).set(d); B[cat].push(buf); } }
+    // rendered a few takes at a time in idle moments, so starting the sound never stalls a frame
+    const jobs = []; for (const cat in BANK) { B[cat] = []; for (const [w, f0, br] of BANK[cat]) for (const sc of [0.92, 1.08]) jobs.push([cat, w, f0, br, sc]); }
+    const work = () => { const t0 = performance.now(); while (jobs.length && performance.now() - t0 < 6) { const [cat, w, f0, br, sc] = jobs.shift();
+        const f = f0.map(([u, h]) => [u, h * sc]); const d = synth(W(w), f, { rasp: 0.15 + rnd() * 0.3, breath: br * 0.12, press: cat === 'cry' || cat === 'jcry' || cat.startsWith('o_') ? 0.6 : 0.3 });
+        const buf = ctx.createBuffer(1, d.length, SR); buf.copyToChannel ? buf.copyToChannel(d, 0) : buf.getChannelData(0).set(d); B[cat].push(buf); }
+      if (jobs.length) setTimeout(work, 16); };
+    setTimeout(work, 0);
     if (typeof VOICE_DATA !== 'undefined') addPack(VOICE_DATA);
     return true;
   }
@@ -5048,7 +5096,7 @@ const VOICE = (() => {
     for (let i = active.length - 1; i >= 0; i--) if (active[i].end <= now) active.splice(i, 1);
     const score = prio * 10 - sp.dist * 0.15;
     if (active.length >= MAX) { let lo = 0; for (let i = 1; i < active.length; i++) if (active[i].score < active[lo].score) lo = i; if (active[lo].score >= score) return false; try { active[lo].src.stop(); } catch (e) {} active.splice(lo, 1); }
-    const rec = REC[cat], list = rec && rec.length && Math.random() < 0.8 ? rec : B[cat]; if (!list || !list.length) return false;
+    const rec = REC[cat], syn = B[cat]; let list = rec && rec.length && (Math.random() < 0.8 || !syn || !syn.length) ? rec : syn; if (!list || !list.length) list = rec; if (!list || !list.length) return false;
     const buf = list[(v.fav + ((Math.random() * 3) | 0) * 5) % list.length];
     const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = v.rate * (0.96 + Math.random() * 0.08);
     const eq = ctx.createBiquadFilter(); eq.type = 'peaking'; eq.frequency.value = v.eqF; eq.Q.value = 1.1; eq.gain.value = v.eqG;
@@ -5061,6 +5109,7 @@ const VOICE = (() => {
     const t0 = now + Math.min(0.5, sp.dist / 343); src.start(t0); const end = t0 + buf.duration / src.playbackRate.value;
     active.push({ src, end, score }); if (u) v.next = end + 0.35 + Math.random() * 0.6; return true;
   }
+  const lastOrd = {};
   const human = (u) => u && !u.camp && u.type !== 'horse' && u.def && u.def.ai !== 'cannon';
   const cryOf = (u) => (u.team === 1 ? 'jcry' : 'cry');
   // a company answering a shout: a few of its men cry out, one after another
@@ -5078,7 +5127,7 @@ const VOICE = (() => {
       case 'warcry': { const u = U[e.id]; if (human(u)) { say(cryOf(u), u, 4, undefined, undefined, undefined, 1.3); if (u.squad >= 0) chorus(sim, sim.squads[u.squad], null, 4); } break; }
       case 'rally': { const p = sim.players[e.p], h = p && U[p.heroId]; if (human(h)) say(cryOf(h), h, 4, undefined, undefined, undefined, 1.3); if (p) for (const id of p.squads) chorus(sim, sim.squads[id], null, 2); break; }
       case 'volley': { const sq = sim.squads[e.sq]; if (!sq || Math.random() < 0.4) break; const m = U[sq.unitIds.find(id => !U[id].dead)]; if (human(m)) say(m.team === 1 ? 'jcry' : 'o_fire', m, 2, undefined, undefined, undefined, 0.9); break; }
-      case 'order': { const p = sim.players[e.p], h = p && U[p.heroId], sq = sim.squads[e.sq]; if (!human(h) || h.dead || (p.lastOrderT && performance.now() - p.lastOrderT < 900)) break; p.lastOrderT = performance.now();
+      case 'order': { const p = sim.players[e.p], h = p && U[p.heroId], sq = sim.squads[e.sq]; if (!human(h) || h.dead || performance.now() - (lastOrd[e.p] || 0) < 900) break; lastOrd[e.p] = performance.now();
         const O = SIM.ORD_CHARGE !== undefined ? SIM : { ORD_CHARGE: 1, ORD_HOLD: 2, ORD_FOLLOW: 3, ORD_FORM: 4, ORD_FIRE: 5 };
         const cat = h.team === 1 ? 'jcry' : e.type === O.ORD_CHARGE ? 'o_charge' : e.type === O.ORD_HOLD ? 'o_hold' : e.type === O.ORD_FOLLOW ? 'o_follow' : e.type === O.ORD_FORM ? 'o_form' : e.type === O.ORD_FIRE ? 'o_fire' : null;
         if (cat) say(cat, h, 4, undefined, undefined, undefined, 1.2); if (e.type === O.ORD_CHARGE) chorus(sim, sq, null, 4); break; }
@@ -6497,9 +6546,12 @@ class Renderer {
       if (noHat && p.hat) { mesh.setMatrixAt(idx, T.zero); continue; }
       if (p.f === 'seg') { if (!G) { mesh.setMatrixAt(idx, T.zero); continue; } const a = GJ[p.a], z = GJ[p.z]; const ax = G[a] + (G[z] - G[a]) * p.t0, ay = G[a + 1] + (G[z + 1] - G[a + 1]) * p.t0, az = G[a + 2] + (G[z + 2] - G[a + 2]) * p.t0; const bx = G[a] + (G[z] - G[a]) * p.t1, by = G[a + 1] + (G[z + 1] - G[a + 1]) * p.t1, bz = G[a + 2] + (G[z + 2] - G[a + 2]) * p.t1; this.seg(mesh, idx, ax, ay, az, bx, by, bz, p.w, p.d); continue; }
       const F = fr[p.f]; if (!F) { mesh.setMatrixAt(idx, T.zero); continue; }
-      const Bf = F[3], o = p.o; const cx = F[0] + Bf[0] * o[0] + Bf[3] * o[1] + Bf[6] * o[2], cy = F[1] + Bf[1] * o[0] + Bf[4] * o[1] + Bf[7] * o[2], cz = F[2] + Bf[2] * o[0] + Bf[5] * o[1] + Bf[8] * o[2];
-      if (!p.r) { this.boxB(mesh, idx, cx, cy, cz, Bf, p.s[0], p.s[1], p.s[2]); continue; }
-      T.m.set(Bf[0], Bf[3], Bf[6], cx, Bf[1], Bf[4], Bf[7], cy, Bf[2], Bf[5], Bf[8], cz, 0, 0, 0, 1).multiply(T.r.makeRotationFromEuler(T.e.set(p.r[0], p.r[1], p.r[2]))).multiply(T.s.makeScale(p.s[0], p.s[1], p.s[2])); mesh.setMatrixAt(idx, T.m);
+      // cloth and plates that hang from a joint follow the limb under them (no knee through the skirt, no arm through the pauldron)
+      let Bf = F[3], o = p.o, fx0 = F[0], fy0 = F[1], fz0 = F[2], ps = p.s;
+      if (G) { const h = this.gearFollow(u, p, F, G); if (h) { Bf = h.B; o = h.o; fx0 = h.x; fy0 = h.y; fz0 = h.z; ps = h.s || p.s; } }
+      const cx = fx0 + Bf[0] * o[0] + Bf[3] * o[1] + Bf[6] * o[2], cy = fy0 + Bf[1] * o[0] + Bf[4] * o[1] + Bf[7] * o[2], cz = fz0 + Bf[2] * o[0] + Bf[5] * o[1] + Bf[8] * o[2];
+      if (!p.r) { this.boxB(mesh, idx, cx, cy, cz, Bf, ps[0], ps[1], ps[2]); continue; }
+      T.m.set(Bf[0], Bf[3], Bf[6], cx, Bf[1], Bf[4], Bf[7], cy, Bf[2], Bf[5], Bf[8], cz, 0, 0, 0, 1).multiply(T.r.makeRotationFromEuler(T.e.set(p.r[0], p.r[1], p.r[2]))).multiply(T.s.makeScale(ps[0], ps[1], ps[2])); mesh.setMatrixAt(idx, T.m);
     }
   }
   boxB(mesh, idx, cx, cy, cz, B, sx, sy, sz) {
@@ -6811,6 +6863,7 @@ class Renderer {
   processEvents(events) {
     const sim = this.sim, units = sim.units; const local = sim.players[this.localIdx]; const heroId = local ? local.heroId : -1;
     for (const ev of events) {
+      if (typeof VOICE !== 'undefined') VOICE.ev(ev, sim, heroId);
       switch (ev.t) {
         case 'shot': {
           if (this.sim.real && ev.shooter !== heroId) { // near misses: the crack of a ball past your head presses you down
@@ -6908,7 +6961,7 @@ class Renderer {
             const w = u.weapon, fx = Math.sin(u.yaw), fz = Math.cos(u.yaw);
             const wd = w === 'katana' ? [0.035, 0.05, 1.0, 0xcfd6dc] : w === 'yari' ? [0.04, 0.04, 2.5, 0x8b6b4a] : w === 'rifle' ? [0.06, 0.09, 1.35, 0x4a2e18] : w === 'bow' ? [0.04, 0.04, 1.9, 0x5a3b1e] : w === 'revolver' ? [0.04, 0.1, 0.28, 0x3a3a3f] : null;
             if (wd) this.spawnDebris('b', u.x + fx * 0.4, u.y + 1.1, u.z + fz * 0.4, ev.ix * 0.3 + fx * rnd(0.5, 2), 2 + Math.random() * 2, ev.iz * 0.3 + fz * rnd(0.5, 2), wd[0], wd[1], wd[2], wd[3], 0.5); }
-          AUDIO.play(Math.random() < 0.55 ? 'scream' : 'death', u.x, u.y + 1, u.z, 0.9);
+          if (typeof VOICE === 'undefined' || !VOICE.on || u.type === 'horse') AUDIO.play(Math.random() < 0.55 ? 'scream' : 'death', u.x, u.y + 1, u.z, 0.9);
           if (ev.killer === heroId) { this.hitMark = 0.45; }
           break;
         }
@@ -7019,7 +7072,13 @@ class Renderer {
     if (hide) { this.hideFigure(slot); return; }
     const f = this.fig, a = this.anim(u.id), dt = this.fdt, tg = this.tg, def = u.def;
     const stT = u.st === ST_IDLE ? 0 : u.stT + alpha * DT;
-    const mounted = u.mounted || u.mount >= 0, down = u.downT > 0 && !mounted;
+    const mounted = u.mounted || u.mount >= 0, wnd = !!(u.wounded && !u.dead) && !mounted;
+    // a wounded man going down (and being got up again) is animated, not snapped: a.dw runs 0 (on his feet) to 1 (on the ground)
+    if (wnd || a.dw > 0) { const want = wnd && u.downed ? 1 : 0;
+      if (!wnd) a.dw = 0;
+      else if (want > a.dw) { if (!(a.dw > 0)) { a.dw = 0; a.dV = uhash(u.id, 23) < 0.5 ? 1 : -1; } a.dUp = false; a.dw = Math.min(1, a.dw + dt / 1.05); }
+      else if (want < a.dw) { a.dUp = true; a.dw = Math.max(0, a.dw - dt / 0.8); } }
+    const down = (u.downT > 0 && !mounted) || (wnd && a.dw > 0);
     const sq = u.squad >= 0 ? this.sim.squads[u.squad] : null, routing = !!(sq && sq.routing);
     // ---------- locomotion state ----------
     const k8 = 1 - Math.exp(-8 * dt);
@@ -7142,6 +7201,10 @@ class Renderer {
     if (mounted) { lean += 0.06 + 0.22 * clamp(((u.mounted ? u.speedNow : this.sim.units[u.mount].speedNow) - 4) / 5, 0, 1); stance = 0; twist += clamp(wrapA(yaw - ryaw), -1.1, 1.1); }
     if (u.camp && u.campPose === 'squat') { crouch = 0.5; lean = 0.3; stance = 0.35; twist = 0.05 * Math.sin(this.time * 0.4 + u.id); rateB = 6; } // hunkered down by the fire
     else if (u.camp) { lean = 0.04 + 0.03 * Math.sin(this.time * 0.6 + u.id); twist = 0.12 * Math.sin(this.time * 0.25 + u.id * 1.7); }
+    // camp life (campPoseT): relaxed hands and weapon, sitting, lying, small activities, a prop in the hand
+    if (u.camp && !u.dead && u.cAct !== undefined) { const P = this.campPoseT(u, a, w); a.cProp = P.prop; a.cPropH = P.ph;
+      lean = P.lean; twist = P.twist; crouch = P.crouch; stance = P.stance; roll = P.roll; rateB = 5;
+      if (P.anchor !== 'skip') { anchor = P.anchor; fkL = P.fkL; fkR = P.fkR; two = P.two; rateW = 6; } }
     if (u.wounded && !u.dead) { if (u.helpedBy >= 0) { lean = 0.28; crouch = Math.max(crouch, 0.16); roll = 0.12 * Math.sin(ph); } else { crouch = 0.62; lean = 0.62; roll = 0.1; stance = 0.4; } rateB = 8; } // doubled over / limping on a friend's shoulder
     // ---------- smoothing ----------
     a.recoil = Math.max(0, a.recoil - dt * 3.2);
@@ -7167,7 +7230,7 @@ class Renderer {
     // ---------- legs (root-local; +x left, +z forward) ----------
     const LT = 0.46, LS = 0.46;
     const legs = this._legs || (this._legs = new Float64Array(18)); // hipL,kneeL,footL,hipR,kneeR,footR
-    let pel;
+    let pel, wdp = null, woy = 0;
     const legPlane = (o, side, th, kn, bb) => {
       const fx = Math.sin(bb), fz = Math.cos(bb);
       const f1 = LT * Math.sin(th), v1 = LT * Math.cos(th), f2 = f1 + LS * Math.sin(th - kn), v2 = v1 + LS * Math.cos(th - kn);
@@ -7180,8 +7243,25 @@ class Renderer {
       const sx = [1, -1];
       for (let i = 0; i < 2; i++) { const o = i * 9, s = sx[i]; legs[o] = s * 0.1; legs[o + 1] = 0; legs[o + 2] = 0; legs[o + 3] = s * 0.34; legs[o + 4] = -0.3; legs[o + 5] = 0.28; legs[o + 6] = s * 0.32; legs[o + 7] = -0.78; legs[o + 8] = 0.1; }
       pel = 1.47 + (u.mount >= 0 ? this.anim(u.mount).hbob : a.hbob);
+    } else if (down && wnd && a.dw !== undefined) { // the fall of a wounded man: stagger, knees buckle, one knee, down on his back, up on an elbow
+      const g = u.crawling ? 1.22 + Math.sin((this.time || 0) * 5 + u.id) * 0.07 : -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1);
+      if (a.dpG === undefined || a.dw < 0.75) a.dpG = g; else a.dpG += (g - a.dpG) * (1 - Math.exp(-3.5 * dt));
+      const gp = a.dpG, kw = clamp(1 - Math.abs(gp) / 0.6, 0, 1), sv = a.dV || 1;
+      // each key: thigh/knee of the kneeling-side leg, thigh/knee of the other, pelvis height, body pitch, lift
+      const KS = [0.05, 0.1, -0.05, 0.1, 0.91, 0, 0], KG = [lerp(0.12, 1.1, kw), lerp(0.2, 1.5, kw), lerp(-0.05, 0.1, kw), lerp(0.3, 1.6, kw), lerp(0.92, 0.5, kw), gp, 0.15 * (1 - kw)];
+      const KN = [1.1, 1.5, 0.1, 1.6, 0.5, 0.18, 0], KT = [0.35, 0.5, -0.25, 0.25, 0.84, sv > 0 ? -0.22 : 0.2, 0], KB = [0.3, 0.6, 0.1, 0.5, 0.92, -1.3, 0.15];
+      const KEYS = a.dUp ? [[0, KS], [0.45, KN], [1, KG]] : [[0, KS], [0.22, KT], [0.5, KN], [0.78, KB], [1, KG]];
+      const w = a.dw, Q = this._dwq || (this._dwq = new Float64Array(7)); let i = 0; while (i < KEYS.length - 2 && w > KEYS[i + 1][0]) i++;
+      const k0 = KEYS[i], k1 = KEYS[i + 1]; let s = clamp((w - k0[0]) / Math.max(1e-4, k1[0] - k0[0]), 0, 1); s = s * s * (3 - 2 * s);
+      for (let j = 0; j < 7; j++) Q[j] = k0[1][j] + (k1[1][j] - k0[1][j]) * s;
+      const oA = sv > 0 ? 0 : 9, oB = sv > 0 ? 9 : 0; legPlane(oA, oA ? -1 : 1, Q[0], Q[1], 0); legPlane(oB, oB ? -1 : 1, Q[2], Q[3], 0);
+      pel = Q[4]; wdp = Q[5]; woy = Q[6];
     } else if (down) {
       legPlane(0, 1, 0.12, 0.2, 0); legPlane(9, -1, -0.05, 0.3, 0); pel = 0.92;
+    } else if (u.camp && a.cl > 0.02) { legPlane(0, 1, 0.06, 0.12, 0); legPlane(9, -1, 0.02, 0.2, 0); pel = 0.92;
+    } else if (u.camp && a.cs > 0.02) { // seated on the ground (knees up, or legs out) or on a log, rising when someone comes to talk
+      const k = a.cs, Sv = a.cSv === 2 ? [1.6, 1.25, 1.6, 1.25, 0.42] : a.cSv === 1 ? [1.5, 0.15, 1.45, 0.25, 0.14] : [2.1, 1.75, 1.95, 1.6, 0.2];
+      const eL = legPlane(0, 1, lerp(0.05, Sv[0], k), lerp(0.1, Sv[1], k), 0.14 * k), eR = legPlane(9, -1, lerp(0.05, Sv[2], k), lerp(0.1, Sv[3], k), -0.14 * k); pel = lerp(Math.max(eL, eR), Sv[4], k);
     } else if (u.airborne) {
       legPlane(0, 1, 0.55, 1.1, 0); legPlane(9, -1, 0.3, 1.2, 0); pel = 0.95;
     } else if (u.st === ST_KICK) {
@@ -7244,8 +7324,8 @@ class Renderer {
     else { toRoot(a.lh, tmpA, 0); ik(0, 6, tmpA[0], tmpA[1], tmpA[2], 1); }
     if (fkR && w !== 'bow' && w !== '') { J[18] = J[15]; J[19] = J[16]; J[20] = J[17]; const fx = J[15] - J[12], fy = J[16] - J[13], fz = J[17] - J[14]; const l = Math.hypot(fx, fy, fz) || 1; const cdir = routing ? [fx / l * 0.3 - C[6], fy / l * 0.3 - C[7] - 0.4, fz / l * 0.3 - C[8]] : [C[6], C[7] + 0.3, C[8]]; const cl2 = Math.hypot(cdir[0], cdir[1], cdir[2]) || 1; J[21] = cdir[0] / cl2; J[22] = cdir[1] / cl2; J[23] = cdir[2] / cl2; }
     // ---------- to world ----------
-    const dp = down ? (u.downed && u.crawling ? 1.22 + Math.sin((this.time || 0) * 5 + u.id) * 0.07 : u.downed ? -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1) : -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4))) : 0, cP = Math.cos(dp), sP = Math.sin(dp); // a downed man is propped on an elbow or half-sitting, and rises as he is hauled up
-    const oy = down ? 0.15 : 0;
+    const dp = wdp !== null ? wdp : down ? (u.downed && u.crawling ? 1.22 + Math.sin((this.time || 0) * 5 + u.id) * 0.07 : u.downed ? -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1) : -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4))) : (u.camp && a.cl ? -1.42 * a.cl : 0), cP = Math.cos(dp), sP = Math.sin(dp); // a downed man is propped on an elbow or half-sitting, and rises as he is hauled up
+    const oy = wdp !== null ? woy : down ? 0.15 : u.camp && a.cl ? 0.12 * a.cl : 0;
     const vsc = u.look && u.look.h ? u.look.h : (u.type === 'byakkotai' ? 0.9 : 1) * (u.champ ? S.HCLASS[u.hclass | 0].scale : u.type === 'hero' ? 1.04 : 0.88 + uhash(u.id, 7) * 0.24); // men come in all sizes: about 12% either way
     const Wp = (lx, ly, lz, out, o) => { lx *= vsc; ly *= vsc; lz *= vsc; const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = x + lx * cy + z2 * sy; out[o + 1] = y + oy + y2; out[o + 2] = z - lx * sy + z2 * cy; };
     const Wd = (lx, ly, lz, out, o) => { const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = lx * cy + z2 * sy; out[o + 1] = y2; out[o + 2] = -lx * sy + z2 * cy; };
@@ -7254,6 +7334,7 @@ class Renderer {
     for (let i = 0; i < 30; i += 3) { if (i === 21) Wd(J[21], J[22], J[23], G, 18 + i); else Wp(J[i], J[i + 1], J[i + 2], G, 18 + i); }
     const CB = this._CB || (this._CB = new Float64Array(9)); Wd(C[0], C[1], C[2], CB, 0); Wd(C[3], C[4], C[5], CB, 3); Wd(C[6], C[7], C[8], CB, 6);
     Wp(0, pel - 0.02, pz, G, 60);
+    if (u.camp) this.campPropDraw(u, a, G);
     this._sx = CB[0]; this._sy = CB[1]; this._sz = CB[2];
     if (vsc !== 1) for (let i = 0; i < 9; i++) CB[i] *= vsc;
     // ---------- draw body ----------
@@ -7286,8 +7367,8 @@ class Renderer {
     else if (w === 'katana' && arm === 'mace') { segW(f.hilt, -0.2, 0.03, 0.045, 0.045); segW(f.blade, 0.03, 0.62, 0.07, 0.07); }
     else if (w === 'katana' && arm === 'jian') { segW(f.hilt, -0.2, 0.03, 0.035, 0.08); segW(f.blade, 0.03, 0.86, 0.018, 0.045); }
     else if (w === 'katana') { if (big) { segW(f.hilt, -0.55, 0.03, 0.045, 0.05); segW(f.blade, 0.03, 1.2, 0.03, 0.085); } else { segW(f.hilt, -0.2, 0.03, 0.04, 0.045); segW(f.blade, 0.03, 0.72, 0.026, 0.075); } }
-    else if (w === 'yari') segW(f.hilt, 1.7, 1.86, 0.11, 0.11); else f.hilt.setMatrixAt(slot, Z);
-    if (w === 'yari') { segW(f.yari, -0.8, 1.85, 0.045, 0.045); segW(f.blade, 1.85, 2.15, 0.02, 0.06); }
+    else if (w === 'yari') { if (u.role === 'spear') segW(f.hilt, 3.55, 3.7, 0.1, 0.1); else segW(f.hilt, 1.7, 1.86, 0.11, 0.11); } else f.hilt.setMatrixAt(slot, Z);
+    if (w === 'yari') { if (u.role === 'spear') { segW(f.yari, -0.9, 3.7, 0.042, 0.042); segW(f.blade, 3.7, 4.0, 0.02, 0.06); } else { segW(f.yari, -0.8, 1.85, 0.045, 0.045); segW(f.blade, 1.85, 2.15, 0.02, 0.06); } } // the duck team's 長槍 is about 1丈5尺, near 5 m
     else if (w !== 'katana') f.blade.setMatrixAt(slot, Z);
     if (w !== 'yari' && !(w === 'katana' && arm === 'guandao')) f.yari.setMatrixAt(slot, Z);
     { // the mandarin duck's special arms: 狼筅 wolf-brush (a bamboo trunk left bristling with branches) and 镗钯 tangba (three-pronged fork)
@@ -7331,7 +7412,7 @@ class Renderer {
     // blade trail while the cut is moving
     if (melee && (u.st === ST_RELEASE || (u.st === ST_RECOVER && stT < 0.06))) {
       const cx = this.camera.position.x - x, cz = this.camera.position.z - z;
-      if (cx * cx + cz * cz < 45 * 45) { const t0 = w === 'yari' ? 1.4 : 0.25, t1 = w === 'yari' ? 2.15 : 0.8; this.trailPush(u.id, P(t0, 0), P(t0, 1), P(t0, 2), P(t1, 0), P(t1, 1), P(t1, 2), u.team === this.localTeam); }
+      if (cx * cx + cz * cz < 45 * 45) { const t0 = w === 'yari' ? (u.role === 'spear' ? 3.2 : 1.4) : 0.25, t1 = w === 'yari' ? (u.role === 'spear' ? 4.0 : 2.15) : 0.8; this.trailPush(u.id, P(t0, 0), P(t0, 1), P(t0, 2), P(t1, 0), P(t1, 1), P(t1, 2), u.team === this.localTeam); }
     }
   }
   // ---------- blade trails ----------
@@ -7485,7 +7566,7 @@ class Renderer {
     if (this.vmBow.visible) { const dr = hero.st === ST_AIM || hero.aiming ? 1 : 0; this.vmBow.position.set(-0.05 + dr * 0.04, -0.12 + dr * 0.08, -0.55); this.vmBow.rotation.set(0, 0, 0.2 - dr * 0.15); }
     { const arm = hero.def.arm, K = this.vmKatana.scale; if (arm === 'guandao') K.set(1.1, 1.8, 2.2); else if (arm === 'mace') K.set(3, 0.72, 1.3); else if (arm === 'jian') K.set(0.75, 1.15, 0.6); else K.set(1, 1, 1); }
     { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * 14); const k = this.vmShieldK; tp.set(-0.42 + k * 0.15, -0.36 + k * 0.05, -0.55 - k * 0.07); this.vmShield.rotation.set(0.1 + k * 0.12, 0.5 - k * 0.3, k * 0.12); } }
-    const yrole = w === 'yari' ? hero.role : null; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
+    const yrole = w === 'yari' ? hero.role : null; this.vmYari.scale.y = yrole === 'spear' ? 1.75 : 1; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
     // a three-eyed gun model added by a campaign (vmSj) replaces the musket parts every frame, whoever you now are
     { const cl = !!hero.club && w === 'rifle'; this.vmRifle.rotation.y = cl ? Math.PI : 0; this.vmRifle.rotation.x = cl ? -0.25 : 0; this.vmRifle.position.z = cl ? -1.05 : 0; this.vmRifle.position.y = cl ? 0.05 : 0; }
     if (this.vmSj) { const on = hero.type === 'rifle_spencer'; this.vmSj.visible = on; for (const c of this.vmRifle.children) { if (c === this.vmSj) continue; if (c === this.vmXbar) { if (on) c.visible = false; continue; } c.visible = !on; } }
@@ -7690,6 +7771,7 @@ class Renderer {
       if (this.biomeRain) this.env.weather.visible = !!sim.rain; else if (this.env.rain) { this.env.rain.visible = !!sim.rain; if (sim.rain) { this.env.rain.material.uniforms.time.value = this.time; this.env.rain.material.uniforms.cam.value.copy(cam.position); } } }
     this.sky.position.copy(cam.position);
     AUDIO.setListener(cam.position.x, cam.position.y, cam.position.z, camYaw);
+    if (typeof VOICE !== 'undefined' && !this.studio) { const lp = sim.players[this.localIdx]; VOICE.frame(dt, sim, lp ? lp.heroId : -1); }
     // fog of war: the enemy is only seen within sight of your own men, or by the flash of his muskets
     if (this.fog) { this.fogT = (this.fogT || 0) - dt; if (this.fogT <= 0) { this.fogT = 0.25; const R = 62 * (1 - 0.45 * (sim.bdef.fog || 0)) * (sim.rain ? 0.8 : 1), R2 = R * R; const mine = [];
         for (const u of units) if (!u.dead && u.team === this.localTeam && u.type !== 'horse') mine.push(u);
@@ -8049,6 +8131,97 @@ Renderer.prototype.buildGroundMap = function () {
 };
 // where a footprint meets sloping ground: the lowest corner, so walls and plinths go down into the earth, not float
 Renderer.prototype.footY = function (b) { let y = Infinity; for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) y = Math.min(y, terrainH(b.x + sx * b.hw, b.z + sz * b.hd)); return y - 0.08; };
+// ---- gear that follows the limb under it (model-style pass) ----
+// Pauldrons and arm plates hang from the shoulder and swing with the upper arm; skirt panels, tassets and robe tails hinge
+// at the waist and follow the thigh behind them; capes hinge at the shoulders and trail when running. Returns null when
+// the part keeps its rigid frame.
+Renderer.prototype.gearFollow = function (u, p, F, G) {
+  const B = F[3], o = p.o, s = p.s; if (!o || !s) return null;
+  const sc = Math.hypot(B[0], B[1], B[2]) || 1, ux = B[3] / sc, uy = B[4] / sc, uz = B[5] / sc, fx = B[6] / sc, fy = B[7] / sc, fz = B[8] / sc;
+  const dirOf = (a, b) => { const dx = G[b] - G[a], dy = G[b + 1] - G[a + 1], dz = G[b + 2] - G[a + 2], l = Math.hypot(dx, dy, dz) || 1; return [dx / l, dy / l, dz / l]; };
+  const A = this.anims[u.id], spd = A ? A.spd || 0 : 0;
+  const R = this._gfR || (this._gfR = { B: new Float64Array(9), o: [0, 0, 0], x: 0, y: 0, z: 0, s: null, ss: [0, 0, 0] }); R.s = null;
+  // basis: up (y) as given, x = the frame's own x made perpendicular, z = x × y; scaled like the source frame
+  const build = (yx, yy, yz) => { let l = Math.hypot(yx, yy, yz) || 1; yx /= l; yy /= l; yz /= l;
+    let xx = B[0] / sc, xy = B[1] / sc, xz = B[2] / sc; const d = xx * yx + xy * yy + xz * yz; xx -= yx * d; xy -= yy * d; xz -= yz * d; l = Math.hypot(xx, xy, xz) || 1; xx /= l; xy /= l; xz /= l;
+    const zx = xy * yz - xz * yy, zy = xz * yx - xx * yz, zz = xx * yy - xy * yx; const O = R.B;
+    O[0] = xx * sc; O[1] = xy * sc; O[2] = xz * sc; O[3] = yx * sc; O[4] = yy * sc; O[5] = yz * sc; O[6] = zx * sc; O[7] = zy * sc; O[8] = zz * sc; };
+  // hinge: keep the part's top edge where it was on the rigid frame, hang the rest along the new up axis
+  const hinge = () => { const top = o[1] + s[1] * 0.5; R.x = F[0] + B[0] * o[0] + B[3] * top + B[6] * o[2]; R.y = F[1] + B[1] * o[0] + B[4] * top + B[7] * o[2]; R.z = F[2] + B[2] * o[0] + B[5] * top + B[8] * o[2]; R.o[0] = 0; R.o[1] = -s[1] * 0.5; R.o[2] = 0; };
+  if (p.f === 'sl' || p.f === 'sr') { // shoulder plates ride the upper arm (70% arm, 30% chest so they still sit on the shoulder)
+    const d = dirOf(p.f === 'sl' ? 18 : 27, p.f === 'sl' ? 21 : 30), k = 0.7;
+    build(-d[0] * k + ux * (1 - k), -d[1] * k + uy * (1 - k), -d[2] * k + uz * (1 - k)); R.x = F[0]; R.y = F[1]; R.z = F[2]; R.o[0] = o[0]; R.o[1] = o[1]; R.o[2] = o[2]; return R; }
+  if (p.f === 'p' && o[1] < -0.06 && s[1] > 0.12) { // skirt / tasset / robe panel below the waist
+    const L = dirOf(0, 3), Rt = dirOf(9, 12); let d, k = 0.8;
+    const fl = L[0] * fx + L[1] * fy + L[2] * fz, fr = Rt[0] * fx + Rt[1] * fy + Rt[2] * fz;
+    if (o[0] > 0.07) d = L; else if (o[0] < -0.07) d = Rt;
+    else if (Math.min(s[0], s[2]) < 0.12) { d = (o[2] >= 0) === (fl >= fr) ? L : Rt; k = 0.9; } // a thin front panel goes with the leading leg, a back panel with the trailing one
+    else { d = [(L[0] + Rt[0]) * 0.5, (L[1] + Rt[1]) * 0.5, (L[2] + Rt[2]) * 0.5]; k = 0.6; // a whole robe skirt: hangs between the legs and flares in depth with the stride so no knee comes through
+      R.ss[0] = s[0] + Math.abs((L[0] - Rt[0]) * B[0] + (L[1] - Rt[1]) * B[1] + (L[2] - Rt[2]) * B[2]) / sc * 0.12; R.ss[1] = s[1]; R.ss[2] = s[2] + Math.abs(fl - fr) * 0.32; R.s = R.ss; }
+    const lag = Math.min(0.3, spd * 0.045); // the hem lifts and trails when running
+    build(-d[0] * k + ux * (1 - k) + fx * lag, -d[1] * k + uy * (1 - k) + fy * lag, -d[2] * k + uz * (1 - k) + fz * lag); hinge(); return R; }
+  if (p.f === 'c' && o[2] < -0.13 && o[1] < 0.22 && s[1] > 0.3 && s[2] < 0.12) { // a cape or back cloth hanging from the shoulders
+    const lag = Math.min(0.45, spd * 0.07), fl = spd > 0.5 ? Math.sin((this.time || 0) * 5 + u.id) * 0.04 * Math.min(1, spd / 4) : 0;
+    build(ux + fx * lag + (B[0] / sc) * fl, uy + fy * lag + (B[1] / sc) * fl, uz + fz * lag + (B[2] / sc) * fl); hinge(); return R; }
+  return null;
+};
+// ---- camp life, drawn: relaxed poses and small activities for the men at the fire (sim sets u.cAct; see campThink) ----
+// Sets the hand/weapon targets in this.tg (chest-local: +x left, +y up from the shoulders, +z forward) and returns the body.
+Renderer.prototype.campPoseT = function (u, a, w) {
+  const tg = this.tg, t = (this.time || 0) + uhash(u.id, 31) * 20, dt = this.fdt || 0.016, act = u.cAct | 0, rise = !!u.cRise, look = !!u.cLook;
+  const lie = act === 7 && !rise, squat = !!u.cSeat && (act === 4 || act === 12) && !rise && !lie, sit = !!u.cSeat && !lie && !squat && !rise;
+  if (a.cSv === undefined) { a.cs = sit ? 1 : 0; a.cl = lie ? 1 : 0; let v = uhash(u.id, 33) < 0.6 ? 0 : 1; const C = this.sim.cfg.camp; if (C && C.props) for (const p of C.props) if (p[0] === 'log' && Math.hypot(p[1] - u.x, p[2] - u.z) < 1.1) v = 2; a.cSv = v; }
+  const kk = 1 - Math.exp(-2.6 * dt); a.cs += ((sit ? 1 : 0) - a.cs) * kk; a.cl += ((lie ? 1 : 0) - a.cl) * kk;
+  const seatPel = a.cSv === 2 ? 0.42 : a.cSv === 1 ? 0.14 : 0.2, gy = sit ? -(seatPel + 0.47) + 0.05 : squat ? -0.95 : -1.34;
+  const R = { lean: 0.03 + 0.02 * Math.sin(t * 0.6), twist: 0.08 * Math.sin(t * 0.21), crouch: 0, stance: 0.2, roll: 0.03 * Math.sin(t * 0.33), anchor: 'W', fkL: false, fkR: false, two: true, prop: '', ph: 'R' };
+  const S3 = (o, x, y, z) => { o[0] = x; o[1] = y; o[2] = z; };
+  const bump = (per, on) => { const c = ((t / per) % 1 + 1) % 1; return c < on ? Math.sin(c / on * PI) : 0; };
+  const L3 = (o, p, q, k) => { for (let j = 0; j < 3; j++) o[j] = p[j] + (q[j] - p[j]) * k; };
+  const pole = w === 'yari' || w === 'rifle';
+  // where the weapon is when the hands are busy: on the ground at his right side
+  const grounded = () => { S3(tg.wp, -0.44, gy, 0.08); S3(tg.wd, 0.05, 0.02, 1); nrm3(tg.wd); };
+  // held at rest: a pole or gun upright at the side, a sabre point-down
+  const rest = (side) => { const sx = side > 0 ? 0.24 : -0.24; if (pole) { S3(tg.wp, sx, -0.42, 0.1); S3(tg.wd, 0, 1, 0.06); } else { S3(tg.wp, sx * 0.95, -0.66, 0.08); S3(tg.wd, 0.05 * side, -0.95, 0.3); } nrm3(tg.wd); if (side > 0) { set3(tg.lh, tg.wp); } else { set3(tg.rh, tg.wp); } };
+  const knees = () => { S3(tg.rh, -0.17, sit ? -0.52 : -0.5, 0.34); S3(tg.lh, 0.17, sit ? -0.52 : -0.5, 0.34); };
+  if (w === 'bow' || w === '' || w === 'revolver') { R.anchor = 'skip'; }
+  if (lie) { S3(tg.rh, -0.06, -0.3, 0.13); S3(tg.lh, 0.07, -0.34, 0.12); S3(tg.wp, -0.42, -0.45, -0.05); S3(tg.wd, 0, 1, 0.02); nrm3(tg.wd); R.lean = 0; R.twist = 0; R.roll = 0.05; R.stance = 0; return R; }
+  if (look) { // somebody has come to talk: look up at him, hands to the knees (or the weapon at rest)
+    if (sit || squat) { knees(); grounded(); R.lean = -0.12; R.crouch = squat ? 0.5 : 0; R.stance = squat ? 0.35 : 0; } else { rest(-1); R.fkL = true; R.lean = -0.04; }
+    return R; }
+  switch (act) {
+    case 1: { const r2 = 0.02 * Math.sin(t * 3.1); S3(tg.rh, -0.09, -0.27 + r2, 0.46); S3(tg.lh, 0.09, -0.27 - r2, 0.46); grounded(); R.lean = 0.24; break; } // hands to the fire
+    case 2: case 15: { const k = act === 2 ? bump(6.5, 0.32) : bump(9, 0.4); L3(tg.rh, [-0.16, -0.42, 0.3], act === 2 ? [-0.03, 0.11, 0.12] : [-0.05, 0.06, 0.17], k); R.prop = act === 2 ? 'gourd' : 'pipe';
+      if (sit || squat) { S3(tg.lh, 0.17, -0.52, 0.34); grounded(); R.lean = 0.12 - (act === 2 ? 0.3 : 0.08) * k; } else { rest(1); R.lean = 0.02 - (act === 2 ? 0.25 : 0.06) * k; } break; }
+    case 3: { const k = bump(2.4, 0.45); S3(tg.lh, 0.05, -0.3, 0.3); L3(tg.rh, [-0.02, -0.26, 0.31], [-0.02, 0.09, 0.13], k); grounded(); R.prop = 'bowl'; R.ph = 'L'; R.lean = 0.22 - 0.1 * k; break; } // bowl and chopsticks
+    case 5: { S3(tg.wp, -0.03, -0.47, 0.34); S3(tg.wd, 1, 0.06, 0.12); nrm3(tg.wd); S3(tg.lh, 0.38, -0.45, 0.38); S3(tg.rh, 0.02 + 0.16 * Math.sin(t * 3.3), -0.42, 0.37); R.prop = 'stone'; R.lean = 0.32; break; } // the whetstone along the blade
+    case 6: { S3(tg.rh, -0.05 + 0.03 * Math.sin(t * 2.3), -0.5 + 0.02 * Math.sin(t * 4.7), 0.3); S3(tg.lh, 0.07, -0.5, 0.31); grounded(); R.prop = 'cloth'; R.ph = 'L'; R.lean = 0.36; break; } // mending a sandal or a sleeve
+    case 4: { knees(); grounded(); R.crouch = 0.5; R.lean = 0.3; R.stance = 0.35; break; }
+    case 12: { const k = bump(5, 0.35); knees(); L3(tg.rh, [-0.17, -0.5, 0.34], [-0.06, -0.7, 0.66], k); grounded(); R.prop = 'stick'; R.crouch = 0.5; R.lean = 0.3 + 0.2 * k; R.stance = 0.35; break; } // feeding the fire
+    case 14: { const k = bump(3.2, 0.3); S3(tg.lh, 0.17, -0.52, 0.34); L3(tg.rh, [-0.1, -0.35 + 0.03 * Math.sin(t * 14), 0.3], [-0.05, -0.62, 0.52], k); grounded(); R.prop = 'cup'; R.lean = 0.3; break; } // dice in a cup
+    case 8: { const k = bump(8, 0.38); L3(tg.rh, [-0.24, -0.62, 0.05], [-0.14, 0.42, 0.02], k); L3(tg.lh, [0.24, -0.62, 0.05], [0.14, 0.42, 0.02], k); S3(tg.wp, -0.46, -0.9, 0.14); S3(tg.wd, -0.1, 1, 0.12); nrm3(tg.wd); R.lean = -0.14 * k; break; } // a long stretch
+    case 9: { rest(1); S3(tg.rh, -0.2 + 0.06 * Math.sin(t * 2.1), -0.26 + 0.09 * Math.sin(t * 1.7), 0.33 + 0.05 * Math.sin(t * 2.6)); R.twist = 0.1 * Math.sin(t * 0.9); R.lean = 0.05; break; } // talking with his hands
+    case 10: { if (pole) rest(-1); else { S3(tg.wp, 0, -0.52, 0.28); S3(tg.wd, 0, -1, 0.12); nrm3(tg.wd); set3(tg.rh, tg.wp); set3(tg.lh, tg.wp); } if (pole) R.fkL = true; R.lean = -0.02; R.stance = 0.3; R.roll = 0; break; } // on watch
+    case 11: { if (w === 'yari') { S3(tg.wp, -0.15, -0.1, 0.18); S3(tg.wd, 0.35, 0.85, 0.22); } else if (w === 'rifle') { S3(tg.wp, -0.21, 0.03, 0.04); S3(tg.wd, 0.16, 0.95, -0.24); } else { const K = KF.katana.carry; set3(tg.wp, K.g); set3(tg.wd, K.d); } nrm3(tg.wd); set3(tg.rh, tg.wp); R.fkL = true; R.stance = 0; R.lean = 0.04; break; } // walking with the weapon sloped
+    case 13: { const c = Math.cos(t * 1.5), s = Math.sin(t * 1.5); S3(tg.rh, -0.04 + 0.1 * c, -0.42, 0.5 + 0.1 * s); S3(tg.lh, 0.06 + 0.1 * c, -0.3, 0.48 + 0.1 * s); grounded(); R.prop = 'ladle'; R.lean = 0.2; break; } // stirring the pot
+    default: { if (sit || squat) { knees(); grounded(); R.lean = 0.18; } else { rest(-1); R.fkL = true; } }
+  }
+  if (squat && act !== 4 && act !== 12) { R.crouch = 0.5; R.stance = 0.35; }
+  return R;
+};
+// the little things in their hands
+Renderer.prototype.campPropDraw = function (u, a, G) {
+  const kind = a.cProp || ''; let P = this.campPropM || (this.campPropM = {});
+  let g = P[u.id];
+  if (!g) { if (!kind) return; g = P[u.id] = {}; const L = (c) => new THREE.MeshLambertMaterial({ color: c });
+    const mk = (geo, c) => { const m = new THREE.Mesh(geo, L(c)); m.visible = false; this.scene.add(m); return m; };
+    g.gourd = mk(new THREE.SphereGeometry(0.055, 7, 5), 0xb08a3c); g.bowl = mk(new THREE.CylinderGeometry(0.075, 0.045, 0.05, 9), 0x6a4a2c); g.cup = mk(new THREE.CylinderGeometry(0.045, 0.04, 0.09, 8), 0x3a2a1c);
+    g.pipe = mk(new THREE.BoxGeometry(0.012, 0.012, 0.3), 0x2a1c12); g.stone = mk(new THREE.BoxGeometry(0.1, 0.025, 0.035), 0x6a6a68); g.cloth = mk(new THREE.BoxGeometry(0.16, 0.025, 0.1), 0x8a7a5a);
+    g.stick = mk(new THREE.BoxGeometry(0.025, 0.025, 0.55), 0x3a2a1a); g.ladle = mk(new THREE.BoxGeometry(0.025, 0.85, 0.025), 0x5a4028); }
+  const hi = a.cPropH === 'L' ? 24 : 33, ei = a.cPropH === 'L' ? 21 : 30;
+  for (const k in g) { const m = g[k]; const on = k === kind && !u.dead; m.visible = on; if (!on) continue;
+    m.position.set(G[hi], G[hi + 1], G[hi + 2]); const fx = G[hi] - G[ei], fz = G[hi + 2] - G[ei + 2];
+    m.rotation.set(k === 'ladle' ? 0.3 : 0, Math.atan2(fx, fz), 0); if (k === 'ladle') m.position.y -= 0.3; if (k === 'gourd') m.position.y += 0.03; }
+};
 return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear, roundBox, uhash };
 })();
 </script>
@@ -9524,7 +9697,7 @@ function replayFrame(dt) {
 $('btnReplay').onclick = () => { AUDIO.init(); startReplay(); };
 function feed(text, me) { const f = $('feed'); const d = document.createElement('div'); d.textContent = text; if (me) d.className = 'me'; f.appendChild(d); while (f.children.length > 6) f.removeChild(f.firstChild); setTimeout(() => { if (d.parentNode) d.parentNode.removeChild(d); }, 9000); }
 function toast(text) { const t = $('toast'); t.textContent = text; t.classList.add('show'); state.toastT = 2.2; }
-const DIRN = ['overhead', 'right swing', 'thrust', 'left swing'], BLKN = ['up', 'right', 'down', 'left'], ORDN = ['move', 'charge', 'hold', 'follow'];
+const DIRN = ['overhead', 'right swing', 'thrust', 'left swing'], BLKN = ['up', 'right', 'down', 'left'], ORDN = ['move', 'charge', 'hold', 'follow', 'form up', 'hold', 'hold', 'hold', 'hold', 'hold', 'hold', 'hold', 'hold', 'hold', 'hold', 'hold'];
 function moraleCls(sq) { if (!sq.alive) return ''; if (sq.routing) return 'm-rout'; const m = sq.morale / sq.moraleMax; return m < 0.35 ? 'm-low' : m < 0.6 ? 'm-mid' : ''; }
 function moraleWord(sq) { if (sq.routing) return 'routing'; if (sq.def.fearless) return 'fearless'; const m = sq.morale / sq.moraleMax; return m < 0.35 ? 'wavering' : m < 0.6 ? 'shaken' : 'steady'; }
 // ---------- screen markers: objectives (lettered circles) and your companies (numbered), pinned to the screen edge when out of view ----------
@@ -9552,6 +9725,7 @@ function hudMarks() {
         if (h.squad === fq.id && h.slotX !== undefined && Math.hypot(h.slotX - h.x, h.slotZ - h.z) > 3) items.push({ x: h.slotX, z: h.slotZ, y: 0.4, txt: '◇', cls: 'place', name: 'your place', always: true }); } }
     { const h = localHero(); let near = null, nd = 2.6; // downed and wounded comrades: a pulsing cross with the bleed-out ring, pinned to the edge when out of view
       if (h) for (const u of sim.teamAlive[me.team]) { if (!u.wounded || u === h) continue; const d = Math.hypot(u.x - h.x, u.z - h.z); if (d > 70) continue;
+        { const an = state.renderer && state.renderer.anims && state.renderer.anims[u.id]; if (u.downed && an && an.dw !== undefined && an.dw < 0.95 && !an.dUp) continue; } // the cross appears once he is down, not while he is still falling
         const helped = u.helpedBy >= 0; if (u.downed || !helped) items.push({ x: u.x, z: u.z, y: 1.3, txt: '✚', cls: 'down' + (u.zfile ? ' file' : '') + (u.reviveBy >= 0 ? ' busy' : ''), always: true, bl: u.downed ? Math.max(0, Math.min(1, u.bleed / (30 * (u.zfile ? 45 : 30)))) : undefined });
         else if (u.helpedBy === h.id) items.push({ x: u.x, z: u.z, y: 2.1, txt: '扶', cls: 'down carry', always: false });
         if (!h.dead && d < nd && (u.downed || !helped)) { nd = d; near = u; } }
@@ -12548,17 +12722,187 @@ function ddRoll() {
   zTalk = function (k, night) { return ddAugment(_talk(k, night), k); }; }
 function ddFrame(dt) {
   const sim = state.sim; if (!sim || !sim.mission) return;
-  if (ZB && sim.mission.soldier && DD.zb !== ZB) { DD.zb = ZB; DD.B = ddFresh(sim); DD.fileKills = 0; DD.killers = {}; DD.firstShot = true; DD.placeSince = 0; DD.acc = 0; }
+  if (ZB && sim.mission.soldier && DD.zb !== ZB) { DD.zb = ZB; DD.B = ddFresh(sim); DD.fx = { cool: 0, charge: 0, aloneT: 0, blk: 0, start: false, mark: 0 }; DD.fileKills = 0; DD.killers = {}; DD.firstShot = true; DD.placeSince = 0; DD.acc = 0; }
   if (ZB && DD.B) ddSample(dt);
-  if (ZC && sim.mission.camp && DD.zc !== ZC) { DD.zc = ZC; DD.obj = null; ddCampObjects();
+  if (ZC && sim.mission.camp && DD.zc !== ZC) { DD.zc = ZC; DD.obj = null; ddCampObjects(); DD.sc = { q: [], cur: null, wait: 0 }; ddPlanScenes();
     // the Jin chapters keep their talk in JCH: wrap each chapter's table once
     if (ZC.jin && typeof JCH !== 'undefined') for (const n in JCH) { const C = JCH[n]; if (!C || !C.talk || DD.wrapped.has(C)) continue; const t = C.talk; DD.wrapped.add(C); C.talk = (k) => ddAugment(t(k) || (typeof jTalkAny === 'function' ? jTalkAny(k, +n) : null), k); } }
+  if (ZC && sim.mission.camp) ddScenesTick(dt);
   if (ZC && sim.mission.camp && !state.zheDlg && DD.obj && ddNearRoll()) { const pr = $('zhePrompt'); if (pr) { pr.hidden = false; pr.innerHTML = '<kbd>E</kbd>Read the roll · 功過簿'; } }
 }
 { const st = document.createElement('style'); st.textContent = '.ddres { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; } .ddres span, .ddroll span { font: 13px sans-serif; padding: 2px 8px; border-radius: 3px; } .ddp { background: rgba(120,150,80,.22); color: #cfe0b0; } .ddm { background: rgba(170,60,50,.25); color: #f0b8a8; } .ddn { opacity: .5; } .ddroll { max-height: 56vh; overflow: auto; text-align: left; } .ddrow { margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; } .ddrow b { width: 100%; font-size: 15px; letter-spacing: .04em; }'; document.head.appendChild(st); }
 // test hooks (read-only)
 window.__ddRollPos = () => (DD.obj ? ddRollPos() : null);
 window.__ddCampKey = (u) => { const R = (ZC && ZC.R) || ZR; return u && u.ci !== undefined && R[u.ci] ? R[u.ci].k : null; };
+// ===================== it2 · scenes in camp: a man walks up to you because of what you did =====================
+// court-martial (軍法) with the staff, the man you carried and his keepsake, the friend of the man you left, a toast at
+// the fire, a nickname, a promotion. At most two per camp, the reckoning first.
+DD.sc = { q: [], cur: null, wait: 0 };
+const ddCamp = () => (ddCtx() || {}).c;
+const ddUnitOf = (k) => { const sim = state.sim; if (!sim || !ZC || !ZC.map) return null; for (const uid in ZC.map) { const R = ZC.R || ZR, r = R[ZC.map[uid]]; if (r && r.k === k) { const u = sim.units[uid]; if (u && !u.dead) return u; } } return null; };
+const ddCampKeys = () => { const out = []; if (!ZC || !ZC.map) return out; const R = ZC.R || ZR; for (const uid in ZC.map) { const r = R[ZC.map[uid]]; if (r && !r.guest) out.push(r.k); } return out; };
+const ddHash = (s) => { let x = 7; for (const c of String(s)) x = (x * 31 + c.charCodeAt(0)) | 0; return Math.abs(x); };
+const ddUniq = (a) => a.filter((x, i) => a.indexOf(x) === i);
+function ddPickChief() { const keys = ddCampKeys(); const pref = { zhe: ['wu', 'he', 'lou'], jin: ['ulgen', 'alin', 'dabsun'], sj: ['sj_hu', 'sj_gao', 'sj_lin'] }[ddCamp()] || []; return pref.find(k => keys.includes(k)) || keys[0]; }
+const DDNICK = { // style: [zh, en, how they explain it]
+  wall: ['鐵壁', 'Iron Wall', ddL('刀砍過來，他就是不讓。', 'Blades come at him and he just doesn\'t give.')],
+  club: ['鐵棍', 'Cudgel', ddL('銃打完了，他還能掄。', 'When the gun is empty he just swings it.')],
+  carry: ['背人的', 'the Carrier', ddL('誰倒了，他就背誰回來。', 'Whoever goes down, he carries back.')],
+  eye: ['千里眼', 'Far-Eye', ddL('那麼遠也打得著。', 'He hits them that far out.')],
+  stone: ['石頭', 'Stone', ddL('等到鼻子尖才放。', 'Waits till they\'re at the end of his nose before he fires.')],
+  ladder: ['推梯的', 'Ladder-Pusher', ddL('梯子一靠上來，他就推下去。', 'A ladder touches the wall and over it goes.')],
+  wolf: ['孤狼', 'Lone Wolf', ddL('一個人往前衝，也不等我們。', 'Charges off alone. Doesn\'t wait for us.')],
+  hare: ['兔子', 'the Hare', ddL('跑得比誰都快。', 'Runs faster than any of us.')],
+  butcher: ['屠夫', 'the Butcher', ddL('跑的他也不放過。', 'Not even the running ones get away from him.')],
+};
+function ddStyle(B) {
+  if (B.ran > 6 && !B.rally) return 'hare'; if (B.kf >= 3) return 'butcher';
+  const s = [['carry', ddUniq(B.help.concat(B.rev, B.aid)).length * 4], ['wall', B.blocks / 2 + B.shield * 2], ['club', B.club * 3], ['eye', B.long * 3], ['stone', B.held ? 5 : 0], ['ladder', B.lad * 3], ['wolf', B.alone > 25 ? 5 : 0]].sort((a, b) => b[1] - a[1]);
+  return s[0][1] >= 5 ? s[0][0] : null;
+}
+function ddPlanScenes() {
+  const C = ddCtx(); if (!C) return; const D = ddDD(C.S), B = D.log[D.log.length - 1]; if (!B || D.seen['sc' + B.n]) return; D.seen['sc' + B.n] = 1; C.save();
+  const keys = ddCampKeys(), here = (k) => keys.includes(k), q = [];
+  const saved = ddUniq(B.help.concat(B.rev, B.aid)).filter(here), left = ddUniq(B.left);
+  // the reckoning
+  if ((B.ran > 6 && !B.rally) || B.alone > 40 || (C.c === 'sj' && B.early >= 4)) q.push({ id: 'court', who: ddPickChief() });
+  else if (left.length) { const w = keys.filter(k => k !== C.S.me)[ddHash(left[0] + B.n) % Math.max(1, keys.length - 1)]; if (w) q.push({ id: 'ask', who: w, about: left[0] }); }
+  // the good
+  if (saved.length) q.push({ id: 'thanks', who: saved[0] });
+  else if (B.kills >= 4 || B.off || B.last || B.lad >= 2 || B.avenge.length) q.push({ id: 'toast', who: keys.filter(k => k !== C.S.me).sort((a, b) => (C.S.bond[b] || 0) - (C.S.bond[a] || 0))[0] });
+  const st = ddStyle(B); if (st && !D.nick && q.length < 2) q.push({ id: 'nick', who: keys[ddHash(st + B.n) % keys.length], style: st });
+  const R = D.rep; if (q.length < 2 && !D.rank && R.valor + R.care >= 14 && R.coward === 0 && !(B.ran > 6)) q.push({ id: 'rank', who: ddPickChief() });
+  DD.sc.q = q.filter(s => s.who).slice(0, 2); DD.sc.wait = 8;
+}
+// the dialogue panel: the same box and keys as camp talk (#zheDlg, state.zheDlg)
+function ddDlg(who, sub, lines, choices, end) {
+  if (document.pointerLockElement) document.exitPointerLock(); Input.keys = 0; $('pause').hidden = true;
+  let box = $('zheDlg'); if (!box) { box = document.createElement('div'); box.id = 'zheDlg'; document.body.appendChild(box); box.addEventListener('mousedown', (e) => e.stopPropagation()); }
+  const show = (ls, ch) => { box.hidden = false; box.innerHTML = `<div class="who">${who}<small>${sub || ''}</small></div>${ls.map(l => `<div class="zh">${l[0]}</div><div class="en">${l[1]}</div>`).join('')}<div class="ch">${ch.map((c, i) => `<button type="button" data-i="${i}"><kbd>${i + 1}</kbd>${c.q}</button>`).join('')}${ch.length ? '' : '<button type="button" data-i="-1"><kbd>E</kbd>Go on</button>'}</div>`;
+    box.querySelectorAll('button').forEach(b => b.onclick = () => (+b.dataset.i < 0 ? close() : choose(+b.dataset.i))); cur = ch; };
+  let cur = choices; const close = () => { if (cur.length) return; box.hidden = true; state.zheDlg = null; requestLock(); if (end) end(); };
+  const choose = (i) => { const c = cur[i]; if (!c) return; AUDIO.play('ui'); const nx = c.fx ? c.fx() : null; if (nx && nx.beat) { box.hidden = true; state.zheDlg = null; ddBeat(nx.beat, () => ddDlg(who, sub, nx.after || [], [], end)); return; } show(c.a || [], nx && nx.more ? nx.more : []); };
+  state.zheDlg = { k: 'dd', choose, close }; show(lines, choices);
+}
+// 軍棍 · the staff: count the blows; press E as each one falls to take it without crying out
+function ddBeat(n, done) {
+  const C = ddCtx(); let el = $('ddBeat'); if (!el) { el = document.createElement('div'); el.id = 'ddBeat'; document.body.appendChild(el); }
+  const NUM = '一二三四五六七八九十'; const zhN = (i) => i <= 10 ? NUM[i - 1] : i < 20 ? '十' + NUM[i - 11] : NUM[Math.floor(i / 10) - 1] + '十' + (i % 10 ? NUM[i % 10 - 1] : '');
+  let i = 0, held = 0, open = false, got = false; el.hidden = false;
+  const tool = C && C.c === 'jin' ? ['鞭', 'the whip'] : ['軍棍', 'the staff'];
+  const draw = (cry) => { el.innerHTML = `<div class="n">${i ? zhN(i) : ''}</div><div class="t">${tool[0]} · ${i} / ${n}</div><div class="k${open ? ' on' : ''}"><kbd>E</kbd> grit your teeth</div>${cry ? `<div class="c">${cry}</div>` : ''}`; };
+  state.zheDlg = { k: 'beat', choose: () => { }, close: () => { if (open && !got) { got = true; held++; } } };
+  const blow = () => { i++; open = false; const r = state.renderer; if (r) { r.shake = Math.max(r.shake, 0.6); r.hitFlash = 0.35; } AUDIO.play('thud'); el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); draw(got ? '' : '啊——！'); got = false;
+    if (i >= n) { setTimeout(() => { el.hidden = true; state.zheDlg = null; const D = C && ddDDsafe(); if (D) { D.beat = { n, held }; if (held >= n * 0.75) { D.rep.disc += 1; D.flags = D.flags || {}; D.flags.endured = 1; } C.save(); } done(held >= n * 0.75); }, 900); return; }
+    setTimeout(() => { open = true; draw(''); setTimeout(blow, 420); }, 380); };
+  draw(''); setTimeout(() => { open = true; draw(''); setTimeout(blow, 420); }, 900);
+}
+const ddDDsafe = () => { const C = ddCtx(); return C ? ddDD(C.S) : null; };
+// ---------- the scenes ----------
+function ddRunScene(s) {
+  const C = ddCtx(); if (!C) return; const D = ddDD(C.S), B = D.log[D.log.length - 1], me = C.S.name, r = ddRow(s.who) || { zh: '', en: 'A comrade', t: '' };
+  const who = `${r.zh} ${r.en}`, sub = r.t, bond = (k, n) => { C.S.bond[k] = (C.S.bond[k] || 0) + n; }, done = () => { C.save(); DD.sc.cur = null; DD.sc.wait = 22; };
+  const jin = C.c === 'jin', sj = C.c === 'sj';
+  if (s.id === 'court') {
+    const officer = jin ? ['甲喇額真', 'the jalan captain'] : sj ? ['把總', 'the company captain'] : ['哨官', 'the company officer'];
+    const crime = B.ran > 6 && !B.rally ? ['臨陣退縮', 'turning your back on the enemy'] : sj && B.early >= 4 ? ['未令先放', 'firing before the order'] : ['失伍', 'leaving your file'];
+    const law = jin ? ddL('汗的法：臨陣退走者，鞭；再犯，斬。', 'The Khan\'s law: who falls back in battle is whipped. The second time, beheaded.') : ddL('號令有云：臨陣退縮者斬，失伍者棍。', 'The regulations say: who turns back in battle is beheaded; who leaves his file is beaten.');
+    const helped = ddUniq(B.help.concat(B.rev, B.aid)).length;
+    ddDlg(who, sub, [ddL(`${me.zh}。${officer[0]}叫你。現在就去。`, `${me.en}. ${officer[1][0].toUpperCase() + officer[1].slice(1)} wants you. Now.`), ddL(`罪名：${crime[0]}。`, `The charge: ${crime[1]}.`), law], [
+      { q: 'I did it. I have no excuse.', a: [ddL('……還知道認。打二十，記過。', '...At least you own it. Twenty strokes, and it goes on the roll.')], fx: () => { bond(s.who, 1); return { beat: 20, after: [ddL('弟兄們把你扶回火邊。沒人說話，但有人把碗遞給你。', 'The men help you back to the fire. Nobody speaks, but someone hands you a bowl.')] }; } },
+      { q: helped ? 'I went back for a wounded man.' : 'I was going for help.', a: [], fx: () => helped ? { beat: 10, after: [ddL('有人作證，你是去背人的。減為十棍。', 'Someone swears you went to carry a man. Ten strokes.')] } : (bond(s.who, -1), { beat: 40, after: [ddL('沒人能作證。說謊加倍：四十。', 'No one can back you. A lie doubles it: forty.')] }) },
+      { q: '(Say nothing.)', a: [], fx: () => ({ beat: 30, after: [ddL('三十。你一聲沒吭，連打的人都看了你一眼。', 'Thirty. You don\'t make a sound; even the man with the staff gives you a look.')] }) },
+    ], done);
+  } else if (s.id === 'ask') {
+    const a = s.about, an = [ddNm(a), ddNm(a, true)];
+    ddDlg(who, sub, [ddL(`你把${an[0]}丟在那裡了。`, `You left ${an[1]} out there.`), ddL('他喊你的名字。我聽見了。', 'He was calling your name. I heard him.')], [
+      { q: 'I couldn\'t carry him. I\'m sorry.', a: [ddL('……我知道。我就是要聽你說出來。', '...I know. I just needed to hear you say it.')], fx: () => { bond(s.who, 0); D.flags = D.flags || {}; D.flags['owned:' + a] = 1; } },
+      { q: 'I thought he was already dead.', a: [ddL('他沒有。', 'He wasn\'t.'), ddL('（他轉身走了。下一仗，他不會站在你旁邊。）', '(He walks away. Next fight, he won\'t stand beside you.)')], fx: () => { bond(s.who, -2); D.grudge = D.grudge || {}; D.grudge[s.who] = a; } },
+      { q: '(Say nothing.)', a: [ddL('（他往地上啐了一口。）', '(He spits on the ground.)')], fx: () => { bond(s.who, -1); } },
+    ], done);
+  } else if (s.id === 'thanks') {
+    const item = jin ? ['鹿骨扳指', 'a deer-bone thumb ring', 'for the bowstring'] : sj ? ['火繩盒', 'his slow-match tin', 'it keeps the match dry'] : ['木雕小鳥', 'a little carved wooden bird', 'my father made it'];
+    ddDlg(who, sub, [ddL(`${me.zh}。你回頭了。別人都在跑，你回頭了。`, `${me.en}. You came back. Everyone was running and you came back.`), ddL(`拿著。${item[0]}。`, `Take this. ${item[1][0].toUpperCase() + item[1].slice(1)} — ${item[2]}.`)], [
+      { q: 'I\'ll keep it close.', a: [ddL('嗯。下次換我。', 'Mm. Next time it\'s my turn.')], fx: () => { bond(s.who, 2); D.keep.push({ k: s.who, zh: item[0], en: item[1], n: B.n }); D.debt = D.debt || {}; D.debt[s.who] = 1; } },
+      { q: 'Keep it. You\'ll need your luck.', a: [ddL('……那我就欠著。', '...Then I owe you.')], fx: () => { bond(s.who, 3); D.debt = D.debt || {}; D.debt[s.who] = 1; } },
+    ], done);
+  } else if (s.id === 'toast') {
+    const deed = B.off ? ddL('砍了他們的頭目', 'cut down their officer') : B.last ? ddL('最後一個站著的', 'the last of us standing') : B.lad ? ddL('把梯子推了下去', 'threw their ladders down') : B.avenge.length ? ddL(`替${ddNm(B.avenge[0])}報了仇`, `paid them back for ${ddNm(B.avenge[0], true)}`) : ddL('殺得最多', 'killed the most of them');
+    ddDlg(who, sub, [ddL(`來！敬${me.zh}——${deed[0]}的人！`, `Here! To ${me.en} — the man who ${deed[1]}!`)], [
+      { q: 'To the ones who aren\'t here.', a: [ddL('……敬他們。', '...To them.'), ddL('（火邊安靜了一會兒，每個人都喝了。）', '(The fire goes quiet for a moment. Everyone drinks.)')], fx: () => { bond(s.who, 1); D.flags = D.flags || {}; D.flags.humble = (D.flags.humble || 0) + 1; } },
+      { q: 'Luck. Just luck.', a: [ddL('運氣也得有人接得住！', 'Luck needs a man to catch it!')], fx: () => bond(s.who, 1) },
+      { q: 'Did you see me? Ha!', a: [ddL('看見了看見了！明天整個營都會知道。', 'We saw, we saw! By tomorrow the whole camp will know.')], fx: () => { D.flags = D.flags || {}; D.flags.boast = (D.flags.boast || 0) + 1; } },
+    ], done);
+  } else if (s.id === 'nick') {
+    const N = DDNICK[s.style];
+    ddDlg(who, sub, [ddL(`欸，你們看——${N[0]}來了！`, `Hey, look — here comes ${N[1]}!`), N[2], ddL('（火邊的人都笑了。）', '(The men at the fire laugh.)')], [
+      { q: `Fine. ${N[1]} it is.`, a: [ddL(`${N[0]}！${N[0]}！`, `${N[1]}! ${N[1]}!`)], fx: () => { D.nick = { zh: N[0], en: N[1], style: s.style }; bond(s.who, 1); } },
+      { q: 'Don\'t call me that.', a: ddHash(s.style + me.en) % 2 ? [ddL('好好好，不叫。', 'All right, all right. We won\'t.')] : [ddL(`越不讓叫，越要叫。${N[0]}！`, `The more you mind, the more we'll say it. ${N[1]}!`)], fx: () => { if (!(ddHash(s.style + me.en) % 2)) D.nick = { zh: N[0], en: N[1], style: s.style }; } },
+    ], done);
+  } else if (s.id === 'rank') {
+    const t = jin ? ['巴圖魯', 'baturu — "hero"', '汗賜你巴圖魯之號。', 'The Khan grants you the name baturu.'] : sj ? ['伍長', 'file leader', '從今天起，你帶這一伍。', 'From today you lead this file of five.'] : ['伍長', 'file leader', '把總給你的腰牌。從今天起你帶一伍。', 'The captain sends you a waist tag. From today you lead a file of five.'];
+    ddDlg(who, sub, [ddL(t[2], t[3]), ddL('別讓我們後悔。', 'Don\'t make us regret it.')], [
+      { q: 'I won\'t.', a: [ddL('（他把東西放在你手裡，拍了拍你的肩。）', '(He puts it in your hand and claps your shoulder.)')], fx: () => { D.rank = { zh: t[0], en: t[1] }; if (jin) D.nick = { zh: '巴圖魯', en: 'Baturu', style: 'baturu' }; bond(s.who, 1); } },
+      { q: 'Give it to someone else.', a: [ddL('不行。命令就是命令。', 'No. An order is an order.')], fx: () => { D.rank = { zh: t[0], en: t[1] }; if (jin) D.nick = { zh: '巴圖魯', en: 'Baturu', style: 'baturu' }; } },
+    ], done);
+  }
+}
+function ddScenesTick(dt) {
+  const S = DD.sc, sim = state.sim, h = localHero(); if (!S.q.length && !S.cur) return; if (!sim || !h || !ZC || !sim.mission.camp) return;
+  if (S.cur && S.cur.talking) return;
+  if (!S.cur) { if ($('zheCard') && !$('zheCard').hidden) return; if (state.zheDlg) return; S.wait -= dt; if (S.wait > 0) return; S.cur = S.q.shift(); S.cur.t = 0; S.cur.u = ddUnitOf(S.cur.who); const n = ddRow(S.cur.who);
+    if (S.cur.u) SPEECH.say(S.cur.u.id, `${(ddCtx().S.name || {}).zh || ''}！`, `${(ddCtx().S.name || {}).en || ''}!`, { prio: 2, dur: 2.5 }); if (n) toast(`${n.zh} ${n.en} is coming over to you`); }
+  const c = S.cur, u = c.u; c.t += dt;
+  if (u && !u.dead) { const dx = h.x - u.x, dz = h.z - u.z, d = Math.hypot(dx, dz); u.yaw = Math.atan2(dx, dz); u.campPose = 'stand';
+    if (d > 1.9 && c.t < 20) { const st = Math.min(d - 1.8, 1.5 * dt); u.px = u.x; u.pz = u.z; u.x += dx / d * st; u.z += dz / d * st; u.y = SIM.terrainH(u.x, u.z); return; } }
+  if (state.zheDlg) return; c.talking = true; ddRunScene(c);
+}
+{ const st = document.createElement('style'); st.textContent = '#ddBeat { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; background: radial-gradient(ellipse at center, rgba(40,6,4,.25), rgba(10,2,2,.75)); color: #f0e0c8; font-family: serif; } #ddBeat .n { font-size: 96px; line-height: 1; text-shadow: 0 0 24px #000; } #ddBeat .t { font: 15px sans-serif; opacity: .8; margin-top: 8px; } #ddBeat .k { margin-top: 26px; font: 600 16px sans-serif; opacity: .35; } #ddBeat .k.on { opacity: 1; color: #ffd28a; } #ddBeat .c { margin-top: 10px; font-size: 26px; color: #ff9a8a; } #ddBeat.hit { animation: ddhit .25s ease-out; } @keyframes ddhit { 0% { background-color: rgba(160,20,10,.45); } 100% { background-color: transparent; } }'; document.head.appendChild(st); }
+window.__ddSc = () => DD.sc;
+// ===================== it3 · in battle: the file remembers you while the fight is on =====================
+// your name or nickname shouted after your kills and blocks; "Follow him!" or "Get back in line!" when you charge
+// ahead, depending on your record; the man who owes you a life stays near and calls it when he pays; a file that
+// trusts you stands steadier, one that doesn't wavers; a known killer gets marked by the enemy.
+DD.fx = { cool: 0, charge: 0, aloneT: 0, blk: 0, start: false, mark: 0 };
+const ddMeName = () => { const C = ddCtx(); if (!C) return null; const D = ddDD(C.S); return D.nick ? { zh: D.nick.zh, en: D.nick.en } : C.S.name; };
+function ddSayNear(zh, en, pred, pr) { const sim = state.sim, h = localHero(); if (!sim || !h || !ZB) return null; let best = null, bd = 18;
+  for (const uid in ZB.map) { const u = sim.units[uid]; if (!u || u.dead || u.wounded || u.id === h.id) continue; const k = ddKey(uid); if (pred && !pred(k, u)) continue; const d = Math.hypot(u.x - h.x, u.z - h.z); if (d < bd) { bd = d; best = u; } }
+  if (best) SPEECH.say(best.id, zh, en, { prio: pr || 2, dur: 2.6 }); return best; }
+function ddTrust() { const C = ddCtx(); if (!C) return 0; const R = ddDD(C.S).rep; return R.care + R.valor * 0.5 + R.disc - R.coward * 1.5 - R.cruel * 0.5; }
+function ddBattleStart() {
+  const C = ddCtx(), sim = state.sim, h = localHero(); if (!C || !sim || !h || !ZB) return; const D = ddDD(C.S); if (!D.log.length) return;
+  // trust: the file holds steadier around a man it trusts, and wavers around one it doesn't
+  const t = ddTrust(), q = sim.squads[ZB.sq]; if (q && !q.def.fearless) { const k = t >= 8 ? 1.25 : t >= 4 ? 1.12 : t <= -4 ? 0.8 : 1; if (k !== 1) { q.moraleMax *= k; q.morale = q.moraleMax; } DD.fx.trust = k; }
+  const nm = ddMeName(); setTimeout(() => {
+    if (D.debt) { const k = Object.keys(D.debt)[0]; const u = k && Object.keys(ZB.map).map(Number).find(id => ddKey(id) === k && !sim.units[id].dead); if (u !== undefined) SPEECH.say(u, `${nm.zh}，今天我在你旁邊。`, `${nm.en}, today I stand next to you.`, { prio: 2, dur: 3.5 }); }
+    if (D.grudge) { const k = Object.keys(D.grudge)[0]; const u = k && Object.keys(ZB.map).map(Number).find(id => ddKey(id) === k && !sim.units[id].dead); if (u !== undefined) SPEECH.say(u, '別指望我回頭找你。', 'Don\'t count on me coming back for you.', { prio: 2, dur: 3.5 }); }
+    else if (DD.fx.trust < 1) ddSayNear('……跟緊點，別又跑了。', '...Stay close this time. Don\'t run again.');
+    else if (DD.fx.trust > 1.1) ddSayNear(`有${nm.zh}在，怕什麼。`, `${nm.en}'s with us. What's to be afraid of?`); }, 9000);
+}
+function ddBattleEvent(ev) {
+  const sim = state.sim, h = localHero(), B = DD.B; if (!sim || !h || !B || !ZB) return; const F = DD.fx, nm = ddMeName() || { zh: '', en: '' }; const C = ddCtx(); const D = C && ddDD(C.S);
+  if (ev.t === 'death' && ev.killer === h.id) { const v = sim.units[ev.id]; if (!v || v.team === h.team || v.type === 'horse') return;
+    if (F.cool <= 0 && (B.kills % 3 === 1 || v.type === 'hero' || v.officer)) { F.cool = 10; const L = v.type === 'hero' || v.officer ? [`${nm.zh}砍了他們的頭目！`, `${nm.en} cut down their officer!`] : [`好！${nm.zh}！`, `Good one, ${nm.en}!`]; ddSayNear(L[0], L[1]); } }
+  // the man you saved pays you back: he kills the man who was going for you
+  if (ev.t === 'death' && D && D.debt && ev.killer >= 0 && ev.killer !== h.id) { const k = ddKey(ev.killer); const v = sim.units[ev.id]; if (k && D.debt[k] && v && v.target === h.id) { delete D.debt[k]; C.S.bond[k] = (C.S.bond[k] || 0) + 2; B.repaid = k; SPEECH.say(ev.killer, '這下扯平了！', 'Now we\'re even!', { prio: 3, dur: 3 }); C.save(); } }
+  if (ev.t === 'block' && ev.by === h.id) { F.blk++; if (F.blk >= 4 && F.cool <= 0) { F.cool = 12; F.blk = 0; ddSayNear(D && D.nick && D.nick.style === 'wall' ? '鐵壁！' : '擋得好！', D && D.nick && D.nick.style === 'wall' ? 'Iron Wall!' : 'Good block!'); } }
+}
+function ddBattleTick(dt) {
+  const sim = state.sim, h = localHero(), B = DD.B, F = DD.fx; if (!sim || !h || h.dead || !B || !ZB) return;
+  F.cool -= dt; F.charge -= dt; F.mark -= dt;
+  if (!F.start && sim.tick > 30) { F.start = true; ddBattleStart(); }
+  // charging ahead alone: the chief calls after you, according to your record
+  F.aloneT = B.alone; if (F.charge <= 0 && B.alone - (F.alone0 || 0) > 3) { F.charge = 40; F.alone0 = B.alone; const t = ddTrust(), nm = ddMeName();
+    const chief = ddSayNear(t >= 4 ? '跟上他！' : `${nm.zh}！回來！歸隊！`, t >= 4 ? `Follow him! Follow ${nm.en}!` : `${nm.en}! Get back in line!`, null, 3);
+    // a file that trusts you comes after you: the squad's next slot is your position for a few seconds
+    if (chief && t >= 4) { const q = sim.squads[ZB.sq]; if (q && q.order !== undefined) { DD.fx.follow = 6; } } }
+  if (F.follow > 0) { F.follow -= dt; const q = sim.squads[ZB.sq]; if (q && q.alive) { q.tx = h.x; q.tz = h.z; } }
+  // a known killer: the enemy point you out and come for you
+  if (F.mark <= 0) { F.mark = 12; const C = ddCtx(), D = C && ddDD(C.S); if (D && D.rep.valor >= 14) { let n = 0; for (const v of sim.units) { if (v.dead || v.team === h.team || v.type === 'horse' || v.ctrl >= 0 || v.def.ai === 'cannon') continue; if (Math.hypot(v.x - h.x, v.z - h.z) < 22 && n < 2) { v.target = h.id; n++; if (n === 1 && !F.marked) { F.marked = 1; SPEECH.say(v.id, '就是他！', 'That\'s the one!', { prio: 2, dur: 2.5 }); } } } } }
+}
+{ const _f = ddFrame, _e = ddEvent;
+  ddFrame = function (dt) { _f(dt); try { if (DD.B && ZB && state.sim && state.sim.mission && state.sim.mission.soldier) ddBattleTick(dt); } catch (e) { console.warn('deeds', e); } };
+  ddEvent = function (ev) { _e(ev); try { ddBattleEvent(ev); } catch (e) { console.warn('deeds', e); } }; }
 
 })();
 </script>
