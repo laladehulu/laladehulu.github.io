@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v40</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v41</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -132,6 +132,15 @@ kbd { font-family: var(--font-ui); font-size: 11px; background: var(--ink); colo
 #pause.story .card { padding: 8px 18px; background: rgba(20,16,12,.72); border: 1px solid #6a5a44; color: #e8dcc0; box-shadow: none; }
 #pause.story h2 { font-size: 15px !important; margin: 0; letter-spacing: .08em; }
 #pause.story p { display: none; }
+#empAim { position: fixed; left: 50%; top: 50%; transform: translate(70px, -110px); pointer-events: none; z-index: 12; display: flex; gap: 10px; align-items: flex-end; font: 600 12px var(--font-ui, sans-serif); color: #f0dcae; text-shadow: 0 1px 2px #000; }
+#empAim .scale { position: relative; width: 46px; height: 220px; border-left: 2px solid rgba(240,220,174,.55); }
+#empAim .scale i { position: absolute; left: -2px; width: 8px; height: 1px; background: rgba(240,220,174,.6); }
+#empAim .scale i.z { width: 14px; background: #f0dcae; }
+#empAim .scale i b { position: absolute; left: 12px; top: -7px; font-weight: 500; font-size: 10px; opacity: .75; white-space: nowrap; }
+#empAim .scale u { position: absolute; left: -9px; width: 0; height: 0; border: 6px solid transparent; border-left-color: #ffd27a; transform: translateY(6px); }
+#empAim .scale s { position: absolute; left: -7px; width: 16px; height: 2px; background: rgba(255,255,255,.45); }
+#empAim .rd { background: rgba(20,16,12,.6); border: 1px solid rgba(240,220,174,.35); padding: 4px 8px; border-radius: 3px; line-height: 1.5; }
+#empAim .rd b { color: #ffd27a; margin-right: 4px; }
 #status .goal { font: 600 15px Georgia, 'Noto Serif CJK TC', serif; color: #f2cf6a; text-shadow: 0 1px 3px #000, 0 0 10px rgba(0,0,0,.6); letter-spacing: .02em; }
 #status { left: 50%; top: max(14px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); display: flex; gap: 14px; align-items: center; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .06em; white-space: nowrap; }
 #status .t0 { color: #ff8a92; } #status .t1 { color: #92afff; }
@@ -802,6 +811,7 @@ const BATTLES = {
   abudali:  { name: 'Abudali Pass', jp: '阿布達里岡', when: 'April 1619', biome: 'winter', fog: 0.3, terrain: 0.45, features: ['pass'], hidden: true, desc: 'A narrow valley in the mountains east of Hetu Ala, its slopes thick with pine and late snow.' },
   bjgate:   { name: 'The Guangqu Gate', jp: '廣渠門', when: 'December 1629', biome: 'winter', fog: 0.15, terrain: 0.2, features: ['streets'], hidden: true, desc: 'The suburb outside the outer wall of Beijing. The wall and its gate towers stand behind, too big to see the end of.' },
   zroad:    { name: 'The road', jp: '道', when: '1619', biome: 'winter', fog: 0.2, terrain: 0.3, features: [], hidden: true, desc: 'A cart road through the Liaodong hills, a village by the way.' },
+  sjvil:    { name: 'A village east of Tongzhou', jp: '村', when: 'November 1629', biome: 'winter', fog: 0.22, terrain: 0.12, features: [], hidden: true, desc: 'A walled farming village on the Tongzhou road: courtyard houses either side of the street, a well in the middle.' },
   zcamp:    { name: 'Camp', jp: '營', when: '1619', biome: 'night', fog: 0.2, terrain: 0.25, features: [], hidden: true, desc: 'A night camp in the hills.' },
   siegecity: { name: 'Ningyuan (siege)', jp: '寧遠', when: 'February 1626', biome: 'winter', fog: 0.12, terrain: 0.08, features: [], hidden: true, desc: 'A walled town on the frozen coast: ditch, rampart, gatehouse and streets.' },
   bonari:   { name: 'Shanhai Pass', jp: '山海關', when: 'May 1644', biome: 'spring', fog: 0.25, terrain: 0.5, features: ['pass'], desc: 'The First Pass Under Heaven: a narrow gap between steep ridges, blocked by two lines of earthworks. Flanking over the slopes is slow and costly.' },
@@ -954,6 +964,7 @@ class Sim {
     if (b === 'bonari') L.pass = { r0: 24, r1: 56, h: 30 };
     if (b === 'siegecity') { L.swall = { z0: SG.z0, z1: SG.z1, h: SG.h, gate: SG.gate, ramps: [-60, -12, 12, 60] }; L.sditch = { zc: SG.ditchZ, w: SG.ditchW, depth: 2.6, bridge: SG.gate, fills: SG.fills.map((f, i) => ({ x: f[0], hw: f[1], done: false, key: i ? 'ditchE' : 'ditchW' })) }; }
     if (b === 'abudali') { L.pass = { r0: 15, r1: 46, h: 24 }; L.hills.push({ x: -34, z: 6, r: 30, h: 6 }); L.hills.push({ x: 30, z: -48, r: 26, h: 5 }); }
+    if (b === 'sjvil') { L.hills.push({ x: -130, z: 60, r: 70, h: 9 }); L.hills.push({ x: 130, z: -50, r: 70, h: 8 }); }
     if (b === 'zroad') { L.hills.push({ x: -105, z: -30, r: 70, h: 13 }); L.hills.push({ x: 110, z: 50, r: 75, h: 15 }); L.hills.push({ x: -95, z: 110, r: 50, h: 9 }); L.hills.push({ x: 0, z: 70, r: 30, h: 2.5 }); }
     if (b === 'bjgate') { L.hills.push({ x: -170, z: -40, r: 70, h: 5 }); L.hills.push({ x: 170, z: -90, r: 60, h: 4 }); }
     if (b === 'zcamp') { L.hills.push({ x: -90, z: 60, r: 70, h: 14 }); L.hills.push({ x: 100, z: -40, r: 80, h: 16 }); L.hills.push({ x: 0, z: 130, r: 70, h: 12 }); }
@@ -1019,6 +1030,13 @@ class Sim {
       for (let bx = -5; bx <= 5; bx++) for (let bz = -4; bz <= 1; bz++) { const x = 6 + bx * 21 + r.range(-2, 2), z = bz * 24 + 8 + r.range(-3, 3); if (Math.abs(x - 6) < 11 || r.next() < 0.3 || !clear(x, z, 6)) continue;
         const two = r.next() < 0.45; this.boxes.push({ x: x - (two ? 3.6 : 0), z, hw: two ? 3 : 5, hd: 3.2, h: r.range(3, 3.6), kind: 'house' }); if (two) this.boxes.push({ x: x + 4, z: z + r.range(-1, 1), hw: 3, hd: 3, h: r.range(2.8, 3.4), kind: 'house' }); keep.push({ x, z, r: 8 }); }
     }
+    if (B === 'sjvil') { // a north-China village: courtyard houses either side of one street, compound walls with gaps for the lanes, a well
+      this.deco.push({ kind: 'road', x: 0, w: 5 }); this.roadX = 0;
+      const H = [[-8, -18, 3, 3.2], [-8, -4, 3, 3], [-8, 12, 3.2, 3], [-8, 26, 3, 3], [8, -14, 3, 3.2], [8, 2, 3, 3], [8, 18, 3.2, 3], [8, 31, 3, 2.8], [-21, -10, 3, 3.5], [-21, 8, 3.2, 3], [-21, 24, 3, 3], [21, -6, 3, 3], [21, 12, 3.5, 3], [21, 28, 3, 3]];
+      for (const [x, z, hw, hd] of H) this.boxes.push({ x, z, hw, hd, h: 3.4, kind: 'house' });
+      const W = [[-14.5, 3, 0.3, 4], [14.5, -2, 0.3, 4], [-14.5, 19.5, 0.3, 3], [14.5, 23, 0.3, 3], [-9, 36, 4, 0.3], [9, 39, 4, 0.3], [-27, 14, 0.3, 7], [27, 4, 0.3, 7], [-21, -17, 3.5, 0.3], [21, -12, 3.5, 0.3], [3.2, 7, 0.6, 0.6]];
+      for (const [x, z, hw, hd] of W) this.boxes.push({ x, z, hw, hd, h: hw < 1 && hd < 1 ? 0.9 : 2.2, kind: 'wall' });
+      keep.push({ x: 0, z: 8, r: 38 }); keep.push({ x: 0, z: -50, r: 10 }); }
     if (B === 'zroad') { this.deco.push({ kind: 'road', x: 0, w: 6 }); this.roadX = 0;
       for (const [x, z, hw, hd] of [[-13, 22, 3.2, 2.6], [-14, 36, 2.8, 2.4], [-24, 30, 3, 2.6], [12.5, 26, 3, 2.5], [13.5, 41, 3.3, 2.7], [23, 33, 2.6, 2.4], [-12.5, 50, 2.6, 2.2]]) { this.boxes.push({ x, z, hw, hd, h: 3.3, kind: 'house' }); keep.push({ x, z, r: 6 }); }
       keep.push({ x: 0, z: 34, r: 16 }); }
@@ -1068,7 +1086,7 @@ class Sim {
     // cover: wooden mantlets (pavises) around objectives and across the middle of the field
     const mant = (x, z) => { if (waterAt(x, z) !== 0) return; for (const q of this.boxes) if (Math.abs(q.x - x) < q.hw + 2 && Math.abs(q.z - z) < q.hd + 1.5) return; this.boxes.push({ x, z, hw: 1.15, hd: 0.2, h: 1.35, kind: 'mantlet' }); keep.push({ x, z, r: 2 }); };
     if (this.scen) { for (const c of this.scen.cover) mant(c[0], c[1]); }
-    else if (B !== 'abudali' && B !== 'zcamp' && B !== 'siegecity') { for (const o of this.layout.objectives || []) for (const sd of [-1, 1]) for (const dx of [-5, 0, 5]) mant(o.x + dx + r.range(-1, 1), o.z + sd * (o.r + 2)); for (let i = 0; i < 14; i++) { const x = r.range(-90, 90), z = r.range(-45, 45); if (clear(x, z, 3)) { mant(x, z); mant(x + 2.6, z + r.range(-0.4, 0.4)); } } }
+    else if (B !== 'abudali' && B !== 'zcamp' && B !== 'siegecity' && B !== 'sjvil') { for (const o of this.layout.objectives || []) for (const sd of [-1, 1]) for (const dx of [-5, 0, 5]) mant(o.x + dx + r.range(-1, 1), o.z + sd * (o.r + 2)); for (let i = 0; i < 14; i++) { const x = r.range(-90, 90), z = r.range(-45, 45); if (clear(x, z, 3)) { mant(x, z); mant(x + 2.6, z + r.range(-0.4, 0.4)); } } }
     if (this.scen) for (const L of this.scen.ladders) this.ladders.push({ x: L[0], z: L[1], hd: L[2], up: false, prog: 0, hp: 0 });
     const treeN = B === 'bonari' ? 30 : B === 'abudali' ? 190 : B === 'zcamp' ? 120 : B === 'nagaoka' ? 70 : this.bdef.biome === 'winter' ? 110 : 150;
     for (let i = 0; i < treeN; i++) {
@@ -1479,6 +1497,9 @@ class Sim {
     else if (u.mounted) this.horseControl(u, keys, disabled, true);
     else this.footControl(u, keys, a, disabled);
     if (disabled) { u.blocking = false; u.atkHeld = !!(a & A_ATK); u.blockHeld = !!(a & A_BLOCK); return; }
+    if (u.manE >= 0 && this.sg && this.empControl(u, a)) return;
+    // E beside a free piece mans it whatever you were doing (reloading, aiming, mid-swing)
+    if ((a & A_KICK) && this.sg && this.phase === 1 && u.mount < 0 && !u.mounted && this.sg.emp.some(e => e.team === u.team && e.man < 0 && len(e.x - u.x, e.z - u.z) < 2.6)) { u.st = ST_IDLE; u.stT = 0; u.aiming = false; u.blocking = false; this.siegeInteract(u); return; }
     const ws = u.def.weapons;
     if ((a & A_SWAP) && ws.length > 1) { u.nextWeapon = ws[(ws.indexOf(u.weapon) + 1) % ws.length]; u.swapQ = true; }
     // a man with only a gun turns it round to fight with it as a club (and back); turning it breaks off a reload
@@ -1672,6 +1693,7 @@ class Sim {
     }
     if (sq.order === ORD_MOVE && len(sq.cx - sq.tx, sq.cz - sq.tz) < 2.5) sq.order = ORD_HOLD;
     if (this.xc) this.xcFront(sq);
+    if (sq.def.yuanyang) this.yyAnchor(sq, n);
     const fx = sin(sq.facing), fz = cos(sq.facing), rx = -cos(sq.facing), rz = sin(sq.facing), s = spacingOf(sq.def);
     let k = 0;
     // friendly companies given the same ground slide apart instead of merging into one mob
@@ -1684,7 +1706,7 @@ class Sim {
       const u = units[sq.unitIds[i]]; if (u.dead) continue;
       let [lat, dep] = slotOffset(sq.formation, k++, n, s, sq.cols); if (sq.def.yuanyang && sq.formation !== FORM_COLUMN) { const r = YY_SLOT[i % 12]; lat = r[0] * 0.92; dep = r[1] * 0.82; }
       if (u.restT > this.tick) dep -= 3.4;
-      u.slotX = clamp((sq.front ? sq.fax : sq.tx) + ox + rx * lat + fx * dep, -HALF, HALF); u.slotZ = clamp((sq.front ? sq.faz : sq.tz) + oz + rz * lat + fz * dep, -HALF, HALF);
+      u.slotX = clamp((sq.yyA ? sq.yax : sq.front ? sq.fax : sq.tx) + ox + rx * lat + fx * dep, -HALF, HALF); u.slotZ = clamp((sq.yyA ? sq.yaz : sq.front ? sq.faz : sq.tz) + oz + rz * lat + fz * dep, -HALF, HALF);
       for (const p of this.players) { if (p.ai || p.team !== sq.team) continue; const h = units[p.heroId]; if (!h || h.dead || h === u) continue; const hx = u.slotX - h.x, hz = u.slotZ - h.z, hd = len(hx, hz); if (hd < 1.9) { const e = hd > 0.05 ? 1.9 / hd : 0; u.slotX = h.x + (hd > 0.05 ? hx * e : rx * 1.9); u.slotZ = h.z + (hd > 0.05 ? hz * e : rz * 1.9); } } // leave the player room to move
       if (sq.def.ai === 'ranged' && sq.order === ORD_HOLD) this.coverSlot(u, fx, fz);
     }
@@ -1740,6 +1762,16 @@ class Sim {
       if (len(q.cx - tx, q.cz - tz) > 3) { q.order = ORD_MOVE; q.tx = tx; q.tz = tz; q.facing = ang; } else { if (q.order !== ORD_HOLD) { q.tx = q.cx; q.tz = q.cz; } q.order = ORD_HOLD; q.facing = ang; } });
     const h = pl && pl.ai ? this.units[pl.heroId] : null; if (h && !h.dead) { h.slotX = clamp(D.x - fx * 8, -HALF + 5, HALF - 5); h.slotZ = clamp(D.z - fz * 8, -HALF + 5, HALF - 5); }
   }
+  // one facing for a whole general's line at his post: toward the mass of the enemy there, kept steady (re-aimed at most
+  // every few seconds and only for a real change), so the line's wings don't swap sides each time a different enemy
+  // company happens to be nearest
+  dirAng(pl, enemies, px, pz, e) {
+    const k = pl.dAng; if (k && Math.abs(k.x - px) < 3 && Math.abs(k.z - pz) < 3 && this.tick - k.t < 150) return k.a;
+    let sx = 0, sz = 0, w = 0; for (const q of enemies) { const d = len(q.cx - px, q.cz - pz); if (d > 80) continue; const ww = (q.aliveCount || 1) / (10 + d); sx += q.cx * ww; sz += q.cz * ww; w += ww; }
+    let a = w > 0 ? atan2(sx / w - px, sz / w - pz) : atan2(e.cx - px, e.cz - pz);
+    if (k && Math.abs(k.x - px) < 3 && Math.abs(k.z - pz) < 3 && Math.abs(wrap(a - k.a)) < 0.6) a = k.a;
+    pl.dAng = { x: px, z: pz, a, t: this.tick }; return a;
+  }
   generalThink(team, squadIds, pl) {
     const enemies = []; for (let i = 0; i < this.squads.length; i++) { const s = this.squads[i]; if (s.alive && s.team !== team && !s.routing && !s.inactive) enemies.push(s); }
     if (!enemies.length) { for (let i = 0; i < this.squads.length; i++) { const s = this.squads[i]; if (s.alive && s.team !== team && !s.inactive) enemies.push(s); } }
@@ -1768,7 +1800,7 @@ class Sim {
         else {
           const close = !pl.fleeing && d < (def.ai === 'ranged' ? 0 : def.mounted ? (pl.aggr ? pl.aggr + 15 : 45) : (pl.aggr || 32)) && D.kind !== DIR_FLANK && !this.navBlockedLine(sq.cx, sq.cz, e.cx, e.cz);
           if (close) { sq.order = ORD_CHARGE; sq.tx = e.cx; sq.tz = e.cz; sq.facing = ang; continue; }
-          const eang = atan2(e.cx - px, e.cz - pz), rx = -cos(eang), rz = sin(eang), n = squadIds.length;
+          const eang = this.dirAng(pl, enemies, px, pz, e), rx = -cos(eang), rz = sin(eang), n = squadIds.length;
           const lat = (i - (n - 1) / 2) * 20, back = def.ai === 'cannon' ? (pl.standoff ? -70 : -14) : def.mounted ? -8 : (pl.standoff && def.ai === 'ranged' ? -38 : 0);
           const tx = px + rx * lat + sin(eang) * back, tz = pz + rz * lat + cos(eang) * back;
           if (len(sq.cx - tx, sq.cz - tz) > 3) { sq.order = ORD_MOVE; sq.tx = clamp(tx, -HALF + 5, HALF - 5); sq.tz = clamp(tz, -HALF + 5, HALF - 5); sq.facing = eang; }
@@ -1962,7 +1994,7 @@ class Sim {
     for (let i = 0; i < enemies.length; i++) { const v = enemies[i]; if (v.inactive || (v.duelWith >= 0 && v.duelWith !== undefined)) continue; const dx = v.x - u.x, dz = v.z - u.z; let d2 = dx * dx + dz * dz;
       if (eng) { const n = eng[v.id] - (u.target === v.id ? 1 : 0); if (n >= 3) d2 *= 5; else if (n === 2) d2 *= 2.2; else if (n === 1) d2 *= 1.25; }
       if (this.xc && eng && this.spN && u.spaceOf !== v.id && (this.spN[v.id] || 0) >= this.xcLim(v)) d2 *= 4; // every space round him is taken: look along the line for a free one
-      if (this.xc && ranged && v.ctrl >= 0 && !this.players[v.ctrl].ai) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 3) d2 *= 8; } if (v.downed && this.story) continue; if (v.wounded) d2 *= v.downed ? 40 : 6; if (this.story && v.zfile && ranged) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 2) d2 *= 4; else if (sh === 1) d2 *= 1.8; } if (v.squad >= 0 && this.squads[v.squad].routing && !u.mounted) d2 *= 1.6; if (sq && sq.focus >= 0 && v.squad === sq.focus && ranged) d2 *= 0.45; if (d2 < bd) { bd = d2; best = v.id; } }
+      if (this.xc && ranged && v.ctrl >= 0 && !this.players[v.ctrl].ai) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 3) d2 *= 8; } if ((v.downed || v.noncomb) && this.story) continue; if (v.wounded) d2 *= v.downed ? 40 : 6; if (this.story && v.zfile && ranged) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 2) d2 *= 4; else if (sh === 1) d2 *= 1.8; } if (v.squad >= 0 && this.squads[v.squad].routing && !u.mounted) d2 *= 1.6; if (sq && sq.focus >= 0 && v.squad === sq.focus && ranged) d2 *= 0.45; if (d2 < bd) { bd = d2; best = v.id; } }
     return best;
   }
   aimedAt(id) { if (this.aimTick !== this.tick) { this.aimTick = this.tick; if (!this.aimN || this.aimN.length < this.units.length) this.aimN = new Int16Array(this.units.length + 64); else this.aimN.fill(0); for (const v of this.units) if (!v.dead && v.target >= 0 && isGun(v.def, v.weapon)) this.aimN[v.target]++; } return this.aimN[id]; }
@@ -2018,6 +2050,7 @@ class Sim {
     const def = u.def, sq = u.squad >= 0 ? this.squads[u.squad] : null;
     u.atkHeld = false; u.blockHeld = false;
     if (u.camp) { u.mx = 0; u.mz = 0; u.target = -1; return; } // a man at the fire
+    if (u.orderly) { this.orderlyAI(u); return; }
     if (u.wounded) { this.woundedAI(u); return; }
     if (this.story && u.team === this.mission.side && u.ctrl < 0 && !u.mounted && def.ai !== 'cannon' && this.aiMedic(u)) return;
     if (u.restT > this.tick && u.hp < u.def.hp * 0.6) u.hp += u.def.hp * 0.012 * DT * 30 / 30; // catching his breath in the second rank
@@ -2066,18 +2099,20 @@ class Sim {
         const xfr = this.xc && sq && sq.front && order === ORD_CHARGE && !isHero && !u.mounted; // in contact the line keeps its frontage
         const leash = (!sq || isHero || (order === ORD_CHARGE && !xfr) || u.mounted) ? 1e9 : order === ORD_FOLLOW ? 6 : xfr ? 3 : 4.5;
         const tsd = leash < 1e9 ? len(tgt.x - u.slotX, tgt.z - u.slotZ) : 0;
-        const xl = (this.xc && !isHero && !u.mounted && !u.champ && u.ctrl < 0 && tsd <= leash + reach) ? this.xcLine(u, sq, tgt, d, reach) : 0; // 1: waiting or breathing, 2: spear keeping his distance
-        if (tsd > leash + reach) { this.goSlot(u, sq, ang); if (u.spaceOf >= 0) u.spaceOf = -1; } // hold the formation: step out only for a foe who comes to the line, rear ranks wait their turn
+        const yy = !isHero && !u.mounted && u.role && sq && !sq.routing && sq.def.yuanyang && this.yyAI(u, sq, tgt, d, reach);
+        const xl = (!yy && this.xc && !isHero && !u.mounted && !u.champ && u.ctrl < 0 && tsd <= leash + reach) ? this.xcLine(u, sq, tgt, d, reach) : 0; // 1: waiting or breathing, 2: spear keeping his distance
+        if (yy) { }
+        else if (tsd > leash + reach) { this.goSlot(u, sq, ang); if (u.spaceOf >= 0) u.spaceOf = -1; } // hold the formation: step out only for a foe who comes to the line, rear ranks wait their turn
         else if (xl) { }
         else if (u.mounted) {
           if (u.ctrl < 0) this.cavCharge(u, tgt, d); // shock cavalry: run up, ride through, wheel, come again
           else { const desired = d > 9 ? def.speed : (d > reach ? 4 : 2.5); this.cavSteer(u, tgt.x, tgt.z, desired); }
         } else if (d > reach - 0.5) { const sp = def.speed * (u.st === ST_IDLE ? 1 : 0.6); this.steerFoot(u, tgt.x, tgt.z, sp); }
         else { u.mx = 0; u.mz = 0; }
-        if (u.role && sq && !sq.routing && !xl) { const sd = len(u.slotX - u.x, u.slotZ - u.z); if (sd > 2.2 && d > reach) this.steerFoot(u, u.slotX, u.slotZ, def.speed); else if (d > reach && sd < 2.2) { u.mx *= 0.3; u.mz *= 0.3; } }
+        if (u.role && sq && !sq.routing && !xl && !yy) { const sd = len(u.slotX - u.x, u.slotZ - u.z); if (sd > 2.2 && d > reach) this.steerFoot(u, u.slotX, u.slotZ, def.speed); else if (d > reach && sd < 2.2) { u.mx *= 0.3; u.mz *= 0.3; } }
         const eager = u.mounted ? 0.35 : u.role === 'spear' && tgt.entT > 0 ? 0.35 : u.role === 'brush' ? 0.2 : u.role === 'shield' ? 0.05 : 0.09;
-        if (d <= (u.mounted ? reach + Math.abs(u.hspeed) * 0.4 : reach + 0.3) && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && xl !== 1 && this.rng.next() < eager && this.xcSpaceOk(u, tgt)) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
-        if (this.xc && u.circleT > 0 && !u.mounted && u.st === ST_IDLE && !xl) { u.circleT -= DT; const sd = (u.id & 1) ? 1 : -1, nx = dx / (d || 1), nz = dz / (d || 1), keep = reach + 1.1; const rad = (d - keep) * 1.6; u.mx = nx * rad + nz * sd * 1.4; u.mz = nz * rad - nx * sd * 1.4; if (!u.blocking && this.rng.next() < 0.02) { u.blocking = true; u.blockT = 0; u.blockDir = DIR_UP; u.blockHold = 0.5; } }
+        if (d <= (u.mounted ? reach + Math.abs(u.hspeed) * 0.4 : reach + 0.3) && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && xl !== 1 && !yy && this.rng.next() < eager && this.xcSpaceOk(u, tgt)) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
+        if (this.xc && u.circleT > 0 && !u.mounted && u.st === ST_IDLE && !xl && !yy) { u.circleT -= DT; const sd = (u.id & 1) ? 1 : -1, nx = dx / (d || 1), nz = dz / (d || 1), keep = reach + 1.1; const rad = (d - keep) * 1.6; u.mx = nx * rad + nz * sd * 1.4; u.mz = nz * rad - nx * sd * 1.4; if (!u.blocking && this.rng.next() < 0.02) { u.blocking = true; u.blockT = 0; u.blockDir = DIR_UP; u.blockHold = 0.5; } }
         this.aiBlock(u, tgt);
       }
     } else {
@@ -2314,6 +2349,8 @@ class Sim {
     const canBlock = def_.blocking && def_.entT <= 0 && def_.flinchT <= 0 && def_.downT <= 0 && def_.type !== 'horse' && !behind;
     const shieldBlock = canBlock && def_.def.shield && dir !== DIR_DOWN;
     const omni = def_.ctrlActive; // human players hold one block that covers the front; AI still has to read the direction
+    if (canBlock && att.def.brush && def_.type !== 'horse' && (omni || def_.blockDir === counterDir(dir) || shieldBlock)) { // branches can't be parried clean: they wrap the guard
+      if (def_.def.shield) { const m = 1 / (def_.mass || 1); def_.vx += nx * 3.4 * m; def_.vz += nz * 3.4 * m; } else this.brushCatch(def_, att, nx, nz, true, hx, hy, hz); /* a shield turns the branches aside; a plain guard gets wrapped */ this.events.push({ t: 'block', x: hx, y: hy, z: hz, perfect: false, by: def_.id, att: att.id, shield: !!def_.def.shield }); att.heavy = false; return; }
     if (canBlock && (omni || def_.blockDir === counterDir(dir) || shieldBlock)) {
       const perfect = def_.blockT < (def_.def.parry || 0.16) * (omni ? 1.15 : 1) && (omni || def_.blockDir === counterDir(dir));
       if (perfect) { // a true parry: the attacker's balance is wrecked and the defender gets the initiative
@@ -2330,10 +2367,10 @@ class Sim {
     if ((def_.mounted || def_.type === 'horse' || def_.mount >= 0) && !(att.mounted || att.mount >= 0)) { const hs = def_.type === 'horse' ? def_ : def_.mounted ? def_ : this.units[def_.mount]; const fast = hs && Math.abs(hs.hspeed) > 5; dmg *= fast ? 0.95 : 1.4; if (hs) hs.hspeed *= fast ? 0.85 : 0.35; } // a galloping horseman is a glancing target; a halted one is cut down
     def_.lastAttacker = att.id;
     const kb = (dir === DIR_UP ? 2.2 : 1.6) * (heavy ? 1.8 : 1);
-    if (att.def.brush && def_.type !== 'horse') { def_.entT = Math.max(def_.entT, def_.champ ? 0.6 : 1.8); this.posture(def_, 26, att); this.events.push({ t: 'entangle', id: def_.id, x: hx, y: hy, z: hz }); }
+    if (att.def.brush && def_.type !== 'horse') this.brushCatch(def_, att, nx, nz, false, hx, hy, hz);
     this.posture(def_, dmg * (heavy ? 0.9 : 0.45) * (att.def.posture || 1), att);
     this.applyDamage(def_, dmg, att.id, nx * kb, heavy ? 1.2 : 0, nz * kb, 'melee', hx, hy, hz);
-    if (!def_.dead) { if (this.xc) this.hitReact(def_, att, dir === DIR_DOWN || att.weapon === 'yari' ? 'thrust' : 'cut', heavy, false); else { def_.flinchT = heavy ? 0.6 : 0.35; if (def_.st === ST_WINDUP || def_.st === ST_AIM) { def_.st = ST_IDLE; def_.stT = 0; } } }
+    if (!def_.dead && !att.def.brush && !(def_.entT > 0)) { if (this.xc) this.hitReact(def_, att, dir === DIR_DOWN || att.weapon === 'yari' ? 'thrust' : 'cut', heavy, false); else { def_.flinchT = heavy ? 0.6 : 0.35; if (def_.st === ST_WINDUP || def_.st === ST_AIM) { def_.st = ST_IDLE; def_.stT = 0; } } }
     if (att.ctrl >= 0 || def_.ctrl >= 0) this.events.push({ t: 'hitq', att: att.id, def: def_.id, q, heavy, x: hx, y: hy, z: hz });
     att.heavy = false;
   }
@@ -2341,7 +2378,7 @@ class Sim {
   posture(u, amt, by) {
     if (u.dead || u.type === 'horse' || u.def.ai === 'cannon') return; const max = u.champ ? 240 : u.type === 'hero' ? 200 : 100 + (u.squad >= 0 ? (this.squads[u.squad].stars || 0) * 15 : 0);
     u.pos += amt; u.posT = 1.1;
-    if (u.pos >= max) { u.pos = 0; u.blocking = false; u.st = ST_STUN; u.stT = 0; u.stunDur = u.champ ? 1.3 : 1.7; u.openT = 1.9; this.events.push({ t: 'posturebreak', id: u.id, x: u.x, y: u.y + 1.2, z: u.z, by: by ? by.id : -1 }); }
+    if (u.pos >= max) { u.pos = 0; u.blocking = false; u.st = ST_STUN; u.stT = 0; u.stunDur = u.champ ? 1.3 : u.entT > 0 ? 0.5 : 1.7; u.entT = 0; u.openT = 1.9; /* a man already held by the brush is not then frozen as well */ this.events.push({ t: 'posturebreak', id: u.id, x: u.x, y: u.y + 1.2, z: u.z, by: by ? by.id : -1 }); }
   }
   tryKick(u) {
     const n = this.gatherNear(u.x, u.z, 3); let best = null, bd = 1e9;
@@ -3740,7 +3777,7 @@ const OPS = { // Assault: attackers with limited manpower take sectors of fortif
   ningyuan_siege: {
     siege: true, title: '寧遠攻守 · The Siege of Ningyuan', year: 'February 1626', battle: 'siegecity', attacker: 1, tickets: 640,
     brief: 'Nurhaci brings the Eight Banners against Ningyuan in the depth of winter. Yuan Chonghuan has burned the suburbs, brought the people inside and mounted Western cannon on the walls. The Jin must fill the ditch, climb or break the walls, take the gatehouse and fight through the streets to the yamen.',
-    zones: [{ key: 'ditchW', x: -28, z: 22, r: 9, name: 'A · West ditch', rate: 0.5 }, { key: 'ditchE', x: 28, z: 22, r: 9, name: 'B · East ditch', rate: 0.5 },
+    zones: [{ key: 'ditchW', x: -28, z: 22, r: 13, name: 'A · West ditch', rate: 0.5 }, { key: 'ditchE', x: 28, z: 22, r: 13, name: 'B · East ditch', rate: 0.5 },
       { key: 'wallW', x: -25, z: 43.5, r: 7, name: 'A · West wall', owner: 0, rate: 0.6 }, { key: 'wallE', x: 25, z: 43.5, r: 7, name: 'B · East wall', owner: 0, rate: 0.6 },
       { key: 'gatehouse', x: 0, z: 55, r: 8, name: 'A · The gatehouse', owner: 0, rate: 0.5 },
       { key: 'street', x: -18, z: 80, r: 11, name: 'A · Drum-tower street', owner: 0, rate: 0.5 }, { key: 'yamen', x: 0, z: 112, r: 13, name: 'B · The yamen', owner: 0, rate: 0.4 }],
@@ -3894,7 +3931,7 @@ Sim.prototype.zWound = function (k) {
 };
 Sim.prototype.helpWounded = function (u) { // E beside a downed or wounded comrade: haul him up, or get his arm over your shoulder
   if (u.dead || u.mounted) return false; let best = null, bd = 2.6;
-  for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.helpedBy >= 0 || v === u) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
+  for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.aided || v.helpedBy >= 0 || v === u) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
   if (!best) return false;
   if (best.downed) { if (best.reviveBy !== u.id) { best.reviveBy = u.id; best.reviveT = 0; this.events.push({ t: 'zrevive0', id: best.id, by: u.id }); } return true; }
   best.helpedBy = u.id; this.events.push({ t: 'zhelp', id: best.id, by: u.id }); return true;
@@ -3957,23 +3994,72 @@ Sim.prototype.aiMedic = function (u) {
 // a man down and waiting for help drags himself back toward his own people, slowly, and lies still when the enemy is
 // on top of him (playing dead); he stops once a comrade is within reach so whoever comes for him can find him
 Sim.prototype.zCrawl = function (u) {
-  if (this.tick % 6 === u.id % 6) { let best = null, bd = 45, foe = 99; const n = this.gatherNear(u.x, u.z, 45);
-    for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.type === 'horse' || v.camp) continue; const d = len(v.x - u.x, v.z - u.z);
-      if (v.team !== u.team) { if (d < foe) foe = d; continue; } if (v.wounded || v.inactive) continue; const w = d - (v.squad === u.squad ? 6 : 0); if (w < bd) { bd = w; best = v; } }
-    u.crawlTo = best && foe > 3.2 && len(best.x - u.x, best.z - u.z) > 2.4 ? best.id : -1; u.crawling = u.crawlTo >= 0; }
-  if (!u.crawling) return; const v = this.units[u.crawlTo]; if (!v || v.dead) { u.crawling = false; return; }
-  const dx = v.x - u.x, dz = v.z - u.z, d = len(dx, dz); if (d < 2.4) { u.crawling = false; return; }
-  const sp = 0.45 * DT; u.x += dx / d * sp; u.z += dz / d * sp; u.y = terrainH(u.x, u.z); this.turnTo(u, atan2(dx, dz), 2 * DT);
+  if (this.tick % 6 === u.id % 6) { let best = null, bd = 45, foe = 99, near = false; const n = this.gatherNear(u.x, u.z, 45);
+    for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.type === 'horse' || v.camp || v.noncomb) continue; const d = len(v.x - u.x, v.z - u.z);
+      if (v.team !== u.team) { if (d < foe) foe = d; continue; } if (v.wounded || v.inactive) continue; if (d < 2.4) near = true; const w = d - (v.squad === u.squad ? 6 : 0); if (w < bd) { bd = w; best = v; } }
+    // the aid post, when it is about as near as his own people, is where he drags himself
+    const A = this.aidPost(), dA = A ? len(A.x - u.x, A.z - u.z) : 1e9, dF = best ? len(best.x - u.x, best.z - u.z) : 1e9;
+    u.crawlAid = !!A && dA < 60 && dA < dF * 1.6 + 6; u.crawlTo = u.crawlAid ? -2 : best && !near ? best.id : -1;
+    u.crawling = foe > 3.2 && (u.crawlAid || (u.crawlTo >= 0 && !near)); }
+  if (!u.crawling) return; let tx, tz; if (u.crawlTo === -2) { const A = this.aidPost(); if (!A) { u.crawling = false; return; } tx = A.x; tz = A.z; if (len(tx - u.x, tz - u.z) < A.r) { this.zAid(u, -1); return; } }
+  else { const v = this.units[u.crawlTo]; if (!v || v.dead) { u.crawling = false; return; } tx = v.x; tz = v.z; }
+  const dx = tx - u.x, dz = tz - u.z, d = len(dx, dz); if (d < 2.4 && u.crawlTo !== -2) { u.crawling = false; return; }
+  const sp = 0.5 * DT; u.x += dx / d * sp; u.z += dz / d * sp; u.y = terrainH(u.x, u.z); this.turnTo(u, atan2(dx, dz), 2 * DT);
+};
+// ---- the aid post (story battles): a staffed tent behind your own line (the Ming 醫 of the camp, the Jin baggage) ----
+// It stands about thirty paces behind your file, away from the enemy, and moves back with the line each phase (or where
+// the mission's phase says, phases[i].aid / mission.aid = [x, z]). A wounded man brought or crawling there is handed to
+// the orderlies: out of the fight, and alive for the roll call.
+Sim.prototype.aidPost = function () {
+  const M = this.mission, mv = this.mv; if (!M || !M.soldier || M.camp || !mv || mv.ph < 0) return null;
+  if (this.aid && this.aid.ph === mv.ph) return this.aid;
+  const side = M.side | 0, P = M.phases[mv.ph] || {}, fix = P.aid || M.aid; let x, z;
+  if (fix) { x = fix[0]; z = fix[1]; }
+  else { let fx = 0, fz = 0, fn = 0, ex = 0, ez = 0, en = 0; const me = this.players.find(p => !p.ai); const fq = me && me.soldierSq !== undefined ? this.squads[me.soldierSq] : null;
+    if (fq && fq.alive) { fx = fq.cx; fz = fq.cz; fn = 1; } else for (const u of this.teamAlive[side]) { if (u.wounded || u.noncomb || u.inactive || u.def.ai === 'cannon') continue; fx += u.x; fz += u.z; fn++; }
+    if (fn) { fx /= fn; fz /= fn; } else { fx = M.start[0]; fz = M.start[1]; }
+    for (const u of this.teamAlive[1 - side]) { if (u.inactive || len(u.x - fx, u.z - fz) > 140) continue; ex += u.x; ez += u.z; en++; }
+    let dx, dz; if (en) { dx = fx - ex / en; dz = fz - ez / en; } else { const y = (M.start[2] || 0) + PI; dx = sin(y); dz = cos(y); }
+    const l = len(dx, dz) || 1; dx /= l; dz /= l; x = fx + dx * 30; z = fz + dz * 30;
+    for (let k = 0; k < 6 && (waterAt(x, z) > 0 || this.boxes.some(b => Math.abs(x - b.x) < b.hw + 3 && Math.abs(z - b.z) < b.hd + 3)); k++) { x -= dx * 5; z -= dz * 5; } }
+  x = clamp(x, -HALF + 12, HALF - 12); z = clamp(z, -HALF + 12, HALF - 12);
+  const old = this.aid; this.aid = { ph: mv.ph, x, z, r: 5.5, n: old ? old.n : 0, ord: old ? old.ord : [], name: M.aidName || (side === 1 ? ['輜重', 'the baggage'] : ['醫帳', 'the aid tent']) };
+  if (!old) { const t = M.side === 1 ? 'ashigaru' : 'ashigaru'; for (let k = 0; k < 3; k++) { const o = this.addUnit(t, side, -1, -1, x + (k - 1) * 2.2, z + 1.5, 0); o.def = defFor(t, side); o.hp = o.def.hp; o.weapon = ''; o.orderly = true; o.noncomb = true; o.fetch = -1; o.slot = k; this.aid.ord.push(o.id); } }
+  // the men already in the tent's care go with it
+  for (const u of this.units) if (u.aided && !u.dead) { const k = u.aidSlot | 0; u.x = u.px = x - 3 + (k % 4) * 1.6; u.z = u.pz = z - 2.5 - Math.floor(k / 4) * 2.2; u.y = u.py = terrainH(u.x, u.z); }
+  this.events.push({ t: 'aidpost', x, z }); return this.aid;
+};
+Sim.prototype.zAid = function (u, by) { // handed to the orderlies: laid on a mat in the tent's lee, out of the fight
+  const A = this.aidPost(); if (!A) return; const k = A.n++; u.aided = true; u.aidSlot = k; u.wounded = true; u.downed = false; u.helpedBy = -1; u.reviveBy = -1; u.crawling = false; u.noncomb = true; u.bleed = 0; u.medic = -1;
+  u.x = u.px = A.x - 3 + (k % 4) * 1.6; u.z = u.pz = A.z - 2.5 - Math.floor(k / 4) * 2.2; u.y = u.py = terrainH(u.x, u.z); u.yaw = PI * 0.5; u.mx = 0; u.mz = 0; u.st = ST_IDLE; u.stT = 0; u.downT = 0.3;
+  for (const o of this.units) if (o.orderly && o.fetch === u.id) o.fetch = -1;
+  this.events.push({ t: 'zaid', id: u.id, by, x: u.x, z: u.z, file: !!u.zfile });
+};
+// the orderlies stand at the tent; when a man lies wounded within a short dash of it and no enemy is on him, one goes
+// out, gets him up with an arm over his shoulder and walks him back
+Sim.prototype.orderlyAI = function (u) {
+  u.target = -1; u.blocking = false; u.aiming = false; if (u.st !== ST_IDLE) { u.st = ST_IDLE; u.stT = 0; } const A = this.aidPost(); if (!A) { u.mx = 0; u.mz = 0; return; }
+  const go = (x, z, sp) => { const d = len(x - u.x, z - u.z); if (d > 0.6) { const y = this.steerFoot(u, x, z, sp); this.turnTo(u, y, 6 * DT); } else { u.mx = 0; u.mz = 0; } return d; };
+  if (u.fetch >= 0) { const v = this.units[u.fetch];
+    if (!v || v.dead || v.aided || !v.wounded || (v.helpedBy >= 0 && v.helpedBy !== u.id) || (v.reviveBy >= 0 && v.reviveBy !== u.id)) { if (v && v.helpedBy === u.id) v.helpedBy = -1; u.fetch = -1; }
+    else if (v.helpedBy === u.id) { go(A.x, A.z, u.def.speed * 0.55); return; }
+    else { if (go(v.x, v.z, u.def.speed * 0.9) < 1.6) { v.downed = false; v.reviveBy = -1; v.crawling = false; v.bleed = 0; v.downT = 0; v.helpedBy = u.id; this.events.push({ t: 'zcollect', id: v.id, by: u.id }); } return; } }
+  if ((this.tick + u.id) % 15 === 0) { let best = null, bd = A.r + 18; for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.aided || v.noncomb || v.helpedBy >= 0 || v.reviveBy >= 0 || v.ctrl >= 0) continue; if (this.units.some(o => o.orderly && o !== u && o.fetch === v.id)) continue; const d = len(v.x - A.x, v.z - A.z); if (d < bd) { bd = d; best = v; } }
+    if (best) { let ed = 1e9; for (const e of this.teamAlive[1 - u.team]) { if (e.inactive) continue; const d = len(e.x - best.x, e.z - best.z); if (d < ed) ed = d; if (ed < 10) break; } if (ed >= 10) { u.fetch = best.id; return; } } }
+  const k = u.slot | 0; go(A.x + (k - 1) * 2.2, A.z + 1.6, u.def.speed * 0.6); if (len(A.x + (k - 1) * 2.2 - u.x, A.z + 1.6 - u.z) < 0.8) this.turnTo(u, u.yaw + 0.01, DT);
 };
 Sim.prototype.woundedAI = function (u) {
   u.target = -1; u.blocking = false; if (u.st !== ST_IDLE && u.st !== ST_STUN) { u.st = ST_IDLE; u.stT = 0; }
+  if (u.aided) { u.mx = 0; u.mz = 0; u.downT = Math.max(u.downT, 0.2); return; }
   if (u.downed) { u.mx = 0; u.mz = 0; u.downT = Math.max(u.downT, 0.2);
     if (u.reviveBy >= 0) { const r = this.units[u.reviveBy]; if (!r || r.dead || r.wounded || len(r.x - u.x, r.z - u.z) > 2.9) { u.reviveBy = -1; u.reviveT = 0; } else if (++u.reviveT >= 45) { this.zRevive(u, r.id); return; } }
     if (--u.bleed <= 0) { u.downed = false; this.kill(u, 0, 0, 0, 'bleed', -1); return; }
     if (u.reviveBy < 0 && u.ctrl < 0) this.zCrawl(u); return; }
   const h = u.helpedBy >= 0 ? this.units[u.helpedBy] : null; if (h && h.dead) u.helpedBy = -1;
   if (u.helpedBy < 0 || !h) { u.mx = 0; u.mz = 0; return; }
-  const bx = h.x - sin(h.yaw) * 1.3 + cos(h.yaw) * 0.5, bz = h.z - cos(h.yaw) * 1.3 - sin(h.yaw) * 0.5, d = len(bx - u.x, bz - u.z);
+  { const A = this.aidPost(); if (A && len(u.x - A.x, u.z - A.z) < A.r) { this.zAid(u, h.id); return; } }
+  // his arm over the helper's shoulder: at the helper's left side, half a pace back, leaning on him
+  const bx = h.x - sin(h.yaw) * 0.25 - cos(h.yaw) * 0.55, bz = h.z - cos(h.yaw) * 0.25 + sin(h.yaw) * 0.55, d = len(bx - u.x, bz - u.z);
   if (d > 0.5) { const y = this.steerFoot(u, bx, bz, u.def.speed * (d > 4 ? 0.8 : 0.62)); this.turnTo(u, y, 4 * DT); } else { u.mx = 0; u.mz = 0; this.turnTo(u, h.yaw, 3 * DT); }
 };
 // a night camp: you, your file around the fire, and the tents
@@ -4010,6 +4096,7 @@ Sim.prototype.missionThink = function () {
   if (M.beacon && this.beaconTick) { this.beaconTick(); if (this.mwin !== undefined) return; }
   const mv = this.mv;
   if (mv.ph < 0) { mv.ph = 0; mv.t0 = this.tick; this.mStart(); }
+  if (M.soldier && this.tick % 15 === 0) this.aidPost();
   const P = M.phases[mv.ph], el = (this.tick - mv.t0) / 30;
   for (const [t, gid, dir] of P.waves || []) { const k = mv.ph + ':' + gid; if (!mv.waves[k] && el >= t) { mv.waves[k] = 1; this.mRelease(gid); if (dir) this.mDir(gid, dir); } }
   for (const [t, a] of P.at || []) { const k = mv.ph + ':at:' + t; if (!mv.ats[k] && el >= t) { mv.ats[k] = 1; this.mAct(a); } }
@@ -4063,7 +4150,12 @@ Sim.prototype.assaultDirs = function () {
   if (this.mission.siege && this.sg && this.sector <= 1) return this.siegeDirs();
   const M = this.mission, A = M.attacker, keys = M.sectors[this.sector] || []; const zs = keys.map(k => this.missionZone(k)).filter(z => z && z.owner !== A);
   const zt = zs.length ? zs : keys.map(k => this.missionZone(k));
-  let i = 0; for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== A || g.broken) continue; const z = zt[i++ % zt.length]; if (z) { p.directive = { kind: DIR_HOLD, x: z.x, z: z.z, by: -1 }; p.standoff = true; } }
+  // a company keeps its point while that point is still a target; only when it falls is the company sent to the
+  // least-crowded remaining one (a broken company no longer shifts everyone after it to the other flank)
+  const load = {}; for (const gid in this.mg) { const g = this.mg[gid]; if (g.G.team !== A || g.broken) continue; if (g.zk && zt.some(z => z.key === g.zk)) load[g.zk] = (load[g.zk] || 0) + 1; else g.zk = null; }
+  for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== A || g.broken || !zt.length) continue;
+    if (!g.zk) { let best = zt[0], bl = 1e9; for (const z of zt) { const l = load[z.key] || 0; if (l < bl) { bl = l; best = z; } } g.zk = best.key; load[g.zk] = bl + 1; }
+    const z = zt.find(q => q.key === g.zk); if (z) { p.directive = { kind: DIR_HOLD, x: z.x, z: z.z, by: -1 }; p.standoff = true; } }
   // defenders: garrisons of this sector hold their points; garrisons of lost sectors fall back to the next line
   const D = 1 - A; let j = 0; for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== D) continue; const di = +gid.slice(1), home = gid[0] === 'd' ? this.missionZone(this.defKey(di)) : null; if (home && home.owner === D) { p.directive = { kind: DIR_HOLD, x: home.x, z: home.z, by: -1 }; continue; } const nz = zt[j++ % zt.length]; if (nz) p.directive = { kind: DIR_HOLD, x: nz.x, z: nz.z, by: -1 }; }
 };
@@ -4167,17 +4259,40 @@ Sim.prototype.siegeTick = function () {
       this.events.push({ t: 'sghit', x: p.x, y: p.y, z: p.z, kind: p.kind, eng: e.kind }); ps[i] = ps[ps.length - 1]; ps.pop(); break; } }
   for (const e of sg.emp) { if (e.cd > 0) e.cd--; if (e.man < 0) continue; const u = this.units[e.man];
     if (!u || u.dead || len(u.x - e.x, u.z - e.z) > 3.2) { e.man = -1; if (u) u.manE = -1; continue; }
-    e.yaw = u.yaw; e.pitch = clamp(u.pitch || 0, -0.5, 0.6); const bx = e.x - sin(e.yaw) * 1.2, bz = e.z - cos(e.yaw) * 1.2; u.x = bx; u.z = bz; u.mx = 0; u.mz = 0;
-    if ((u.st === ST_WINDUP || u.st === ST_AIM || u.st === ST_RELEASE) && e.cd <= 0) { this.sgFire(e, e.yaw, e.pitch); u.st = ST_IDLE; u.stT = 0; } else if (u.st === ST_WINDUP) { u.st = ST_IDLE; u.stT = 0; } }
+    // the piece traverses and elevates toward where its gunner looks, at the speed a crew can lay it; he stands at its breech
+    { const bow = e.kind === 'bow', ty = bow ? 2.4 : 1.3, tp = bow ? 1.2 : 0.7; const dy = wrap(u.yaw - e.yaw); e.yaw = wrap(e.yaw + clamp(dy, -ty * DT, ty * DT)); const wp = clamp(u.pitch || 0, -0.5, 0.6); e.pitch = (e.pitch || 0) + clamp(wp - (e.pitch || 0), -tp * DT, tp * DT); }
+    const bx = e.x - sin(e.yaw) * 1.2, bz = e.z - cos(e.yaw) * 1.2; u.x = bx; u.z = bz; u.mx = 0; u.mz = 0; u.st = ST_IDLE; u.stT = 0;
+    if (u.empFire) { u.empFire = false; if (e.cd <= 0) this.sgFire(e, e.yaw, e.pitch, u.id); } }
   if (this.tick % 15 === 0) this.siegeThink();
 };
 const SGE = { ram: { hw: 1.5, hd: 3, h: 3.6, sp: 1.5 }, tower: { hw: 2.5, hd: 2.5, h: 9.5, sp: 1.0 }, cart: { hw: 1.7, hd: 0.9, h: 2.6, sp: 1.6 } };
 Sim.prototype.sgHurt = function (e, dmg) { if (e.hp <= 0) return; e.hp -= dmg; if (e.hp <= 0) { e.hp = 0; if (e.lad && e.lad.up) { e.lad.up = false; this.navBoxes(); } this.events.push({ t: 'sgengine', kind: e.kind, x: e.x, z: e.z }); for (const sq of this.squads) if (sq.alive && sq.team === e.team && !sq.def.fearless) sq.morale = Math.max(0, sq.morale - 6); } };
-Sim.prototype.sgFire = function (e, yaw, pitch) {
-  const bow = e.kind === 'bow', v = bow ? 62 : 78; e.cd = bow ? 30 * 5 : 30 * 9;
+Sim.prototype.sgFire = function (e, yaw, pitch, by) {
+  const bow = e.kind === 'bow', v = bow ? 62 : 78; e.cd = bow ? 30 * 5 : 30 * 9; e.cdMax = e.cd;
   const cp = cos(pitch), x = e.x + sin(yaw) * 1.6, z = e.z + cos(yaw) * 1.6, y = e.y + (bow ? 1.4 : 1.2);
-  this.projectiles.push({ kind: 'solid', bolt: bow, x, y, z, vx: sin(yaw) * cp * v, vy: sin(pitch) * v, vz: cos(yaw) * cp * v, team: e.team, owner: -1, life: 0, hits: 0 });
-  this.events.push({ t: 'sgshot', x, y, z, dx: sin(yaw), dz: cos(yaw), gun: !bow, team: e.team });
+  // a piece on the wall top fires out through its embrasure, over the parapet in front of it
+  this.projectiles.push({ kind: 'solid', bolt: bow, x, y, z, vx: sin(yaw) * cp * v, vy: sin(pitch) * v, vz: cos(yaw) * cp * v, team: e.team, owner: -1, life: 0, hits: 0, over: e.team === this.sg.D });
+  this.events.push({ t: 'sgshot', x, y, z, dx: sin(yaw), dz: cos(yaw), gun: !bow, team: e.team, by: by === undefined ? -1 : by, emp: e.id });
+};
+// a manned piece takes all of its gunner's hands: left click (attack or fire) looses it, E leaves it; his own weapon is
+// slung meanwhile, so nothing he carries can fire, aim, reload or be swapped
+Sim.prototype.empControl = function (u, a) {
+  const e = this.sg.emp[u.manE]; if (!e || e.man !== u.id) { u.manE = -1; return false; }
+  u.aiming = false; u.blocking = false; u.fireQ = 0; u.swapQ = false; u.atkHeld = false; u.blockHeld = false; if (u.st !== ST_IDLE) { u.st = ST_IDLE; u.stT = 0; }
+  if (this.phase !== 1) return true;
+  if (a & (A_FIRE | A_ATK)) u.empFire = true;
+  if (a & A_KICK) this.siegeInteract(u);
+  return true;
+};
+// where a shot from this piece at this lay would first strike: the same steps and stops as updateProjectiles (no state changed)
+Sim.prototype.sgPredict = function (e, yaw, pitch) {
+  const bow = e.kind === 'bow', v = bow ? 62 : 78, cp = cos(pitch); let x = e.x + sin(yaw) * 1.6, z = e.z + cos(yaw) * 1.6, y = e.y + (bow ? 1.4 : 1.2), vx = sin(yaw) * cp * v, vy = sin(pitch) * v, vz = cos(yaw) * cp * v; const over = e.team === this.sg.D, pts = [];
+  for (let t = 0; t < 30 * 8; t++) { for (let s = 0; s < 3; s++) { const dt = DT / 3; vy -= GRAV * dt; x += vx * dt; y += vy * dt; z += vz * dt;
+      if (Math.abs(x) > HALF || Math.abs(z) > HALF) return { x, y, z, pts, out: true };
+      for (const bx of this.boxes) { if (over && bx.kind === 'sface') continue; if (x > bx.x - bx.hw && x < bx.x + bx.hw && z > bx.z - bx.hd && z < bx.z + bx.hd && y < terrainH(bx.x, bx.z) + bx.h) return { x, y, z, pts, box: true }; }
+      const g = terrainH(x, z); if (y <= g) return { x, y: g, z, pts }; }
+    if (t % 3 === 0) pts.push(x, y, z); }
+  return { x, y, z, pts, out: true };
 };
 // pick a mark for an unmanned emplacement: defenders prefer engines, then the thickest crowd of the enemy
 Sim.prototype.sgAim = function (e) {
@@ -4279,11 +4394,16 @@ Sim.prototype.siegeDirs = function () {
   const att = Object.keys(this.mg).filter(g => this.mg[g].G.team === A && this.mg[g].released && !this.mg[g].broken);
   const jobs = [];
   const eng = (k) => sg.engines.filter(e => e.kind === k && e.hp > 0);
-  const ram = eng('ram')[0]; if (ram && !(ram.atGate && sg.gateHp <= 0)) jobs.push([ram.x, ram.z - 5, false]);
-  for (const t of eng('tower')) jobs.push(t.docked ? [t.x, W.z0 + 2.5, false] : [t.x, t.z - 5, false]);
-  if (s === 0) { const dz = M.sectors[0].map(k => { const z = this.missionZone(k); return [z.x, z.z, true]; }); jobs.unshift(...dz); for (const c of eng('cart')) if (c.cover) jobs.push([c.x, c.z - 4, false]); }
-  else { for (const L of sg.lads) jobs.push(L.up ? [L.x, W.z0 + 2.5, false] : [L.x, W.z0 - 3, false]); for (const c of eng('cart')) if (!c.cover) jobs.push([c.lane, W.z0 - 2.5, false]); if (sg.gateHp <= 0) jobs.unshift([0, W.z1 + 6, false]); }
-  att.forEach((g, i) => { const p = this.players[this.mg[g].p], j = jobs[i % jobs.length]; if (!j) return; p.directive = { kind: DIR_HOLD, x: clamp(j[0], -HALF + 3, HALF - 3), z: clamp(j[1], -HALF + 3, HALF - 3), by: -1 }; p.standoff = j[2]; });
+  // each job has an id, and a company keeps its job while the job exists: nobody marches from one flank to the other
+  // every time an engine is hit or a ladder falls
+  const ram = eng('ram')[0]; if (ram && !(ram.atGate && sg.gateHp <= 0)) jobs.push([ram.x, ram.z - 5, false, 'ram']);
+  eng('tower').forEach((t, i) => jobs.push(t.docked ? [t.x, W.z0 + 2.5, false, 'tw' + t.id] : [t.x, t.z - 5, false, 'tw' + t.id]));
+  if (s === 0) { const dz = M.sectors[0].map(k => { const z = this.missionZone(k); return [z.x, z.z, false, 'z' + k]; }); jobs.unshift(...dz, ...dz.map(j => [j[0], j[1], false, j[3] + 'b'])); for (const c of eng('cart')) if (c.cover) jobs.push([c.x, c.z - 4, false, 'ct' + c.id]); }
+  else { sg.lads.forEach((L, i) => jobs.push(L.up ? [L.x, W.z0 + 2.5, false, 'ld' + i] : [L.x, W.z0 - 3, false, 'ld' + i])); for (const c of eng('cart')) if (!c.cover) jobs.push([c.lane, W.z0 - 2.5, false, 'ct' + c.id]); if (sg.gateHp <= 0) jobs.unshift([0, W.z1 + 6, false, 'gate']); }
+  const load = {}; for (const g of att) { const G = this.mg[g]; if (G.jid && G.jsec === s && jobs.some(j => j[3] === G.jid)) load[G.jid] = (load[G.jid] || 0) + 1; else { G.jid = null; G.jsec = s; } }
+  att.forEach((g) => { const G = this.mg[g], p = this.players[G.p]; if (!jobs.length) return;
+    if (!G.jid) { let best = jobs[0], bl = 1e9; for (const j of jobs) { const l = load[j[3]] || 0; if (l < bl) { bl = l; best = j; } } G.jid = best[3]; load[G.jid] = bl + 1; }
+    const j = jobs.find(q => q[3] === G.jid); p.directive = { kind: DIR_HOLD, x: clamp(j[0], -HALF + 3, HALF - 3), z: clamp(j[1], -HALF + 3, HALF - 3), by: -1 }; p.standoff = j[2]; });
   // defenders: the wall garrisons stand on the wall top above the ladders; the rest hold the gatehouse and the town
   const posts = [[-26, 43.6], [26, 43.6], [-14, 43.6], [14, 43.6], [0, W.z1 + 7], [-18, 80], [0, 110]];
   let j = 0; for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== D || g.broken || g.G.free) continue; const pt = posts[j++ % posts.length]; p.directive = { kind: DIR_HOLD, x: pt[0], z: pt[1], by: -1 }; }
@@ -4361,6 +4481,90 @@ Sim.prototype.xcEbb = function () { // clash, pause, clash: count the blows each
 // Anti-lock: a running reaction is never extended or restarted; when it ends the man has 0.7 s in which further hits hurt but
 // cannot stagger him (only a cosmetic flinch); and he is never reeling for more than 0.6 s out of any 2 s.
 const HR_IMM = 0.7, HR_WIN = 60, HR_CAP = 0.6;
+// ---- 狼筅 · the wolf-brush and the mandarin duck team (紀效新書) ----
+// The brush does not kill: its spiked, layered branches catch a man at five metres, shove him back and hold him for a
+// moment, and the long spears behind step out and finish him. A man the brush has just let go of can't be caught again
+// at once (he tears free), so two brushes can't hold one man forever.
+Sim.prototype.brushCatch = function (v, b, nx, nz, blocked, hx, hy, hz) {
+  if (v.dead || v.type === 'horse') return;
+  const imm = (v.entImm || 0) > this.tick, m = 1 / (v.mass || 1);
+  if (imm) { v.vx += nx * 3.4 * m; v.vz += nz * 3.4 * m; return; }
+  const dur = v.champ ? 0.35 : blocked ? 0.42 : 0.65;
+  v.entT = Math.max(v.entT, dur); v.entImm = this.tick + Math.round((dur + 1.2) * 30); v.entBy = b.id;
+  v.vx += nx * (blocked ? 3.5 : 5.5) * m; v.vz += nz * (blocked ? 3.5 : 5.5) * m;
+  if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } v.blocking = false;
+  if (v.hrT > 0) v.hrT = 0;
+  this.posture(v, blocked ? 5 : 8, b);
+  this.events.push({ t: 'entangle', id: v.id, by: b.id, blocked: !!blocked, x: hx, y: hy, z: hz });
+};
+// the duck team fights as one body from its places: the brushes screen and sweep, the spears lunge at what the brushes
+// catch and step back, the shields and the leader step up a pace to meet whoever gets through, the tridents guard the
+// flanks and finish the fallen. Only a broken team (half gone) falls apart into single fights.
+// in contact the duck team does not run onto the enemy: its body stops with the enemy at the end of the brushes and
+// presses forward slowly as one, turning to face him; a team cut down to half loses this and fights man to man
+Sim.prototype.yyAnchor = function (sq, n) {
+  if (n < sq.count * 0.5 || sq.routing || (sq.order !== ORD_CHARGE && sq.order !== ORD_HOLD && sq.order !== ORD_FORM)) { sq.yyA = false; return; }
+  let e = null, bd = 13; const m = this.gatherNear(sq.cx, sq.cz, 13);
+  for (let i = 0; i < m; i++) { const v = this.units[this.nearBuf[i]]; if (v.team === sq.team || v.dead || v.wounded || v.type === 'horse' || v.inactive) continue; const dv = len(v.x - sq.cx, v.z - sq.cz); if (dv < bd) { bd = dv; e = v; } }
+  if (!e) { if (sq.yyA) { sq.yyA = false; } return; }
+  const dx = e.x - sq.cx, dz = e.z - sq.cz, l = len(dx, dz) || 1, want = atan2(dx, dz);
+  const df = wrap(want - sq.facing), turn = 1.0 * 15 * DT; sq.facing = wrap(sq.facing + clamp(df, -turn, turn));
+  const ax = e.x - sin(sq.facing) * 4.6, az = e.z - cos(sq.facing) * 4.6;
+  if (!sq.yyA) { sq.yyA = true; sq.yax = sq.cx; sq.yaz = sq.cz; }
+  const mx = ax - sq.yax, mz = az - sq.yaz, ml = len(mx, mz), step = 1.3 * 15 * DT; // squadThink runs every 15 ticks: the body moves at about a walking pace
+  if (ml > step) { sq.yax += mx / ml * step; sq.yaz += mz / ml * step; } else { sq.yax = ax; sq.yaz = az; }
+};
+Sim.prototype.yyAI = function (u, sq, tgt, d, reach) {
+  const r = u.role; if (!r || r === 'cook' || !sq.def.yuanyang) return false;
+  if (sq.aliveCount !== undefined && sq.count && sq.aliveCount < sq.count * 0.5) return false;
+  const sx = u.slotX, sz = u.slotZ, sd = len(sx - u.x, sz - u.z), sp = u.def.speed;
+  const home = (lim) => { if (sd > lim) this.steerFoot(u, sx, sz, sp * (sd > 3 ? 1 : 0.8)); else { u.mx = 0; u.mz = 0; } };
+  const idle = u.st === ST_IDLE && u.flinchT <= 0 && u.entT <= 0 && !(u.hrT > 0);
+  if (r === 'spear') {
+    if (u.yyL === 1) { const v = this.units[u.yyT];
+      if (!v || v.dead || u.st === ST_RECOVER || u.st === ST_STUN || (u.st === ST_IDLE && this.tick - u.yyS > 8)) { u.yyL = 2; u.yyB = this.tick; u.lunge = false; }
+      else { u.target = v.id; const dd = len(v.x - u.x, v.z - u.z); if (dd > reach - 0.4) this.steerFoot(u, v.x, v.z, sp * 1.7); else { u.mx = 0; u.mz = 0; } return true; } }
+    if (u.yyL === 2) { u.lunge = false; if (sd < 0.6 || this.tick - u.yyB > 75) u.yyL = 0; else { this.steerFoot(u, sx, sz, sp * 1.15); return true; } }
+    // notice what the brushes have caught: a held man within a lunge of this spear, at most two spears on one man
+    if (idle) { let best = null, bd = reach + 2.4; const n = this.gatherNear(u.x, u.z, reach + 2.6);
+      for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v.team === u.team || v.dead || !(v.entT > 0.12) || v.type === 'horse') continue; const dv = len(v.x - u.x, v.z - u.z); if (dv >= bd || dv < 1.2) continue;
+        let k = 0; for (const id of sq.unitIds) { const w = this.units[id]; if (w !== u && w.yyL === 1 && w.yyT === v.id) k++; } if (k >= 2) continue; best = v; bd = dv; }
+      if (best) { u.yyL = 1; u.yyT = best.id; u.yyS = this.tick; u.target = best.id; this.startWindup(u, DIR_DOWN); u.heavy = !!this.xc; u.aiHeavy = false; u.lunge = true;
+        const dx = best.x - u.x, dz = best.z - u.z, l = len(dx, dz) || 1; u.vx += dx / l * 5; u.vz += dz / l * 5; this.turnTo(u, atan2(dx, dz), 1);
+        this.events.push({ t: 'yylunge', id: u.id, at: best.id }); return true; } }
+    home(1.0); if (tgt && idle && d <= reach + 0.2 && this.rng.next() < 0.08) this.startWindup(u, DIR_DOWN); return true;
+  }
+  if (r === 'brush') { home(1.0);
+    if (idle) { let c = null, cd = reach + 1.6, near = 99; const n = this.gatherNear(u.x, u.z, reach + 2);
+      for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v.team === u.team || v.dead || v.wounded || v.type === 'horse') continue; const dv = len(v.x - u.x, v.z - u.z); if (dv < near) near = dv;
+        if (v.entT > 0 || (v.entImm || 0) > this.tick + 8 || dv >= cd || Math.abs(wrap(atan2(v.x - u.x, v.z - u.z) - u.yaw)) > 1.1) continue; c = v; cd = dv; }
+      if (c) { u.target = c.id; if (this.rng.next() < 0.45) this.startWindup(u, (u.id + (this.tick >> 4)) & 1 ? DIR_UP : DIR_DOWN); }
+      else if (tgt && d < 11 && near > reach + 1 && this.tick >= (u.yySw || 0)) { u.yySw = this.tick + 55 + (u.id % 5) * 7; this.startWindup(u, DIR_UP); } } // the brush is never still: it sweeps the front of the team
+    return true; }
+  if (r === 'shield' || r === 'lead') {
+    // a man who got past the brushes, close to the spears or the brushes: step up a pace, take him on the shield, cut him
+    let lk = null, ld = 99; const n = this.gatherNear(u.x, u.z, 6);
+    for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v.team === u.team || v.dead || v.type === 'horse' || v.wounded) continue;
+      let near = false; for (const id of sq.unitIds) { const w = this.units[id]; if (w.dead || (w.role !== 'spear' && w.role !== 'brush')) continue; if (len(v.x - w.x, v.z - w.z) < 2.6) { near = true; break; } }
+      const dv = len(v.x - u.x, v.z - u.z); if ((near || dv < reach + 0.6) && dv < ld) { ld = dv; lk = v; } }
+    if (lk) { u.target = lk.id; if (u.yyCov !== lk.id) { u.yyCov = lk.id; this.events.push({ t: 'yycover', id: u.id, at: lk.id }); }
+      const px = lk.x - u.slotX, pz = lk.z - u.slotZ, pl = len(px, pz) || 1, k = Math.min(1.5, pl - reach * 0.6), gx = u.slotX + px / pl * Math.max(0, k), gz = u.slotZ + pz / pl * Math.max(0, k);
+      if (len(gx - u.x, gz - u.z) > 0.4) this.steerFoot(u, gx, gz, sp); else { u.mx = 0; u.mz = 0; }
+      const open = lk.st === ST_RECOVER || lk.st === ST_STUN || lk.entT > 0 || lk.hrT > 0 || lk.openT > 0;
+      if (idle && !u.blocking && ld <= reach + 0.3 && this.rng.next() < (open ? 0.3 : 0.06)) this.startWindup(u, this.aiPickDir(u));
+      return true; }
+    home(0.8); if (tgt && idle && !u.blocking && d <= reach + 0.2 && this.rng.next() < 0.05) this.startWindup(u, this.aiPickDir(u)); return true;
+  }
+  if (r === 'trident') {
+    // the flanks, and the finishing of whoever the team has caught or knocked down
+    let fv = null, fd = 99; const n = this.gatherNear(u.x, u.z, reach + 2);
+    for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v.team === u.team || v.dead || v.type === 'horse') continue; const dv = len(v.x - u.x, v.z - u.z); if (dv > reach + 1.5) continue; const w = (v.entT > 0 || v.downT > 0 || v.hrT > 0) ? dv - 2 : dv; if (w < fd) { fd = w; fv = v; } }
+    if (fv) { u.target = fv.id; const dv = len(fv.x - u.x, fv.z - u.z); const gx = sx + (fv.x - sx) * 0.35, gz = sz + (fv.z - sz) * 0.35; if (dv > reach - 0.3 && len(gx - sx, gz - sz) < 1.5) this.steerFoot(u, gx, gz, sp); else home(1.5);
+      if (idle && dv <= reach + 0.2 && this.rng.next() < ((fv.entT > 0 || fv.downT > 0 || fv.hrT > 0) ? 0.35 : 0.08)) this.startWindup(u, DIR_DOWN); return true; }
+    home(1.0); return true;
+  }
+  return false;
+};
 Sim.prototype.hitReact = function (u, a, kind, heavy, blocked) {
   if (!this.xc || u.dead || u.type === 'horse' || u.def.ai === 'cannon' || u.champ) return false;
   if (u.hrA === undefined) { u.hrT = 0; u.hrImm = 0; u.hrA = 9; u.hrK = 0; u.hrD = 0.3; u.hrS = 1; u.hrL = []; u.hrF = 0; u.hrFS = 1; }
@@ -4750,8 +4954,8 @@ const MUSIC = (() => {
   };
   const mf = (m) => 440 * Math.pow(2, (m - 69) / 12);
   let REC = null, recSrc = null, recG = null, recEnd = 0, comp = null, ctx, out, dry, nb, playing = null, nextT = 0, step = 0, timer = null, vol = 0.5, target = 0.5, I = 0.5, muted = false, prevMel = {};
-  function ensure() {
-    if (out) return true; ctx = AUDIO.ctx; if (!ctx) return false; nb = AUDIO.noise;
+  function ensure(c) {
+    if (out && !c) return true; ctx = c || AUDIO.ctx; if (!ctx) return false; nb = AUDIO.noise;
     out = ctx.createGain(); out.gain.value = muted ? 0 : vol;
     comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 2.5; comp.attack.value = 0.012; comp.release.value = 0.3;
     // a warm hall: stereo exponential tail with a few early reflections
@@ -4823,7 +5027,63 @@ const MUSIC = (() => {
   const BAT_R = [1, 1, 6, 5, 1, 5, 6, 1, 6, 5, 6, 1, 1, 1, 5, 6];
   const SIEGE = mel("1:4 1:2 2:2 | 3:6 2~:2 | 1:2 6,:2 5,:4 | 6,:8 | 1:4 1:2 2:2 | 3:4 5~:4 | 6:2 5:2 3:2 2:2 | 3:8 | 5:4 6:2 5:2 | 3:6 5:2 | 6:2 1':2 6:2 5:2 | 3:8 | 2:4 3:2 2:2 | 1:4 6,~:4 | 5,:2 6,:2 1:2 2:2 | 1:8", 71);
   const SIEGE_R = [1, 1, 6, 6, 1, 1, 6, 3, 5, 3, 6, 3, 2, 6, 5, 1];
+  // ---------- the war engine (battle and siege): a live drum corps that follows the fight ----------
+  // 擊鼓而進: the big war drum (戰鼓) drives on the beat, the small drums (堂鼓) interlock on the sixteenths, cymbals (鈸)
+  // and gongs mark the phrases, a suona leads, the cello and zheng hold the ground under it. Three levels follow how close
+  // the fighting is: approach (heartbeat drums, a held erhu line), engaged (the full drive) and melee (double-time drums,
+  // doubled suona, horn calls). Every 8 bars a phrase: A, B, A', then a break (C) that drops to big hits and builds back.
+  const BAT_A = mel("5 5 6 5 3 2 1:2 | 2 3 5 6 5:4 | 1' 1' 6 5 3 5 6 3 | 2 3 5 3 2 1:3 | 5 5 6 5 3 2 1:2 | 2 3 5 6 1':4 | 2' 1' 6 1' 6 5 3:2 | 5 6 5 3 2:2 1:2", 71);
+  const BAT_B = mel("6 1' 2' 1' 6 5 3:2 | 5 6 1' 6 5 3 2:2 | 3 5 6 1' 2' 1' 6 5 | 3 2 3 5 1:2 -:2 | 1':2 -:2 1':2 -:2 | 6 5 3 2 1:4 | 2':2 1':2 6:2 5:2 | 6:6 -:2", 71);
+  const BAT_C = mel("1' 6 5 6 1':2 2':2 | 3':2 2' 1' 6:4 | 5 6 1' 2' 3' 2' 1' 6 | 5:6 3:2 | 2 3 5 6 5 3 2 3 | 5:4 6:2 5:2 | 3 2 1 2 3 5 2 3 | 1:6 -:2", 71);
+  const BAT_D = mel("5:8 | 6:4 5:4 | 3:8 | 2:4 3~:4 | 5:8 | 6:4 1':4 | 6:6 5:2 | 5:8", 71); // the break: long erhu tones over the hits
+  const SIG_A = mel("1:4 1:2 2:2 | 3:6 2~:2 | 1:2 6,:2 5,:4 | 6,:8 | 1:4 1:2 2:2 | 3:4 5~:4 | 6:2 5:2 3:2 2:2 | 3:8", 71);
+  const SIG_B = mel("5:4 6:2 5:2 | 3:6 5:2 | 6:2 1':2 6:2 5:2 | 3:8 | 2:4 3:2 2:2 | 1:4 6,~:4 | 5,:2 6,:2 1:2 2:2 | 1:8", 71);
+  const SIG_C = mel("6 6 5 3 5:2 6:2 | 1':4 6:4 | 5 3 2 3 5:2 3:2 | 2:8 | 3 3 2 1 2:2 3:2 | 5:4 6~:4 | 5 3 2 3 1:2 6,:2 | 1:8", 71);
+  const SIG_D = mel("1:8 | 6,:8 | 5,:8 | 6,~:8 | 1:8 | 2:8 | 3:4 2:4 | 1:8", 71);
+  const humanize = (t, j) => t + (Math.random() - 0.5) * (j || 0.008);
+  function warTrack(o) {
+    let lvl = 1, plan = 'ABAC', vary = 0;
+    return { bpm: o.bpm, len: 256, play(s, t, e8) {
+      const ph = Math.floor(s / 64) % 4, bar = Math.floor(s / 8) % 8, b8 = s % 8, e16 = e8 / 2;
+      if (s % 64 === 0) { plan = Math.random() < 0.3 ? 'ABCA' : 'ABAC'; vary = Math.random(); }
+      if (b8 === 0) lvl = I < 0.42 ? (lvl === 1 && I > 0.36 ? 1 : 0) : I < 0.78 ? (lvl === 2 && I > 0.72 ? 2 : 1) : 2; // with a little hysteresis
+      const sec = plan[ph], root = o.roots[(ph % 2) * 8 + bar], brk = sec === 'C' && lvl > 0, last = bar === 7, mel0 = { A: o.m[0], B: o.m[1], C: o.m[3] }[sec] || o.m[0];
+      const M = sec === 'A' && ph === 2 ? o.m[2] : mel0; // the third phrase carries the second tune
+      // --- phrase marks: gong and crash on the downbeat of a phrase, a horn call into the melee
+      if (s % 64 === 0) { if (lvl > 0) { hit(o.gong, t, 0.22 + lvl * 0.05); hit('bo_ff', t, 0.13 + lvl * 0.04, 1, 0.2); } else hit('gong_lt', t, 0.16); if (lvl === 2) suona(t + e8 * 0.1, 59, e8 * 5, 0.2); }
+      // --- drums, on a sixteenth grid (two per eighth)
+      for (let h = 0; h < 2; h++) { const k = b8 * 2 + h, tt = humanize(t + h * e16, h ? 0.01 : 0.004);
+        if (last && lvl > 0 && !(sec === 'C')) { // the fill: small drums roll up into the next phrase, the big drum lands on the last sixteenth
+          if (k >= 8) hit('tg_f', tt, 0.1 + (k - 8) * 0.025, 1, (k % 2 ? 0.25 : -0.25)); if (k % 4 === 0) dagu(tt, 'mf', 0.3 + k * 0.012); if (k === 15) { dagu(tt, 'ff', 0.55); hit('bd_ff', tt, 0.4, 0.85); } if (k < 8 && (k === 0 || k === 6)) dagu(tt, 'ff', 0.55); continue; }
+        if (brk) { // the break: two big hits a bar, a held drone; the last two bars build back
+          if (k === 0 || k === 11) { dagu(tt, 'ff', 0.62); hit('bd_ff', tt, 0.38, 0.8); } if (k === 0 && bar % 2 === 0) hit('gong_f', tt, 0.12);
+          if (bar >= 6) { if (bar === 7 || k % 2 === 0) hit('tg_f', tt, 0.06 + (bar - 6) * 0.06 + k * 0.006, 1, k % 2 ? 0.3 : -0.3); if (k % 4 === 0) dagu(tt, 'mf', 0.22 + (bar - 6) * 0.14 + k * 0.01); }
+          continue; }
+        const BIG = [[0, 10], [0, 6, 8, 11], [0, 3, 6, 8, 10, 11, 14]][lvl], MID = [[], [4, 12], [4, 12, 13]][lvl];
+        if (BIG.includes(k)) { dagu(tt, 'ff', lvl === 0 ? 0.32 : k === 0 ? 0.62 : 0.5); if (lvl === 2 && k === 0) hit('bd_ff', tt, 0.34, 0.8); }
+        if (MID.includes(k)) dagu(tt, 'mf', 0.36);
+        if (lvl === 1 && [2, 7, 9, 14, 15].includes(k)) hit('tg_f', tt, k === 15 ? 0.15 : 0.12, 1, k % 2 ? 0.28 : -0.28);
+        if (lvl === 2) { const acc = k % 4 === 2; hit(acc ? 'tg_f' : 'tg_p', tt, acc ? 0.17 : 0.1, 1, k % 2 ? 0.3 : -0.3); if (k === 4 || k === 12) dagu(tt, 'rim', 0.18); }
+        if (lvl === 0 && k === 6 && bar % 2) hit('tg_p', tt, 0.1, 1, 0.2); }
+      // --- cymbals
+      if (!brk && b8 === 0 && lvl === 1 && bar % 2 === 0 && bar) hit('bo_mf', t, 0.1, 1, -0.2);
+      if (!brk && lvl === 2) { if (b8 === 0 && bar) hit('bo_mf', t, 0.12, 1, bar % 2 ? 0.25 : -0.25); if (b8 === 6 && bar % 2) hit('bo_sh', t, 0.1, 1, 0.1); }
+      // --- the ground: cello pulse (or pedal) on the root, the zheng ostinato
+      if (lvl === 0 || brk) { if (b8 === 0 && bar % 2 === 0) drone(t, sdeg(root, 0, 35), e8 * 16, 0.16); }
+      else { const P = [0, 0, 5, 0, 0, 5, 4, 3]; cello(t, sdeg(root, P[b8], 35), b8 === 0 ? 0.3 : 0.2); }
+      if (lvl > 0 && !brk) zheng(humanize(t), sdeg(root, [0, 3, 5, 3, 6, 3, 5, 3][b8], 59), b8 === 0 ? 0.17 : 0.1);
+      if (brk && b8 === 0 && bar % 2 === 0) zhengTrem(t, sdeg(root, 5, 47), e8 * 15, 0.12);
+      // --- the voices
+      if (lvl === 0) { if (s % 2 === 0) { const n = M.get((s / 2) % M.total); if (n) erhu(t, n.m - 12, n.len * e8 * 2, 0.22); } } // the tune at half speed, an octave down: something coming
+      else if (brk) line('erhuD', o.m[3], s, t, e8, (tt, m, d, f) => erhu(tt, m, d, 0.28, f));
+      else { const quiet = vary > 0.7 && bar < 2; // sometimes the drums alone open a phrase
+        if (!quiet) line('suona', M, s, t, e8, (tt, m, d) => suona(tt, m, d * 0.95, 0.32));
+        if (lvl === 2 && !quiet) { line('suona2', M, s, t, e8, (tt, m, d) => suona(tt + 0.012, m - 12, d * 0.95, 0.15)); line('erhuB', M, s, t, e8, (tt, m, d) => erhu(tt, m - 12, d * 0.95, 0.13)); } }
+    } };
+  }
   const TRACKS = {
+    battle: warTrack({ bpm: 132, roots: BAT_R, m: [BAT_A, BAT_B, BAT_C, BAT_D], gong: 'gong_big' }),
+    siege: warTrack({ bpm: 112, roots: SIEGE_R, m: [SIG_A, SIG_B, SIG_C, SIG_D], gong: 'gong_big' }),
     menu: { bpm: 64, len: 256, rec: { key: 'mus_red_dawn', pure: true, e8: 0.47 }, play(s, t, e8) {
       if (REC && REC.pure) return;
       const sec = Math.floor(s / 64), bar = Math.floor(s / 8) % 8, b8 = s % 8, root = MENU_R[sec][bar];
@@ -4847,7 +5107,7 @@ const MUSIC = (() => {
       if (bar === 4 && b8 === 0) hit('bo_sh', t, 0.18);
     } },
     // battle and siege ride on a recorded war-drum ensemble (0 A.D., CC BY-SA); our instruments lock to its beat
-    battle: { bpm: 124, rec: { key: 'mus_taiko_1', e8: 0.3076, ph: 0.01 }, recs: [{ key: 'mus_taiko_1', e8: 0.3076, ph: 0.01 }, { key: 'mus_hill', pure: true, e8: 0.3076 }, { key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, { key: 'mus_red_dawn', pure: true, e8: 0.3076 }], len: 128, play(s, t, e8) {
+    battle0: { bpm: 124, rec: { key: 'mus_taiko_1', e8: 0.3076, ph: 0.01 }, recs: [{ key: 'mus_taiko_1', e8: 0.3076, ph: 0.01 }, { key: 'mus_hill', pure: true, e8: 0.3076 }, { key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, { key: 'mus_red_dawn', pure: true, e8: 0.3076 }], len: 128, play(s, t, e8) {
       if (REC && REC.pure) return;
       const bar = Math.floor(s / 8), b8 = s % 8, root = BAT_R[bar % 16];
       const pat = ['ff', 0, 'mf', 'rim', 'ff', 'rim', 'mf', 0][b8];
@@ -4862,7 +5122,7 @@ const MUSIC = (() => {
       else line('xunB', BAT, s, t, e8, (tt, m, d) => xun(tt, m, d * 0.95, 0.26));
       if (I > 0.82) line('erhuB', BAT, s, t, e8, (tt, m, d) => erhu(tt, m - 12, d * 0.95, 0.17));
     } },
-    siege: { bpm: 104, rec: { key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, recs: [{ key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, { key: 'mus_hill', pure: true, e8: 0.3104 }, { key: 'mus_taiko_1', e8: 0.3076, ph: 0.01 }], len: 128, play(s, t, e8) {
+    siege0: { bpm: 104, rec: { key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, recs: [{ key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, { key: 'mus_hill', pure: true, e8: 0.3104 }, { key: 'mus_taiko_1', e8: 0.3076, ph: 0.01 }], len: 128, play(s, t, e8) {
       if (REC && REC.pure) return;
       const bar = Math.floor(s / 8), b8 = s % 8, root = SIEGE_R[bar % 16];
       if (REC) { } else if (b8 === 0 || b8 === 4) dagu(t, 'ff', 0.6); if (b8 === 2 || b8 === 6) dagu(t, 'hand', 0.34); if (b8 === 7) dagu(t, 'rim', 0.22);
@@ -4878,10 +5138,11 @@ const MUSIC = (() => {
   let recIdx = 0;
   function startRec(t) { const b = REC.buf; recSrc = ctx.createBufferSource(); recSrc.buffer = b; recSrc.connect(recG); recSrc.start(t); recEnd = t + b.duration; nextT = t + (REC.ph || 0); step = 0; prevMel = {}; }
   function stopRec() { if (recSrc) { try { recG.gain.setTargetAtTime(0, ctx.currentTime, 0.4); const s0 = recSrc; setTimeout(() => { try { s0.stop(); } catch (e) { } }, 1500); } catch (e) { } } recSrc = null; REC = null; }
-  function tick() {
-    if (!playing || !ctx) return; const tr = TRACKS[playing]; const e8 = REC ? REC.e8 : 60 / tr.bpm / 2;
-    if (REC) { recG.gain.setTargetAtTime((REC.pure ? 0.62 : 0.42) + 0.4 * I, ctx.currentTime, 0.8); if (ctx.currentTime + 0.35 > recEnd) { const L = tr.recs; if (L && L.length > 1) { recIdx = (recIdx + 1) % L.length; const nb = S().get(L[recIdx].key); if (nb) REC = Object.assign({ buf: nb }, L[recIdx]); } startRec(recEnd); } }
-    while (nextT < ctx.currentTime + 0.3) { I += (target - I) * 0.06; try { tr.play(step % tr.len, nextT, e8); } catch (e) {} nextT += e8; step++; }
+  function tick() { if (!playing || !ctx) return; tickAt(ctx.currentTime); }
+  function tickAt(now) {
+    const tr = TRACKS[playing]; const e8 = REC ? REC.e8 : 60 / tr.bpm / 2;
+    if (REC) { recG.gain.setTargetAtTime((REC.pure ? 0.62 : 0.42) + 0.4 * I, now, 0.8); if (now + 0.35 > recEnd) { const L = tr.recs; if (L && L.length > 1) { recIdx = (recIdx + 1) % L.length; const nb = S().get(L[recIdx].key); if (nb) REC = Object.assign({ buf: nb }, L[recIdx]); } startRec(recEnd); } }
+    while (nextT < now + 0.3) { I += (target - I) * 0.06; try { tr.play(step % tr.len, nextT, e8); } catch (e) {} nextT += e8; step++; }
   }
   function play(name) {
     if (!ensure() || !TRACKS[name]) return; if (playing === name) return;
@@ -4907,9 +5168,23 @@ const MUSIC = (() => {
     else if (kind === 'wave') { hit('bo_ff', t, 0.24); dagu(t, 'ff', 0.5); dagu(t + 0.2, 'ff', 0.5); }
   }
   function setIntensity(v) { target = v; }
+  // render a cue offline (for previews and tests): the same scheduler, driven by a fake clock into an OfflineAudioContext
+  async function _offline(name, iv, secs, curve) {
+    const live = { ctx, out, dry, comp, nb, playing, REC, recSrc, recG, recEnd, nextT, step, I, target, prevMel, recIdx };
+    if (timer) { clearInterval(timer); timer = null; }
+    const oc = new OfflineAudioContext(2, Math.ceil(44100 * secs), 44100); out = null; ensure(oc); out.gain.value = vol;
+    playing = name; step = 0; prevMel = {}; nextT = 0.12; REC = null; recSrc = null; recIdx = 0; I = target = iv;
+    const rb = TRACKS[name].rec && S().get(TRACKS[name].rec.key);
+    if (rb) { REC = Object.assign({ buf: rb }, TRACKS[name].rec); recG = oc.createGain(); recG.gain.value = 0.6; recG.connect(comp); startRec(0.12); }
+    for (let now = 0; now < secs - 0.4; now += 0.05) { if (curve) target = curve(now); tickAt(now); }
+    const pr = oc.startRendering();
+    ({ ctx, out, dry, comp, nb, playing, REC, recSrc, recG, recEnd, nextT, step, I, target, prevMel, recIdx } = live);
+    if (playing) timer = setInterval(tick, 50);
+    return pr;
+  }
   function toggle() { muted = !muted; if (out) out.gain.setTargetAtTime(muted ? 0 : vol, ctx.currentTime, 0.1); return !muted; }
   function setMuted(m) { muted = m; if (out) out.gain.setTargetAtTime(muted ? 0 : vol, ctx.currentTime, 0.1); }
-  return { play, stop, sting, accent, setIntensity, toggle, setMuted, get muted() { return muted; }, get track() { return playing; } };
+  return { _offline, play, stop, sting, accent, setIntensity, toggle, setMuted, get muted() { return muted; }, get track() { return playing; } };
 })();
 </script>
 <script>
@@ -5573,6 +5848,7 @@ class Renderer {
     this.ragNext = 0;
     this.buildEnvironment(); this.buildWater();
     { const n = sim.units.length; this.fog = !!(window.__boshin && window.__boshin.state && window.__boshin.state.fog) && !sim.heroMode && !sim.chaos; this.seen = new Uint8Array(n).fill(1); this.wasSeen = new Uint8Array(n).fill(1); this.reveal = new Float32Array(n); this.seenSq = new Uint8Array(sim.squads.length).fill(1); this.lastSeen = []; }
+    this.buildGroundMap();
     if (!this.lowfx) { this.toonify(); this.buildPost(); }
     AUDIO.setRain(!!sim.rain);
     this.resize();
@@ -5642,7 +5918,7 @@ class Renderer {
     const sc = this.scene, L = (c) => new THREE.MeshLambertMaterial({ color: c });
     const tents = this.sim.boxes.filter(b => b.kind === 'tent');
     if (tents.length) { const g = new THREE.CylinderGeometry(1, 1, 1, 3, 1); g.rotateX(-Math.PI / 2); g.translate(0, 0.5, 0); const m = new THREE.InstancedMesh(g, L(0xb9ab8a), tents.length); const T = this.tmp;
-      tents.forEach((b, i) => { const y = terrainH(b.x, b.z); T.m.compose(T.v.set(b.x, y, b.z), T.q.identity(), T.v2.set(b.hw * 2 / 1.732, b.h / 1.5, b.hd * 2)); m.setMatrixAt(i, T.m); }); m.castShadow = true; m.receiveShadow = true; sc.add(m);
+      tents.forEach((b, i) => { const y = Math.min(terrainH(b.x, b.z) - 0.04, this.footY(b) + 0.04); T.m.compose(T.v.set(b.x, y, b.z), T.q.identity(), T.v2.set(b.hw * 2 / 1.732, b.h / 1.5, b.hd * 2)); m.setMatrixAt(i, T.m); }); m.castShadow = true; m.receiveShadow = true; sc.add(m);
       for (const b of tents) { const y = terrainH(b.x, b.z); const flap = new THREE.Mesh(new THREE.PlaneGeometry(b.hw * 0.9, b.h * 0.7), L(0x2a2620)); flap.position.set(b.x, y + b.h * 0.32, b.z + b.hd + 0.02); sc.add(flap);
         for (const sz of [-1, 1]) { const pole = new THREE.Mesh(new THREE.BoxGeometry(0.06, b.h + 0.25, 0.06), L(0x5a4630)); pole.position.set(b.x, y + (b.h + 0.25) / 2, b.z + sz * (b.hd + 0.05)); sc.add(pole); } } }
     this.campFires = [];
@@ -5719,6 +5995,45 @@ class Renderer {
     this.sgHoles = sg.holes.map(L => { const o = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.8, 0.4), L0x(0x16120e)); o.position.set(L.x, gy(L.x, W.z0 - 1) + 1.4, W.z0 - 0.45); o.scale.set(0.01, 0.01, 1); sc.add(o); return o; });
     function L0x(c) { return new THREE.MeshBasicMaterial({ color: c }); }
     this.sgv = true;
+  }
+  // manning a bed crossbow or a gun: your own weapon is slung, your hands are on the piece (tiller and trigger bar, or the
+  // two handspikes), and the ground shows where a shot at the present lay would first strike (Sim.sgPredict: the sim's own steps)
+  empView(hero, dt) {
+    const sg = this.sim.sg, e = sg && hero.manE >= 0 ? sg.emp[hero.manE] : null, on = !!(e && e.man === hero.id) && (this.tp || 0) < 0.3 && hero.downT <= 0;
+    if (on && !this.vmEmp) this.buildEmpVM(hero);
+    if (!this.vmEmp) return;
+    this.vmEmp.visible = on; this.empMark.visible = on; this.empArc.visible = on; if (!on) { this.empHud = null; return; }
+    this.vm.visible = false; this.vmArms.visible = false; this.vmShield.visible = false; this.vmBow.visible = false;
+    const bow = e.kind === 'bow'; this.vmEmpBow.visible = bow; this.vmEmpGun.visible = !bow;
+    this.fovTarget = this.empZoom ? (bow ? 36 : 30) : 70;
+    this.empKick = Math.max(0, (this.empKick || 0) - dt * 2.5); const k = this.empKick * this.empKick;
+    this.vmEmp.position.set(0, -k * 0.06, k * 0.16); this.vmEmp.rotation.x = k * 0.12;
+    this.empN = (this.empN || 0) + 1;
+    if (this.empN % 3 === 1 || !this.empP) { const P = this.sim.sgPredict(e, e.yaw, e.pitch || 0); this.empP = P;
+      const gy = P.box ? P.y : SIM.terrainH(P.x, P.z); this.empMark.position.set(P.x, gy + 0.06, P.z); const dist = Math.hypot(P.x - e.x, P.z - e.z); const s = 0.8 + dist * 0.025; this.empMark.scale.set(s, s, s);
+      const A = this.empArc.geometry.attributes.position, n = Math.min(A.count, P.pts.length / 3); for (let i = 0; i < A.count; i++) { const j = Math.min(i, n - 1) * 3; if (n > 0) A.setXYZ(i, P.pts[j], P.pts[j + 1], P.pts[j + 2]); else A.setXYZ(i, e.x, e.y, e.z); } A.needsUpdate = true; this.empArc.geometry.setDrawRange(0, n); this.empArc.geometry.computeBoundingSphere();
+      this.empHud = { kind: e.kind, cd: e.cd, cdMax: e.cdMax || (bow ? 150 : 270), elev: e.pitch || 0, want: this._viewPitch, dist, wall: !!P.box, out: !!P.out }; }
+    else if (this.empHud) { this.empHud.cd = e.cd; this.empHud.elev = e.pitch || 0; this.empHud.want = this._viewPitch; }
+  }
+  buildEmpVM(hero) {
+    const g = new THREE.Group(); this.camera.add(g); this.vmEmp = g; const mk = (c) => new THREE.MeshLambertMaterial({ color: c, depthTest: false });
+    const skin = mk(0xd2ac84), wood = mk(0x5a3a20), dark = mk(0x3a2616), iron = mk(0x4a4c50), sleeve = mk(torsoColor(hero));
+    const bx = (p, w, h, d, m, x, y, z, rx, ry, rz) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.rotation.set(rx || 0, ry || 0, rz || 0); o.renderOrder = 990; p.add(o); return o; };
+    const hand = (p, x, y, z, ry) => { const h = new THREE.Group(); h.position.set(x, y, z); h.rotation.y = ry || 0; p.add(h); bx(h, 0.085, 0.07, 0.11, skin, 0, 0, 0); bx(h, 0.09, 0.03, 0.05, skin, 0, 0.045, -0.03); bx(h, 0.1, 0.1, 0.42, sleeve, 0, -0.07, 0.24, 0.32); return h; };
+    // 床弩: the tiller running out ahead, its cross handle and the trigger lever under your right hand
+    const B = new THREE.Group(); g.add(B); this.vmEmpBow = B;
+    bx(B, 0.16, 0.12, 1.5, wood, 0, -0.4, -1.15); bx(B, 0.62, 0.06, 0.07, dark, 0, -0.32, -0.62); bx(B, 0.035, 0.16, 0.035, iron, 0.09, -0.42, -0.66, 0.4); bx(B, 0.02, 0.02, 1.3, mk(0xd8d0bc), 0, -0.33, -1.25);
+    hand(B, -0.24, -0.29, -0.62, 0.15); hand(B, 0.2, -0.3, -0.62, -0.15);
+    // a gun: both hands on the handspikes that lay the trail, the breech and its touch-hole ahead
+    const G = new THREE.Group(); g.add(G); this.vmEmpGun = G;
+    for (const s of [-1, 1]) bx(G, 0.06, 0.06, 1.2, wood, s * 0.24, -0.42, -0.85, -0.18, s * 0.28);
+    bx(G, 0.34, 0.3, 0.5, iron, 0, -0.55, -1.55); bx(G, 0.12, 0.12, 0.12, iron, 0, -0.42, -1.25); bx(G, 0.02, 0.03, 0.02, mk(0xff8a3a), 0, -0.38, -1.42);
+    hand(G, -0.27, -0.33, -0.55, 0.25); hand(G, 0.27, -0.33, -0.55, -0.25);
+    // where the shot will fall: a thin ring on the ground and a faint dotted arc
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 24), new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+    ring.rotation.x = -Math.PI / 2; const mark = new THREE.Group(); mark.add(ring); const dot = new THREE.Mesh(new THREE.CircleGeometry(0.18, 10), ring.material); dot.rotation.x = -Math.PI / 2; mark.add(dot); this.scene.add(mark); this.empMark = mark;
+    const ag = new THREE.BufferGeometry(); ag.setAttribute('position', new THREE.BufferAttribute(new Float32Array(90 * 3), 3));
+    const arc = new THREE.Points(ag, new THREE.PointsMaterial({ color: 0xffe2a0, size: 0.16, transparent: true, opacity: 0.45, depthWrite: false, fog: false })); arc.frustumCulled = false; this.scene.add(arc); this.empArc = arc;
   }
   updateSiege(dt) {
     const sim = this.sim, sg = sim.sg, W = SIM.TERR.swall, T = this.tmp;
@@ -5810,14 +6125,18 @@ class Renderer {
     const wallMat = new THREE.MeshLambertMaterial({ color: 0xa9a49a }), roofMat = new THREE.MeshLambertMaterial({ color: snow ? 0xe6e9ec : 0x3e4044 }), plasterMat = new THREE.MeshLambertMaterial({ color: 0x9a958c }), capMat = new THREE.MeshLambertMaterial({ color: snow ? 0xeef0f2 : 0x34363a });
     const houses = boxes.filter(b => b.kind === 'house' || b.kind === 'hall'), walls = boxes.filter(b => b.kind === 'wall');
     const hm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), wallMat, houses.length + 1), rm = new THREE.InstancedMesh(new THREE.ConeGeometry(0.72, 1, 4), roofMat, houses.length + 1);
+    // each house stands on a low stone plinth (台基) whose foot goes down to the lowest corner of the slope
+    const plm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: snow ? 0x8a8780 : 0x75706a }), houses.length + 1);
     houses.forEach((b, i) => {
-      const y = terrainH(b.x, b.z); const wh = b.h * 0.62;
-      T.m.compose(T.v.set(b.x, y + wh / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2, wh, b.hd * 2)); hm.setMatrixAt(i, T.m);
+      const y = terrainH(b.x, b.z); const wh = b.h * 0.62, fy = this.footY(b), pt = y + 0.32;
+      T.m.compose(T.v.set(b.x, (fy + pt) / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2 + 0.36, pt - fy, b.hd * 2 + 0.36)); plm.setMatrixAt(i, T.m);
+      T.m.compose(T.v.set(b.x, (pt - 0.05 + y + wh) / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2, y + wh - pt + 0.05, b.hd * 2)); hm.setMatrixAt(i, T.m);
       T.m.compose(T.v.set(b.x, y + wh + b.h * 0.2, b.z), T.q.setFromEuler(T.e.set(0, PI / 4, 0)), T.v2.set(Math.max(b.hw, b.hd) * 2 * 1.15, b.h * 0.42, Math.max(b.hw, b.hd) * 2 * 1.15)); rm.setMatrixAt(i, T.m);
     });
     const wm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), plasterMat, walls.length + 1), cm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), capMat, walls.length + 1);
-    walls.forEach((b, i) => { const y = terrainH(b.x, b.z); T.m.compose(T.v.set(b.x, y + b.h / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2, b.h, b.hd * 2)); wm.setMatrixAt(i, T.m); T.m.compose(T.v.set(b.x, y + b.h + 0.08, b.z), T.q.identity(), T.v2.set(b.hw * 2 + 0.3, 0.18, b.hd * 2 + 0.3)); cm.setMatrixAt(i, T.m); });
-    for (const m of [hm, rm, wm, cm]) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; this.scene.add(m); }
+    walls.forEach((b, i) => { const y = terrainH(b.x, b.z), fy = this.footY(b); T.m.compose(T.v.set(b.x, (fy + y + b.h) / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2, y + b.h - fy, b.hd * 2)); wm.setMatrixAt(i, T.m); T.m.compose(T.v.set(b.x, y + b.h + 0.08, b.z), T.q.identity(), T.v2.set(b.hw * 2 + 0.3, 0.18, b.hd * 2 + 0.3)); cm.setMatrixAt(i, T.m); });
+    houses.length || plm.setMatrixAt(0, T.zero); for (let i = houses.length; i < houses.length + 1; i++) plm.setMatrixAt(i, T.zero);
+    for (const m of [hm, rm, wm, cm, plm]) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; this.scene.add(m); }
     const temple = this.sim.deco.find(d => d.kind === 'temple');
     if (temple) { const g = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 4.2, 8), new THREE.MeshLambertMaterial({ color: 0xb8402a })); const y = terrainH(temple.x, temple.z - 20); g.position.set(temple.x - 3.2, y + 2.1, temple.z - 20); this.scene.add(g); const g2 = g.clone(); g2.position.x = temple.x + 3.2; this.scene.add(g2); const beam = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.5, 0.6), new THREE.MeshLambertMaterial({ color: 0x2b2420 })); beam.position.set(temple.x, y + 4.4, temple.z - 20); this.scene.add(beam); const gr = new THREE.Mesh(new THREE.ConeGeometry(5.6, 1.4, 4), new THREE.MeshLambertMaterial({ color: this.biome.snow ? 0xe6e9ec : 0x2f5a4a })); gr.rotation.y = PI / 4; gr.scale.set(1.2, 1, 0.45); gr.position.set(temple.x, y + 5.3, temple.z - 20); this.scene.add(gr); }
   }
@@ -5827,10 +6146,19 @@ class Renderer {
     const box = new THREE.BoxGeometry(1, 1, 1), pyr = new THREE.ConeGeometry(0.72, 1, 4);
     // Liaoyang gate tower: a massive grey brick base, then a two-storey red timber tower under double hip roofs
     // mantlets: plank shields on props, painted with each army's colours
-    { const ms = boxes.filter(q => q.kind === 'mantlet'); if (ms.length) { const pm = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: 0x6a4a2c }), ms.length), fm = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: 0xffffff }), ms.length * 2), sm2 = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: 0x4a3420 }), ms.length * 2);
-      ms.forEach((b, i) => { const y = terrainH(b.x, b.z); T.m.compose(T.v.set(b.x, y + b.h / 2, b.z), T.q.setFromEuler(T.e.set(-0.08 * Math.sign(b.z || 1), 0, 0)), T.v2.set(b.hw * 2, b.h, 0.12)); pm.setMatrixAt(i, T.m);
-        const faceZ = b.z > 0 ? -1 : 1; for (const k of [0, 1]) { T.m.compose(T.v.set(b.x + (k ? 0.5 : -0.5) * b.hw, y + b.h * 0.62, b.z + faceZ * 0.07), T.q.identity(), T.v2.set(b.hw * 0.7, 0.18, 0.02)); fm.setMatrixAt(i * 2 + k, T.m); fm.setColorAt(i * 2 + k, T.c.set(b.z > 0 ? 0xb8262a : 0xd8b03c)); T.m.compose(T.v.set(b.x + (k ? 0.7 : -0.7) * b.hw, y + 0.55, b.z - faceZ * 0.5), T.q.setFromEuler(T.e.set(faceZ * 0.9, 0, 0)), T.v2.set(0.1, 1.3, 0.1)); sm2.setMatrixAt(i * 2 + k, T.m); } });
-      if (fm.instanceColor) fm.instanceColor.needsUpdate = true; for (const m of [pm, fm, sm2]) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; this.scene.add(m); } } }
+    // a mantlet is a wall of planks, no two quite alike, their feet dug into the ground, held by two cross battens behind
+    { const ms = boxes.filter(q => q.kind === 'mantlet'); if (ms.length) { const nP = ms.map(b => Math.max(3, Math.round(Math.max(b.hw, b.hd) * 2 / 0.3))), NP = nP.reduce((a, c) => a + c, 0);
+      const pm = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: 0xffffff }), NP), bt = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: 0x3e2c1c }), ms.length * 2), fm = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: 0xffffff }), ms.length * 2), sm2 = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: 0x4a3420 }), ms.length * 2);
+      const q = new THREE.Quaternion(), off = new THREE.Vector3(); let pk = 0;
+      ms.forEach((b, i) => { const along = b.hw >= b.hd, L = (along ? b.hw : b.hd) * 2, faceZ = along ? (b.z > 0 ? -1 : 1) : (b.x > 0 ? -1 : 1), ry = along ? 0 : HPI, tilt = 0.08 * faceZ;
+        const put = (m, idx, lx, ly, lz, sx, sy, sz, rx, rz) => { const e = T.e.set(tilt + (rx || 0), ry, rz || 0, 'YXZ'); q.setFromEuler(e); off.set(lx, ly, lz).applyQuaternion(T.q.setFromEuler(T.e.set(tilt, ry, 0, 'YXZ'))); const wx = b.x + off.x, wz = b.z + off.z;
+          T.m.compose(T.v.set(wx, terrainH(wx, wz) + off.y, wz), q, T.v2.set(sx, sy, sz)); m.setMatrixAt(idx, T.m); T.e.order = 'XYZ'; };
+        const n = nP[i], w = L / n;
+        for (let j = 0; j < n; j++) { const hj = uhash(i * 31 + j, 5), hh = b.h * (0.93 + 0.13 * hj) + 0.2; put(pm, pk, -L / 2 + (j + 0.5) * w, hh / 2 - 0.2, 0, w * 0.965, hh, 0.11, 0, (hj - 0.5) * 0.016); pm.setColorAt(pk++, T.c.setHSL(0.075 + hj * 0.012, 0.36 + hj * 0.06, 0.205 + uhash(i * 31 + j, 9) * 0.04)); }
+        for (const k of [0, 1]) { put(bt, i * 2 + k, 0, k ? b.h * 0.78 : 0.32, -faceZ * 0.085, L * 0.97, 0.11, 0.05);
+          put(fm, i * 2 + k, (k ? 0.25 : -0.25) * L, b.h * 0.62, faceZ * 0.065, L * 0.35, 0.18, 0.02); fm.setColorAt(i * 2 + k, T.c.set(b.z > 0 ? 0xb8262a : 0xd8b03c));
+          put(sm2, i * 2 + k, (k ? 0.35 : -0.35) * L, 0.55, -faceZ * 0.5, 0.1, 1.3, 0.1, faceZ * 0.9 - tilt); } });
+      for (const m of [pm, fm]) if (m.instanceColor) m.instanceColor.needsUpdate = true; for (const m of [pm, bt, fm, sm2]) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; this.scene.add(m); } } }
     // siege engines: the battering ram's roofed cart and the scaling ladders
     if (this.sim.ram) { const g = new THREE.Group(); const wood = new THREE.MeshLambertMaterial({ color: 0x5a3a20 }), hide = new THREE.MeshLambertMaterial({ color: 0x7a6040 }), iron = new THREE.MeshLambertMaterial({ color: 0x3a3a3c });
       const mb = (w, h, d, m, x, y, z, rx, rz) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); if (rx) o.rotation.x = rx; if (rz) o.rotation.z = rz; o.castShadow = true; g.add(o); return o; };
@@ -6473,7 +6801,7 @@ class Renderer {
         case 'sgdock': { const gy = SIM.terrainH(ev.x, ev.z); AUDIO.play('thud', ev.x, gy + 6, ev.z, 2); this.dust(ev.x, gy + 6.6, ev.z + 4, 14, 0, 0.5, 0, 2, 1.2, 0.5, 2); break; }
         case 'sgengine': { const gy = SIM.terrainH(ev.x, ev.z); for (let i = 0; i < 22; i++) this.spawnDebris('b', ev.x + rnd(-2, 2), gy + rnd(1, ev.kind === 'tower' ? 9 : 3), ev.z + rnd(-2, 2), rnd(-5, 5), rnd(2, 8), rnd(-5, 5), rnd(0.15, 0.45), rnd(0.8, 3), rnd(0.15, 0.4), 0x5a3a20, 1); this.puffSmoke(ev.x, gy + 2, ev.z, 40, 0, 2.5, 0, 4, 8, 1.5, 6, 0.25, 0.7); AUDIO.play('collapse', ev.x, gy + 2, ev.z, 1.3); break; }
         case 'sghit': { this.burstSparks(ev.x, ev.y, ev.z, ev.kind === 'arrow' ? 3 : 14, 5, 0.8, 0.6, 0.35, 0.35, 0.08); if (ev.kind !== 'arrow') { for (let i = 0; i < 5; i++) this.spawnDebris('b', ev.x, ev.y, ev.z, rnd(-3, 3), rnd(1, 4), rnd(-3, 3), 0.5, 0.06, 0.06, 0x6a4a2c, 1); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.4); } break; }
-        case 'sgshot': { this.flash(ev.x, ev.y, ev.z, ev.gun ? 5 : 1.5, ev.gun ? 0.2 : 0.08); if (ev.gun) { this.puffSmoke(ev.x + ev.dx * 1.5, ev.y, ev.z + ev.dz * 1.5, 30, ev.dx * 3, 0.6, ev.dz * 3, 1.5, 5, 1, 4.5, 0.85, 0.7); AUDIO.play('cannon', ev.x, ev.y, ev.z, 1.6); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 40) this.shake = Math.max(this.shake, 0.6 * (1 - dc / 40)); } else AUDIO.play('thud', ev.x, ev.y, ev.z, 1.2); break; }
+        case 'sgshot': { this.flash(ev.x, ev.y, ev.z, ev.gun ? 5 : 1.5, ev.gun ? 0.2 : 0.08); if (ev.by === heroId && ev.by >= 0) { this.empKick = 1; this.recoil = 1; this.recoilRoll = rnd(-1, 1); this.shake = Math.max(this.shake, ev.gun ? 1 : 0.35); if (this.imp) this.imp.vp += ev.gun ? 2.2 : 0.8; } if (ev.gun) { this.puffSmoke(ev.x + ev.dx * 1.5, ev.y, ev.z + ev.dz * 1.5, 30, ev.dx * 3, 0.6, ev.dz * 3, 1.5, 5, 1, 4.5, 0.85, 0.7); AUDIO.play('cannon', ev.x, ev.y, ev.z, 1.6); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 40) this.shake = Math.max(this.shake, 0.6 * (1 - dc / 40)); } else AUDIO.play('thud', ev.x, ev.y, ev.z, 1.2); break; }
         case 'sgsaltpeter': AUDIO.play('fire', this.camera.position.x, 0, ev.z, 1.6); break;
         case 'sgram': { const gy = SIM.terrainH(ev.x, ev.z - 2); this.dust(ev.x, gy + 1.5, ev.z - 1, 10, 0, 1, -1, 2, 1, 0.4, 1.6); this.burstSparks(ev.x, gy + 1.8, ev.z - 0.5, 8, 4, 0.9, 0.7, 0.4, 0.3, 0.08); AUDIO.play('ram', ev.x, gy + 1.5, ev.z, 2); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 25) this.shake = Math.max(this.shake, 0.35 * (1 - dc / 25)); break; }
         case 'sgfill': AUDIO.play('thud', ev.x, 0, ev.z, 1.2); break;
@@ -6663,7 +6991,11 @@ class Renderer {
         o[0] = v(0); o[1] = (e > 0.001 ? P0[1] * e * s : 0) + 0.25 * fl * fs; o[2] = (e > 0.001 ? P0[2] * e * s : 0); o[3] = v(3); o[4] = Math.min(v(4), Math.max(0, 1 - a.stance)); o[5] = v(5);
         o[6] = (e > 0.001 && u.hrK === 1 ? -0.1 * s * e : 0); o[7] = v(7); o[8] = v(8);
         a.lean += o[0]; a.twist += o[1]; a.roll += o[2]; a.crouch += o[3]; a.stance += o[4]; a.lunge += o[5]; for (let j = 0; j < 3; j++) { a.wp[j] += o[6 + j]; a.rh[j] += o[6 + j]; a.lh[j] += o[6 + j]; }
-        a.hrh = v(6); } }
+        a.hrh = v(6); }
+      // caught in a wolf-brush: thrown back, arms up, twisting against the branches
+      if (!a.hro && !mounted && !down && u.entT > 0) { const e2 = Math.min(1, u.entT / 0.2), P3 = HR_POSE[3], w = Math.sin((this.time || 0) * 13 + u.id) * 0.22;
+        const o = a.hro = a.hroB || (a.hroB = new Float64Array(9)); o[0] = P3[0] * 0.8 * e2; o[1] = (P3[1] + w) * e2; o[2] = (P3[2] + w * 0.5) * e2; o[3] = 0; o[4] = 0; o[5] = P3[5] * e2; o[6] = 0; o[7] = P3[7] * 0.9 * e2; o[8] = P3[8] * e2;
+        a.lean += o[0]; a.twist += o[1]; a.roll += o[2]; a.lunge += o[5]; for (let j = 0; j < 3; j++) { a.wp[j] += o[6 + j]; a.rh[j] += o[6 + j]; a.lh[j] += o[6 + j]; } a.hrh = -0.3 * e2; } }
     // ---------- legs (root-local; +x left, +z forward) ----------
     const LT = 0.46, LS = 0.46;
     const legs = this._legs || (this._legs = new Float64Array(18)); // hipL,kneeL,footL,hipR,kneeR,footR
@@ -7158,6 +7490,7 @@ class Renderer {
       this._jolt = IM.jolt + flin * 0.5; this._joltR = IM.r;
       this.updateViewmodel(hero, alpha, dt, clamp(hero.speedNow / 3.5, 0, 1), mounted);
       this.vm.visible = hero.downT <= 0 && (this.tp || 0) < 0.3; this.vmArms.visible = this.vm.visible; if (!this.vm.visible) { this.vmShield.visible = false; this.vmBow.visible = false; }
+      if (this.sim.sg || this.vmEmp) this.empView(hero, dt);
     } else {
       this.vm.visible = false; this.vmArms.visible = false; this.vmShield.visible = false; this.vmBow.visible = false; this.fovTarget = 60;
       this.fov += (this.fovTarget - this.fov) * (1 - Math.exp(-dt * 10)); if (Math.abs(cam.fov - this.fov) > 0.05) { cam.fov = this.fov; cam.updateProjectionMatrix(); }
@@ -7336,6 +7669,13 @@ class Renderer {
       o.material = t;
     });
     this.sleeveMat = cache.get(this.sleeveMat) || this.sleeveMat;
+    // grounding in the ink edition: a soft grey wash at the foot of every structure (no trodden-earth colour: the
+    // print keeps its own ground tones)
+    if (this.terrain && this.groundMap) { const tm = this.terrain.material = this.terrain.material.clone(), base = THREE.Material.prototype.onBeforeCompile, gMap = this.groundMap, gExt = this.groundExt;
+      tm.onBeforeCompile = function (sh, r) { if (base) base.call(this, sh, r); sh.uniforms.gMap = { value: gMap }; sh.uniforms.gExt = { value: gExt };
+        sh.vertexShader = 'varying vec3 vGW;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vGW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        sh.fragmentShader = 'varying vec3 vGW; uniform sampler2D gMap; uniform float gExt;\n' + sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n { vec4 gm = texture2D(gMap, (vGW.xz + gExt) / (2.0 * gExt)); diffuseColor.rgb *= 1.0 - gm.r * 0.4; diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.86, 0.83, 0.78), smoothstep(0.35, 0.6, gm.g) * 0.5); }'); };
+      tm.needsUpdate = true; }
   }
   buildPost() {
     const b = this.renderer.getDrawingBufferSize(new THREE.Vector2());
@@ -7465,16 +7805,16 @@ class Renderer {
 Renderer.prototype.buildBeijing = function () {
   const sc = this.scene, snow = this.biome.snow, grp = new THREE.Group(); sc.add(grp); this.beijing = grp;
   const brick = new THREE.MeshLambertMaterial({ color: 0x6f6b64 }), brickD = new THREE.MeshLambertMaterial({ color: 0x5c5852 }), red = new THREE.MeshLambertMaterial({ color: 0x8a3226 }),
-    roof = new THREE.MeshLambertMaterial({ color: snow ? 0xc9ccd0 : 0x3d433e }), roofD = new THREE.MeshLambertMaterial({ color: 0x2c302c }), win = new THREE.MeshLambertMaterial({ color: 0x2a2420 });
-  const Z0 = 176, H = 13, T = 8, X0 = -330, X1 = 330, gx = 6, base = -8;
+    roof = new THREE.MeshLambertMaterial({ color: snow ? 0x5a605e : 0x3d433e }), roofD = new THREE.MeshLambertMaterial({ color: 0x2c302c }), win = new THREE.MeshLambertMaterial({ color: 0x2a2420 });
+  const Z0 = 176, H = 17, T = 9, X0 = -330, X1 = 330, gx = 6, base = -8;
   const box = (m, x, y, z, w, h, d, ry) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); if (ry) o.rotation.y = ry; grp.add(o); return o; };
   // a hip roof (廡殿/歇山 read as a hip at this distance): a flattened four-sided cone rotated to sit square
   const hip = (m, x, y, z, w, d, h) => { const o = new THREE.Mesh(new THREE.ConeGeometry(Math.SQRT1_2, 1, 4, 1), m); o.rotation.y = Math.PI / 4; o.scale.set(w, h, d); o.position.set(x, y + h / 2, z); grp.add(o); return o; };
   const tower = (x, z, w, d, storeys, s) => { // a gate or corner tower: brick platform part is the wall itself, then red-pillared storeys under deep eaves
-    let y = H; for (let k = 0; k < storeys; k++) { const sw = w * (1 - k * 0.12), sd = d * (1 - k * 0.12), bh = 5.2 * s;
+    let y = H; for (let k = 0; k < storeys; k++) { const sw = w * (1 - k * 0.12), sd = d * (1 - k * 0.12), bh = 6.5 * s;
       box(red, x, y + bh / 2, z, sw, bh, sd); hip(roof, x, y + bh - 0.6 * s, z, sw * 1.32, sd * 1.4, (k === storeys - 1 ? 6.5 : 2.6) * s); y += bh + (k === storeys - 1 ? 0 : 1.6 * s); } };
   const arrowTower = (x, z, w, d) => { // 箭樓: a tall brick box pierced with rows of arrow windows, a hip roof on top
-    const h = 13; box(brickD, x, H + h / 2, z, w, h, d); for (let row = 0; row < 4; row++) for (let c = 0; c < 12; c++) box(win, x - w / 2 + (c + 0.5) * w / 12, H + 2.2 + row * 2.8, z - d / 2 - 0.05, 0.9, 1.1, 0.2);
+    const h = 16; box(brickD, x, H + h / 2, z, w, h, d); for (let row = 0; row < 4; row++) for (let c = 0; c < 12; c++) box(win, x - w / 2 + (c + 0.5) * w / 12, H + 2.6 + row * 3.4, z - d / 2 - 0.05, 1.1, 1.4, 0.2);
     hip(roof, x, H + h - 0.4, z, w * 1.25, d * 1.5, 6); };
   // the wall itself in 20 m lengths standing on the ground, so its foot follows the land; bastions every 80 m
   for (let x = X0; x < X1; x += 20) { const cx = x + 10; if (Math.abs(cx - gx) < 12) continue; const y0 = Math.min(terrainH(Math.max(-HALF - 25, Math.min(HALF + 25, cx)), Z0 - T / 2), 0) + base; box(brick, cx, (y0 + H) / 2, Z0, 20.2, H - y0, T); }
@@ -7486,7 +7826,7 @@ Renderer.prototype.buildBeijing = function () {
   box(brick, gx - 20, (base + H) / 2, Z0 - 14, 4, H - base, 28); box(brick, gx + 20, (base + H) / 2, Z0 - 14, 4, H - base, 28); box(brick, gx, (base + H) / 2, Z0 - 27, 44, H - base, 5);
   box(win, gx, 3.5, Z0 - 29.6, 6, 7 - base, 0.4);
   arrowTower(gx, Z0 - 27, 30, 9);
-  box(brick, gx, (base + H) / 2, Z0, 24, H - base, T + 2); box(win, gx, 4, Z0 - T / 2 - 1.1, 6, 8 - base, 0.4); tower(gx, Z0, 26, 13, 2, 1);
+  box(brick, gx, (base + H) / 2, Z0, 24, H - base, T + 2); box(win, gx, 4, Z0 - T / 2 - 1.1, 6, 8 - base, 0.4); tower(gx, Z0, 30, 15, 2, 1.25);
   // corner towers (角樓) where the wall turns away, and small watch towers (敵臺) on a few bastions
   for (const s of [-1, 1]) { const x = gx + s * 300; box(brick, x, (base + H) / 2, Z0 - 6, 22, H - base, 20); arrowTower(x, Z0 - 6, 20, 16);
     box(brick, x + s * 8, (base + H) / 2, Z0 + 60, 8, H - base, 120); }
@@ -7496,6 +7836,51 @@ Renderer.prototype.buildBeijing = function () {
   box(far, -40, 6, 330, 900, 34, 10); for (const [x, s] of [[-170, 1.5], [120, 1.4], [-430, 1.2]]) { box(farR, x, 23 + 4 * s, 330, 22 * s, 8 * s, 11 * s); hip(roof, x, 23 + 7.4 * s, 330, 30 * s, 16 * s, 7 * s); }
   grp.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; } });
 };
+// ---- grounding: where things meet the earth ----
+// One ground map for the whole field, painted once when the battle is built: R = contact shadow (ambient occlusion
+// round every house, wall, palisade, mantlet, tent, rock and trunk), G = trodden earth (an uneven skirt of bare,
+// trampled ground round each structure). The realism and stylized ground shaders read it, so every object stands in
+// the ground instead of slicing through it along a perfect line. A few loose stones break up the base as well.
+Renderer.prototype.buildGroundMap = function () {
+  const E = HALF + 30, N = this.lowfx ? 1024 : 2048, k = N / (2 * E), sim = this.sim;
+  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, N, N); return [c, g]; };
+  const [dc, dg] = mk(), [ac, ag] = mk();
+  let seed = 4711 + (sim.seed & 1023); const rr = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const X = (x) => (x + E) * k, Zc = (z) => (z + E) * k;
+  // [dirt margin m, contact strength] per kind of structure
+  const KIND = { house: [1.1, 0.8], hall: [1.3, 0.85], wall: [0.7, 0.65], palisade: [0.85, 0.6], mantlet: [0.95, 0.65], tent: [0.7, 0.5], rampart: [1.4, 0.45], gate: [1.3, 0.8], keep: [1.6, 0.85] };
+  const blob = (g, cx, cz, hw, hd, m, a, jag) => { // an uneven rounded outline round a footprint, grown by m
+    const pts = [], per = 2 * (hw + hd) + 4 * m, n = Math.max(10, Math.min(64, Math.round(per / 0.7)));
+    for (let i = 0; i < n; i++) { const t = i / n * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
+      // a rounded rectangle (superellipse) through the grown footprint, pushed in and out a little
+      const ex = (hw + m) * Math.sign(c) * Math.pow(Math.abs(c), 0.35), ez = (hd + m) * Math.sign(s) * Math.pow(Math.abs(s), 0.35), j = 1 + (rr() - 0.5) * jag;
+      pts.push([cx + ex * j, cz + ez * j]); }
+    g.globalAlpha = a; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(X(p[0]), Zc(p[1])) : g.moveTo(X(p[0]), Zc(p[1]))); g.closePath(); g.fill(); };
+  dg.fillStyle = '#fff'; ag.fillStyle = '#fff'; const stones = [];
+  for (const b of sim.boxes) { const K = KIND[b.kind]; if (!K) continue; const tall = Math.min(1, (b.h || 2) / 3);
+    blob(dg, b.x, b.z, b.hw, b.hd, K[0], 1, 0.45);
+    blob(ag, b.x, b.z, b.hw, b.hd, 0.12 + 0.18 * tall, K[1] * (0.6 + 0.4 * tall), 0.1);
+    if (b.kind !== 'tent' && b.kind !== 'rampart') { const n = Math.max(2, Math.min(9, Math.round((b.hw + b.hd) * 1.1)));
+      for (let i = 0; i < n; i++) { const t = rr() * Math.PI * 2, c = Math.cos(t), s = Math.sin(t), o = 0.12 + rr() * 0.45;
+        stones.push([b.x + Math.sign(c) * Math.min(Math.abs(c) * 3, 1) * (b.hw + o), b.z + Math.sign(s) * Math.min(Math.abs(s) * 3, 1) * (b.hd + o), 0.45 + rr() * 0.9]); } } }
+  for (const o of sim.obstacles) { const r = o.kind === 1 ? 0.9 * (o.scale || 1) : 0.45 * (o.scale || 1); blob(ag, o.x, o.z, r * 0.5, r * 0.5, r * 0.6, o.kind === 1 ? 0.55 : 0.35, 0.2); if (o.kind === 1) blob(dg, o.x, o.z, r * 0.6, r * 0.6, 0.5, 0.6, 0.5); }
+  for (const f of sim.deco.filter(d => d.kind === 'fence')) { const dx = Math.sin(f.yaw), dz = Math.cos(f.yaw);
+    for (const [g, w, a] of [[dg, 1.1, 0.7], [ag, 0.35, 0.35]]) { g.globalAlpha = a; g.lineWidth = w * 2 * k; g.lineCap = 'round'; g.strokeStyle = '#fff'; g.beginPath(); g.moveTo(X(f.x), Zc(f.z)); g.lineTo(X(f.x + dx * f.len), Zc(f.z + dz * f.len)); g.stroke(); } }
+  if (!stones.length && !sim.boxes.some(b => KIND[b.kind]) && !sim.obstacles.length) return;
+  // soften: the trodden ground fades over ~0.4 m (the shaders cut it with noise), the contact shadow over ~0.35 m
+  const soft = (src, px) => { const [c, g] = mk(); g.filter = `blur(${px.toFixed(1)}px)`; g.drawImage(src, 0, 0); return g.getImageData(0, 0, N, N).data; };
+  const D = soft(dc, 0.42 * k), A = soft(ac, 0.32 * k), px = new Uint8Array(N * N * 4);
+  for (let i = 0; i < N * N; i++) { px[i * 4] = A[i * 4]; px[i * 4 + 1] = D[i * 4]; px[i * 4 + 3] = 255; }
+  const tex = new THREE.DataTexture(px, N, N, THREE.RGBAFormat); tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.generateMipmaps = true; tex.needsUpdate = true;
+  this.groundMap = tex; this.groundExt = E;
+  // loose stones and clods along the bases, half sunk
+  if (stones.length) { const T = this.tmp, snow = this.biome.snow; const m = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.16, 0), new THREE.MeshLambertMaterial({ color: 0xffffff }), stones.length);
+    stones.forEach((s, i) => { const y = terrainH(s[0], s[1]); T.m.compose(T.v.set(s[0], y - 0.03, s[1]), T.q.setFromEuler(T.e.set(rr() * 3, rr() * 3, rr() * 3)), T.v2.set(s[2] * (0.8 + rr() * 0.5), s[2] * 0.6, s[2])); m.setMatrixAt(i, T.m);
+      m.setColorAt(i, T.c.setHSL(0.08, 0.08 + rr() * 0.08, (snow ? 0.42 : 0.3) + rr() * 0.14)); });
+    if (m.instanceColor) m.instanceColor.needsUpdate = true; m.castShadow = false; m.receiveShadow = true; m.frustumCulled = false; this.scene.add(m); }
+};
+// where a footprint meets sloping ground: the lowest corner, so walls and plinths go down into the earth, not float
+Renderer.prototype.footY = function (b) { let y = Infinity; for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) y = Math.min(y, terrainH(b.x + sx * b.hw, b.z + sz * b.hd)); return y - 0.08; };
 return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear, roundBox, uhash };
 })();
 </script>
@@ -7559,9 +7944,10 @@ return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, leg
     if (this.fig.head) { this.fig.head.material.roughness = 0.96; } for (const k of ['hand', 'foot', 'kepi', 'cap', 'jingasa', 'band']) if (this.fig[k] && this.fig[k].material.roughness !== undefined) this.fig[k].material.roughness = 0.97; // matte skin and cloth: no sun glare off faces and hats
     // the battlefield floor: churned mud, trampled grass, puddles and stones
     if (this.terrain) { const tm = this.terrain.material; tm.roughness = 0.97;
-      const snowF = this.biome.snow ? 1 : -1; tm.onBeforeCompile = (sh) => { sh.uniforms.rTime = RT.time; sh.uniforms.rSnow = { value: snowF };
+      const snowF = this.biome.snow ? 1 : -1; const gMap = this.groundMap || new THREE.DataTexture(new Uint8Array(4), 1, 1, THREE.RGBAFormat), gExt = this.groundExt || 1; gMap.needsUpdate = true;
+      tm.onBeforeCompile = (sh) => { sh.uniforms.rTime = RT.time; sh.uniforms.rSnow = { value: snowF }; sh.uniforms.gMap = { value: gMap }; sh.uniforms.gExt = { value: gExt };
         sh.vertexShader = 'varying vec3 vWP;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-        sh.fragmentShader = 'varying vec3 vWP; uniform float rSnow;\n' + NOISE + TCELL + sh.fragmentShader
+        sh.fragmentShader = 'varying vec3 vWP; uniform float rSnow; uniform sampler2D gMap; uniform float gExt;\n' + NOISE + TCELL + sh.fragmentShader
           .replace('#include <color_fragment>', `#include <color_fragment>
             { vec2 p = vWP.xz;
               float big = rF(p * 0.035), mid = rF(p * 0.21), fine = rV(p * 1.7) * 0.6 + rV(p * 0.9 + 4.0) * 0.4;
@@ -7586,8 +7972,16 @@ return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, leg
                 cc *= 1.0 - seam * 0.035; cc = mix(cc, mix(vec3(0.22, 0.2, 0.16), vec3(0.42, 0.4, 0.35), step(0.6, cl2.w)), grit * 0.4);
                 c = mix(c, cc, near); }
               float stones = smoothstep(0.88, 0.94, rV(p * 1.9)) * (1.0 - churn); c = mix(c, vec3(0.42, 0.4, 0.37), stones * 0.6);
+              // grounding: trodden bare earth round every structure (an uneven edge cut by noise), and a contact shadow at the foot
+              vec4 gm = texture2D(gMap, (p + gExt) / (2.0 * gExt)); float gn = rV(p * 1.4) * 0.6 + rV(p * 4.3 + 9.0) * 0.4;
+              float dirt = smoothstep(0.34, 0.5, gm.g + (gn - 0.5) * 0.5);
+              vec3 trod = mix(earth, mud, 0.3 + 0.45 * fine) * (0.88 + 0.2 * gn); trod = mix(trod, vec3(0.4, 0.38, 0.34), grit * 0.5 * near);
+              c = mix(c, trod, dirt * 0.9);
               // keep what the map painted on purpose: water margins, roads, rock, snow
-              diffuseColor.rgb = mix(c, base, snowy); }`)
+              diffuseColor.rgb = mix(c, base, snowy);
+              // on snow: trodden slush, grey-brown, round the foot of things
+              diffuseColor.rgb = mix(diffuseColor.rgb, mix(earth, vec3(0.62, 0.6, 0.57), 0.45 + 0.25 * gn), dirt * snowy * 0.8);
+              diffuseColor.rgb *= 1.0 - gm.r * 0.72; }`)
           .replace('#include <normal_fragment_begin>', `#include <normal_fragment_begin>
             { vec2 p = vWP.xz; float e = 0.06; float h0 = rF(p * 0.6); float hx = rF((p + vec2(e, 0.0)) * 0.6); float hz = rF((p + vec2(0.0, e)) * 0.6);
               vec3 bump = vec3((h0 - hx) / e, 0.0, (h0 - hz) / e) * 0.07;
@@ -7755,10 +8149,24 @@ return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, leg
         float h1(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
         float lin(vec2 uv){ float d = texture2D(tDep, uv).x; return (near * far) / (far - d * (far - near)); }
         vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
+        // FXAA: the scene is drawn into a texture with no multisampling, so long straight edges (walls, boards, poles)
+        // would stair-step; this smooths them along their own direction
+        vec3 fxaa(vec2 uv){ vec2 px = 1.0 / res; vec3 L = vec3(0.299, 0.587, 0.114);
+          vec3 cM = texture2D(tCol, uv).rgb; float lM = dot(min(cM, 1.0), L);
+          float lNW = dot(min(texture2D(tCol, uv + vec2(-1.0, -1.0) * px).rgb, 1.0), L), lNE = dot(min(texture2D(tCol, uv + vec2(1.0, -1.0) * px).rgb, 1.0), L);
+          float lSW = dot(min(texture2D(tCol, uv + vec2(-1.0, 1.0) * px).rgb, 1.0), L), lSE = dot(min(texture2D(tCol, uv + vec2(1.0, 1.0) * px).rgb, 1.0), L);
+          float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE))), lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+          if (lMax - lMin < max(0.04, lMax * 0.1)) return cM;
+          vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+          float red = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125); float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + red);
+          dir = clamp(dir * rcp, -8.0, 8.0) * px;
+          vec3 A = 0.5 * (texture2D(tCol, uv + dir * (1.0 / 3.0 - 0.5)).rgb + texture2D(tCol, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
+          vec3 B = A * 0.5 + 0.25 * (texture2D(tCol, uv - dir * 0.5).rgb + texture2D(tCol, uv + dir * 0.5).rgb);
+          float lB = dot(min(B, 1.0), L); return (lB < lMin || lB > lMax) ? A : B; }
         void main(){
           vec2 q = vUv - 0.5; float r2 = dot(q, q);
           // a little lens: chromatic fringe toward the corners
-          vec2 ca = q * r2 * 0.012; vec3 c = vec3(texture2D(tCol, vUv + ca).r, texture2D(tCol, vUv).g, texture2D(tCol, vUv - ca).b);
+          vec2 ca = q * r2 * 0.012; vec3 c0 = texture2D(tCol, vUv).rgb; vec3 c = fxaa(vUv); c.r += texture2D(tCol, vUv + ca).r - c0.r; c.b += texture2D(tCol, vUv - ca).b - c0.b;
           // bloom from fire, flashes and the sun through smoke (cheap 12-tap gather of bright light)
           vec3 bl = vec3(0.0); vec2 px = 1.0 / res;
           for (int i = 0; i < 12; i++) { float a = float(i) * 2.39996; float rr = (3.0 + float(i) * 2.2); vec3 s = texture2D(tCol, vUv + vec2(cos(a), sin(a)) * rr * px * 1.6).rgb; bl += max(s - vec3(0.9), vec3(0.0)); }
@@ -7840,9 +8248,10 @@ return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, leg
     // the ground: big flat patches in three grass tones (hard edges), and tiny crisp marks up close only
     if (this.terrain) { const old = this.terrain.material; const tm = new THREE.MeshToonMaterial({ vertexColors: old.vertexColors, color: old.color ? old.color.clone() : C(0xffffff), gradientMap: g }); this.terrain.material = tm;
       const snowF = this.biome.snow ? 1 : -1;
-      tm.onBeforeCompile = (sh) => { sh.uniforms.sSnow = { value: snowF }; sh.uniforms.g0 = { value: C(L.g[0]) }; sh.uniforms.g1 = { value: C(L.g[1]) }; sh.uniforms.g2 = { value: C(L.g[2]) }; sh.uniforms.gE = { value: C(L.earth) };
+      const gMap = this.groundMap || new THREE.DataTexture(new Uint8Array(4), 1, 1, THREE.RGBAFormat), gExt = this.groundExt || 1; gMap.needsUpdate = true;
+      tm.onBeforeCompile = (sh) => { sh.uniforms.sSnow = { value: snowF }; sh.uniforms.gMap = { value: gMap }; sh.uniforms.gExt = { value: gExt }; sh.uniforms.g0 = { value: C(L.g[0]) }; sh.uniforms.g1 = { value: C(L.g[1]) }; sh.uniforms.g2 = { value: C(L.g[2]) }; sh.uniforms.gE = { value: C(L.earth) };
         sh.vertexShader = 'varying vec3 vWP;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-        sh.fragmentShader = 'varying vec3 vWP; uniform float sSnow; uniform vec3 g0, g1, g2, gE;\n' + NOISE + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+        sh.fragmentShader = 'varying vec3 vWP; uniform float sSnow; uniform vec3 g0, g1, g2, gE; uniform sampler2D gMap; uniform float gExt;\n' + NOISE + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
           { vec2 p = vWP.xz; vec3 base = diffuseColor.rgb; float lum = dot(base, vec3(0.3, 0.59, 0.11));
             float v = sF(p * 0.035) + (sV(p * 0.21) - 0.5) * 0.18;
             vec3 band = v < 0.42 ? g0 : v < 0.56 ? g1 : g2;
@@ -7855,7 +8264,13 @@ return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, leg
             float px = length(fwidth(p * 1.6)); float near = 1.0 - smoothstep(0.08, 0.2, px);
             float dotm = step(0.965, pick) * step(length(f), 0.14) * near * (1.0 - bare);
             c = mix(c, pick > 0.985 ? vec3(0.93, 0.88, 0.7) : c * 1.22, dotm);
-            diffuseColor.rgb = mix(c, base, snowy); }`); };
+            // grounding, in flat shapes: a trodden-earth patch round each structure (crisp, gently wavy edge) and a
+            // flat contact shadow band at the foot of it
+            vec4 gm = texture2D(gMap, (p + gExt) / (2.0 * gExt)); float dv = gm.g + (sV(p * 0.8) - 0.5) * 0.28; float aw = fwidth(dv) * 0.75 + 0.002;
+            float dirt = smoothstep(0.42 - aw, 0.42 + aw, dv); c = mix(c, mix(gE, base, 0.25) * 0.95, dirt);
+            float av = gm.r; float aw2 = fwidth(av) * 0.75 + 0.002; float ao = smoothstep(0.3 - aw2, 0.3 + aw2, av);
+            diffuseColor.rgb = mix(c, base, snowy); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.66, 0.62, 0.56), dirt * snowy * 0.8);
+            diffuseColor.rgb *= 1.0 - ao * 0.3 - av * 0.12; }`); };
       tm.needsUpdate = true; }
     this.styleSetup();
   };
@@ -7944,8 +8359,22 @@ return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, leg
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: `uniform sampler2D tCol, tDep; uniform vec2 res; uniform float near, far, exposure; uniform vec3 ink; varying vec2 vUv;
         float lin(vec2 uv){ float d = texture2D(tDep, uv).x; return (near * far) / (far - d * (far - near)); }
+        // FXAA: the scene is drawn into a texture with no multisampling, so long straight edges (walls, boards, poles)
+        // would stair-step; this smooths them along their own direction
+        vec3 fxaa(vec2 uv){ vec2 px = 1.0 / res; vec3 L = vec3(0.299, 0.587, 0.114);
+          vec3 cM = texture2D(tCol, uv).rgb; float lM = dot(min(cM, 1.0), L);
+          float lNW = dot(min(texture2D(tCol, uv + vec2(-1.0, -1.0) * px).rgb, 1.0), L), lNE = dot(min(texture2D(tCol, uv + vec2(1.0, -1.0) * px).rgb, 1.0), L);
+          float lSW = dot(min(texture2D(tCol, uv + vec2(-1.0, 1.0) * px).rgb, 1.0), L), lSE = dot(min(texture2D(tCol, uv + vec2(1.0, 1.0) * px).rgb, 1.0), L);
+          float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE))), lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+          if (lMax - lMin < max(0.04, lMax * 0.1)) return cM;
+          vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+          float red = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125); float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + red);
+          dir = clamp(dir * rcp, -8.0, 8.0) * px;
+          vec3 A = 0.5 * (texture2D(tCol, uv + dir * (1.0 / 3.0 - 0.5)).rgb + texture2D(tCol, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
+          vec3 B = A * 0.5 + 0.25 * (texture2D(tCol, uv - dir * 0.5).rgb + texture2D(tCol, uv + dir * 0.5).rgb);
+          float lB = dot(min(B, 1.0), L); return (lB < lMin || lB > lMax) ? A : B; }
         void main(){
-          vec2 px = 1.0 / res; vec3 c = texture2D(tCol, vUv).rgb;
+          vec2 px = 1.0 / res; vec3 c = fxaa(vUv);
           float d0 = lin(vUv), dl = lin(vUv - vec2(px.x, 0.0)), dr = lin(vUv + vec2(px.x, 0.0)), du = lin(vUv + vec2(0.0, px.y)), dd = lin(vUv - vec2(0.0, px.y));
           float e = (abs(dl + dr - 2.0 * d0) + abs(du + dd - 2.0 * d0)) / max(d0, 0.1);
           float line = smoothstep(0.02, 0.06, e) * (1.0 - smoothstep(30.0, 140.0, d0));
@@ -8360,6 +8789,21 @@ function wpnName(h, w) {
 }
 function localHero() { const sim = state.sim; if (!sim) return null; const p = sim.players[state.localIdx]; return p ? sim.units[p.heroId] : null; }
 // a man whose only weapon is a gun (the three-eyed gun, a plain musket) turns it round with Q/X to fight with it as a club (sim: u.club)
+// manning a bed crossbow or a gun: the weapon panel shows the piece, and an elevation scale with the range of the fall of shot
+// sits under the sights (the renderer works out the fall with the sim's own projectile steps)
+function empHUD(hero) {
+  const r = state.renderer; let el = $('empAim'); const H = r && r.empHud; const on = !!(H && hero.manE >= 0 && !hero.dead && !Input.cmdMode);
+  if (r) r.empZoom = on && Input.rmb;
+  if (!on) { if (el) el.hidden = true; return; }
+  if (!el) { el = document.createElement('div'); el.id = 'empAim'; document.body.appendChild(el); }
+  el.hidden = false; const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), gun = H.kind !== 'bow', deg = (x) => (x * 180 / Math.PI), e = deg(H.elev), w = deg(H.want), laying = Math.abs(w - e) > 0.6;
+  const ticks = []; for (let d = -25; d <= 30; d += 5) ticks.push(`<i style="bottom:${((d + 25) / 55 * 100).toFixed(1)}%"${d === 0 ? ' class="z"' : ''}><b>${d > 0 ? '+' : ''}${d}°</b></i>`);
+  el.innerHTML = `<div class="scale">${ticks.join('')}<u style="bottom:${((clamp(e, -25, 30) + 25) / 55 * 100).toFixed(1)}%"></u><s style="bottom:${((clamp(w, -25, 30) + 25) / 55 * 100).toFixed(1)}%"></s></div>`
+    + `<div class="rd"><b>${gun ? '砲' : '弩'}</b> 仰 ${e >= 0 ? '+' : ''}${e.toFixed(1)}°${laying ? ' · laying…' : ''}<br>${H.out ? 'beyond the field' : H.wall ? 'strikes the wall ahead' : `falls at ${Math.round(H.dist)} m`}</div>`;
+  $('weapon').textContent = gun ? '紅夷砲 · the gun' : '床弩 · bed crossbow';
+  const ready = H.cd <= 0; $('ammoFill').style.width = (ready ? 100 : (1 - H.cd / H.cdMax) * 100).toFixed(0) + '%'; $('ammoText').textContent = ready ? 'Ready · LMB fire' : `${gun ? 'Sponging and loading' : 'Spanning the bow'}… ${Math.ceil(H.cd / 30)} s`;
+  $('dirText').textContent = 'Mouse lays the piece · RMB look closer · LMB fire · E leave it';
+}
 function gunMode() { const h = localHero(); return h && ((h.weapon === 'rifle' && !Input.bayonet && !h.club) || h.weapon === 'revolver'); }
 document.addEventListener('keydown', (e) => {
   if (state.screen !== 'game') return;
@@ -9056,6 +9500,7 @@ function updateHUD(dt) {
       else { $('ammoFill').style.width = (have / mag * 100).toFixed(0) + '%'; $('ammoText').textContent = mag > 1 ? `${'●'.repeat(have)}${'○'.repeat(mag - have)}${have === 0 ? ' · R reload · Q club' : ''}` : (have > 0 ? 'Loaded' : 'Empty · R reload' + (hero.def.weapons.length > 1 ? '' : ' · Q club')); }
     } else { $('ammoFill').style.width = (hero.st === S.ST_WINDUP ? Math.min(1, (hero.stT) / 0.28) * 100 : hero.blocking ? 100 : 0).toFixed(0) + '%'; $('ammoText').textContent = hero.st === S.ST_WINDUP ? `Winding up: ${DIRN[hero.atkDir]}` : hero.blocking ? `Blocking ${BLKN[hero.blockDir]}` : hero.st === S.ST_RECOVER ? 'Recovering' : ''; }
     $('dirText').textContent = (!hero.dead && !Input.cmdMode && !gunMode()) ? (hero.weapon === 'yari' ? 'LMB thrust · wheel↑ slam · RMB block · double-tap A/D slide' : 'LMB slash · hold heavy · wheel↑ overhead · R stab · RMB block · double-tap A/D slide') : (me.rallyT > 0 ? `rally in ${Math.ceil(me.rallyT / 30)}s` : 'V · rally');
+    empHUD(hero);
     { const fu = $('fury'); const full = me.fury >= S.FURY_MAX; fu.style.setProperty('--f', (me.fury / S.FURY_MAX * 100).toFixed(0) + '%'); fu.classList.toggle('full', full); fu.classList.toggle('on', hero.frenzyT > 0); fu.querySelector('span').textContent = hero.frenzyT > 0 ? `VALOR ${Math.ceil(hero.frenzyT)}s` : full ? 'Valor ready · V' : 'Fury'; $('bombs').textContent = `雷 ${'●'.repeat(me.bombs)}${'○'.repeat(S.BOMBS - me.bombs)} · 4`; }
   }
   { const fo = $('fporders'); const show = alive && !Input.cmdMode && !state.ended && sim.players[state.localIdx].squads.some(id => sim.squads[id].alive);
@@ -9077,7 +9522,7 @@ function updateHUD(dt) {
   state.hudT -= dt;
   if (state.hudT <= 0) {
     state.hudT = 0.4;
-    if (sim.phase === 1 && hero && !state.ended) { let near = 0; for (const v of sim.teamAlive[1 - me.team]) if (Math.abs(v.x - hero.x) + Math.abs(v.z - hero.z) < 40) near++; MUSIC.setIntensity(near > 3 ? 1 : 0.6); }
+    if (sim.phase === 1 && hero && !state.ended) { let near = 0; for (const v of sim.teamAlive[1 - me.team]) if (Math.abs(v.x - hero.x) + Math.abs(v.z - hero.z) < 40) near++; MUSIC.setIntensity(0.38 + Math.min(1, near / 12) * 0.62); }
     const a0 = sim.teamAlive[0].length, a1 = sim.teamAlive[1].length;
     $('status').innerHTML = `<span class="t0">${S.FACTION[0].jp} ${a0}</span><span class="vs">·</span><span class="t1">${a1} ${S.FACTION[1].jp}</span>`;
     if (sim.mission && sim.mission.beacon && typeof beaconGoal === 'function') $('status').innerHTML = beaconGoal();
@@ -10120,7 +10565,7 @@ function zheFinish(winner) {
   const sim = state.sim, h = localHero(); if (!ZB) return; const M = sim.mission, z = sim.missionZone('mouth'); const won = winner === M.side;
   const fate = {}; const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
   for (const uid in ZB.map) { const k = ZR[ZB.map[uid]].k; const u = sim.units[uid]; if (u.dead) { fate[k] = 'dead'; continue; }
-    const out = (near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4)); fate[k] = out ? 'out' : 'lost'; }
+    const out = !!u.aided || ((near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4))); fate[k] = out ? 'out' : 'lost'; }
   for (const k of ZB.deadMe || []) fate[k] = 'dead';
   if (fate.me === undefined) fate.me = h && !h.dead ? 'out' : 'dead';
   // you go on as whoever you became
@@ -10226,7 +10671,7 @@ function zheFinishK(winner) {
   const sim = state.sim, h = localHero(); const M = sim.mission, z = sim.missionZone('tieling'); const won = winner === M.side;
   const fate = {}; const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
   for (const uid in ZB.map) { const r = ZR[ZB.map[uid]]; if (!r) continue; const k = r.k; const u = sim.units[uid]; if (u.dead) { fate[k] = 'dead'; continue; }
-    const out = (near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4)); fate[k] = out ? 'out' : 'lost'; }
+    const out = !!u.aided || ((near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4))); fate[k] = out ? 'out' : 'lost'; }
   for (const k of ZB.deadMe || []) fate[k] = 'dead';
   const meK = ZS.me || 'me'; if (fate[meK] === undefined) fate[meK] = h && !h.dead ? 'out' : 'dead';
   if (ZB.cur && ZB.cur !== meK && ZB.cur !== 'stranger' && fate[meK] === 'dead') { const nk = ZB.cur; ZS.me = nk; ZS.oldName = ZS.name; ZS.name = { zh: zRow(nk).zh, en: zRow(nk).en }; }
@@ -10390,7 +10835,7 @@ function zheFinish2(winner) {
   const sim = state.sim, h = localHero(); const M = sim.mission, z = sim.missionZone('road'); const won = winner === M.side;
   const fate = {}; const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
   for (const uid in ZB.map) { const r = ZR[ZB.map[uid]]; if (!r) continue; const k = r.k; const u = sim.units[uid]; if (u.dead) { fate[k] = 'dead'; continue; }
-    const out = (near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4)); fate[k] = out ? 'out' : 'lost'; }
+    const out = !!u.aided || ((near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4))); fate[k] = out ? 'out' : 'lost'; }
   for (const k of ZB.deadMe || []) fate[k] = 'dead';
   const meK = ZS.me || 'me'; if (fate[meK] === undefined) fate[meK] = h && !h.dead ? 'out' : 'dead';
   if (ZB.cur && ZB.cur !== meK && ZB.cur !== 'stranger' && fate[meK] === 'dead') { const nk = ZB.cur; ZS.me = nk; ZS.oldName = ZS.name; ZS.name = { zh: zRow(nk).zh, en: zRow(nk).en }; }
@@ -11005,7 +11450,7 @@ function jFinish(winner) {
   const fate = {}, near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
   for (const uid in ZB.map) { const r = JR[ZB.map[uid]]; if (!r) continue; const u = sim.units[uid];
     // the winners keep the field and carry in their wounded; after a defeat a man who cannot walk is left behind
-    fate[r.k] = u.dead ? 'dead' : (!won && u.wounded && u.helpedBy < 0 && !near(u, 4)) ? 'lost' : 'out'; }
+    fate[r.k] = u.dead ? 'dead' : (!won && u.wounded && !u.aided && u.helpedBy < 0 && !near(u, 4)) ? 'lost' : 'out'; }
   for (const k of ZB.deadMe) fate[k] = 'dead';
   const meK = JS.me, alive = h && !h.dead, oldName = Object.assign({}, JS.name);
   if (ZB.cur === meK || ZB.cur === 'stranger') fate[meK] = alive ? 'out' : 'dead'; else fate[meK] = 'dead';
@@ -11145,6 +11590,49 @@ const SJ_MISSIONS = (() => { const PI = Math.PI; const cartRow = (z, xs) => xs.m
           [32, 'sj_gao', 'Same snow as Sarhu. Same sound.', '跟薩爾滸一樣的雪。一樣的聲音。']] },
     ],
     win: 'You got back to Beijing.',
+  },
+  // ----- between Shunyi and the gate: a forage party ambushed in a village east of Tongzhou -----
+  sjamb: {
+    title: '村 · The village', year: 'November 1629', battle: 'sjvil', side: 0, soldier: { group: 'sjf' }, hidden: true, ch: 'sja',
+    brief: 'Falling back on Beijing after Shunyi, the army is starving. Your team is sent with a forage party into a village east of Tongzhou. The Jin have been burning the villages around the capital.',
+    start: [0, -58, 0],
+    zones: [{ key: 'well', x: 0, z: 6, r: 7, name: 'The well' }, { key: 'south', x: 0, z: -66, r: 12, name: 'The south road' }],
+    forts: [[-3.6, -9, 0.5, 1.9, 1.5, 'mantlet'], [4, 23, 0.5, 1.9, 1.5, 'mantlet']],
+    labels: { samurai: ['Jin raiders', '金兵'], byakkotai: ['Mongol raiders', '蒙古兵'] },
+    groups: {
+      sjf: { team: 0, name: 'Captain Cui Ying', zh: '崔英', army: ['rifle_spencer'], at: [0, -58, 0], dir: ['hold', 0, -54], stay: true },
+      forage: { team: 0, name: 'The forage party', zh: '採糧隊', army: ['ashigaru'], at: [-4, -64, 0], dir: ['hold', -4, -60], stay: true, n: 6 },
+      west: { team: 1, name: 'Raiders in the courtyards', zh: '金兵', army: ['samurai', 'samurai'], at: [-33, 8, PI / 2], reserve: true, n: 10 },
+      east: { team: 1, name: 'Raiders behind the houses', zh: '金兵', army: ['samurai', 'archer'], at: [33, 2, -PI / 2], reserve: true, n: 10 },
+      north: { team: 1, name: 'More raiders', zh: '蒙古兵', army: ['byakkotai', 'samurai'], at: [0, 48, PI], reserve: true, n: 10 },
+      horse: { team: 1, name: 'Jin horsemen', army: ['cavalry'], at: [-46, -36, PI / 2], reserve: true, n: 4 },
+    },
+    phases: [
+      { title: '一 · 空村 · The empty village', goal: 'Search the village with your team', text: 'No smoke, no dogs. Search it.', show: ['well'],
+        start: [['dir', 'sjf', 'hold', 0, 4], ['dir', 'forage', 'hold', -3, -6]],
+        obj: { all: [{ reach: 'well' }, { survive: 26 }] },
+        say: [[4, 'sj_hu', 'Quiet. No dogs. No smoke from the chimneys.', '太靜了。沒有狗叫，煙囪也沒煙。'],
+          [10, 'sj_qian', 'A village with no dogs has somebody hiding in it.', '沒狗叫的村子，一定藏著人。'],
+          [16, 'sj_ma', 'Millet in that barn. I can smell it.', '那個倉裡有小米。我聞得到。'],
+          [21, 'sj_tian', 'There\'s a child\'s shoe in the street.', '路上有一隻小孩的鞋。']] },
+      { title: '二 · 伏 · Ambush', goal: 'Fire point-blank, then club them', text: 'They come over the walls. Fire into their faces.',
+        start: [['release', 'east'], ['dir', 'east', 'hold', 2, 4], ['calm', 'east', 14], ['dir', 'sjf', 'hold', 0, 5], ['dir', 'forage', 'hold', 0, -2]],
+        obj: { survive: 55 }, waves: [[7, 'west', ['hold', -2, 6]]], at: [[8, ['calm', 'west', 14]]],
+        say: [[1, 'sj_gao', 'Over the walls! Both sides!', '翻牆過來了！兩邊都有！'], [4, 'sj_hu', 'Back to back round the well! Fire into their faces!', '圍著井背靠背！對著臉放！'],
+          [13, 'sj_lin', 'Empty? Turn the gun round and swing!', '打空了？倒過來掄！'], [24, 'sj_wu', 'Ha! Like threshing millet!', '哈！跟打穀子一樣！'],
+          [38, 'sj_zhao', 'One came out of the barn! The barn!', '倉裡又出來一個！倉裡！'], [48, 'sj_song', 'They were waiting for us. They knew we would be hungry.', '他們在等我們。他們知道我們會餓。']] },
+      { title: '三 · 巷戰 · In the lanes', goal: 'Hold the street by the well', text: 'More of them from the north lane.',
+        start: [['release', 'north'], ['dir', 'north', 'hold', 0, 8], ['calm', 'north', 14]],
+        obj: { survive: 45 }, at: [[38, ['break', 'west']], [39, ['break', 'east']], [41, ['break', 'north']]],
+        say: [[1, 'lookout', 'The north lane! Mongols!', '北邊巷子！蒙古兵！'], [6, 'sj_hu', 'Don\'t go into the houses after them! Stay in the street!', '別進屋追！守在街上！'],
+          [20, 'sj_tian', 'Where is the child? Whose shoe was it?', '那孩子呢？那是誰的鞋？'], [40, 'sj_hu', 'They\'re running. Let them go. Count your men.', '跑了。讓他們跑。點人數。']] },
+      { title: '四 · 出村 · Out of the village', goal: 'Get your team out by the south road', text: 'Horsemen will come. Take the wounded and go.', show: ['south'], hide: ['well'],
+        start: [['dir', 'sjf', 'hold', 0, -64], ['dir', 'forage', 'hold', 0, -66], ['release', 'horse'], ['dir', 'horse', 'hold', -10, -40], ['calm', 'horse', 20]],
+        obj: { extract: 'south' }, limit: 240, fail: 'The horsemen cut the road south.',
+        say: [[2, 'sj_ma', 'Leave the millet. Carry the men.', '小米不要了。抬人。'], [10, 'lookout', 'Horsemen in the field to the west!', '西邊地裡有馬兵！'],
+          [16, 'sj_hu', 'Walk. Wounded in the middle. Guns outward.', '走。傷的在中間，銃口朝外。']] },
+    ],
+    win: 'You brought the team out of the village.',
   },
   // ----- chapter two: the Guangqu Gate, the twentieth day of the eleventh month (December 1629) -----
   sj2: {
@@ -11475,6 +11963,7 @@ const SJBAT = {
   battle1: ['sj1', '順義 · Shunyi', 'November 1629. Your team marches behind the carts. Stay with your team: the chief calls the drill. Fire when the drum rolls, then swing the empty gun.', [['sjf', 'sjf'], ['mangui', 'mangui']]],
   battle2: ['sj2', '廣渠門 · The Guangqu Gate', 'The twentieth day of the eleventh month. Before the Guangqu Gate with Yuan Chonghuan\'s Liaodong men. Fire by ranks; never all at once.', [['sjf', 'sjf'], ['yuan', 'yuan'], ['zu', 'zu']]],
   battle3: ['sj3', '長山 · Changshan', 'October 1631. The cart camp on the long hill. Hold the north carts with your team.', [['sjf', 'sjf'], ['zhang', 'zhang']]],
+  battleA: ['sjamb', '村 · The village', 'A village east of Tongzhou, on the road back to Beijing. Search it with your team. Point-blank, the three barrels; then turn the gun round (Q) and swing it.', [['sjf', 'sjf']]],
   drill: ['sjdrill', '校場 · The drill ground', 'The autumn review. Stay with your team and march on the drum. Left mouse fires the three barrels one after another; R reloads.', [['sjf', 'sjf']]],
 };
 function sjBattle(scene) {
@@ -11485,6 +11974,8 @@ function sjBattle(scene) {
   const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = sIdx(ZS.me);
   ZS.team.forEach((k, i) => { if (k === ZS.me || !ZS.alive[k]) return; let id = q.unitIds[i]; if (id === undefined || used[id]) id = q.unitIds.find(x => !used[x]); if (id === undefined) return; used[id] = 1; ZB.map[id] = sIdx(k); });
   for (const uid in ZB.map) sDress(sim.units[uid], ZB.map[uid]);
+  // only the living men of the team take the field: the places of the dead stay empty until new drafts come (no strangers)
+  { let n = 0; for (const id of q.unitIds) { const u = sim.units[id]; if (ZB.map[id] !== undefined || u.dead) { if (!u.dead) n++; continue; } u.dead = true; u.hp = 0; u.inactive = true; u.trimmed = true; sim.total[u.team]--; } q.count = n; q.aliveCount = n; }
   for (const [g, k] of B[3]) { const G = sim.mg[g]; if (G) sDress(sim.units[sim.players[G.p].heroId], sIdx(k)); }
   document.body.classList.add('sjstory'); sjVM(); sjProps(M);
   if (scene === 'drill') setTimeout(() => storyCard(B[2], B[1]), 11000);
@@ -11535,10 +12026,10 @@ function sjProps(M) {
 // a battle is over: who came out, who is dead, who is missing
 function sjFinish(winner) {
   const sim = state.sim, h = localHero(); if (!ZB) return; const M = sim.mission, won = winner === M.side, scene = ZB.scene;
-  const z = sim.missionZone(scene === 'battle1' ? 'road' : scene === 'battle3' ? 'river' : 'nowhere'); const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
+  const z = sim.missionZone(scene === 'battle1' ? 'road' : scene === 'battle3' ? 'river' : scene === 'battleA' ? 'south' : 'nowhere'); const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
   const fate = {};
   for (const uid in ZB.map) { const r = SR[ZB.map[uid]]; if (!r) continue; const u = sim.units[uid]; if (u.dead) { fate[r.k] = 'dead'; continue; }
-    const inZ = z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 12, left = u.wounded && u.helpedBy < 0 && !near(u, 5) && !inZ;
+    const inZ = z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 12, left = u.wounded && !u.aided && u.helpedBy < 0 && !near(u, 5) && !inZ;
     fate[r.k] = left && (z || !won) ? 'lost' : (!z ? won || near(u, 14) : inZ || near(u, won ? 30 : 12)) ? 'out' : 'lost'; }
   for (const k of ZB.deadMe || []) fate[k] = 'dead';
   if (fate[ZS.me] === undefined) fate[ZS.me] = h && !h.dead ? 'out' : 'dead';
@@ -11547,7 +12038,7 @@ function sjFinish(winner) {
   if (ZB.cur && ZB.cur !== ZS.me && ZB.cur !== 'stranger' && fate[ZS.me] === 'dead') { const nk = ZB.cur; ZS.oldName = ZS.name; sjName(); ZS.me = nk; ZS.name = { zh: sRow(nk).zh, en: sRow(nk).en }; fate[nk] = 'out'; }
   ZS.lastDead = [];
   for (const k in fate) { ZS.fate[k] = fate[k]; ZS.alive[k] = fate[k] === 'out'; if (fate[k] !== 'out') ZS.lastDead.push(k); }
-  const B = { drill: ['camp0', null], battle1: ['ch2', 'back in Beijing'], battle2: ['ch3', 'before the gate'], battle3: ['end', 'across the river'] }[scene];
+  const B = { drill: ['camp0', null], battle1: ['amb', 'back from Shunyi'], battleA: ['ch2', 'back in Beijing'], battle2: ['ch3', 'before the gate'], battle3: ['end', 'across the river'] }[scene];
   ZS.stage = B[0]; zSave();
   if (scene === 'drill') { zCards([{ title: '出征 · Marching out', year: 'The eleventh month of 1629', p: ['The Jin army is through the Great Wall. Zunhua falls; the old general Zhao Shuaijiao, riding to its relief from Shanhai Pass, is killed outside it.', 'The capital camps are sent out to meet the raiders before they reach the walls. Your company goes with Man Gui\'s horsemen from Datong, north-east to Shunyi.'], btn: 'Make camp →' }], () => sjGo('camp0')); return; }
   const outN = ZS.team.filter(k => ZS.alive[k]).length, names = ZS.lastDead.map(k => sRow(k)).filter(Boolean);
@@ -11557,6 +12048,7 @@ function sjFinish(winner) {
   $('btnNext').onclick = () => { $('result').hidden = true; zCards(SJAFTER[scene]().concat([{ title: '隊 · Your team', year: `${outN} of ten`, html: sjTeamList(B[1]), btn: B[0] === 'end' ? 'Epilogue →' : 'Go on →' }]), () => sjGo(B[0])); };
 }
 const SJAFTER = {
+  battleA: () => [{ title: '村 · The village', year: 'The eleventh month of 1629', p: ['You came back without the millet. The forage parties that went out that week mostly came back the same way, or not at all: the Jin were living off the same villages, and burning what they could not carry.', 'Nobody found the child.'], zh: '金兵四出焚掠，京畿諸村一空。' }],
   battle1: () => [{ title: '順義 · Shunyi', year: 'The eleventh month of 1629', p: ['Man Gui and Hou Shilu were beaten at Shunyi and fell back on Beijing. The Jin rode on, burning the villages around the capital.', 'Three days later Yuan Chonghuan arrived with nine thousand Liaodong horsemen. He had ridden round the Jin army to put himself between it and the city.'], zh: '滿桂、侯世祿戰順義，敗績。' }],
   battle2: () => [{ title: '廣渠門 · The Guangqu Gate', year: 'The twentieth day of the eleventh month', p: ['Yuan Chonghuan\'s men fought outside the Guangqu Gate from noon until dark, and drove the Jin back over the canal. Yuan was in the fight himself; arrows stuck in his armour like the quills of a hedgehog.', 'The same day, outside the Desheng Gate, Man Gui fought under the walls, and the guns on the wall fired into his own men.'], zh: '兩肋如蝟，賴有重甲不透。' },
     { title: '督師 · The Governor', year: 'Winter 1629 – autumn 1630', p: ['The Jin let it be known that Yuan had a secret pact with them. Ten days after the battle the Chongzhen Emperor called Yuan into the palace and arrested him. Zu Dashou took the Liaodong army and rode east in fury. Man Gui was given the command and was killed outside the Yongding Gate a few weeks later.',
@@ -11580,6 +12072,7 @@ function sjStart(scene) {
   if (scene === 'ch2' || scene === 'ch3') { const ch = scene === 'ch2' ? 1 : 2; if (ZS.refilled !== scene) { sjRefill(ch); ZS.refilled = scene; zSave(); }
     const nc = sjNewMenCard(); const C = scene === 'ch2' ? [{ title: '京城 · The capital', year: 'The eleventh month of 1629', p: ['The gates of the inner city are shut. Your company is quartered in the outer city, under the Guangqu Gate, where the road comes in from the east.'] }] : [{ title: '大凌河 · Dalinghe', year: 'Autumn 1631', p: ['Two years on. The team marches north-east up the coast road, past Shanhai Pass and Ningyuan, with Zhang Chun\'s relief army.'] }];
     zCards(C.concat(nc ? [nc] : []), () => { ZS.stage = scene === 'ch2' ? 'camp1' : 'camp2'; zSave(); sjStart(ZS.stage); }); return; }
+  if (scene === 'amb') return zCards([{ title: '採糧 · Forage', year: 'Three days after Shunyi', p: ['The army falls back on Beijing with nothing to eat. The quartermasters send gun teams out with the forage parties.', 'Your team is told to bring back millet from a village east of Tongzhou. Smoke stands over half the villages on the plain.'], btn: 'Into the village →' }], () => { ZS.stage = 'battleA'; zSave(); sjGo('battleA'); });
   if (/^camp[012]$/.test(scene)) return sjCamp(+scene[4]);
   if (SJBAT[scene]) return sjBattle(scene);
   if (scene === 'end' || scene === 'done') return sjEnd();
