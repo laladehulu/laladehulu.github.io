@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v48</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v49</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1494,6 +1494,7 @@ class Sim {
     u.yaw = wrap((inp[1] | 0) * TAU / 65536); u.pitch = clamp((inp[2] | 0) / 10000, -1.45, 1.45);
     if (a & A_MOUNT) this.tryMount(u, p);
     const disabled = u.downT > 0 || u.st === ST_STUN;
+    this.heroRegen(u);
     if (u.mount >= 0) this.horseControl(this.units[u.mount], keys, disabled, false);
     else if (u.mounted) this.horseControl(u, keys, disabled, true);
     else this.footControl(u, keys, a, disabled);
@@ -2399,7 +2400,7 @@ class Sim {
     best.vx += dx / d * 3; best.vz += dz / d * 3; best.lastAttacker = u.id;
   }
   applyDamage(u, dmg, attackerId, ix, iy, iz, cause, hx, hy, hz) {
-    if (u.dead || u.inactive) return false;
+    if (u.dead || u.inactive) return false; if (dmg > 0) u.hurtTk = this.tick;
     if (u.ctrl >= 0 && this.players[u.ctrl] && this.players[u.ctrl].god) return false; // debug mode: the tester cannot be hurt
     if (this.xc && u.ctrl >= 0 && !this.players[u.ctrl].ai && (cause === 'melee' || cause === 'trample' || cause === 'spear' || cause === 'counter' || cause === 'arrow' || cause === 'shot')) { // no instant deaths in a crowd or under a whole company's volley
       const dec = (this.tick - (u.xcT === undefined ? this.tick : u.xcT)) * DT * 0.3 * u.def.hp; u.xcB = Math.max(0, (u.xcB || 0) - dec); u.xcT = this.tick;
@@ -3971,6 +3972,14 @@ Sim.prototype.assaultCap = function () {
   // the defenders' reserves count against the same field: garrison plus reserves never exceed the cap
   // (an assault needs odds: the attackers field the full cap, the defenders about 70% of it, as before the cap)
   fit(groups(1 - A, false).concat(groups(1 - A, true)), Math.max(16, Math.round(CAP * 0.7) - humanDef));
+};
+// a man you play gets his breath and some strength back once he's out of the fight: nobody hurt him for 6 s and no
+// enemy within 12 m; he mends about 4% of his health a second, up to full
+Sim.prototype.heroRegen = function (u) {
+  if (u.dead || u.wounded || u.downed || u.type === 'horse' || u.hp >= u.def.hp) return;
+  if (this.tick - (u.hurtTk === undefined ? -1e9 : u.hurtTk) < 30 * 6) return;
+  if (this.tick % 15 === u.id % 15) { u.regenOk = true; const n = this.gatherNear(u.x, u.z, 12); for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (!v.dead && v.team !== u.team && v.type !== 'horse' && !v.inactive && len(v.x - u.x, v.z - u.z) < 12) { u.regenOk = false; break; } } }
+  if (u.regenOk) u.hp = Math.min(u.def.hp, u.hp + u.def.hp * 0.04 * DT);
 };
 Sim.prototype.mTrim = function (p, n, keepHero) {
   let k = 0; for (const id of p.squads) { const q = this.squads[id]; const keep = Math.max(0, Math.min(q.unitIds.length, n - k)); q.unitIds.forEach((uid, i) => { if (i < keep) return; const u = this.units[uid]; u.dead = true; u.hp = 0; u.inactive = true; u.trimmed = true; this.total[u.team]--; }); k += keep; q.count = keep; q.aliveCount = keep; if (!keep) q.alive = false; }
@@ -9834,7 +9843,9 @@ function siegeHUD(dt) {
 function updateHUD(dt) {
   const sim = state.sim, r = state.renderer; const hero = localHero(); const me = sim.players[state.localIdx];
   if (state.toastT > 0) { state.toastT -= dt; if (state.toastT <= 0) $('toast').classList.remove('show'); }
-  $('vignette').style.opacity = r.hitFlash > 0 || r.imp.blur > 0.02 ? Math.min(1, r.hitFlash * 1.6 + r.imp.blur * 0.4) : 0; $('vignette').style.transform = r.imp.blur > 0.02 ? `scale(${1 + r.imp.blur * 0.06})` : '';
+  { // the red at the edges grows as you lose blood, and beats when you are close to the end; a hit flashes on top
+    const hp0 = hero && !hero.dead ? Math.max(0, Math.min(1, 1 - hero.hp / hero.def.hp)) : 0, low = Math.max(0, (hp0 - 0.25) / 0.75), pulse = hp0 > 0.7 ? 0.12 * (0.5 + 0.5 * Math.sin(performance.now() / 260)) : 0;
+    const fl = r.hitFlash > 0 || r.imp.blur > 0.02 ? Math.min(1, r.hitFlash * 1.6 + r.imp.blur * 0.4) : 0; $('vignette').style.opacity = Math.max(fl, Math.min(0.85, low * 0.7 + pulse)); } $('vignette').style.transform = r.imp.blur > 0.02 ? `scale(${1 + r.imp.blur * 0.06})` : '';
   $('parry').style.opacity = r.parryFlash > 0 ? r.parryFlash : 0;
   if (hero && !hero.dead && !Input.cmdMode && sim.phase === 1) { // a horseman bearing down on you: warn in time to dodge or brace
     state.cavT = (state.cavT || 0) - dt; if (state.cavT <= 0) { for (const v of sim.teamAlive[1 - hero.team]) { if (!v.mounted || Math.abs(v.hspeed || 0) < 5.5) continue; const dx = hero.x - v.x, dz = hero.z - v.z, d = Math.hypot(dx, dz); if (d > 28 || d < 3) continue; if ((dx * Math.sin(v.yaw) + dz * Math.cos(v.yaw)) / d < 0.9) continue;
