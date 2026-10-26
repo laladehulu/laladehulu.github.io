@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v32</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v33</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -128,6 +128,10 @@ kbd { font-family: var(--font-ui); font-size: 11px; background: var(--ink); colo
 #objbar .sc { font-family: var(--font-display); font-weight: 700; font-size: 15px; min-width: 30px; text-align: center; } #objbar .sc.t0 { color: #ff8a92; } #objbar .sc.t1 { color: #92afff; }
 #objbar small { color: var(--muted); font-size: 10px; }
 @media (max-width: 900px) { #objbar .obj { padding: 2px 4px; font-size: 10px; } }
+#pause.story { background: none; pointer-events: auto; align-items: flex-end; padding-bottom: 36vh; }
+#pause.story .card { padding: 8px 18px; background: rgba(20,16,12,.72); border: 1px solid #6a5a44; color: #e8dcc0; box-shadow: none; }
+#pause.story h2 { font-size: 15px !important; margin: 0; letter-spacing: .08em; }
+#pause.story p { display: none; }
 #status .goal { font: 600 15px Georgia, 'Noto Serif CJK TC', serif; color: #f2cf6a; text-shadow: 0 1px 3px #000, 0 0 10px rgba(0,0,0,.6); letter-spacing: .02em; }
 #status { left: 50%; top: max(14px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); display: flex; gap: 14px; align-items: center; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .06em; white-space: nowrap; }
 #status .t0 { color: #ff8a92; } #status .t1 { color: #92afff; }
@@ -8362,9 +8366,12 @@ canvas.addEventListener('wheel', (e) => {
 function requestLock() { try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
 document.addEventListener('pointerlockchange', () => {
   Input.locked = document.pointerLockElement === canvas;
-  if (state.screen === 'game' && !Input.cmdMode) $('pause').hidden = Input.locked || DEP.open || !!state.zheDlg;
+  if (state.screen === 'game' && !Input.cmdMode) { $('pause').hidden = Input.locked || DEP.open || !!state.zheDlg; pauseLook(); }
   if (!Input.locked) { Input.lmb = false; Input.rmb = false; Input.keys = 0; }
 });
+// in a story you are one soldier, not a commander: a small, quiet prompt that doesn't cover the scene
+function pauseLook() { const pz = $('pause'), M = state.sim && state.sim.mission, story = !!(M && (M.soldier || M.camp)); pz.classList.toggle('story', story);
+  const h = pz.querySelector('h2'), p = pz.querySelector('p'); if (story && h.dataset.k !== 's') { h.dataset.k = 's'; h.textContent = 'Click to continue'; p.textContent = ''; } else if (!story && h.dataset.k !== 'c') { h.dataset.k = 'c'; h.textContent = 'Click to take command'; p.innerHTML = 'The battle keeps running while you are away. Press <kbd>O</kbd> any time for the command view.'; } }
 $('pause').addEventListener('click', () => { if (state.screen === 'game') requestLock(); });
 function storyLock() { const s = state.sim; return !!(s && s.mission && (s.mission.soldier || s.mission.camp)); } // story chapters: no overview, no other men's bodies, no fleets
 function toggleCmd(force) {
@@ -8508,7 +8515,7 @@ function startGame(msg, me, net, delay) {
   state.selected = []; state.ended = false; state.acc = 0; state.stalled = false; state.started = true; state.slowT = 0;
   Input.cmdMode = false; Input.keys = 0; Input.lmb = false; Input.rmb = false; Input.ads = false; Input.pressed = 0; Input.cmds = []; Input.bayonet = false;
   const hero = localHero(); if (hero) { Input.yaw = hero.yaw; Input.pitch = 0; state.lastHeroId = hero.id; }
-  show('game'); $('cmdui').hidden = true; $('pause').hidden = false; $('vitals').hidden = false; $('army').hidden = false; $('cmdpanel').hidden = false; $('cmdtitle').textContent = 'Command view';
+  show('game'); $('cmdui').hidden = true; $('pause').hidden = false; setTimeout(pauseLook, 0); $('vitals').hidden = false; $('army').hidden = false; $('cmdpanel').hidden = false; $('cmdtitle').textContent = 'Command view';
   $('cmdhelp').textContent = 'Left-click or drag a box to select (Shift adds) · Right-click to move, right-drag to lay out a line · Right-click an enemy to charge';
   $('heroName').textContent = cfg.players[me].name; $('feed').innerHTML = '';
   const bd = state.sim ? state.sim.bdef : S.BATTLES[cfg.battle];
@@ -11215,7 +11222,7 @@ function sjBattle(scene) {
   for (const uid in ZB.map) sDress(sim.units[uid], ZB.map[uid]);
   for (const [g, k] of B[3]) { const G = sim.mg[g]; if (G) sDress(sim.units[sim.players[G.p].heroId], sIdx(k)); }
   document.body.classList.add('sjstory'); sjVM(); sjProps(M);
-  if (scene === 'drill') setTimeout(() => storyCard(B[2], B[1]), 6500);
+  if (scene === 'drill') setTimeout(() => storyCard(B[2], B[1]), 11000);
 }
 function sjEvent(ev) {
   const sim = state.sim; if (!ZB || !ZB.sj || !sim) return;
