@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v29</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v30</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2387,7 +2387,7 @@ class Sim {
     if (this.real) spread = spread * (1 + 2.2 * Math.max(0, 1 - (u.aimHold || 0) / 1.4)) + u.speedNow * 0.01 + ((u.fat || 0) > 50 ? 0.01 : 0);
     if (u.weapon === 'bow') { const v = g.speed || 50, cp = cos(u.pitch); const ox = u.x + sin(u.yaw) * 0.5, oy = u.y + 1.55, oz = u.z + cos(u.yaw) * 0.5; const sp2 = spread * 0.6;
       const yw = u.yaw + (this.rng.next() - 0.5) * sp2, pt = u.pitch + (this.rng.next() - 0.5) * sp2;
-      this.projectiles.push({ kind: 'arrow', x: ox, y: oy, z: oz, vx: sin(yw) * cos(pt) * v, vy: sin(pt) * v, vz: cos(yw) * cos(pt) * v, team: u.team, owner: u.id, life: 0, hits: 0 });
+      this.projectiles.push({ kind: 'arrow', x: ox, y: oy, z: oz, vx: sin(yw) * cos(pt) * v, vy: sin(pt) * v, vz: cos(yw) * cos(pt) * v, team: u.team, owner: u.id, life: 0, hits: 0, over: this.overParapet(u) });
       this.events.push({ t: 'arrow', id: u.id, x: ox, y: oy, z: oz }); }
     else if (u.weapon === 'rifle' && this.misfire(u)) this.events.push({ t: 'misfire', id: u.id, x: u.x, y: u.y + 1.5, z: u.z });
     else this.fireRifle(u, u.yaw, u.pitch, spread, g.dmg, true, g.range, u.weapon);
@@ -2474,7 +2474,7 @@ class Sim {
         bestT = t3; kind = o.kind === 1 ? 'rock' : o.kind === 0 ? 'tree' : 'wood'; victim = null;
       }
     }
-    for (let i = 0; i < this.boxes.length; i++) { const t = this.rayBox(ox, oy, oz, dx, dy, dz, this.boxes[i], bestT); if (t > 0 && t < bestT) { bestT = t; kind = this.boxes[i].kind === 'wall' ? 'rock' : 'wood'; victim = null; } }
+    for (let i = 0; i < this.boxes.length; i++) { if (this.boxes[i].kind === 'sface' && this.overParapet(u)) continue; const t = this.rayBox(ox, oy, oz, dx, dy, dz, this.boxes[i], bestT); if (t > 0 && t < bestT) { bestT = t; kind = this.boxes[i].kind === 'wall' ? 'rock' : 'wood'; victim = null; } }
     if (lost && kind === 'unit') { kind = 'none'; victim = null; }
     if (victim && victim.def.shield && victim.st !== ST_RELEASE && victim.downT <= 0 && Math.abs(wrap(atan2(u.x - victim.x, u.z - victim.z) - victim.yaw)) < 1.0 && this.rng.next() < 0.45) { kind = 'wood'; victim = null; }
     const hx = ox + dx * bestT, hy = oy + dy * bestT, hz = oz + dz * bestT;
@@ -2505,7 +2505,7 @@ class Sim {
     const dd = len(tgt.x - u.x, tgt.z - u.z), sc = (0.035 + dd * 0.0007) * (human && tgt.speedNow > 2 ? 1.8 : 1);
     const b = this.ballistic(u, tgt.x + tgt.mx * lead, tgt.z + tgt.mz * lead, bw.speed, 0.06); b.yaw += (this.rng.next() - 0.5) * sc * 2; b.ang += (this.rng.next() - 0.5) * sc;
     const ca = cos(b.ang), v = bw.speed; const ox = u.x + sin(b.yaw) * 0.6, oy = u.y + 1.5, oz = u.z + cos(b.yaw) * 0.6;
-    this.projectiles.push({ kind: 'arrow', x: ox, y: oy, z: oz, vx: sin(b.yaw) * ca * v, vy: sin(b.ang) * v, vz: cos(b.yaw) * ca * v, team: u.team, owner: u.id, life: 0, hits: 0 });
+    this.projectiles.push({ kind: 'arrow', x: ox, y: oy, z: oz, vx: sin(b.yaw) * ca * v, vy: sin(b.ang) * v, vz: cos(b.yaw) * ca * v, team: u.team, owner: u.id, life: 0, hits: 0, over: this.overParapet(u) });
     u.ammo--; this.events.push({ t: 'arrow', id: u.id, x: ox, y: oy, z: oz });
   }
   updateProjectiles() {
@@ -2523,7 +2523,7 @@ class Sim {
         const dt = DT / 3; p.vy -= GRAV * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.life += dt;
         const g = terrainH(p.x, p.z);
         // boxes stop everything
-        for (let b = 0; b < this.boxes.length && !done; b++) { const bx = this.boxes[b]; if (p.x > bx.x - bx.hw && p.x < bx.x + bx.hw && p.z > bx.z - bx.hd && p.z < bx.z + bx.hd && p.y < terrainH(bx.x, bx.z) + bx.h) { if (p.kind === 'shell') this.explode(p.x, p.y, p.z, p.team, p.owner, 7.5, 170); else if (p.kind === 'arrow') this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); else this.events.push({ t: 'bounce', x: p.x, y: p.y, z: p.z, big: true }); done = true; } }
+        for (let b = 0; b < this.boxes.length && !done; b++) { const bx = this.boxes[b]; if (p.over && bx.kind === 'sface') continue; if (p.x > bx.x - bx.hw && p.x < bx.x + bx.hw && p.z > bx.z - bx.hd && p.z < bx.z + bx.hd && p.y < terrainH(bx.x, bx.z) + bx.h) { if (p.kind === 'shell') this.explode(p.x, p.y, p.z, p.team, p.owner, 7.5, 170); else if (p.kind === 'arrow') this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); else this.events.push({ t: 'bounce', x: p.x, y: p.y, z: p.z, big: true }); done = true; } }
         if (done) break;
         if (p.y <= g) {
           if (p.kind === 'shell') { this.explode(p.x, g + 0.1, p.z, p.team, p.owner, 7.5, 170); done = true; break; }
@@ -2595,7 +2595,7 @@ class Sim {
       u.x += u.vx * DT; u.z += u.vz * DT;
       if (u.y <= ground) {
         u.y = ground;
-        if (u.vy < -8 && u.def.ai !== 'cannon') { u.downT = Math.max(u.downT, 1.2); this.events.push({ t: 'land', id: u.id, x: u.x, y: u.y, z: u.z, v: -u.vy }); if (u.vy < -11) this.applyDamage(u, (-u.vy - 11) * 7, -1, 0, 0, 0, 'fall'); }
+        if (u.vy < -8 && u.def.ai !== 'cannon') { u.downT = Math.max(u.downT, 1.2); this.events.push({ t: 'land', id: u.id, x: u.x, y: u.y, z: u.z, v: -u.vy }); if (u.vy < -13) this.applyDamage(u, (-u.vy - 13) * 2.4, -1, 0, 0, 0, 'fall'); }
         u.vy = 0; u.airborne = false; u.vx *= 0.5; u.vz *= 0.5;
       } else u.airborne = true;
     } else {
@@ -2653,6 +2653,7 @@ class Sim {
       if (bl) for (let k = 0; k < bl.length; k++) {
         const b = this.boxes[bl[k]]; if (b.kind === 'gate' && (u.type === 'hero' || b.hw < 0.1)) continue; if (b.lad && b.lad.up && Math.abs(u.x - b.lad.x) < (b.lad.w || 1.5)) continue;
         const ex = b.hw + r, ez = b.hd + r; const dx = u.x - b.x, dz = u.z - b.z;
+        if (b.kind === 'sface' && u.airborne && u.y > terrainH(b.x, b.z) + 0.3) continue;
         if (dx > -ex && dx < ex && dz > -ez && dz < ez) {
           const px = ex - Math.abs(dx), pz = ez - Math.abs(dz);
           if (px < pz) u.x = b.x + (dx < 0 ? -ex : ex); else u.z = b.z + (dz < 0 ? -ez : ez);
@@ -3498,6 +3499,64 @@ const MISSIONS = {
     ],
     win: 'The Jin fell back from the walls of Ningyuan.',
   },
+  // ===== 八旗 · The Plain White Niru (Jin story campaign, jin.js): the same wars from the other side, as one armoured man
+  // in a niru of Hong Taiji's Plain White Banner. Chapter One: Abdali, April 1619, from the wooded west ridge.
+  jin1: {
+    title: '阿布達里岡 · Abdali', year: 'April 1619', battle: 'abudali', side: 1, soldier: { group: 'niru' }, hidden: true, ch: 'j1',
+    brief: 'Two days after Sarhu. Du Song\'s column is destroyed and Ma Lin\'s scattered. Liu Ting\'s column is still coming through the eastern mountains, and Hong Taiji\'s banners wait for it on the west ridge above the valley.',
+    start: [-92, 14, PI / 2],
+    zones: [{ key: 'road', x: 0, z: -98, r: 16, name: 'The road where the southerners stand' }],
+    groups: {
+      niru: { team: 1, name: 'Tobohui', zh: '托博輝', army: ['samurai'], at: [-92, 14, PI / 2], dir: ['hold', -90, 14], stay: true },
+      hong: { team: 1, name: 'Hong Taiji', zh: '皇太極', army: ['cavalry', 'samurai', 'samurai', 'byakkotai', 'archer', 'cavalry', 'samurai'], at: [-106, -8, PI / 2], dir: ['hold', -100, -8], stay: true },
+      daisan: { team: 1, name: 'Daišan', zh: '代善', army: ['cavalry', 'samurai', 'samurai', 'archer', 'cavalry'], at: [0, 138, PI], reserve: true },
+      ridge: { team: 1, name: 'Archers on the east ridge', army: ['archer'], at: [72, -20, -PI / 2], reserve: true, stay: true, dir: ['hold', 34, -24] },
+      liu: { team: 0, name: 'Liu Ting', zh: '劉綎', army: ['rifle_imp', 'ronin'], at: [0, -96, 0], dir: ['hold', 0, -64], stay: true },
+      tusi: { team: 0, name: 'Sichuan and Miao levies', zh: '川黔土兵', army: ['ashigaru', 'ronin', 'ashigaru'], at: [0, -72, 0], dir: ['hold', 0, -40], stay: true },
+      kang: { team: 0, name: 'Kang Yingqian\'s rearguard', zh: '康應乾', army: ['rifle_imp', 'ashigaru'], at: [0, -128, 0], dir: ['hold', 0, -112], stay: true },
+      amin: { team: 1, name: 'Amin', zh: '阿敏', army: ['samurai', 'cavalry', 'samurai'], at: [-104, -70, PI / 2], reserve: true },
+      duck: { team: 0, name: 'The Zhejiang duck teams', zh: '浙兵鴛鴦陣', army: ['yuanyang', 'yuanyang', 'yuanyang'], at: [4, -126, 0], dir: ['hold', 0, -114], stay: true, reserve: true },
+    },
+    phases: [
+      { title: '一 · 西嶺 · The west ridge', goal: 'Wait in the trees with your niru', text: 'Hong Taiji\'s banners lie hidden in the woods of the west ridge. Below, Liu Ting\'s column hurries north toward Hetu Ala. Wait with your niru.',
+        obj: { survive: 56 },
+        at: [[18, ['dir', 'liu', 'hold', 0, -50]], [34, ['dir', 'liu', 'hold', 0, -32]], [34, ['dir', 'tusi', 'hold', 0, -4]]],
+        say: [[2, 'niru', 'Down on one knee, and keep your helmets out of the sun. Nobody moves before the conch.', '都跪下，盔別反光。海螺不響，誰也不許動。'],
+          [9, 'ulgen', 'The old man under the big standard, that\'s Liu Ting. They say his sword weighs a hundred and twenty jin.', '大纛底下那個老頭就是劉綎。聽說他的刀有一百二十斤。'],
+          [16, 'hong', 'Plain White. Whose niru is this?', '正白旗的。這是誰的牛錄？'],
+          [19, 'niru', 'Tobohui\'s, my Beile. Every man who can wear armour is here.', '托博輝的，貝勒爺。能披甲的全在這兒。'],
+          [23, 'hong', 'Good. When my elder brother strikes the head of that column, you strike its side. Not one breath before.', '好。等我二哥打他的頭，你們打他的腰。早一口氣也不行。'],
+          [32, 'muktan', 'The man in Ming red who rode down to them last night carried Du Song\'s own command arrow. Du Song has been dead three days.', '昨晚穿紅衣下去的那個人，拿的是杜松自己的令箭。杜松已經死了三天了。'],
+          [41, 'ilan', 'So the old man is hurrying to a feast that\'s already been eaten.', '所以那老頭是趕著去吃一桌早散了的席。'],
+          [50, 'sose', 'Their guns are falling behind. The column is stretching like a wet bowstring.', '他們的砲落後了。隊伍拉得跟濕弓弦一樣長。']] },
+      { title: '二 · 代善 · The first charge', goal: 'Hold the ridge and watch the pass', text: 'Daišan\'s banners strike the head of the column in the pass. Hold your place on the ridge until the conch.', start: [['release', 'daisan'], ['dir', 'daisan', 'hold', 0, -20]],
+        obj: { survive: 60 },
+        say: [[1, 'lookout', 'Daišan\'s banners in the pass! Red, and red bordered with white!', '大貝勒的旗進谷了！正紅，鑲紅！'],
+          [9, 'ulgen', 'The levies at their head are taking it. Look at them. They\'re holding.', '前頭的土兵頂住了。你看他們，還真頂住了。'],
+          [20, 'dabsun', 'Why are we waiting? They\'re fighting down there!', '我們還等什麼？下面打起來了！'],
+          [24, 'alin', 'Because a man who goes before the conch loses his head, nephew. Sit down.', '因為海螺沒響就衝的人要掉腦袋，外甥。坐下。'],
+          [40, 'niru', 'Tighten your girths. Archers, arrows on the string. Armoured men to the front.', '緊肚帶。弓手搭箭。披甲的站前頭。'],
+          [54, 'hong', 'Now. Down the ridge!', '就是現在。下嶺！']] },
+      { title: '三 · 下嶺 · Down the ridge', goal: 'Charge down into the column\'s flank', text: 'The conch. Hong Taiji\'s banners pour down the west ridge into the side of the column.', start: [['release', 'ridge'], ['dir', 'hong', 'attack'], ['dir', 'niru', 'attack'], ['dir', 'daisan', 'attack'], ['calm', 'kang', 24], ['calm', 'duck', 16]],
+        obj: { survive: 70 },
+        at: [[30, ['kill', 'liu']], [42, ['wound', 5]]],
+        say: [[1, 'niru', 'Heavy armour in front, archers behind! Hit them before they can turn!', '重甲在前，弓手在後！趁他們還沒轉過身來！'],
+          [6, 'ulgen', 'Stay on my shoulder! Cut at the arms, the arms!', '跟緊我的肩膀！砍胳膊，砍胳膊！'],
+          [31, 'lookout', 'The big standard is down! Liu Ting is down!', '大纛倒了！劉綎倒了！'],
+          [44, 'sose', 'One of ours is down. Get him up, get him up!', '我們的人倒了！扶他起來，快！']] },
+      { title: '四 · 鴛鴦陣 · The duck teams', goal: 'Break the duck teams holding the road', text: 'The column is broken, but the southern infantry will not run. Their duck teams have closed up across the road. Break them.', show: ['road'],
+        start: [['break', 'liu'], ['break', 'tusi'], ['break', 'kang'], ['release', 'duck'], ['calm', 'duck', 40], ['dir', 'duck', 'hold', 0, -98], ['dir', 'niru', 'attack'], ['dir', 'hong', 'attack'], ['dir', 'daisan', 'attack']],
+        obj: { defeat: ['duck'], frac: 0.65 }, waves: [[70, 'amin', ['attack']]],
+        at: [[10, ['promote']]],
+        say: [[2, 'muktan', 'Southerners. They fight in twelves: the shields, then those bamboo things, then the spears.', '南兵。他們十二個人一隊：藤牌在前，竹子在中間，長槍在後。'],
+          [6, 'ulgen', 'Don\'t go into the shields. Get round them. The bamboo can\'t turn quickly!', '別往藤牌上撞！繞過去，那竹子轉不快！'],
+          [11, 'soldier', 'Ulgen is down! The bošokū is down!', '烏勒根倒了！撥什庫倒了！'],
+          [14, 'niru', 'His file is yours now. Bring them in on the left!', '他的人歸你了。從左邊帶上去！'],
+          [60, 'lookout', 'They\'re not running. Heaven, they\'re not running.', '他們不跑。老天，他們不跑。'],
+          [71, 'lookout', 'Amin\'s banners on the ridge! More of ours coming down!', '二貝勒的旗下嶺了！我們的人來了！']] },
+    ],
+    win: 'The southern infantry died where they stood. Nothing stood between Liu Ting\'s column and the mountains any more.',
+  },
   zcamp: { title: '營 · Camp', year: '', battle: 'zcamp', side: 0, camp: true, hidden: true, brief: '', start: [0, 0, 0], zones: [], groups: {}, phases: [{ title: '營 · Camp', text: '', obj: { never: true } }], win: '' },
 };
 const OPS = { // Assault: attackers with limited manpower take sectors of fortified points one by one; defenders fall back
@@ -3571,7 +3630,8 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     const cache = new Map(); const tune = (d, k, m) => { const key = d; if (!cache.has(key)) cache.set(key, new Map()); const c = cache.get(key); if (!c.has(k)) c.set(k, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return c.get(k); };
     for (const u of this.units) { if (u.type === 'horse' || u.officer || u.def.ai === 'cannon') continue; const foe = u.team !== M.side; u.def = foe ? tune(u.def, 0.82, 0.82) : tune(u.def, 1.12, 1.05); u.hp = u.def.hp; } }
   if (M.siege && (ass || M.soldier)) { if (!ass) this.sector = 0; this.siegeInit(); if (!ass) this.sg.emp = this.sg.emp.filter(e => e.team === this.sg.D); } // a story chapter on the walls uses the siege engines too (the Jin of 1626 had no field guns)
-  if (ass) { let n = 0; for (const u of this.units) if (u.team === M.attacker && u.type !== 'horse' && u.type !== 'hero') n++; this.tickets = Math.round(n * 0.8); for (const o of this.objectives) o.rate *= 0.6; this.sector = 0; M.sectors[0].forEach(k => this.missionZone(k).hidden = false); this.assaultDirs(); this.mv.ph = 0; }
+  if (ass) { let n = 0; for (const u of this.units) if (u.team === M.attacker && u.type !== 'horse' && u.type !== 'hero') n++; this.tickets = M.tickets || Math.round(n * 0.8);
+    this.assaultCap();  for (const o of this.objectives) o.rate *= 0.6; this.sector = 0; M.sectors[0].forEach(k => this.missionZone(k).hidden = false); this.assaultDirs(); this.mv.ph = 0; }
   // humans: in the campaign each leads a squad of the troops they chose (two when alone) and rides with it
   if (M.soldier) { // a story chapter: you are one man in a mandarin duck team of the named group
     const g = this.mg[M.soldier.group], gp = g ? this.players[g.p] : null;
@@ -3629,15 +3689,16 @@ Sim.prototype.mAct = function (a) {
   else if (a[0] === 'hide') { const z = this.missionZone(a[1]); if (z) z.hidden = true; }
   else if (a[0] === 'kill') { const g = this.mg[a[1]]; if (g) { const h = this.units[this.players[g.p].heroId]; if (h && !h.dead) { h.officer = false; this.applyDamage(h, 1e6, -1, 0, 0, 0, 'arrow'); } this.events.push({ t: 'mkill', gid: a[1], name: g.G.name, zh: g.G.zh || '' }); } }
   else if (a[0] === 'promote') this.zPromote();
+  else if (a[0] === 'lead') this.zPromote(true);
   else if (a[0] === 'break') this.mBreak(a[1]);
   else if (a[0] === 'calm') { const g = this.mg[a[1]]; if (g) { g.calm = a[2]; const p = this.players[g.p]; if (g.released && !g.broken) p.aggr = a[2]; } }
   else if (a[0] === 'wound') this.zWound(a[1] | 0);
   else if (a[0] === 'sector') { this.sector = a[1] | 0; if (a[2] && this.sg) for (const f of TERR.sditch.fills) if (!f.done) { f.done = true; this.sgRewater(f); this.events.push({ t: 'sgfill', x: f.x, z: TERR.sditch.zc }); } if (this.sg) { this.navBoxes(); this.siegeDirs(); } }
 };
 // the section chief falls and the file is yours: his squad passes to the man who is left
-Sim.prototype.zPromote = function () {
+Sim.prototype.zPromote = function (keep) {
   for (const p of this.players) { if (p.ai) continue; const q = this.squads[p.soldierSq]; if (!q) continue; const chief = this.units[q.unitIds[0]];
-    if (chief && !chief.dead && chief.ctrl < 0) this.applyDamage(chief, 1e6, -1, 0, 0, 0, 'arrow');
+    if (!keep && chief && !chief.dead && chief.ctrl < 0) this.applyDamage(chief, 1e6, -1, 0, 0, 0, 'arrow');
     if (q.owner >= 0 && q.owner !== p.idx) { const o = this.players[q.owner]; o.squads = o.squads.filter(id => id !== q.id); }
     q.owner = p.idx; for (const id of q.unitIds) this.units[id].owner = p.idx; if (!p.squads.includes(q.id)) p.squads.push(q.id); q.order = ORD_FOLLOW; p.commanderId = p.heroId;
     this.events.push({ t: 'zpromote', p: p.idx, sq: q.id, chief: chief ? chief.id : -1 }); }
@@ -3675,9 +3736,19 @@ Sim.prototype.zRevive = function (u, by) {
   this.events.push({ t: 'zrevive', id: u.id, by, limp: !!(limp && h && h.ctrl >= 0) });
 };
 // a raid, a picket, a handful of scouts: keep the first n men of a group and send its general and the rest away before the field opens
-Sim.prototype.mTrim = function (p, n) {
-  let k = 0; for (const id of p.squads) { const q = this.squads[id]; const keep = Math.max(0, Math.min(q.unitIds.length, n - k)); q.unitIds.forEach((uid, i) => { if (i < keep) return; const u = this.units[uid]; u.dead = true; u.hp = 0; u.inactive = true; this.total[u.team]--; }); k += keep; q.count = keep; q.aliveCount = keep; if (!keep) q.alive = false; }
-  for (const uid of [p.heroId, p.horseId]) { const u = uid >= 0 ? this.units[uid] : null; if (u) { u.dead = true; u.hp = 0; u.inactive = true; if (u.type !== 'horse') this.total[u.team]--; } }
+// assault: however big the manpower pool, no more than about 64 men per side stand on the field at once
+Sim.prototype.assaultCap = function () {
+  const M = this.mission, A = M.attacker, CAP = M.cap || 64; const size = (p) => { let n = 0; for (const id of p.squads) { const q = this.squads[id]; for (const uid of q.unitIds) if (!this.units[uid].dead) n++; } return n; };
+  const groups = (team, res) => Object.keys(this.mg).filter(g => this.mg[g].G.team === team && !!this.mg[g].G.reserve === res).map(g => this.players[this.mg[g].p]);
+  const fit = (list, budget) => { const tot = list.reduce((s, p) => s + size(p), 0); if (tot <= budget) return; for (const p of list) { const n = Math.max(4, Math.floor(size(p) * budget / tot)); this.mTrim(p, n, true); } };
+  const humanMen = this.players.filter(p => !p.ai && p.team === A).reduce((s, p) => s + size(p), 0), humanDef = this.players.filter(p => !p.ai && p.team !== A).reduce((s, p) => s + size(p), 0);
+  fit(groups(A, false), Math.max(16, CAP - humanMen)); for (const p of groups(A, true)) if (size(p) > 22) this.mTrim(p, 22, true);
+  // the defenders' reserves count against the same field: garrison plus reserves never exceed the cap
+  fit(groups(1 - A, false).concat(groups(1 - A, true)), Math.max(16, CAP - humanDef));
+};
+Sim.prototype.mTrim = function (p, n, keepHero) {
+  let k = 0; for (const id of p.squads) { const q = this.squads[id]; const keep = Math.max(0, Math.min(q.unitIds.length, n - k)); q.unitIds.forEach((uid, i) => { if (i < keep) return; const u = this.units[uid]; u.dead = true; u.hp = 0; u.inactive = true; u.trimmed = true; this.total[u.team]--; }); k += keep; q.count = keep; q.aliveCount = keep; if (!keep) q.alive = false; }
+  if (!keepHero) for (const uid of [p.heroId, p.horseId]) { const u = uid >= 0 ? this.units[uid] : null; if (u) { u.dead = true; u.hp = 0; u.inactive = true; if (u.type !== 'horse') this.total[u.team]--; } }
 };
 Sim.prototype.coverShield = function (v, p) { // a rattan shield beside you turns the arrow meant for you
   const src = atan2(-p.vx, -p.vz); const n = this.gatherNear(v.x, v.z, 1.9);
@@ -3712,8 +3783,9 @@ Sim.prototype.woundedAI = function (u) {
 Sim.prototype.setupCamp = function (humans) {
   const C = this.cfg.camp || { npcs: [], tents: [], me: { x: 0, z: 6, yaw: PI, role: 'shield' } };
   for (const t of C.tents || []) this.boxes.push({ x: t[0], z: t[1], hw: t[2], hd: t[3], h: t[4], kind: 'tent' });
-  const mk = (role, x, z, yaw) => { const u = this.addUnit('yuanyang', 0, -1, -1, x, z, yaw); u.role = role; u.def = YYDEF[role] || YYDEF.spear; u.hp = u.def.hp; u.weapon = u.def.weapons[0]; return u; };
-  humans.forEach((p, i) => { p.team = 0; p.auto = false; p.ready = true; p.squads = []; const m = C.me; const u = mk(m.role || 'shield', m.x + i * 1.5, m.z, m.yaw); u.owner = p.idx; u.ctrl = p.idx; p.heroId = u.id; p.commanderId = -1; p.respawnAt = 0; });
+  const CT = C.type || 'yuanyang', CTm = C.team | 0; // another campaign's camp: its own unit type and side (jin.js, shenji.js)
+  const mk = (role, x, z, yaw) => { const u = this.addUnit(CT, CTm, -1, -1, x, z, yaw); if (CT === 'yuanyang') { u.role = role; u.def = YYDEF[role] || YYDEF.spear; u.hp = u.def.hp; u.weapon = u.def.weapons[0]; } return u; };
+  humans.forEach((p, i) => { p.team = CTm; p.auto = false; p.ready = true; p.squads = []; const m = C.me; const u = mk(m.role || 'shield', m.x + i * 1.5, m.z, m.yaw); u.owner = p.idx; u.ctrl = p.idx; p.heroId = u.id; p.commanderId = -1; p.respawnAt = 0; });
   for (const n of C.npcs || []) { const u = mk(n.role, n.x, n.z, n.yaw); u.camp = true; u.ci = n.ci; u.campPose = n.pose || 'stand'; }
   this.mv.ph = 0;
 };
@@ -3807,7 +3879,15 @@ Sim.prototype.assaultThink = function () {
   const M = this.mission, A = M.attacker; const keys = M.sectors[this.sector];
   // manpower: every attacking man who falls costs a ticket; reserves march on while tickets last and the line is thin
   let act = 0; for (const u of this.teamAlive[A]) if (!u.inactive && u.type !== 'horse' && u.def.ai !== 'cannon') act++;
-  if (act < 150 && this.tickets > 0) { const next = Object.keys(this.mg).find(g => this.mg[g].G.team === A && !this.mg[g].released); if (next) { this.mRelease(next); this.assaultDirs(); } }
+  const CAP = M.cap || 64;
+  if (act + 20 <= CAP && this.tickets > 0) { const next = Object.keys(this.mg).find(g => this.mg[g].G.team === A && !this.mg[g].released); if (next) { this.mRelease(next); this.assaultDirs(); } }
+  // the manpower pool is bigger than the field: fallen attackers come back up the road as fresh men while tickets last
+  let revivable = false;
+  if (this.tickets > 0 && this.tick % 45 === 0) { let room = Math.min(CAP - act, this.tickets), k = 0;
+    for (const u of this.units) { if (room <= 0) break; if (!u.dead || u.inactive || u.trimmed || u.team !== A || u.type === 'horse' || u.type === 'hero' || u.squad < 0 || u.def.ai === 'cannon' || u.ctrl >= 0) continue; revivable = true;
+      if (this.tick - (u.deathTick || 0) < 30 * 8) continue; const g = this.mg[this.players[this.squads[u.squad].owner] ? this.players[this.squads[u.squad].owner].gid : ''] ; if (g && !g.released) continue;
+      this.reviveUnit(u, clamp(M.attAt[0] + ((k % 6) - 2.5) * 3, -HALF + 4, HALF - 4), clamp(M.attAt[1] + Math.floor(k / 6) * 3 * (A === 1 ? -1 : 1), -HALF + 4, HALF - 4)); k++; room--; } }
+  else if (this.tickets > 0) revivable = this.units.some(u => u.dead && !u.inactive && !u.trimmed && u.team === A && u.type !== 'horse' && u.type !== 'hero' && u.squad >= 0 && u.def.ai !== 'cannon');
   if (keys.every(k => this.missionZone(k).owner === A)) {
     this.events.push({ t: 'msector', sector: this.sector, team: A });
     for (const k of keys) this.missionZone(k).hidden = true;
@@ -3818,11 +3898,11 @@ Sim.prototype.assaultThink = function () {
     this.assaultDirs();
   }
   if (this.tick % 150 === 0) this.assaultDirs();
-  if (this.tick % 90 === 0 && this.teamAlive[1 - A].length < (this.defStart || (this.defStart = this.teamAlive[1 - A].length)) * 0.75) { const D = 1 - A, nz = this.missionZone((M.sectors[Math.min(this.sector + 1, M.sectors.length - 1)] || keys)[0]) || this.missionZone(keys[0]), fz = A === 1 ? 1 : -1;
-    for (const u of this.units) { if (!u.dead || u.team !== D || u.type === 'horse' || u.type === 'hero' || u.squad < 0 || u.inactive || u.def.ai === 'cannon' || u.ctrl >= 0) continue; if (this.tick - (u.deathTick || 0) < 30 * 25) continue;
+  if (this.tick % 90 === 0 && this.teamAlive[1 - A].length < Math.min(CAP, (this.defStart || (this.defStart = this.teamAlive[1 - A].length)) * 0.75)) { const D = 1 - A, nz = this.missionZone((M.sectors[Math.min(this.sector + 1, M.sectors.length - 1)] || keys)[0]) || this.missionZone(keys[0]), fz = A === 1 ? 1 : -1;
+    for (const u of this.units) { if (!u.dead || u.trimmed || u.team !== D || u.type === 'horse' || u.type === 'hero' || u.squad < 0 || u.inactive || u.def.ai === 'cannon' || u.ctrl >= 0) continue; if (this.tick - (u.deathTick || 0) < 30 * 25) continue;
       const k = u.id % 9; this.reviveUnit(u, clamp(nz.x + (k % 3 - 1) * 3, -HALF + 4, HALF - 4), clamp(nz.z + fz * (14 + Math.floor(k / 3) * 3), -HALF + 4, HALF - 4)); } }
   const left = Object.keys(this.mg).some(g => this.mg[g].G.team === A && !this.mg[g].released);
-  if (this.tickets <= 0 || (act < 8 && !left)) { this.mwin = 1 - A; this.events.push({ t: 'mend', won: false, text: 'The attackers have no men left to send.', att: A }); }
+  if (this.tickets <= 0 || (act < 8 && !left && !revivable)) { this.mwin = 1 - A; this.events.push({ t: 'mend', won: false, text: 'The attackers have no men left to send.', att: A }); }
 };
 
 // ===== 攻守城 · Siege: walls, ditch, ladders, siege towers, covered rams, shield carts, sappers, oil, stones and bed crossbows =====
@@ -3842,6 +3922,8 @@ function siegeWallH(w, x, z, h) {
 function siegeDitchH(d, x, z, h) { const dz = z - d.zc, ad = dz < 0 ? -dz : dz; if (ad >= d.w) return h; const ax = x < 0 ? -x : x; if (ax < d.bridge) return h; const t = 1 - (ad / d.w) * (ad / d.w); return h - d.depth * t; }
 function siegeDitchWater(d, x, z) { const dz = z - d.zc, ad = dz < 0 ? -dz : dz; if (ad >= d.w * 0.8) return 0; const ax = x < 0 ? -x : x; if (ax < d.bridge) return -1;
   for (let i = 0; i < d.fills.length; i++) { const f = d.fills[i]; if (f.done && (x - f.x < 0 ? f.x - x : x - f.x) < f.hw) return 2; } return 1; }
+// a man on the wall top leans over the parapet in front of him to shoot down at the foot of the wall
+Sim.prototype.overParapet = function (u) { const W = TERR.swall; if (!this.sg || !W) return false; return u.z > W.z0 + 0.4 && u.z < W.z1 + 0.5 && u.y > W.h - 1.2; };
 Sim.prototype.siegeInit = function () {
   const M = this.mission, A = M.attacker, D = 1 - A, W = TERR.swall; const sg = this.sg = { A, D, gateHp: 6000, gateMax: 6000, engines: [], lads: [], emp: [], holes: [], fired: false, oilT: 0, stoneT: 0, slipT: 0, ice: this.bdef.biome === 'winter', sec: -1 };
   // the gate in its passage through the rampart
@@ -4805,6 +4887,10 @@ function gearFor(u) {
     case 'jigen': petalHelm(iron, 0x1a1a1a); dingjia(0x5a2226, 0x9a9ea6); mirror(); break;
     case 'horokutai': mingHair(); hachimaki(red); robe(0x7a3422, 0x2a2a34); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); b('p', [0.24, 0.07, 0.06], [0.03, 0.06, 0.03], 0xe8e2cc); break;
     case 'ronin': if (vr % 2 === 0) hatOn(() => c('h', [0, 0.16, 0], [0.8, 0.18, 0.8], 0x9a8058)); else mingHair(); robe(torsoColor(u), 0x5a4a3a); break;
+  } else if (u.look && u.look.jin) { const L = u.look, cc = L.coat || bc;
+    if (L.jin === 'helm') jinHelm(L.iron || iron, L.plume); else if (L.jin === 'fur') furHat(L.fur || red); else if (L.jin === 'liang') liangmao();
+    queue(); if (L.armor === 'robe') robe(cc, L.sash || 0x26262c); else dingjia(cc, L.stud || 0xc9c0a8); if (L.quiver) quiver(); if (L.flag) backflag(bc);
+    lookGear(L, b, c, y, hatOn, 'body');
   } else switch (u.type) {
     case 'hero': jinHelm(0xc9a03a, red); queue(); dingjia(0xc9a03a, 0x8a5a20); b('c', [0, -0.02, -0.17], [0.52, 0.7, 0.03], 0x9a7a2a); break;
     case 'samurai': jinHelm(iron); queue(); dingjia(bc, 0xc9c0a8); break;
@@ -5296,7 +5382,12 @@ class Renderer {
   }
   updateSiege(dt) {
     const sim = this.sim, sg = sim.sg, W = SIM.TERR.swall, T = this.tmp;
-    sg.engines.forEach((e, i) => { const g = this.sgEng[i]; if (!g) return; g.visible = e.hp > 0; if (e.hp <= 0) return; const y = SIM.terrainH(e.x, e.z); g.position.set(e.x, y, e.z);
+    sg.engines.forEach((e, i) => { const g = this.sgEng[i]; if (!g) return; g.visible = e.hp > 0; if (e.hp <= 0) return;
+      // the sim moves an engine in half-second steps; draw it rolling at a steady pace toward where the sim has it
+      const ud = g.userData; if (ud.dx === undefined) { ud.dx = e.x; ud.dz = e.z; ud.tx = e.x; ud.tz = e.z; ud.vel = 0; }
+      if (e.x !== ud.tx || e.z !== ud.tz) { ud.tx = e.x; ud.tz = e.z; ud.vel = Math.hypot(e.x - ud.dx, e.z - ud.dz) / 0.5; }
+      { const ddx = ud.tx - ud.dx, ddz = ud.tz - ud.dz, dd = Math.hypot(ddx, ddz); if (dd > 6) { ud.dx = ud.tx; ud.dz = ud.tz; } else if (dd > 1e-4) { const st = Math.min(dd, Math.max(ud.vel, 0.25) * dt); ud.dx += ddx / dd * st; ud.dz += ddz / dd * st; } }
+      const y = SIM.terrainH(ud.dx, ud.dz); g.position.set(ud.dx, y, ud.dz);
       if (e.kind === 'ram') { const sw = e.atGate && sg.gateHp > 0 ? Math.sin(this.time * 4.2) : 0; g.userData.log.position.z = sw * 0.9; }
       if (e.kind === 'tower') { const br = g.userData.bridge; const k = e.docked ? 1 : 0; br.rotation.x += ((k ? 0 : -1.4) - br.rotation.x) * Math.min(1, dt * 3); }
       if (e.burn > 0 && Math.random() < dt * 16) { const S = { ram: [1.4, 3, 3.6], tower: [2.4, 2.4, 10], cart: [1.6, 0.8, 2.6] }[e.kind]; this.sparks.spawn(e.x + rnd(-S[0], S[0]), y + rnd(0.5, S[2]), e.z + rnd(-S[1], S[1]), rnd(-0.4, 0.4), rnd(1.5, 3.5), rnd(-0.4, 0.4), rnd(0.5, 1.1), rnd(0.5, 1.1), 0.1, 1, 0.55, 0.15, 1, 0.8, -2, 0.9, 0.25, 0.05); if (Math.random() < 0.4) this.smoke.spawn(e.x, y + S[2], e.z, rnd(-0.3, 0.3), 1.5, rnd(-0.3, 0.3), 4, 0.8, 3.5, 0.18, 0.16, 0.15, 0.5, 0.8, 0); } });
@@ -7295,6 +7386,181 @@ return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, leg
 })();
 </script>
 <script>
+// ============================================================================
+// 畫 · Stylized edition: the realism edition's game (same sim flags, same gear, same combat) drawn with a clean,
+// painted look instead of the film look. Loaded after realism.js; only active when window.MING_STYLE is set
+// (that build also sets MING_REAL and MING_XCOMBAT, so every behaviour is the realism one).
+// Flat toon bands with crisp shadow shapes, a thin ink outline, a small harmonious palette per biome, cel clouds,
+// low-poly tufts and smoke puffs. No blurry or stretched textures: colour comes from flat tones and tiny crisp marks.
+// ============================================================================
+(function () {
+  if (typeof window === 'undefined' || !window.MING_STYLE || !window.MING_REAL || typeof RENDER === 'undefined') return;
+  const R = RENDER.Renderer.prototype; const HALF = 150; const terrainH = SIM.terrainH;
+  const ST = { time: { value: 0 } };
+  const styQ = () => { try { const v = localStorage.getItem('ming_q'); return v === null ? 1 : Math.max(0, Math.min(2, +v)); } catch (e) { return 1; } };
+  // palettes: sky (top, horizon), light (sun, hemisphere sky/ground), ground tones (three grass bands + earth), foliage tint, fog
+  const DAY = { top: 0x6f9cc6, hor: 0xe9dcbf, cloud: 0xfaf4e6, cloudSh: 0xc3c8cf, sun: 0xfff0d2, sunI: 1.0, hemiS: 0xb9c8d6, hemiG: 0x6a5c42, hemiI: 0.72,
+    g: [0x66783c, 0x768444, 0x8c8c4e], earth: 0x9a7a52, fol: 1.25, fog: 0xd9d6c4, ink: 0x2a2420, mtn: 0x8ea3b4, exp: 1.0 };
+  const WIN = { top: 0x7f9fbf, hor: 0xe6ecf0, cloud: 0xffffff, cloudSh: 0xc9d3de, sun: 0xfff6e6, sunI: 1.05, hemiS: 0xd2e0ee, hemiG: 0x8c94a0, hemiI: 0.95,
+    g: [0xdfe7ee, 0xeef3f6, 0xffffff], earth: 0x8c8278, fol: 1.15, fog: 0xdfe6ec, ink: 0x2b2f3a, mtn: 0xa9b8c8, exp: 1.0 };
+  const STORM = { top: 0x56646f, hor: 0xa8adad, cloud: 0x9aa1a6, cloudSh: 0x6d767e, sun: 0xdfe6ee, sunI: 0.8, hemiS: 0xaab4bd, hemiG: 0x55503f, hemiI: 1.0,
+    g: [0x66734a, 0x76804f, 0x8a8a58], earth: 0x6e5a40, fol: 1.1, fog: 0x9da3a4, ink: 0x1e2226, mtn: 0x6f7b85, exp: 1.05 };
+  const NITE = { top: 0x0d1428, hor: 0x2c3a5c, cloud: 0x3a4a6c, cloudSh: 0x1e2842, sun: 0x9fb4e6, sunI: 0.42, hemiS: 0x40507a, hemiG: 0x141418, hemiI: 0.55,
+    g: [0x2c3a34, 0x34443a, 0x3e4c40], earth: 0x3a3226, fol: 1.0, fog: 0x1c2640, ink: 0x06080e, mtn: 0x26324e, exp: 1.08 };
+  const look = (r) => r.biome.night ? NITE : r.sim.rain ? STORM : r.biome.snow ? WIN : DAY;
+  const C = (h) => new THREE.Color(h);
+  const NOISE = `
+    float sH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float sV(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(sH(i), sH(i+vec2(1.0,0.0)), f.x), mix(sH(i+vec2(0.0,1.0)), sH(i+vec2(1.0,1.0)), f.x), f.y); }
+    float sF(vec2 p){ float a = 0.0, w = 0.5; for (int i = 0; i < 3; i++) { a += sV(p) * w; p = p * 2.03 + vec2(13.1, 7.7); w *= 0.5; } return a; }
+  `;
+  // three light bands: shade, half, lit. Crisp steps, no gradient smear.
+  const grad = () => { const g = new THREE.DataTexture(new Uint8Array([105, 105, 105, 255, 178, 178, 178, 255, 255, 255, 255, 255]), 3, 1, THREE.RGBAFormat); g.minFilter = THREE.NearestFilter; g.magFilter = THREE.NearestFilter; g.generateMipmaps = false; g.needsUpdate = true; return g; };
+  const punch = (col, k) => { const h = {}; col.getHSL(h); col.setHSL(h.h, Math.min(1, h.s * k), h.l); return col; };
+
+  R.toonify = function () {
+    const L = look(this), g = grad(); this.styGrad = g; const cache = new Map();
+    const metal = new Set([this.fig.blade, this.fig.barrel, this.fig.kabuto, this.fig.rod, this.fig.boss].filter(Boolean));
+    this.scene.traverse((o) => {
+      if (!o.isMesh || !o.material || !o.material.isMeshLambertMaterial) return;
+      const m = o.material, isMetal = metal.has(o); const key = m.uuid + (isMetal ? 'm' : '');
+      let t = cache.get(key);
+      if (!t) { const col = punch(m.color.clone(), 1.06); if (isMetal) col.lerp(C(0xdfe4ea), 0.35);
+        t = new THREE.MeshToonMaterial({ color: col, vertexColors: m.vertexColors, transparent: m.transparent, opacity: m.opacity, side: m.side, depthWrite: m.depthWrite, gradientMap: g }); cache.set(key, t); cache.set(m, t); }
+      o.material = t;
+    });
+    this.sleeveMat = cache.get(this.sleeveMat) || this.sleeveMat;
+    // the ground: big flat patches in three grass tones (hard edges), and tiny crisp marks up close only
+    if (this.terrain) { const old = this.terrain.material; const tm = new THREE.MeshToonMaterial({ vertexColors: old.vertexColors, color: old.color ? old.color.clone() : C(0xffffff), gradientMap: g }); this.terrain.material = tm;
+      const snowF = this.biome.snow ? 1 : -1;
+      tm.onBeforeCompile = (sh) => { sh.uniforms.sSnow = { value: snowF }; sh.uniforms.g0 = { value: C(L.g[0]) }; sh.uniforms.g1 = { value: C(L.g[1]) }; sh.uniforms.g2 = { value: C(L.g[2]) }; sh.uniforms.gE = { value: C(L.earth) };
+        sh.vertexShader = 'varying vec3 vWP;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        sh.fragmentShader = 'varying vec3 vWP; uniform float sSnow; uniform vec3 g0, g1, g2, gE;\n' + NOISE + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+          { vec2 p = vWP.xz; vec3 base = diffuseColor.rgb; float lum = dot(base, vec3(0.3, 0.59, 0.11));
+            float v = sF(p * 0.035) + (sV(p * 0.21) - 0.5) * 0.18;
+            vec3 band = v < 0.42 ? g0 : v < 0.56 ? g1 : g2;
+            // paths and bare ground the map painted (brown, not green) keep their own colour in flat tones
+            float bare = smoothstep(0.02, 0.09, base.r - base.g * 0.98);
+            float snowy = smoothstep(0.7, 0.8, lum) * step(0.0, sSnow);
+            vec3 c = mix(band, mix(gE, base, 0.5) * (v < 0.5 ? 0.94 : 1.04), bare);
+            // tiny marks: flowers/stones on a 0.6 m grid, drawn only where a cell is several pixels wide (no shimmer)
+            vec2 cell = floor(p * 1.6); float pick = sH(cell); vec2 f = fract(p * 1.6) - 0.5;
+            float px = length(fwidth(p * 1.6)); float near = 1.0 - smoothstep(0.08, 0.2, px);
+            float dotm = step(0.965, pick) * step(length(f), 0.14) * near * (1.0 - bare);
+            c = mix(c, pick > 0.985 ? vec3(0.93, 0.88, 0.7) : c * 1.22, dotm);
+            diffuseColor.rgb = mix(c, base, snowy); }`); };
+      tm.needsUpdate = true; }
+    this.styleSetup();
+  };
+
+  R.styleSetup = function () {
+    const L = look(this), sc = this.scene, q = styQ();
+    this.buildForest();
+    if (this.forest) { const fm = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: this.styGrad });
+      fm.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+        { float l = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); diffuseColor.rgb = mix(vec3(l), diffuseColor.rgb, ${L.fol.toFixed(2)}) * 1.12; }`); };
+      for (const m of this.forest) m.material = fm; }
+    this.buildTufts();
+    this.sun.color.set(L.sun); this.sun.intensity = L.sunI; this.hemi.color.set(L.hemiS); this.hemi.groundColor.set(L.hemiG); this.hemi.intensity = L.hemiI;
+    // crisp shadow shapes: plain PCF, small kernel; redrawn every other frame
+    this.sun.shadow.radius = 1; this.sun.shadow.bias = -0.0005; this.sun.shadow.normalBias = 0.05;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap; this.sun.shadow.mapSize.set(q === 2 ? 2048 : 1536, q === 2 ? 2048 : 1536); if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
+    this.renderer.shadowMap.enabled = q > 0; this.renderer.shadowMap.autoUpdate = q === 2; this.shadowTick = 0;
+    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * Math.min(window.devicePixelRatio || 1, 1.25)); this.resize();
+    // restrained fog: linear, far away, the horizon colour (render.js eases near/far by view mode from fogBase)
+    const fogC = C(L.fog); sc.fog = new THREE.Fog(fogC, 70, 330); this.fogBase = [this.biome.night ? 30 : 70, this.biome.night ? 170 : this.sim.rain ? 230 : 330]; this.realFog = null; sc.background = C(L.hor);
+    if (this.dragon) { for (const k of ['body', 'fins', 'belly']) this.dragon[k].visible = false; this.dragon.head.visible = false; this.dragon.pearl.visible = false; this.dragon = null; }
+    // mountains: flat layered silhouettes in the palette
+    if (this.env && this.env.group) this.env.group.traverse((o) => { if (o.isSprite) o.visible = false; if (o.isMesh && o.material && o.material.isMeshBasicMaterial) { o.material = o.material.clone(); const l = o.material.color.getHSL({}).l; o.material.color.copy(C(L.mtn)).lerp(C(L.hor), Math.min(0.75, 0.25 + l * 0.5)); } if (o.isMesh && o.material && o.material.isShaderMaterial && o.material.uniforms && o.material.uniforms.col) { o.material.uniforms.col.value.set(L.mtn); } });
+    // water in two clean tones and foam lines
+    if (this.waterMats) for (const m of this.waterMats) { const U = m.uniforms; if (!U.deep) continue; const snow = this.biome.snow; U.deep.value.set(this.biome.night ? 0x1a2a44 : snow ? 0x6f8ea8 : 0x3d7aa0); U.light.value.set(this.biome.night ? 0x2e4466 : snow ? 0xb9d0de : 0x76b9c8); U.foam.value.set(snow ? 0xffffff : 0xf6f1e2); }
+    // sky: a smooth two-colour gradient, cel clouds with hard edges and a lit/shaded side, a crisp sun disc
+    this.sky.material = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false,
+      uniforms: { top: { value: C(L.top) }, hor: { value: C(L.hor) }, cl: { value: C(L.cloud) }, cs: { value: C(L.cloudSh) }, sunCol: { value: C(L.sun) }, sunDir: { value: this.sunDir.clone() }, time: ST.time, night: { value: this.biome.night ? 1 : 0 } },
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: NOISE + `uniform vec3 top, hor, cl, cs, sunCol, sunDir; uniform float time, night; varying vec3 vP;
+        void main(){ vec3 d = normalize(vP); float h = d.y;
+          vec3 c = mix(hor, top, smoothstep(-0.02, 0.55, h));
+          vec2 uv = d.xz / max(0.1, h + 0.15) * 0.9 + vec2(time * 0.004, time * 0.0015);
+          float n = sF(uv * 0.9) + sV(uv * 3.0) * 0.12; float n2 = sF(uv * 0.9 + vec2(0.05, -0.04));
+          float aw = fwidth(n) * 1.5 + 0.004; float cloud = smoothstep(0.56 - aw, 0.56 + aw, n) * smoothstep(0.0, 0.06, h);
+          float shade = smoothstep(0.62 - aw, 0.62 + aw, n2);
+          c = mix(c, mix(cs, cl, shade), cloud * (night > 0.5 ? 0.6 : 0.95));
+          float s = dot(d, normalize(sunDir)); float disc = smoothstep(0.9994, 0.99948, s);
+          c = mix(c, sunCol * (night > 0.5 ? 1.0 : 1.08), disc * (1.0 - cloud * 0.8));
+          c += sunCol * pow(max(s, 0.0), 24.0) * 0.12 * (1.0 - night);
+          if (night > 0.5) { vec2 sp = floor(d.xz / max(0.2, h + 0.3) * 260.0); float st = step(0.996, sH(sp)) * smoothstep(0.1, 0.4, h) * (1.0 - cloud); c += vec3(0.85, 0.88, 1.0) * st * 0.8; }
+          gl_FragColor = vec4(c, 1.0); }` });
+    if (this.tracerMesh) { this.tracerMesh.material = this.tracerMesh.material.clone(); this.tracerMesh.material.transparent = true; this.tracerMesh.material.opacity = 0.6; }
+    if (this.trailMesh) { this.trailMesh.material.opacity = 0.45; }
+    // campfire light: a softer warm pool that falls off quickly, so faces by the fire keep their bands
+    for (const f of this.campFires || []) { f.lt.color.set(0xffb27a); f.lt.decay = 2.2; f.lt.distance = 20; }
+    this.buildPuffColumns();
+  };
+
+  // ---- low-poly tufts of grass instead of textured cards: 4-sided cones in a few flat tones
+  R.buildTufts = function () {
+    if (this.biome.snow) return; const L = look(this);
+    let seed = 911; const rr = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const g = new THREE.ConeGeometry(0.22, 0.55, 4, 1); g.translate(0, 0.26, 0);
+    const n = [500, 1400, 2400][styQ()]; const mesh = new THREE.InstancedMesh(g, new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: this.styGrad }), n); mesh.frustumCulled = false; mesh.receiveShadow = true;
+    const T = this.tmp, cols = [C(L.g[0]).multiplyScalar(0.82), C(L.g[1]).multiplyScalar(0.88), C(L.g[2]).multiplyScalar(0.9), C(L.earth).lerp(C(L.g[2]), 0.5)]; let k = 0;
+    for (let t = 0; t < n * 3 && k < n; t++) { const px = (rr() - 0.5) * 290, pz = (rr() - 0.5) * 290; const dens = Math.sin(px * 0.05 + 2) * Math.cos(pz * 0.043) + Math.sin(px * 0.11) * 0.5; if (dens < 0.1 || SIM.waterAt(px, pz) > 0) continue; if (this.sim.boxes.some((b) => Math.abs(px - b.x) < b.hw + 1 && Math.abs(pz - b.z) < b.hd + 1)) continue;
+      const s = 0.6 + rr() * 0.8; T.m.compose(T.v.set(px, terrainH(px, pz) - 0.04, pz), T.q.setFromEuler(T.e.set((rr() - 0.5) * 0.3, rr() * 6.28, (rr() - 0.5) * 0.3)), T.v2.set(s, s * (0.7 + rr() * 0.7), s)); mesh.setMatrixAt(k, T.m); mesh.setColorAt(k, cols[Math.floor(rr() * cols.length)]); k++; }
+    mesh.count = k; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; this.scene.add(mesh); this.tufts = mesh;
+  };
+  // ---- distant burning: stacked low-poly smoke puffs that drift upward (flat toon grey, no soft texture)
+  R.buildPuffColumns = function () {
+    if (this.biome.night) return;
+    let seed = 31 + (this.sim.seed & 255); const rr = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const N = 5, P = 9, g = new THREE.IcosahedronGeometry(1, 1); const night = !!this.biome.night;
+    const mesh = new THREE.InstancedMesh(g, new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: this.styGrad, fog: false }), N * P); mesh.frustumCulled = false;
+    this.puffs = []; let k = 0;
+    for (let i = 0; i < N; i++) { const a = rr() * Math.PI * 2, R0 = 190 + rr() * 150, x = Math.sin(a) * R0, z = Math.cos(a) * R0, lean = (rr() - 0.5) * 0.5;
+      for (let j = 0; j < P; j++) { const f = j / P; const c = C(night ? 0x1c2338 : 0x9a9690).lerp(C(night ? 0x2a3350 : 0xe4dfd4), f); if (j === 0) c.set(night ? 0x7a3a22 : 0x7a6a5a); mesh.setColorAt(k, c); this.puffs.push({ k, x, z, lean, f, s: 9 + f * 26 + rr() * 6, ph: rr() * 6.28 }); k++; } }
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; this.scene.add(mesh); this.puffMesh = mesh; this.updatePuffs(0);
+  };
+  R.updatePuffs = function (t) {
+    if (!this.puffMesh) return; const T = this.tmp, P = 9;
+    for (const p of this.puffs) { const ff = (p.f + t * 0.004) % 1; const y = 2 + ff * P * 10; const s = (5 + ff * 17) * (ff > 0.85 ? (1 - ff) / 0.15 : 1);
+      T.m.compose(T.v.set(p.x + p.lean * y + Math.sin(p.ph + y * 0.05) * 4, y, p.z), T.q.setFromEuler(T.e.set(p.ph, p.ph + t * 0.02, 0)), T.v2.set(s, s * 0.8, s)); this.puffMesh.setMatrixAt(p.k, T.m); }
+    this.puffMesh.instanceMatrix.needsUpdate = true;
+  };
+
+  // ---- the camera: a thin ink outline on silhouettes and creases, a gentle clean grade, a soft vignette
+  R.buildPost = function () {
+    const b = this.renderer.getDrawingBufferSize(new THREE.Vector2()); const L = look(this);
+    const rt = new THREE.WebGLRenderTarget(b.x, b.y, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat });
+    rt.depthTexture = new THREE.DepthTexture(b.x, b.y); rt.depthTexture.type = THREE.UnsignedIntType;
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { tCol: { value: rt.texture }, tDep: { value: rt.depthTexture }, res: { value: new THREE.Vector2(b.x, b.y) }, near: { value: 0.05 }, far: { value: 700 }, ink: { value: C(L.ink) }, exposure: { value: L.exp } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: `uniform sampler2D tCol, tDep; uniform vec2 res; uniform float near, far, exposure; uniform vec3 ink; varying vec2 vUv;
+        float lin(vec2 uv){ float d = texture2D(tDep, uv).x; return (near * far) / (far - d * (far - near)); }
+        void main(){
+          vec2 px = 1.0 / res; vec3 c = texture2D(tCol, vUv).rgb;
+          float d0 = lin(vUv), dl = lin(vUv - vec2(px.x, 0.0)), dr = lin(vUv + vec2(px.x, 0.0)), du = lin(vUv + vec2(0.0, px.y)), dd = lin(vUv - vec2(0.0, px.y));
+          float e = (abs(dl + dr - 2.0 * d0) + abs(du + dd - 2.0 * d0)) / max(d0, 0.1);
+          float line = smoothstep(0.02, 0.06, e) * (1.0 - smoothstep(30.0, 140.0, d0));
+          if (d0 > far * 0.98) line = 0.0;
+          vec3 cl = texture2D(tCol, vUv - vec2(px.x, 0.0)).rgb, cr = texture2D(tCol, vUv + vec2(px.x, 0.0)).rgb, cu = texture2D(tCol, vUv + vec2(0.0, px.y)).rgb, cd = texture2D(tCol, vUv - vec2(0.0, px.y)).rgb;
+          line *= smoothstep(0.04, 0.14, length(cl - cr) + length(cu - cd));
+          // edge smoothing: blend toward the neighbours across strong colour steps (cheap AA for the flat bands)
+          vec3 avg = (cl + cr + cu + cd) * 0.25; float ce = length(cl - cr) + length(cu - cd); c = mix(c, avg, smoothstep(0.15, 0.5, ce) * 0.45);
+          c = mix(c, ink * 0.6 + c * 0.4, line * 0.75);
+          c *= exposure;
+          float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = mix(vec3(l), c, 1.08);
+          vec2 q = vUv - 0.5; c *= mix(0.86, 1.0, smoothstep(0.75, 0.25, length(q * vec2(1.1, 1.2))));
+          gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0); }`,
+      depthTest: false, depthWrite: false });
+    const scene = new THREE.Scene(); const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); quad.frustumCulled = false; scene.add(quad);
+    this.post = { rt, mat, scene, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1) };
+  };
+  const present0 = R.present;
+  R.present = function (cam) { ST.time.value = this.time || 0; this.updatePuffs(this.time || 0); return present0.call(this, cam); };
+})();
+</script>
+<script>
 // ===== Realism edition uniforms =====
 // The realism edition dresses its soldiers from period sources (平番得勝圖, 出警入蹕圖, 武備志, surviving armour) with more
 // detail per figure; the regular editions keep their own look. Same part budget: b<=40, c<=4, y<=5 per man.
@@ -7422,6 +7688,10 @@ function realGear(u) {
     case 'jigen': mingKui(0x6e757c, 0x3a3a40, brass); dingjia(0x4a2024, 0x9a9ea6, [0.15, 0.06, -0.03, -0.12]); mirror(); break;
     case 'horokutai': mingHair(); b('h', [0, 0.115, 0], [0.285, 0.045, 0.285], red); robe(0x7a3422, 0x2a2a34); bombs(); y('c', [0.12, -0.02, -0.17], [0.2, 0.2, 0.2], 0x2a2a2e); break;
     case 'ronin': if (vr % 2 === 0) hatOn(() => c('h', [0, 0.16, 0], [0.8, 0.18, 0.8], 0x9a8058)); else { mingHair(); b('h', [0, 0.08, 0], [0.29, 0.07, 0.29], 0x2a3a5a); } robe(torsoColor(u), 0x5a4a3a); if (vr % 3 !== 1) straw(); break;
+  } else if (u.look && u.look.jin) { const L = u.look, cc = L.coat || bc;
+    if (L.jin === 'helm') jinHelm(L.iron || iron, cc, L.plume || red, L.tall); else if (L.jin === 'fur') furHat(L.fur || red); else if (L.jin === 'liang') liangmao();
+    queue(); if (L.armor === 'robe') robe(cc, L.sash || 0x26262c); else dingjia(cc, L.stud || 0xc9c0a8); hoof(cc); if (L.quiver) { quiver(); sadai(); } if (L.flag) backflag(bc);
+    R.lookGear(L, b, c, y, hatOn, 'body');
   } else switch (u.type) {
     case 'hero': jinHelm(0xc9a03a, 0xe8c040, red, 1.35); queue(); dingjia(0xe8c040, 0xa8201a, [0.15, 0.06, -0.03, -0.12]); hoof(0xe8c040); b('c', [0, -0.08, -0.18], [0.6, 0.95, 0.03], 0xa8201a, [-0.06, 0, 0]); break; // the Khan's yellow, under a red cloak
     case 'samurai': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8); hoof(bc); break;
@@ -8953,8 +9223,8 @@ const SPEECH = (() => {
   const v3 = new THREE.Vector3();
   const unit = (id) => state.sim && id >= 0 ? state.sim.units[id] : null;
   function nameOf(id) {
-    if (typeof ZB !== 'undefined' && ZB && ZB.map[id] !== undefined) { const r = ZR[ZB.map[id]]; return r ? { zh: r.zh, en: r.en } : null; }
-    if (typeof ZC !== 'undefined' && ZC && ZC.map[id] !== undefined) { const r = ZR[ZC.map[id]]; return r ? { zh: r.zh, en: r.en } : null; }
+    if (typeof ZB !== 'undefined' && ZB && ZB.map[id] !== undefined) { const r = (ZB.R || ZR)[ZB.map[id]]; return r ? { zh: r.zh, en: r.en } : null; }
+    if (typeof ZC !== 'undefined' && ZC && ZC.map[id] !== undefined) { const r = (ZC.R || ZR)[ZC.map[id]]; return r ? { zh: r.zh, en: r.en } : null; }
     if (typeof SOLD !== 'undefined' && SOLD && SOLD.map && SOLD.map[id]) return SOLD.map[id].name;
     return null;
   }
@@ -9184,7 +9454,7 @@ function zTags() {
   if (!ZTAG.v) ZTAG.v = new THREE.Vector3(); let n = 0;
   if (sim && r && map && state.screen === 'game' && !state.zheDlg && r.lastMode === 'fp') {
     const cam = r.camera, W = canvas.clientWidth, H = canvas.clientHeight, h = localHero(), al = r.alpha === undefined ? 1 : Math.max(0, Math.min(1, r.alpha));
-    for (const uid in map) { const u = sim.units[uid]; if (!u || u.dead || (h && +uid === h.id)) continue; const rr = ZR[map[uid]]; if (!rr || rr.k === 'me') continue;
+    for (const uid in map) { const u = sim.units[uid]; if (!u || u.dead || (h && +uid === h.id)) continue; const rr = ((ZB ? ZB.R : ZC && ZC.R) || ZR)[map[uid]]; if (!rr || rr.k === 'me') continue;
       if (typeof SPEECH !== 'undefined' && SPEECH.speaking && SPEECH.speaking(+uid)) continue;
       const v = ZTAG.v.set(u.px + (u.x - u.px) * al, u.py + (u.y - u.py) * al + (u.mounted ? 3.1 : 2.45), u.pz + (u.z - u.pz) * al); const d = cam.position.distanceTo(v); v.project(cam);
       if (v.z > 1 || Math.abs(v.x) > 1 || Math.abs(v.y) > 1) continue; const look = Math.abs(v.x) < 0.07 && Math.abs(v.y) < 0.2 && d < 32;
@@ -9211,12 +9481,17 @@ const ZR = [ // the file, in the order of the duck team's places (YY_ROLE)
   { k: 'du', zh: '杜阿九', en: 'Du Ajiu', role: 'trident', t: 'trident' },
   { k: 'zhu', zh: '朱胖子', en: 'Fatty Zhu', role: 'cook', t: 'cook · 伙夫' },
 ];
-const ZKEY = 'mingZhe';
+let ZKEY = 'mingZhe';
+// other story campaigns (shenji.js …) reuse this machinery: while one is running it sets ZKEY to its own save and fills
+// ZHOOK with its own talk / sleep / finish / speaker names / camp chatter
+const ZHOOK = {};
 let ZS = null, ZB = null, ZC = null; // save, battle mapping, camp mapping
 function zLoad() { try { return JSON.parse(localStorage.getItem(ZKEY) || 'null'); } catch (e) { return null; } }
 function zSave() { try { localStorage.setItem(ZKEY, JSON.stringify(ZS)); } catch (e) { } }
 function zFresh(name) { const s = { v: 1, stage: 'camp0', name: name || { zh: '阿明', en: 'Aming' }, alive: {}, fate: {}, bond: {}, talked: {}, flags: {}, me: 'me' }; for (const r of ZR) { s.alive[r.k] = true; s.bond[r.k] = 0; } return s; }
-const zRow = (k) => ZR.find(r => r.k === k);
+// the roster in play: another campaign's (ZB.R / ZC.R, set by jin.js or shenji.js) or the Zhejiang file
+const zRos = () => (ZB && ZB.R) || (ZC && ZC.R) || ZR;
+const zRow = (k) => zRos().find(r => r.k === k);
 const zName = (k) => k === 'me' ? ZS.name : zRow(k);
 
 // ---------- cards: exposition between scenes ----------
@@ -9241,6 +9516,7 @@ const INTRO = [
 // ---------- dialogue: who says what, the night before and the night after ----------
 // each topic: q (what you say), a: lines [zh, en], bond, flag
 function zTalk(k, night) {
+  if (ZHOOK.talk) return ZHOOK.talk(k, night);
   if (night >= 2) return zTalk2(k, night);
   const S0 = ZS, dead = (x) => !S0.alive[x], lost = ZR.filter(r => !r.ch && r.k !== 'me' && r.k !== k && !S0.alive[r.k]).map(r => r.zh);
   if (night === 0) return ({
@@ -9344,7 +9620,7 @@ function zLook() {
   if (Math.hypot(h.x - ZC.bed[0], h.z - ZC.bed[1]) < 1.9) return { bed: true };
   let best = null, bd = 0.5; const fx = Math.sin(Input.yaw), fz = Math.cos(Input.yaw);
   for (const u of sim.units) { if (!u.camp) continue; const dx = u.x - h.x, dz = u.z - h.z, d = Math.hypot(dx, dz); if (d > 3.4 || d < 0.3) continue; const off = 1 - (dx * fx + dz * fz) / d; if (off < bd) { bd = off; best = u; } }
-  return best ? { u: best, k: ZR[best.ci].k } : null;
+  return best ? { u: best, k: zRos()[best.ci].k } : null;
 }
 function zheKeyE() {
   if (!ZC || !state.sim || !state.sim.mission || !state.sim.mission.camp) return false;
@@ -9353,6 +9629,7 @@ function zheKeyE() {
   zDialog(t.k, t.u); return true;
 }
 function zSleep() {
+  if (ZHOOK.sleep) return ZHOOK.sleep();
   if (ZC.night >= 2) return zSleep2();
   if (ZC.night === 0) { ZS.stage = 'battle1'; zSave(); zCards([{ title: '黎明 · Dawn', year: 'April 1619', p: ['Drums before light. The column breaks camp and climbs on into the valleys. Ahead, somewhere, is Hetu Ala; behind, the guns and the grain carts are already falling back along the track.', 'Chief Wu walks down the file, tugging straps and checking match-cord. "Twelve men," he says. "One life."'], btn: 'March →' }], () => zGo('battle1')); }
   else { ZS.stage = 'end1'; zSave(); zCards([{ title: '第一章終 · End of Chapter One', year: 'Abudali Pass, April 1619', p: [`${ZR.filter(r => r.k !== 'me' && ZS.alive[r.k]).length} of your file sleep around the embers. In the morning you will walk south out of the mountains with the remnants of Liu Ting's army.`, 'What is left of the southern troops is spread among the northern garrisons. Your file is sent to Tieling, a walled town on the road between Shenyang and Kaiyuan.'], zh: '間章 · 開原道 · The Kaiyuan road, summer 1619', btn: 'Summer →' }], () => { zGo('kai'); }); }
@@ -9386,9 +9663,9 @@ document.addEventListener('keydown', (e) => { // the dialogue panel takes the ke
 // ---------- in battle ----------
 function zheSay(ev) { // scripted lines come out of a man's mouth when you are near enough to hear him; otherwise by runner
   const sim = state.sim, h = localHero(); if (!ZB) return false;
-  const W = { liu: ['劉綎', 'General Liu Ting'], chief: ['吳老栓', 'Chief Wu'], fang: ['方秀才', 'Fang the Scholar'], lookout: ['', 'Lookout'], soldier: ['', 'A soldier'], rider: ['', 'A rider in Ming colours'], qi: ['戚金', 'General Qi Jin'], chen: ['陳策', 'General Chen Ce'], sichuan: ['周敦吉', 'Zhou Dunji of the White Poles'], col: ['', 'The column officer'], folk: ['', 'A woman from Kaiyuan'] }[ev.who] || ['', ev.who];
-  let id = -1; const zi = ZR.findIndex(r => r.k === ev.who && r.k !== 'me' && !r.guest);
-  if (zi >= 0) { for (const uid in ZB.map) if (ZB.map[uid] === zi && sim.units[uid] && !sim.units[uid].dead && !sim.units[uid].wounded) id = +uid; if (id >= 0) { W[0] = ZR[zi].zh; W[1] = ZR[zi].en; } else { W[0] = ''; W[1] = 'A soldier'; } }
+  const W = { liu: ['劉綎', 'General Liu Ting'], chief: ['吳老栓', 'Chief Wu'], fang: ['方秀才', 'Fang the Scholar'], lookout: ['', 'Lookout'], soldier: ['', 'A soldier'], rider: ['', 'A rider in Ming colours'], qi: ['戚金', 'General Qi Jin'], chen: ['陳策', 'General Chen Ce'], sichuan: ['周敦吉', 'Zhou Dunji of the White Poles'], col: ['', 'The column officer'], folk: ['', 'A woman from Kaiyuan'] }[ev.who] || (ZHOOK.who && ZHOOK.who[ev.who]) || ['', ev.who];
+  let id = -1; const ZRR = zRos(), zi = ZRR.findIndex(r => r.k === ev.who && r.k !== 'me' && !r.guest);
+  if (zi >= 0) { for (const uid in ZB.map) if (ZB.map[uid] === zi && sim.units[uid] && !sim.units[uid].dead && !sim.units[uid].wounded) id = +uid; if (id >= 0) { W[0] = ZRR[zi].zh; W[1] = ZRR[zi].en; } else { W[0] = ''; W[1] = 'A soldier'; } }
   else if (ev.who === 'qi' && sim.mg.zhe && sim.mission.ch === 2) id = sim.players[sim.mg.zhe.p].heroId;
   else if (ev.who === 'liu') { const g = sim.mg.liu; id = g ? sim.players[g.p].heroId : -1; }
   else if (sim.mg[ev.who]) { const g = sim.mg[ev.who]; id = sim.players[g.p].heroId; }
@@ -9401,6 +9678,7 @@ function zheSay(ev) { // scripted lines come out of a man's mouth when you are n
 }
 function zheEvent(ev) {
   const sim = state.sim; if (!ZB || !sim || !sim.mission || !sim.mission.soldier) return; const me = sim.players[state.localIdx];
+  if (ZHOOK.event) ZHOOK.event(ev);
   if (ev.t === 'mkill' && ev.gid === 'zhe' && ZB.ch2 && !ZB.chK) { MUSIC.stop(); setTimeout(() => { if (state.sim === sim && !state.ended) { MUSIC.play('battle'); MUSIC.setIntensity(0.35); } }, 12000); } // Qi Jin falls: the war drums stop, and for a while there is only the fighting
   if (ev.t === 'zpromote' && ev.p === state.localIdx && ZB.ch2) { state.fpSel = null; banner('你領隊 · Your file', 'You lead the file: F follow me / H halt / C charge / Z form up where you look', 6); }
   else if (ev.t === 'zpromote' && ev.p === state.localIdx) { state.fpSel = null; const q = sim.squads[ev.sq]; const w = q.unitIds.map(id => sim.units[id]).find(u => !u.dead && u.ctrl < 0 && !u.wounded);
@@ -9410,7 +9688,7 @@ function zheEvent(ev) {
     SPEECH.say(ev.id, '我的腿……走不了了！', 'My leg... I can\'t walk!', { prio: 3, dur: 4 }); toast(`${n ? n.zh + ' ' + n.en : 'A man of your file'} is hit and can't walk. Get to him and press E to get him up`); }
   else if (ev.t === 'zhelp' && ev.id === ZB.wounded) { ZS.flags[ZB.chK ? 'helpedK' : ZB.ch2 ? 'helped2' : 'helped6'] = true; feed(`You get ${(SPEECH.nameOf(ev.id) || { en: 'him' }).en}'s arm over your shoulder`, true); }
   else if (ev.t === 'zcarry' && ev.p === state.localIdx) { const k = ZB.map[ev.id]; ZB.fell = true; const prev = ZB.cur; if (prev && ZS.alive[prev] !== false) { ZB.deadMe = ZB.deadMe || []; ZB.deadMe.push(prev); }
-    ZB.cur = k !== undefined ? ZR[k].k : 'stranger'; const n = SPEECH.nameOf(ev.id); const h = sim.units[ev.id]; if (h) { Input.yaw = h.yaw; Input.pitch = 0; }
+    ZB.cur = k !== undefined ? zRos()[k].k : 'stranger'; const n = SPEECH.nameOf(ev.id); const h = sim.units[ev.id]; if (h) { Input.yaw = h.yaw; Input.pitch = 0; }
     toast(n ? `You fall. The fight goes on — you are ${n.zh} ${n.en} now` : 'You fall. The fight goes on — you are another man of the column now'); }
 }
 function zheObjLines() {
@@ -9421,6 +9699,7 @@ function zheObjLines() {
   return s;
 }
 function zheFinish(winner) {
+  if (ZHOOK.finish) return ZHOOK.finish(winner);
   if (ZB && state.sim.mission && state.sim.mission.ch === 2) return zheFinish2(winner);
   if (ZB && state.sim.mission && state.sim.mission.ch === 'k') return zheFinishK(winner);
   const sim = state.sim, h = localHero(); if (!ZB) return; const M = sim.mission, z = sim.missionZone('mouth'); const won = winner === M.side;
@@ -9459,7 +9738,7 @@ function zGrid(dt) {
   ZG.el.hidden = false; ZG.t -= dt; if (ZG.t > 0) return; ZG.t = 0.2;
   const h = localHero(), ids = Object.keys(ZB.map).map(Number).sort((a, b) => ZB.map[a] - ZB.map[b]);
   for (const uid of ids) {
-    const rr = ZR[ZB.map[uid]]; if (!rr) continue; let c = ZG.cells[uid];
+    const rr = (ZB.R || ZR)[ZB.map[uid]]; if (!rr) continue; let c = ZG.cells[uid]; // ZB.R: another campaign's roster (jin.js, shenji.js)
     if (!c) { c = document.createElement('div'); c.className = 'zc'; c.innerHTML = '<i></i><em></em><b></b><u><s></s></u>'; ZG.el.appendChild(c); ZG.cells[uid] = c; c.children[2].textContent = rr.zh; c.title = rr.en; }
     const u = sim.units[uid], f = c.firstChild;
     if (!u) { if (f._uid !== -1) setFaceZ(f, null); c.className = 'zc miss'; c.children[1].textContent = '?'; continue; }
@@ -9488,12 +9767,12 @@ function zheHUD(dt) {
   if (sim && sim.mission && sim.mission.camp) $('status').style.visibility = 'hidden';
   if (!sim || !sim.mission || !sim.mission.camp || !ZC || state.zheDlg) { if (pr) pr.hidden = true; return; }
   if (!pr) { pr = document.createElement('div'); pr.id = 'zhePrompt'; document.body.appendChild(pr); }
-  const t = zLook(); pr.hidden = !t; if (t) pr.innerHTML = t.bed ? '<kbd>E</kbd>Lie down on your bedroll' + (ZC.night ? '' : ' — march at dawn') : `<kbd>E</kbd>Talk to ${ZR[t.u.ci].zh} ${ZR[t.u.ci].en}`;
+  const t = zLook(); pr.hidden = !t; if (t) pr.innerHTML = t.bed ? '<kbd>E</kbd>Lie down on your bedroll' + (ZC.night ? '' : ' — march at dawn') : `<kbd>E</kbd>Talk to ${zRos()[t.u.ci].zh} ${zRos()[t.u.ci].en}`;
   // the camp murmurs: men talk to each other when you pass
   ZC.chatT -= dt; if (ZC.chatT <= 0) { ZC.chatT = 7 + Math.random() * 6; const h = localHero(); if (!h) return; const near = sim.units.filter(u => u.camp && Math.hypot(u.x - h.x, u.z - h.z) < 14); if (!near.length) return; const u = near[Math.floor(Math.random() * near.length)];
     const P0 = [['這鬼地方，四月還下雪。', 'Snow in April. What a place.'], ['明天走多少里？', 'How many li tomorrow?'], ['聽說赫圖阿拉的城是木頭的。', 'They say the walls of Hetu Ala are made of logs.'], ['腳上的凍瘡又裂了。', 'My chilblains have split open again.'], ['誰還有菸葉？', 'Anyone got tobacco?'], ['義烏這時候該插秧了。', 'Back in Yiwu they\'ll be planting the rice now.']];
     const P1 = [['……', '...'], ['火別讓它滅了。', 'Don\'t let the fire go out.'], ['明天往南走。', 'Tomorrow we go south.'], ['我閉上眼睛就看見西嶺上的旗。', 'When I close my eyes I see the banners on the west ridge.']];
-    const PL = ZC.night === 2 ? ZP2 : ZC.night === 3 ? ZP3 : ZC.night ? P1 : P0; const L = PL[Math.floor(Math.random() * PL.length)]; SPEECH.say(u.id, L[0], L[1], { prio: 0, cool: 10 }); }
+    const PL = ZHOOK.chatter ? ZHOOK.chatter(ZC.night) : ZC.night === 2 ? ZP2 : ZC.night === 3 ? ZP3 : ZC.night ? P1 : P0; const L = PL[Math.floor(Math.random() * PL.length)]; SPEECH.say(u.id, L[0], L[1], { prio: 0, cool: 10 }); }
 }
 function zMenu() {
   const s = zLoad(); const b = $('btnZhe'), nb = $('btnZheNew'); if (!b) return;
@@ -9718,6 +9997,989 @@ function zheFinish2(winner) {
   ], () => zGo('camp3')); };
 }
 
+
+// ===================== 道 · On the road: short scenes between the camps and the battles (story-road) =====================
+// You march with your file. The men talk in twos and threes, and the talk knows who came out of the last fight and who did
+// not; now and then one of them turns to you (E to answer). A handful of raiders tests the column. Enter (twice) marches on.
+// Low stakes: in these scenes a man of the file is knocked down, never killed (the sim's `soft` missions).
+const ZRV = ['he', 'luo', 'lou', 'fang', 'wang', 'jin', 'ye', 'du', 'zhu', 'liu6'], ZRN = ['xiaoman', 'bao', 'shao'];
+const zrAny = (list) => ({ r: list }); // a slot filled by any one of these, at random
+// what a man was like, for the men who never knew him
+const ZTRAIT = {
+  liu6: ['十六歲，扛著一丈五的狼筅，從來不往後退。', 'Sixteen, carrying a fifteen-foot brush, and he never once stepped back.'],
+  lou: ['他懷裡揣著一封信，一直沒寄。', 'He carried a letter inside his coat, and never sent it.'],
+  luo: ['骰子不離手，嘴不饒人，刀也不饒人。', 'Never without his dice. A sharp tongue and a sharper blade.'],
+  jin: ['他總說山裡有東西。他說對了。', 'He always said there was something in those hills. He was right.'],
+  ye: ['他有個女兒。他沒看見她長大。', 'He had a daughter. He never saw her grow up.'],
+  wang: ['力氣大，飯量也大，可最後一口餅也肯分給你。', 'Strong as an ox and always hungry, and he would still give you his last bite.'],
+  fang: ['讀過書，什麼都懂，就是不懂怎麼怕。', 'He had read books and understood everything, except how to be afraid.'],
+  he: ['打過播州的老兵。我的盾是他教的。', 'A Bozhou veteran. He taught me the shield.'],
+  du: ['一心想拿一顆首級，回家娶春花。', 'All he wanted was one head, and to go home and marry Chunhua.'],
+  zhu: ['伙夫。粥稀，可從來沒讓我們餓著。', 'The cook. Thin gruel, but he never let us go hungry.'],
+  xiaoman: ['樓阿根的弟弟。倔，跟他哥一樣。', 'Lou Agen\'s little brother. Stubborn, like his brother.'],
+  bao: ['寧波撐船的。說什麼都是一根長桿子。', 'A Ningbo boatman. Everything was just a long pole to him.'],
+  shao: ['十七歲。這回是真的十七。', 'Seventeen. Really seventeen.'],
+};
+// the dead of the file, as the save remembers them (never the living)
+function zrDead() { return ZR.filter(r => !r.guest && r.k !== 'me' && r.k !== 'wu' && r.k !== ZS.me && ZS.alive[r.k] === false && (!r.ch || (ZS.fate2 && ZS.fate2[r.k]))); }
+function zrDead2() { const F = ZS.fate2 || {}; return ZR.filter(r => !r.guest && r.k !== 'me' && r.k !== ZS.me && F[r.k] && F[r.k] !== 'out' && ZS.alive[r.k] === false); }
+const ZROAD = {
+  A: { mission: 'roadA', next: 'camp0',
+    camp: { fires: [[-5, 124], [6, 119]], props: [['wagon', -7, 46, 1.2], ['log', 5, 30, 0.4], ['log', 4, 33, 1.5], ['banner', 3, 128, 0, '劉'], ['rack', -6, 116, 0.3], ['shields', 8, 114, 0.6]] },
+    card: ['March 1619. Liu Ting\'s column climbs north into the Jin hills. You march as a shield man in Chief Wu\'s file. Keep your place and listen to the men around you. E answers when one of them speaks to you; Enter (twice) marches on.', '寬甸道 · The Kuandian road'],
+    winT: '暮 · Dusk', winX: 'The column made camp in a fold of the hills.',
+    after: [{ title: '暮 · Dusk', year: 'March 1619', p: ['The column makes camp in a fold of the hills. The scouts have seen how many you are; somewhere ahead, someone is counting.', 'Chief Wu sets two extra sentries, and walks down the file one more time before dark.'], btn: 'Night →' }],
+    go: () => zGo('camp0'),
+    beats: [
+      { ph: 0, t: 5, who: { w: 'wu', l: 'luo', s: 'liu6' }, lines: [['w', '聽鼓就走，聽金就停。戚爺爺的規矩：行軍不許亂，不許喧嘩，不許私自離隊取水。', 'Drum, we march. Gong, we halt. Marshal Qi\'s rules: no straggling, no shouting, and nobody leaves the file to fetch water.'], ['l', '不許喧嘩？那駱鐵頭只好閉嘴了。', 'No shouting? Then Luo Tietou had better shut his mouth.'], ['s', '嘿嘿。', 'Heh.']] },
+      { ph: 0, t: 18, who: { s: 'liu6', l: 'luo' }, lines: [['s', '這狼筅扛一天，比打一仗還累。', 'A day of carrying this brush is worse than a battle.'], ['l', '跟我換根長槍？那你就得站前頭了。', 'Want to trade it for a spear? Then you\'d be standing in front.'], ['s', '……那我還是扛著吧。', '...I\'ll keep carrying it.']] },
+      { ph: 0, t: 31, who: { f: 'fang', h: 'he' }, lines: [['f', '出寬甸已經九天了。地圖上說，再翻三道嶺就是赫圖阿拉。', 'Nine days out of Kuandian. The map says three more ridges and we reach Hetu Ala.'], ['h', '地圖不打仗。', 'Maps don\'t fight.']],
+        reply: { q: 'Ask Fang where the other columns are', me: ['方秀才，別的幾路到哪了？', 'Fang, where are the other columns now?'], a: [['f', '沒有消息。這山裡，連信鴿都飛不過來。', 'No word. Not even a pigeon gets through these hills.']], bond: 'f' } },
+      { ph: 0, t: 44, who: { w: 'wang', z: 'zhu' }, lines: [['w', '胖子，鍋裡還有沒有？', 'Fatty, anything left in the pot?'], ['z', '鍋在我背上，粥在你夢裡。', 'The pot\'s on my back. The gruel\'s in your dreams.']] },
+      { ph: 1, t: 3, who: { w: 'wu', z: 'zhu' }, lines: [['w', '井水不許生喝。胖子，燒開了再分。金人退的時候，常往井裡下毒。', 'Nobody drinks raw from that well. Fatty, boil it, then share it out. When the Jin pull back they often foul the wells.'], ['z', '曉得，曉得。燒開了，一人一瓢。', 'I know, I know. Boiled, one ladle each.']] },
+      { ph: 1, t: 13, who: { j: 'jin', y: 'ye' }, lines: [['j', '門都沒閂。灶還是溫的。他們剛走不久。', 'The doors aren\'t even barred. The stove is still warm. They left only just now.'], ['y', '……帶著孩子走的吧。院子裡有個撥浪鼓。', '...They left with the children. There\'s a rattle-drum in the yard.']],
+        reply: { q: 'Tell Ye San to leave the rattle-drum where it is', me: ['放著吧，別動人家的東西。', 'Leave it. Don\'t touch their things.'], a: [['y', '嗯。……我女兒也有一個。', 'Mm. ...My daughter has one too.']], bond: 'y' } },
+      { ph: 1, t: 27, who: { d: 'du', h: 'he' }, lines: [['d', '空村子，連隻雞都沒留。這算什麼仗？', 'An empty village, not even a chicken left. What kind of war is this?'], ['h', '堅壁清野。播州的人也這麼幹：糧帶走，人躲進山，等我們走累了再來。', 'Strip the land and hide in the hills. They did it at Bozhou too: take the grain, vanish, and come back when we are worn out.']] },
+      { ph: 2, t: 5, who: { s: 'liu6' }, lines: [['s', '插住——插住——', 'Plant it — plant it —']] },
+      { ph: 3, t: 2, who: { l: 'luo', w: 'wu', s: 'liu6' }, lines: [['l', '跑了！看了看我們有多少人就跑了。', 'They\'re off! Took one look at how many we are and ran.'], ['w', '他們不是來打的，是來數的。今晚多放兩個哨。', 'They didn\'t come to fight. They came to count. Two extra sentries tonight.']],
+        reply: { q: 'Ask Chen Xiaoliu if he is all right', me: ['小六，沒事吧？', 'Xiaoliu, you all right?'], a: [['s', '沒……沒事。手在抖。可是我插住了一匹。', 'I\'m... fine. My hands are shaking. But I stopped one.']], bond: 's' } },
+      { ph: 3, t: 20, who: { f: 'fang' }, lines: [['f', '他們知道我們在哪。我們不知道他們在哪。', 'They know where we are. We don\'t know where they are.']] },
+      { ph: 3, t: 32, who: { o: 'lou' }, lines: [['o', '（樓阿根低聲哼起義烏的山歌。）', '(Lou Agen hums a Yiwu hill song under his breath.)']] },
+    ] },
+  B: { mission: 'roadB', next: 'camp2',
+    camp: { fires: [[-6, 124], [5, 121]], props: [['wagon', 6, -30, 0.15], ['banner', -3, 128, 0, '戚'], ['wagon', 10, 112, 1.4], ['wagon', -10, 112, -1.4], ['rack', 4, 126, 0]] },
+    card: ['The third month of 1621. The relief army marches north from Liaoyang toward Shenyang. You lead your file in the column. E answers when one of your men speaks to you; Enter (twice) marches on.', '遼陽道 · North from Liaoyang'],
+    winT: '渾河 · The Hun River', winX: 'The relief army reached the Hun River by evening.',
+    after: [{ title: '渾河 · The Hun River', year: 'The third month of 1621', p: ['By evening the relief army reaches the Hun River. The Sichuan White Poles make camp by the bridge; Qi Jin\'s Zhejiang men dig in five li to the south, behind wagons and a ditch.', 'Somewhere north of the river, the sky over Shenyang is red.'], btn: 'Night →' }],
+    go: () => zGo('camp2'),
+    beats: [
+      { ph: 0, t: 5, who: { s: 'shao', v: zrAny(ZRV) }, lines: [['s', '隊長，北邊是什麼樣的？', 'Chief, what is it like up north?']],
+        reply: { q: 'Tell Shao Afu what the north is like', me: ['冷。山多。金人的馬比你想的快。', 'Cold. Hills. Their horses are faster than you think.'], a: [['s', '……比我想的快多少？', '...How much faster than I think?'], ['v', '快到你來不及想。', 'Faster than you can think it.']], bond: 's' } },
+      { ph: 0, t: 19, who: { b: 'bao', x: 'xiaoman' }, lines: [['b', '這條路比寧波的河還彎。', 'This road bends more than the rivers at Ningbo.'], ['x', '你又沒在這條路上撐過船。', 'You never poled a boat up this road.'], ['b', '撐過就好了，至少能坐著。', 'I wish I had. At least I\'d be sitting down.']] },
+      { ph: 0, t: 33, who: { v: zrAny(ZRV), n: zrAny(ZRN) }, make: () => { const d = zrDead()[0];
+        if (!d) return { lines: [['v', '吳隊長要是還在，這會兒該罵我們走得慢了。', 'If Chief Wu were still here, he\'d be cursing us for walking slow.'], ['n', '吳隊長？', 'Chief Wu?'], ['v', '阿布達里岡。他老說：十二個人，一條命。', 'Abudali Pass. He always said: twelve men, one life.']] };
+        const T = ZTRAIT[d.k] || ['跟你一樣，什麼都不懂，可從來不往後退。', 'Like you. Knew nothing, and never once stepped back.'];
+        return { lines: [['v', `${d.zh}要是還在，這會兒該罵我們走得慢了。`, `If ${d.en} were still with us, he'd be cursing us for walking slow.`], ['n', '他是什麼樣的人？', 'What was he like?'], ['v', T[0], T[1]]] }; } },
+      { ph: 0, t: 47, who: { v: zrAny(ZRV) }, lines: [['v', '兩年前也是這個月，我們往北走。', 'Two years ago, this same month, we were walking north.']] },
+      { ph: 1, t: 3, who: { p: ['wang', 'bao', 'he', 'luo'], q: ['bao', 'xiaoman', 'shao', 'du'] }, lines: [['p', '讓開，讓我來。一、二——', 'Out of the way, let me at it. One, two —'], ['q', '起！', 'Heave!']] },
+      { ph: 1, t: 10, who: { c: ['zhu', 'shao', 'jin', 'du'] }, lines: [['c', '輪子底下墊草，墊草！', 'Straw under the wheel — straw!']] },
+      { ph: 1, t: 17, who: { v: zrAny(ZRV.concat(ZRN)) }, lines: [['v', '動了！動了！', 'It\'s moving! It\'s moving!']],
+        reply: { q: 'Order the men back into file', me: ['歸隊！別在路上站著。', 'Back in file! Don\'t stand about on the road.'], a: [['v', '是，隊長。', 'Yes, chief.']] } },
+      { ph: 2, t: 4, who: { s: ['shao', 'xiaoman', 'bao'], f: ['fang', 'he', 'lou', 'luo', 'wang'] }, lines: [['s', '這麼多人……他們從哪來的？', 'So many people... where are they from?'], ['f', '瀋陽北邊的屯子。金人一來，屯子就空了。', 'The farm villages north of Shenyang. When the Jin come, the villages empty.']] },
+      { ph: 2, t: 15, who: { v: zrAny(ZRV) }, lines: [['v', '穿著我們的號衣，搶自己人。', 'Wearing our coats, and robbing our own.']] },
+      { ph: 3, t: 2, who: { x: ['xiaoman', 'shao', 'bao'], v: zrAny(ZRV) }, lines: [['x', '那些人……也是當兵的吧？', 'Those men... they were soldiers too, weren\'t they?'], ['v', '是。跑了，就什麼都不是了。', 'They were. A man who runs is nothing at all.']],
+        reply: { q: 'Tell them: we don\'t run', me: ['我們不跑。阿布達里岡沒跑，這回也不跑。', 'We don\'t run. We didn\'t run at Abudali, and we won\'t now.'], a: [['x', '……是，隊長。', '...Yes, chief.']], bond: 'x' } },
+      { ph: 3, t: 17, who: { f: ['fang', 'he', 'lou', 'luo', 'jin'] }, lines: [['f', '前面就是渾河。過了河，就是瀋陽。', 'Up ahead is the Hun River. Across it, Shenyang.']] },
+    ] },
+  C: { mission: 'roadC', next: 'end2',
+    camp: { fires: [[-2, 3], [-7, 126], [7, 126]], props: [['banner', -9, 129, 0, '明'], ['banner', 9, 129, 0, '袁'], ['rack', 3, 12, 1.2], ['log', -3, 6, 0.2], ['shields', 4, 3, 0.8]] },
+    pre: [{ title: '五年 · Five years', year: '1621 – 1625', p: ['Liaoyang fell days after the Hun River, and with it everything east of the Liao River. The next winter Guangning was lost too, and the Ming fell back on a line of forts along the Bohai coast toward Shanhai Pass.', 'What was left of your file was kept on in the coastal garrisons, mending walls and drilling the new men.'], btn: 'Winter 1625 →' }],
+    card: ['Winter 1625. Every fort beyond the Pass is being abandoned on the new commissioner\'s orders — except one. Your file walks the coast road to Ningyuan by night. E answers; Enter (twice) marches on.', '寧遠道 · The road to Ningyuan'],
+    winT: '寧遠 · Ningyuan', winX: 'Your file walked in through the gate of Ningyuan before dawn.',
+    after: [{ title: '寧遠 · Ningyuan', year: 'The twelfth month of 1625', p: ['That autumn the new commissioner, Gao Di, ordered every fort beyond Shanhai Pass abandoned. The garrisons burned what they could not carry and streamed back toward the Pass, and the people of the forts went with them; many died on the road in the cold.',
+      'One man refused. Yuan Chonghuan, the intendant at Ningyuan, stayed with fewer than twenty thousand men in a small walled town on the Bohai coast, far from any help.', 'Your file walks in through the gate before dawn. In a few weeks Nurhaci will cross the frozen Liao River with the Eight Banners.'],
+      zh: '我寧前道也，官此，當死此，我必不去。— Yuan Chonghuan, in the History of Ming', btn: 'To be continued →' }],
+    go: () => { if (typeof zStart3 === 'function') zStart3('ch3'); else location.reload(); },
+    beats: [
+      { ph: 0, t: 5, who: { a: zrAny(ZRV.concat(ZRN)), b: zrAny(ZRV.concat(ZRN)), f: ['fang', 'he', 'lou', 'luo', 'bao', 'xiaoman', 'shao', 'wang', 'jin', 'ye', 'du', 'zhu', 'liu6'] }, lines: [['a', '五年了。遼陽沒了，廣寧也沒了。', 'Five years. Liaoyang is gone. Guangning too.'], ['b', '高經略說關外不守了，全撤回山海關。', 'Commissioner Gao says nothing beyond the Pass is to be held. Everyone back to Shanhai Pass.'], ['f', '只有袁道台不走。他說：「我寧前道也，官此，當死此，我必不去。」', 'Only Intendant Yuan won\'t go. He said: "I am the intendant of Ning-Qian. My post is here, and here I will die. I will not leave."']] },
+      { ph: 0, t: 24, who: { v: zrAny(ZRV.concat(ZRN)), w: zrAny(ZRV.concat(ZRN)) }, make: () => { const d = zrDead2()[0];
+        if (!d) return { lines: [['v', '渾河那天，我們一個都沒丟。', 'At the Hun River we didn\'t lose a single man.'], ['w', '五年了，就這件事，我服你。', 'Five years, and that\'s the one thing I\'ll give you.']] };
+        return { lines: [['v', `渾河那天，${d.zh}……`, `That day at the Hun River, ${d.en}...`], ['w', '別說了。看路。', 'Don\'t. Watch the road.']],
+          reply: { q: `Say ${d.en}'s name`, me: [`${d.zh}。我記得。`, `${d.en}. I remember.`], a: [['v', '我們都記得。', 'We all remember.']] } }; } },
+      { ph: 0, t: 40, who: { s: ['bao', 'xiaoman', 'shao', 'luo', 'jin'] }, lines: [['s', '海風好冷。寧波的海是暖的。', 'The sea wind is so cold. The sea at home is warm.']] },
+      { ph: 1, t: 15, who: { v: zrAny(ZRV.concat(ZRN)) }, lines: [['v', '別開銃！看清楚再說。', 'Don\'t fire! Look first.']] },
+      { ph: 1, t: 24, who: { l: ['luo', 'du', 'wang', 'bao'], s: ['shao', 'xiaoman', 'liu6', 'ye'] }, lines: [['l', '鹿都比人膽子大，敢在這地方走。', 'Even the deer are braver than men, walking about out here.'], ['s', '嘿。', 'Heh.']],
+        reply: { q: 'Tell the sentries to stay sharp', me: ['別鬆勁。鹿不會半夜來，人會。', 'Stay sharp. Deer don\'t come at midnight. Men do.'], a: [['l', '是。', 'Yes.']] } },
+      { ph: 2, t: 3, who: { v: zrAny(ZRV.concat(ZRN)) }, lines: [['v', '別讓他們摸到路上來！', 'Don\'t let them onto the road!']] },
+      { ph: 3, t: 2, who: { v: zrAny(ZRV.concat(ZRN)), f: ['fang', 'he', 'lou', 'luo', 'bao', 'xiaoman', 'shao'] }, lines: [['v', '他們回去報信了。大軍不遠了。', 'They\'ve gone back to report. The main army isn\'t far behind.'], ['f', '那就進城吧。寧遠的牆，是袁道台這幾年一塊磚一塊磚修起來的。', 'Then into the town. Intendant Yuan has spent these years building Ningyuan\'s walls up brick by brick.']] },
+      { ph: 3, t: 22, who: { a: zrAny(ZRV.concat(ZRN)) }, lines: [['a', '看——城上有燈。', 'Look — lights on the wall.']] },
+    ] },
+};
+const ZRD = { on: false, key: '', q: [], qT: 0, wait: null, prompt: null, done: {}, skipT: 0, el: null, hint: null, last: 0 };
+// the living man of the file for a slot: a roster key, a list (the first of them on his feet), or zrAny(list) (any of them)
+function zrUnit(spec, taken) {
+  const sim = state.sim, h = localHero(); if (spec === 'me') return h && !h.dead ? h.id : -1;
+  let keys = typeof spec === 'string' ? [spec] : spec.r ? spec.r.slice().sort(() => Math.random() - 0.5) : spec;
+  for (const k of keys) for (const uid in ZB.map) { const r = ZR[ZB.map[uid]], u = sim.units[uid]; if (!r || r.k !== k || !u || u.dead || u.downed || u.wounded || taken[uid] || (h && +uid === h.id)) continue; return +uid; }
+  return -1;
+}
+function zrSay(id, zh, en) {
+  const sim = state.sim, u = sim && sim.units[id]; if (!u || u.dead || u.downed) return; const h = localHero(); const me = h && id === h.id;
+  SPEECH.say(id, zh, en, { prio: 3, who: me ? `${ZS.name.zh} ${ZS.name.en}` : undefined, dur: Math.min(7.5, 2.8 + en.length / 20) });
+}
+function zrQueue(lines, ids) { for (const [s, zh, en] of lines) { const id = s === 'me' ? (localHero() || {}).id : ids[s]; if (id === undefined || id < 0) continue; ZRD.q.push({ id, zh, en, gap: Math.min(6.5, 2.2 + en.length / 24) }); } }
+function zrBond(ids, s) { const k = ids[s] !== undefined && ZB.map[ids[s]] !== undefined ? ZR[ZB.map[ids[s]]].k : null; if (k) { ZS.bond[k] = (ZS.bond[k] || 0) + 1; zSave(); } }
+function zRoadUI() {
+  if (!ZRD.el) { const e = document.createElement('div'); e.id = 'zroadPr'; document.body.appendChild(e); ZRD.el = e; const k = document.createElement('div'); k.id = 'zroadHint'; k.innerHTML = '<kbd>Enter</kbd> march on'; document.body.appendChild(k); ZRD.hint = k; }
+}
+function zRoadStop() { ZRD.on = false; ZRD.q.length = 0; ZRD.prompt = null; if (ZRD.el) ZRD.el.hidden = true; if (ZRD.hint) ZRD.hint.hidden = true; }
+function zRoadTick(dt) {
+  const sim = state.sim, D = ZROAD[ZRD.key]; if (!ZRD.on || !sim || !sim.mission || !sim.mission.road || !D) return;
+  if (state.ended) { zRoadStop(); return; }
+  ZRD.hint.hidden = false; if (ZRD.skipT > 0) ZRD.skipT -= dt;
+  if (ZRD.q.length) { ZRD.qT -= dt; if (ZRD.qT <= 0) { const L = ZRD.q.shift(); zrSay(L.id, L.zh, L.en); ZRD.qT = L.gap; } return; }
+  if (ZRD.qT > 0) { ZRD.qT -= dt; return; }
+  if (ZRD.wait) { ZRD.prompt = ZRD.wait; ZRD.wait = null; ZRD.prompt.t = 9; ZRD.el.innerHTML = `<kbd>E</kbd>${ZRD.prompt.q}`; ZRD.el.hidden = false; }
+  if (ZRD.prompt) { ZRD.prompt.t -= dt; if (ZRD.prompt.t <= 0) { ZRD.prompt = null; ZRD.el.hidden = true; } return; }
+  const ph = sim.mv.ph; if (ph < 0) return; const el = (sim.tick - sim.mv.t0) / 30, h = localHero(); if (!h || h.dead) return;
+  for (let i = 0; i < D.beats.length; i++) { const b = D.beats[i]; if (ZRD.done[i] || b.ph !== ph || el < b.t) continue;
+    if (el > b.t + 25) { ZRD.done[i] = 1; continue; }
+    const ids = {}, taken = {}; let ok = true; for (const s in b.who) { const id = zrUnit(b.who[s], taken); if (id < 0) { ok = false; break; } ids[s] = id; taken[id] = 1; }
+    if (!ok) continue;
+    let near = true; for (const s in ids) { const u = sim.units[ids[s]]; if (Math.hypot(u.x - h.x, u.z - h.z) > 18) near = false; } if (!near && el < b.t + 10) continue;
+    ZRD.done[i] = 1; const m = b.make ? b.make() : b; if (!m) continue;
+    zrQueue(m.lines || [], ids); if (m.reply) ZRD.wait = Object.assign({ ids }, m.reply); ZRD.qT = 0; break; }
+}
+function zRoadKey(e) {
+  if (!ZRD.on || !state.sim || !state.sim.mission || !state.sim.mission.road || state.ended || Input.cmdMode) return;
+  if (e.code === 'KeyE' && ZRD.prompt) { e.preventDefault(); e.stopImmediatePropagation(); const P = ZRD.prompt; ZRD.prompt = null; ZRD.el.hidden = true;
+    ZRD.q.push({ id: localHero().id, zh: P.me[0], en: P.me[1], gap: Math.min(6.5, 2.2 + P.me[1].length / 24) }); zrQueue(P.a, P.ids); if (P.bond) zrBond(P.ids, P.bond); ZRD.qT = 0; return; }
+  if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); const sim = state.sim, h = localHero();
+    const foe = h && sim.teamAlive[1].some(u => !u.inactive && Math.hypot(u.x - h.x, u.z - h.z) < 45);
+    if (foe) { toast('Not with the enemy this close'); return; }
+    if (ZRD.skipT <= 0) { ZRD.skipT = 3; toast('Press Enter again to march on'); return; }
+    zRoadSkip(); }
+}
+window.addEventListener('keydown', zRoadKey, true);
+function zRoadDone() { const D = ZROAD[ZRD.key]; ZS.flags['road' + ZRD.key] = 1; ZS.stage = D.next; zSave(); zRoadStop(); }
+function zRoadSkip() { const D = ZROAD[ZRD.key]; zRoadDone(); state.ended = true; zCards(D.after, D.go); }
+function zStartR(scene) {
+  ZS = zLoad(); if (!ZS) { ZS = zFresh(); }
+  const key = scene.slice(4), D = ZROAD[key]; if (!D) return;
+  $('menu').hidden = true; state.lowfx = $('lowfxIn').checked; state.fog = false;
+  if (D.pre && !ZS.flags['pre' + key]) { ZS.flags['pre' + key] = 1; zSave(); zCards(D.pre, () => zStartR(scene)); return; }
+  const lead = key !== 'A', seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: ZS.name.zh || 'You', team: 0, yyRole: lead ? 'lead' : 'shield', connected: true }];
+  startGame({ seed, battle: 'zroad', mode: 'campaign', mission: D.mission, camp: D.camp, players: pl }, 0, null, 1);
+  const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq]; const meK = lead ? (ZS.me || 'me') : 'me', meIdx = ZR.findIndex(r => r.k === meK);
+  ZB = { map: {}, sq: q.id, first: me.heroId, cur: meK, fell: false, ch2: lead, road: key };
+  const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = meIdx;
+  const file = lead ? zFile2().filter(r => ZS.alive[r.k] !== false) : ZR.filter(r => !r.ch && r.k !== 'me' && ZS.alive[r.k] !== false);
+  const left = []; for (const r of file) { const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role === r.role); if (id !== undefined) { used[id] = 1; ZB.map[id] = ZR.indexOf(r); } else left.push(r); }
+  for (const r of left) { const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role !== 'lead'); if (id !== undefined) { used[id] = 1; ZB.map[id] = ZR.indexOf(r); } }
+  for (const uid in ZB.map) zDress(sim.units[uid], ZB.map[uid]);
+  zRoadUI(); Object.assign(ZRD, { on: true, key, q: [], qT: 0, wait: null, prompt: null, done: {}, skipT: 0, last: performance.now() });
+  const loop = () => { if (state.sim !== sim || !ZRD.on) return; const now = performance.now(); zRoadTick(Math.min(0.1, (now - ZRD.last) / 1000)); ZRD.last = now; requestAnimationFrame(loop); }; requestAnimationFrame(loop);
+  setTimeout(() => storyCard(D.card[0], D.card[1]), 700);
+}
+function zheFinishR(winner) {
+  const sim = state.sim, D = ZROAD[ZB.road]; ZRD.key = ZB.road; const won = winner === sim.mission.side; zRoadDone();
+  let hurt = 0; for (const uid in ZB.map) { const u = sim.units[uid]; if (u && (u.downed || u.wounded || u.dead)) hurt++; }
+  $('resultTitle').textContent = won ? D.winT : '散 · Scattered on the road'; $('resultTitle').className = won ? 'win' : 'lose';
+  $('resultText').innerHTML = `${won ? D.winX : 'The column picked up what was left of you on the road.'}${hurt ? ` ${hurt} of your file ${hurt > 1 ? 'were' : 'was'} knocked about, and walk on bandaged.` : ''}`;
+  $('btnNext').hidden = false; $('btnNext').textContent = 'On →';
+  $('btnNext').onclick = () => { $('result').hidden = true; zCards(D.after, D.go); };
+}
+
+// ===================== 八旗 · The Plain White Niru: the same war from the Jin side =====================
+// A second story campaign, spliced into main.js's scope after zhe.js (build.sh). You are a young armoured man (披甲,
+// uksin) in a niru of Hong Taiji's Plain White Banner. It reuses the Zhejiang campaign's machinery: the soldier mission
+// in sim.js, SPEECH captions, live heads in the squad grid, name tags and the golden goal line (through the ZB.R / ZC.R
+// roster hooks in zhe.js), and cards. Its own save is `mingJin`; scenes switch by reload through `mingJinGo`.
+// Stages: c1 (camp) -> b1 (battle) -> c2 -> b2 ... -> done. The dead stay dead; new men fill the file between chapters.
+const JKEY = 'mingJin', JGO = 'mingJinGo';
+const JR = [ // the file. Index 0 is the man in the squad's first place (the bošokū while he lives)
+  { k: 'ulgen', zh: '烏勒根', en: 'Ulgen', t: 'bošokū (sergeant) · 撥什庫 · a Hada man' },
+  { k: 'me', zh: '', en: '', t: 'armoured man · 披甲' },
+  { k: 'dabsun', zh: '達布遜', en: 'Dabsun', t: 'armoured man · 16 · Alin\'s nephew' },
+  { k: 'sose', zh: '索色', en: 'Sose', t: 'archer · sable hunter' },
+  { k: 'ilan', zh: '伊蘭', en: 'Ilan', t: 'armoured man · the third son' },
+  { k: 'bahai', zh: '巴海', en: 'Bahai', t: 'armoured man · pearl diver from the Sungari' },
+  { k: 'lier', zh: '李二', en: 'Li Er', t: 'bondservant · 包衣 · taken at Fushun' },
+  { k: 'bater', zh: '巴特爾', en: 'Bater', t: 'Khorchin Mongol · a gift to the Khan' },
+  { k: 'erde', zh: '額爾德', en: 'Erde', t: 'armoured man · a son born this winter' },
+  { k: 'muktan', zh: '穆克譚', en: 'Muktan', t: 'armoured man · writes the new script' },
+  { k: 'manggu', zh: '莽古', en: 'Manggu', t: 'armoured man · never satisfied' },
+  { k: 'alin', zh: '阿林', en: 'Alin', t: 'armoured man · served since Tulun' },
+  // men who join the file between chapters, in this order, as the dead leave places
+  { k: 'tuhe', zh: '圖赫', en: 'Tuhe', t: 'new man · Ula born, 17', draft: true },
+  { k: 'wangsi', zh: '王四', en: 'Wang Si', t: 'new man · a Liaoyang Han who shaved his head', draft: true },
+  { k: 'dorji', zh: '多爾濟', en: 'Dorji', t: 'new man · Khalkha Mongol horse-breaker', draft: true },
+  { k: 'jala', zh: '扎拉', en: 'Jala', t: 'new man · Erde\'s cousin', draft: true },
+  { k: 'hife', zh: '希佛', en: 'Hife', t: 'new man · a blacksmith\'s son', draft: true },
+  { k: 'yanggu', zh: '楊古', en: 'Yanggu', t: 'new man · keeps a hawk', draft: true },
+  { k: 'kesi', zh: '克什', en: 'Kesi', t: 'new man · quiet, from the Warka', draft: true },
+  { k: 'cimbu', zh: '欽布', en: 'Cimbu', t: 'new man · sings badly', draft: true },
+  { k: 'anju', zh: '安珠', en: 'Anju', t: 'new man · his brother died at Ningyuan', draft: true },
+  { k: 'furdan', zh: '富爾丹', en: 'Furdan', t: 'new man · born the year of the Seven Grievances\' war', draft: true },
+  { k: 'sabu', zh: '薩布', en: 'Sabu', t: 'new man · a Han gunner\'s apprentice', draft: true },
+  { k: 'hoto', zh: '豁托', en: 'Hoto', t: 'new man · Hoifa orphan', draft: true },
+  // officers you meet in person
+  { k: 'tobohui', zh: '托博輝', en: 'Tobohui', t: 'captain of the niru · 牛錄額真', guest: true },
+];
+const JW = 0xe4e0d4, JSTUD = 0x7a6a50; // Plain White: white armour coats with dark iron studs
+const JLOOK = {
+  ulgen: { h: 1.04, jin: 'helm', plume: 0xb8281e, coat: JW, stud: JSTUD, brows: 'knit', beard: 'longmous', grey: true, scar: true, skin: 0xb88a62 },
+  me: { h: 1.0, jin: 'helm', coat: JW, stud: JSTUD, brows: 'thin' },
+  dabsun: { h: 0.88, jin: 'helm', coat: JW, stud: JSTUD, brows: 'high', young: true, rosy: true, skin: 0xe2bc96 },
+  sose: { h: 0.97, jin: 'liang', armor: 'robe', coat: 0x5a6a7a, sash: 0x2a2620, quiver: true, brows: 'thin', beard: 'mous', skin: 0xc49a72 },
+  ilan: { h: 0.96, jin: 'helm', coat: JW, stud: JSTUD, brows: 'high', grin: true, beard: 'stubble' },
+  bahai: { h: 1.15, jin: 'helm', coat: JW, stud: JSTUD, brows: 'thick', bulk: true, bigNose: true, skin: 0xb48a62 },
+  lier: { h: 0.95, jin: 'liang', armor: 'robe', coat: 0x4a5260, sash: 0x2a2a2e, brows: 'sad', beard: 'stubble', skin: 0xd6ae88 },
+  bater: { h: 1.02, jin: 'fur', fur: 0x2a4a8a, armor: 'robe', coat: 0x8a5a2a, sash: 0xd8b03c, quiver: true, brows: 'thick', beard: 'mous', rosy: true, skin: 0xb07a52 },
+  erde: { h: 1.0, jin: 'helm', coat: JW, stud: JSTUD, brows: 'thin', beard: 'goatee', charm: true },
+  muktan: { h: 0.98, jin: 'helm', coat: JW, stud: JSTUD, brows: 'thin', beard: 'goatee', longBeard: true, brush: true, skin: 0xdcbc98 },
+  manggu: { h: 1.03, jin: 'helm', coat: JW, stud: JSTUD, brows: 'knit', beard: 'full', patch: true },
+  alin: { h: 1.01, jin: 'helm', iron: 0x4a4e54, coat: JW, stud: JSTUD, brows: 'sad', beard: 'longmous', grey: true, longBeard: true, skin: 0xbf9670 },
+  tuhe: { h: 0.92, jin: 'helm', coat: JW, stud: JSTUD, brows: 'high', young: true, skin: 0xdcb48e },
+  wangsi: { h: 0.99, jin: 'liang', armor: 'robe', coat: 0x4a5260, sash: 0x2a2a2e, brows: 'thin', beard: 'mous', skin: 0xd8b28c },
+  dorji: { h: 1.06, jin: 'fur', fur: 0xc8281e, armor: 'robe', coat: 0x3a5a6a, sash: 0xd8b03c, brows: 'thick', rosy: true, skin: 0xa87650 },
+  jala: { h: 1.0, jin: 'helm', coat: JW, stud: JSTUD, brows: 'thin', beard: 'goatee', skin: 0xc8a07a },
+  hife: { h: 1.09, jin: 'helm', coat: JW, stud: JSTUD, brows: 'thick', bulk: true, beard: 'stubble', skin: 0xb8865e },
+  yanggu: { h: 0.97, jin: 'helm', coat: JW, stud: JSTUD, brows: 'high', grin: true, quiver: true },
+  kesi: { h: 0.94, jin: 'liang', armor: 'robe', coat: 0x5a6a7a, sash: 0x2a2620, brows: 'sad', skin: 0xc49a72 },
+  cimbu: { h: 1.02, jin: 'helm', coat: JW, stud: JSTUD, brows: 'thick', grin: true, beard: 'mous', rosy: true },
+  anju: { h: 0.96, jin: 'helm', coat: JW, stud: JSTUD, brows: 'knit', young: true, skin: 0xe0b890 },
+  furdan: { h: 1.0, jin: 'helm', coat: JW, stud: JSTUD, brows: 'thin', young: true, rosy: true },
+  sabu: { h: 0.98, jin: 'liang', armor: 'robe', coat: 0x4a5260, sash: 0x6a4a30, brows: 'thick', beard: 'stubble', skin: 0xd4aa82 },
+  hoto: { h: 0.93, jin: 'fur', fur: 0x5a3a22, coat: JW, stud: JSTUD, brows: 'sad', scar: true },
+  tobohui: { h: 1.08, jin: 'helm', iron: 0x8a6a2a, plume: 0xe8e4da, coat: JW, stud: 0xd8b03c, flag: true, brows: 'thick', beard: 'full', skin: 0xbc8e66 },
+};
+let JS = null; // the Jin save
+function jLoad() { try { return JSON.parse(localStorage.getItem(JKEY) || 'null'); } catch (e) { return null; } }
+function jSave() { try { localStorage.setItem(JKEY, JSON.stringify(JS)); } catch (e) { } }
+function jFresh() { const s = { v: 1, stage: 'c1', name: { zh: '阿克敦', en: 'Akdun' }, alive: {}, fate: {}, bond: {}, talked: {}, flags: {}, me: 'me', joined: {}, seen: {} }; for (const r of JR) if (!r.draft && !r.guest) { s.alive[r.k] = true; s.bond[r.k] = 0; } return s; }
+const jRow = (k) => JR.find(r => r.k === k);
+const jIdx = (k) => JR.findIndex(r => r.k === k);
+function jMeRow() { const r = jRow('me'), nm = JS.me === 'me' ? JS.name : (JS.meName || { zh: '', en: '' }); r.zh = nm.zh; r.en = nm.en; } // the 'me' row carries your first name, even after you carry on as another man
+function jDress(u, i) { const r = JR[i]; if (!u || !r) return; u.look = Object.assign({ id: 'j:' + r.k }, JLOOK[r.k] || { jin: 'helm', coat: JW, stud: JSTUD }); if (state.renderer) state.renderer.colorFigure(u.id, u); }
+function jGo(scene) { try { localStorage.setItem(JGO, scene); } catch (e) { } location.reload(); }
+// the men of the file now, not counting you; the bošokū stands in it only while he lives and you do not lead
+function jFile() { return JR.filter(r => !r.guest && r.k !== JS.me && JS.alive[r.k]); }
+// between chapters new men take the empty places (eleven besides you)
+function jFill(n) { let vac = 11 - jFile().length; for (const r of JR) { if (vac <= 0) break; if (!r.draft || JS.alive[r.k] !== undefined) continue; JS.alive[r.k] = true; JS.bond[r.k] = 0; JS.joined[r.k] = n; vac--; } }
+const jDead = () => JR.filter(r => !r.guest && r.k !== JS.me && JS.alive[r.k] === false && JS.fate[r.k] !== 'you');
+
+// ---------- the chapters ----------
+const JCH = {};
+JCH[1] = {
+  mission: 'jin1', battle: 'abudali',
+  intro: [
+    { title: '建州 · Jianzhou', year: 'Spring 1619 · 天命四年', p: ['For thirty years Nurhaci has gathered the Jurchen tribes under one hand: Hada, Hoifa, Ula, one after another. In 1616 he named his state the Later Jin and himself its Khan.',
+      'Last spring he declared Seven Grievances against the Ming before Heaven and took Fushun. This spring the Ming have answered with four armies.'], zh: '天命三年四月，汗以七大恨告天。' },
+    { title: '八旗 · The Eight Banners', year: 'Niru · jalan · gūsa', p: ['Every Jurchen household belongs to a niru, about three hundred men under a captain. Five niru make a jalan, five jalan a banner, and there are eight banners. In war each niru sends out its armoured men.',
+      'You are one of them: a young 披甲, an armoured man, in a niru of the Plain White Banner, the banner of the Khan\'s fourth son, Hong Taiji.'],
+      html: '<p><label style="font:14px sans-serif">Your name <input id="jName" value="阿克敦" maxlength="6" style="width:6em;font-size:15px"> <input id="jNameEn" value="Akdun" maxlength="14" style="width:8em;font-size:15px"></label></p>',
+      onNext: () => { const zh = ($('jName').value || '阿克敦').trim().slice(0, 6), en = ($('jNameEn').value || 'Akdun').trim().slice(0, 14); JS.name = { zh, en }; jSave(); } },
+    { title: '薩爾滸 · Sarhu', year: 'The third month of 1619', p: ['The Ming came by four roads, and the Khan went out by one. Two days ago at Sarhu your banners destroyed Du Song\'s column in the snow. Yesterday Ma Lin\'s broke in the north.',
+      'One column is left: old Liu Ting\'s, coming through the eastern mountains toward Hetu Ala. Tonight your niru camps on the road to meet it.'], zh: '憑爾幾路來，我只一路去。', btn: 'To the camp →' },
+  ],
+  campTitle: '營 · The night after Sarhu', campCard: 'Your niru camps in the hills east of Hetu Ala. Walk among the file and talk with them (look at a man and press E). When you are ready, lie down on your bedroll (E).',
+  guests: ['tobohui'],
+  chat: [['薩爾滸那邊的屍首還沒埋完。', 'They haven\'t finished burying the dead at Sarhu.'], ['杜松的頭盔是金的，你看見沒？', 'Did you see Du Song\'s helmet? Gilded.'], ['腳凍麻了。', 'My feet have gone numb.'], ['明天走多遠？', 'How far tomorrow?'], ['汗說：憑他幾路來，我只一路去。', 'The Khan says: however many roads they come by, we go by one.'], ['給馬多餵一把豆子。', 'Give the horses an extra handful of beans.']],
+  dawn: { title: '黎明 · Dawn', year: 'The fourth day of the third month', p: ['Before light the niru rides east and climbs into the woods of the west ridge. Below, along the valley floor, Liu Ting\'s column is already moving.', 'Ulgen walks down the file, tugging straps. "Armour in front, bows behind," he says. "And nobody goes before the conch."'], btn: 'To the ridge →' },
+  battleCard: ['April 1619. Hong Taiji\'s banners wait in the woods above the valley. Stay with your file. LMB cut, RMB guard.', '阿布達里岡 · Abdali'],
+  who: { niru: ['托博輝', 'Tobohui, captain of the niru'], hong: ['皇太極', 'Hong Taiji, the Fourth Beile'], daisan: ['代善', 'Daišan, the Great Beile'], lookout: ['', 'A lookout'], soldier: ['', 'A bannerman'] },
+  fateText: { out: 'came down from the ridge', dead: 'killed at Abdali', lost: 'left in the valley' },
+  after: (won, li, outN) => [
+    { title: '阿布達里岡 · What happened', year: 'The fourth month of 1619', p: ['Liu Ting died fighting under his standard. Two days later the Korean army that marched with him, cut off and starving at Fucha, surrendered to Daišan. Of the four Ming columns, only Li Rubai\'s, called back in time, went home.',
+      'In five days the Khan had destroyed an army the Ming called four hundred and seventy thousand strong. The scribes of the niru wrote it all down in the new script, and Ulgen\'s name among the dead.'], zh: '天命四年三月，大破明兵於薩爾滸、阿布達里岡。' },
+    { title: '牛錄 · Your file', year: `${outN} came home`, html: `<ul>${li}</ul>`, p: ['Ulgen is dead. Tobohui gives his place to you: you are the bošokū of the file now.'], btn: 'Two years later →' },
+  ],
+  next: 'c2',
+  talk: (k) => ({
+    ulgen: { g: ['你的弓弦換了沒有？明天用得著。', 'Changed your bowstring? You\'ll need it tomorrow.'], t: [
+      { q: 'What happens tomorrow?', a: [['四貝勒的人埋伏在西嶺上，等大貝勒先打他們的頭。', 'The Fourth Beile\'s men lie up on the west ridge and wait for the Great Beile to hit the head of the column.'], ['披甲的在前，弓手在後。跟著我，別一個人往裡衝。', 'Armour in front, bows behind. Stay with me, and never go in alone.']] },
+      { q: 'Where are you from?', bond: 1, a: [['哈達。我十五歲那年，汗打下了哈達，我就成了他的人。', 'Hada. When I was fifteen the Khan took Hada, and I became his man.'], ['那時候我恨他。現在……他讓我們吃得飽。', 'I hated him then. Now... he keeps us fed.']] },
+      { q: 'Do the Ming fight well?', a: [['杜松的人在薩爾滸打得很硬。可他們的火器一下雪就啞了。', 'Du Song\'s men fought hard at Sarhu. But their guns go dumb in the snow.'], ['南邊來的那些不一樣。聽說他們不跑。', 'The ones from the south are different. They say they don\'t run.']] }] },
+    dabsun: { g: ['我在薩爾滸砍倒一個！真的！', 'I cut one down at Sarhu! I really did!'], t: [
+      { q: 'What was it like?', a: [['……他比我還小。他在喊他娘。', '...He was younger than me. He was calling for his mother.'], ['舅舅說別想。我就不想。', 'Uncle says don\'t think about it. So I don\'t.']] },
+      { q: 'Stay close to me tomorrow.', bond: 1, flag: 'promise', a: [['好！你砍左邊，我砍右邊！', 'Good! You take the left, I\'ll take the right!']] }] },
+    sose: { g: ['風往東吹。明天的箭會飄。', 'The wind\'s blowing east. Tomorrow the arrows will drift.'], t: [
+      { q: 'Teach me to shoot in the wind.', bond: 1, a: [['看樹梢，別看旗。旗會騙人，樹不會。', 'Watch the treetops, not the banners. Banners lie. Trees don\'t.']] },
+      { q: 'You were a hunter?', a: [['冬天打貂，夏天挖參。這兩年……只打人。', 'Sable in winter, ginseng in summer. These two years... only men.']] }] },
+    ilan: { g: ['來，擲一把。輸了明天替我背箭。', 'Come on, one throw. Lose, and you carry my arrows tomorrow.'], t: [
+      { q: 'Throw the knucklebones.', bond: 1, a: [['（羊拐骨在火光裡翻滾。你贏了；他大笑，丟給你一枚明朝銅錢。）', '(The knucklebones tumble in the firelight. You win; he laughs and tosses you a Ming copper.)']] },
+      { q: 'Why "Ilan"?', a: [['我是老三。我爹懶，數到三就不起名了。', 'I\'m the third son. My father was lazy. After three he stopped thinking up names.']] }] },
+    bahai: { g: ['餓。誰還有炒米？', 'Hungry. Who\'s got parched millet?'], t: [
+      { q: 'Share your millet with him.', bond: 1, a: [['好兄弟。明天誰敢碰你，我把他的臉按進雪裡。', 'Brother. Tomorrow, anyone touches you, I push his face in the snow.']] },
+      { q: 'What did you do before?', a: [['在松花江裡摸東珠。我一口氣能憋到你數一百。', 'I dived for pearls in the Sungari. I can hold my breath while you count to a hundred.'], ['珠子都給了貝勒。我們只落下一手凍瘡。', 'The pearls all went to the beile. We kept the frostbite.']] }] },
+    lier: { g: ['……爺有什麼吩咐？', '...Does the master want something?'], t: [
+      { q: 'I\'m not your master.', bond: 1, a: [['（他看了你很久。）……我叫李二，撫順人。去年城破的時候被分到這個牛錄。', '(He looks at you for a long time.) ...My name is Li Er. From Fushun. When the town fell last year I was given to this niru.']] },
+      { q: 'How did Fushun fall?', a: [['李永芳開了城門。汗說投降的不殺。他說話算話……大多數時候。', 'Li Yongfang opened the gates. The Khan said those who gave up would be spared. He kept his word... mostly.'], ['我家的人都在對面那邊。', 'My people are all on the other side.']] }] },
+    bater: { g: ['你們女真人的馬太矮了。', 'You Jurchen ride horses that are too short.'], t: [
+      { q: 'Why are you with us?', a: [['科爾沁的台吉把我送給汗當禮物。我比一匹馬值錢一點。', 'A Khorchin taiji gave me to the Khan as a gift. I was worth a little more than a horse.'], ['可這裡有肉吃。在草原上，冬天只有雪吃。', 'But here there\'s meat. On the grass, in winter, you eat snow.']] },
+      { q: 'Sing something.', bond: 1, a: [['（他低聲用蒙古話唱了一段長調，唱一匹走失的白馬。火邊的人都不說話了。）', '(He sings a long low song in Mongolian about a white horse that wandered away. Around the fire the talking stops.)']] }] },
+    erde: { g: ['我兒子正月生的。我還沒見過他。', 'My son was born in the first month. I haven\'t seen him yet.'], t: [
+      { q: 'What will you call him?', bond: 1, flag: 'erdeson', a: [['本想叫他阿林……阿林大叔不會高興的。就叫太平吧。', 'I thought of "Alin"... Uncle Alin wouldn\'t like that. I\'ll call him Taiping. Peace.']] },
+      { q: 'You\'ll see him soon.', a: [['汗說打完這一仗就分田、分人。我回家就有自己的地了。', 'The Khan says after this there\'ll be land and men to share out. I\'ll go home with fields of my own.']] }] },
+    muktan: { g: ['別擋光，我在記帳。', 'Don\'t block my light. I\'m keeping the tally.'], t: [
+      { q: 'What are you writing?', a: [['哪個牛錄斬了幾級，折了幾個人，得了幾匹馬。汗什麼都要記下來。', 'Which niru took how many heads, lost how many men, took how many horses. The Khan wants everything written down.'], ['這是額爾德尼師傅造的字，拿蒙古字母寫我們的話。才二十年。', 'It\'s the script Master Erdeni made: our tongue in Mongol letters. It\'s only twenty years old.']] },
+      { q: 'Why are we fighting?', bond: 1, a: [['汗以七大恨告天。頭一恨：明朝無故殺了他的祖父、父親。', 'The Khan named Seven Grievances before Heaven. The first: the Ming killed his grandfather and his father for nothing.'], ['可真正的理由是：我們不打他們，他們就會再把我們分成十個部落，讓我們自相殘殺。', 'But the real reason is this: if we don\'t fight them, they\'ll split us into ten tribes again and let us kill each other.']] },
+      { q: 'Write my name in it.', a: [['（他用新字在帳尾寫下你的名字。「這樣你就丟不了了。」）', '(He writes your name at the foot of the tally in the new letters. "Now you can\'t get lost.")']] }] },
+    manggu: { g: ['又是凍硬的肉乾。', 'Frozen jerky again.'], t: [
+      { q: 'At least we won.', a: [['贏了。贏了明天還得走一百里山路。', 'We won. For winning, tomorrow we walk a hundred li of mountain.']] },
+      { q: 'Help him lace his armour.', bond: 1, a: [['……手倒挺巧。謝了。', '...Handy, aren\'t you. Thanks.']] }] },
+    alin: { g: ['看著那孩子。他以為打仗跟打獵一樣。', 'Keep an eye on that boy. He thinks war is a hunt.'], t: [
+      { q: 'He\'ll be all right.', bond: 1, a: [['我姐姐就這一個兒子。我答應過她，帶他回去。', 'My sister has only the one son. I promised her I\'d bring him home.']] },
+      { q: 'How long have you fought?', a: [['從汗打圖倫城那年。那時候他只有十三副甲。', 'Since the year the Khan attacked Tulun. He had thirteen suits of armour then.'], ['十三副甲起家，現在……你看看這山谷。', 'Thirteen suits of armour, and now... look at this valley.']] }] },
+    tobohui: { g: ['睡不著？明天睡得更少。', 'Can\'t sleep? You\'ll sleep less tomorrow.'], t: [
+      { q: 'What should I know about tomorrow?', a: [['我們的牛錄跟著四貝勒。海螺一響，從西嶺上衝下去。', 'Our niru goes with the Fourth Beile. When the conch sounds, we go down the west ridge.'], ['盯著那面大纛。纛一倒，明軍就散了。', 'Watch the big standard. When it falls, the Ming come apart.']] },
+      { q: 'What does "niru" mean?', a: [['打獵的時候，十個人一隊，每人出一支箭。那支箭就叫「牛錄」。', 'On the hunt men went in tens and each gave one arrow. That arrow was called a niru.'], ['汗把打獵的規矩變成了一個國家。', 'The Khan turned the rules of the hunt into a state.']] }] },
+  })[k],
+};
+
+// ---------- camp ----------
+const JCAMP = { fires: [[0, 0], [8, -5]], tents: [[-10, 4, 1.7, 2.5, 2.1], [-4.5, 10.5, 1.7, 2.5, 2.1], [4.5, 10.5, 1.7, 2.5, 2.1], [10, 4, 1.7, 2.5, 2.1]],
+  props: [['pot', 8, -5, 0], ['banner', -3, -7.5, 0.3, '白'], ['rack', -7.5, -3.5, 0.9], ['log', 0, 2.9, 0], ['log', -2.6, -1.4, 1.1], ['log', 2.7, -1.2, -1.1]] };
+function jCampCfg(n) {
+  const C = JCH[n], npcs = [], beds = [], file = jFile(), rows = [{ k: JS.me }].concat(file), N = rows.length;
+  rows.forEach((r, i) => { const a = -0.5 + (i / Math.max(8, N)) * Math.PI * 1.55 + Math.PI * 0.55; beds.push([+(Math.sin(a) * 6.3).toFixed(2), +(Math.cos(a) * 6.3).toFixed(2), +(a + Math.PI).toFixed(3), false]); });
+  for (const k of jDead().map(r => r.k).slice(0, 4)) { const a = Math.PI * (1.6 + beds.length * 0.07); beds.push([+(Math.sin(a) * 6.3).toFixed(2), +(Math.cos(a) * 6.3).toFixed(2), +(a + Math.PI).toFixed(3), true]); } // empty bedrolls for the dead
+  // the file around the fire: squatting in a ring, a few standing; officers by the second fire
+  file.forEach((r, i) => { const a = (i / Math.max(1, file.length)) * Math.PI * 2 + 0.4, rr = i % 3 === 2 ? 3.4 : 2.5; const x = +(Math.sin(a) * rr).toFixed(2), z = +(Math.cos(a) * rr).toFixed(2);
+    npcs.push({ role: 'spear', x, z, yaw: +Math.atan2(-x, -z).toFixed(3), ci: jIdx(r.k), pose: i % 3 === 2 ? 'stand' : 'squat' }); });
+  (C.guests || []).forEach((k, i) => npcs.push({ role: 'spear', x: 7 - i * 1.5, z: -2.6, yaw: 2.6, ci: jIdx(k), pose: 'stand' }));
+  ZC = { bed: [beds[0][0], beds[0][1]], jin: true, R: JR, map: {}, night: n };
+  return { type: 'samurai', team: 1, fires: JCAMP.fires, tents: JCAMP.tents, props: JCAMP.props, bedrolls: beds, npcs, me: { x: 0.4, z: -3.4, yaw: 0, role: 'spear' } };
+}
+function jStart(scene) {
+  JS = jLoad() || jFresh(); jMeRow(); $('menu').hidden = true; state.lowfx = $('lowfxIn').checked; state.fog = false;
+  const m = /^([cb])(\d)$/.exec(scene); if (!m) { jMenu(); $('menu').hidden = false; return; }
+  const n = +m[2], C = JCH[n]; if (!C) { $('menu').hidden = false; return; }
+  const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: JS.name.zh || 'You', team: 1, connected: true }];
+  if (m[1] === 'c') {
+    if (!JS.seen['i' + n]) { if (n > 1) jFill(n); return zCards(C.intro, () => { JS.seen['i' + n] = 1; JS.stage = 'c' + n; jSave(); jStart('c' + n); }); }
+    const camp = jCampCfg(n); ZB = null;
+    startGame({ seed, battle: 'zcamp', mode: 'campaign', mission: 'zcamp', camp, players: pl }, 0, null, 1);
+    for (const u of state.sim.units) if (u.camp) { ZC.map[u.id] = u.ci; jDress(u, u.ci); } { const me = state.sim.units[state.sim.players[0].heroId]; jDress(me, jIdx(JS.me)); } ZC.chatT = 6;
+    MUSIC.play('menu'); MUSIC.setIntensity(0.15); AUDIO.setFire(0.6); $('army').hidden = true;
+    setTimeout(() => storyCard(C.campCard, C.campTitle), 900);
+  } else {
+    ZC = null; startGame({ seed, battle: C.battle, mode: 'campaign', mission: C.mission, players: pl }, 0, null, 1);
+    const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq];
+    ZB = { map: {}, sq: q.id, first: me.heroId, cur: JS.me, fell: false, R: JR, jin: true, ch: n, deadMe: [] };
+    const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = jIdx(JS.me);
+    const file = jFile(); // the bošokū takes the first place while he lives; everyone else fills in
+    const chief = file.find(r => r.k === 'ulgen'); if (chief && !used[q.unitIds[0]]) { used[q.unitIds[0]] = 1; ZB.map[q.unitIds[0]] = jIdx('ulgen'); }
+    for (const r of file) { if (r.k === 'ulgen') continue; const id = q.unitIds.find(uid => !used[uid]); if (id === undefined) break; used[id] = 1; ZB.map[id] = jIdx(r.k); }
+    for (const uid in ZB.map) jDress(sim.units[uid], ZB.map[uid]);
+    const g = sim.mg.niru; if (g) { const h = sim.units[sim.players[g.p].heroId]; if (h) { h.look = Object.assign({ id: 'j:tobohui' }, JLOOK.tobohui); if (state.renderer) state.renderer.colorFigure(h.id, h); } }
+    setTimeout(() => storyCard(C.battleCard[0], C.battleCard[1]), 700);
+  }
+}
+function jLook() {
+  const sim = state.sim, h = localHero(); if (!h || h.dead || !ZC) return null;
+  if (Math.hypot(h.x - ZC.bed[0], h.z - ZC.bed[1]) < 1.9) return { bed: true };
+  let best = null, bd = 0.5; const fx = Math.sin(Input.yaw), fz = Math.cos(Input.yaw);
+  for (const u of sim.units) { if (!u.camp) continue; const dx = u.x - h.x, dz = u.z - h.z, d = Math.hypot(dx, dz); if (d > 3.4 || d < 0.3) continue; const off = 1 - (dx * fx + dz * fz) / d; if (off < bd) { bd = off; best = u; } }
+  return best ? { u: best, k: JR[best.ci].k } : null;
+}
+function jKeyE() {
+  if (state.zheDlg) return true; const t = jLook(); if (!t) return true;
+  if (t.bed) { const n = ZC.night, C = JCH[n]; JS.stage = 'b' + n; jSave(); zCards([C.dawn], () => jGo('b' + n)); return true; }
+  jDialog(t.k, t.u); return true;
+}
+// talk: the same panel and keys as the Zhejiang camp (#zheDlg, state.zheDlg)
+function jDialog(k, u) {
+  const n = ZC.night, D = JCH[n].talk(k) || jTalkAny(k, n); if (!D) return; const r = jRow(k); state.zheDlg = { k };
+  if (document.pointerLockElement) document.exitPointerLock(); Input.keys = 0; $('pause').hidden = true;
+  let box = $('zheDlg'); if (!box) { box = document.createElement('div'); box.id = 'zheDlg'; document.body.appendChild(box); box.addEventListener('mousedown', (e) => e.stopPropagation()); }
+  const h = localHero(); if (h && u) Input.yaw = Math.atan2(u.x - h.x, u.z - h.z);
+  const key = (t) => `${n}:${k}:${t.q}`, open = () => D.t.filter(t => !JS.talked[key(t)]);
+  const render = (lines, topics) => { box.hidden = false;
+    box.innerHTML = `<div class="who">${r.zh} ${r.en}<small>${r.t}${JS.bond[k] > 0 ? ' · ' + '♥'.repeat(Math.min(3, JS.bond[k])) : ''}</small></div>${lines.map(l => `<div class="zh">${l[0]}</div><div class="en">${l[1]}</div>`).join('')}<div class="ch">${topics.map((t, i) => `<button type="button" data-i="${i}"><kbd>${i + 1}</kbd>${t.q}</button>`).join('')}<button type="button" data-i="-1"><kbd>Esc</kbd>Leave</button></div>`;
+    box.querySelectorAll('button').forEach(b => b.onclick = () => choose(+b.dataset.i)); state.zheDlg.topics = topics; };
+  const choose = (i) => { AUDIO.play('ui'); if (i < 0) { close(); return; } const t = state.zheDlg.topics[i]; if (!t) return;
+    JS.talked[key(t)] = 1; if (t.bond) JS.bond[k] = (JS.bond[k] || 0) + t.bond; if (t.flag) JS.flags[t.flag] = true; jSave(); render([[`「${t.q}」`, ''], ...t.a].filter(x => x[0]), open()); };
+  const close = () => { box.hidden = true; state.zheDlg = null; requestLock(); };
+  state.zheDlg.choose = choose; state.zheDlg.close = close; render([D.g], open());
+}
+// a man the chapter has no special lines for (usually a new man): who he is, and the dead he never knew
+function jTalkAny(k, n) {
+  const r = jRow(k); if (!r) return null; const B = JDRAFT[k] || {}; const lost = jDead().map(d => d.zh);
+  return { g: B.g || ['……', '...'], t: (B.t || []).concat(lost.length ? [{ q: 'You never met the ones we lost.', a: [[`${lost.slice(0, 3).join('、')}……我聽他們說起過。`, `${jDead().slice(0, 3).map(d => d.en).join(', ')}... I've heard them talk about them.`], ['我會站在他們站過的地方。', 'I\'ll stand where they stood.']] }] : []) };
+}
+const JDRAFT = {
+  tuhe: { g: ['我是烏拉人。汗打下烏拉那年我才五歲。', 'I\'m from Ula. I was five when the Khan took Ula.'], t: [{ q: 'Do you hate him for it?', bond: 1, a: [['我不記得烏拉了。我只記得這個牛錄。', 'I don\'t remember Ula. I only remember this niru.']] }] },
+  wangsi: { g: ['我剃了頭，留了辮子。剃頭的時候我哭了。', 'I shaved my head and grew the queue. I cried when they shaved it.'], t: [{ q: 'Why did you join?', bond: 1, a: [['遼陽破了以後，降的人分田，不降的……你知道的。', 'After Liaoyang fell, the ones who gave up got land. The ones who didn\'t... you know.'], ['我有娘要養。', 'I have a mother to feed.']] }] },
+  dorji: { g: ['給我一匹野馬，三天就能騎。', 'Give me a wild horse and I\'ll ride it in three days.'], t: [{ q: 'Where are you from?', bond: 1, a: [['喀爾喀。我們的台吉跟汗結了盟，我就跟來了。', 'Khalkha. Our taiji made an oath with the Khan, and I came along.']] }] },
+  jala: { g: ['額爾德是我表哥。他跟你說過他兒子嗎？', 'Erde is my cousin. Did he tell you about his boy?'], t: [{ q: 'He did.', bond: 1, a: [['太平。我答應過嫂子，看著他。', 'Taiping. I promised his wife I\'d look out for him.']] }] },
+  hife: { g: ['這甲片是我爹打的。你看這個鉚釘。', 'My father forged these plates. Look at this rivet.'], t: [{ q: 'Good work.', bond: 1, a: [['他說，甲好，人就能回家。', 'He says if the armour\'s good, the man comes home.']] }] },
+  yanggu: { g: ['我的鷹餓了。你有生肉嗎？', 'My hawk is hungry. Got any raw meat?'], t: [{ q: 'Does it hunt for you?', bond: 1, a: [['兔子、野雞。打仗的時候我把牠留在家裡。牠會等我。', 'Hares, pheasant. When there\'s a war I leave her at home. She waits for me.']] }] },
+  kesi: { g: ['……', '...'], t: [{ q: 'You don\'t talk much.', bond: 1, a: [['瓦爾喀人話少。話多的都死在山裡了。', 'Warka men don\'t talk much. The ones who did died in the mountains.']] }] },
+  cimbu: { g: ['要不要聽我唱一段？', 'Want to hear me sing?'], t: [{ q: 'Go on, then.', bond: 1, a: [['（他唱得真難聽。全營都笑了，連最累的人都笑了。）', '(He sings terribly. The whole camp laughs, even the most tired men.)']] }] },
+  anju: { g: ['我哥死在寧遠城下。紅衣砲。', 'My brother died under the walls of Ningyuan. The red cannon.'], t: [{ q: 'I\'m sorry.', bond: 1, a: [['他們說汗現在也有紅衣砲了。我想看看。', 'They say the Khan has red cannon of his own now. I want to see them.']] }] },
+  furdan: { g: ['我爹說我出生那年，汗告了七大恨。', 'My father says the year I was born the Khan swore the Seven Grievances.'], t: [{ q: 'You\'re young.', a: [['十三。報了十六。', 'Thirteen. I said sixteen.']] }] },
+  sabu: { g: ['佟大人在教漢人鑄砲。我學過裝藥。', 'Lord Tong is teaching Han men to cast cannon. I learned to load them.'], t: [{ q: 'Will the guns help us?', bond: 1, a: [['寧遠城牆就是被砲守住的。這回輪到我們了。', 'It was guns that held the walls of Ningyuan. This time it\'s our turn.']] }] },
+  hoto: { g: ['輝發沒了以後，我是這個牛錄養大的。', 'After Hoifa was gone, this niru raised me.'], t: [{ q: 'Then we\'re your family.', bond: 1, a: [['……嗯。', '...Mm.']] }] },
+};
+function jHUD(dt) {
+  zTags(); const sim = state.sim; let pr = $('zhePrompt'); $('status').style.visibility = 'hidden';
+  if (state.zheDlg) { if (pr) pr.hidden = true; return; }
+  if (!pr) { pr = document.createElement('div'); pr.id = 'zhePrompt'; document.body.appendChild(pr); }
+  const t = jLook(); pr.hidden = !t; if (t) pr.innerHTML = t.bed ? '<kbd>E</kbd>Lie down on your bedroll — ride at dawn' : `<kbd>E</kbd>Talk to ${JR[t.u.ci].zh} ${JR[t.u.ci].en}`;
+  ZC.chatT -= dt; if (ZC.chatT <= 0) { ZC.chatT = 7 + Math.random() * 6; const h = localHero(); if (!h) return; const near = sim.units.filter(u => u.camp && Math.hypot(u.x - h.x, u.z - h.z) < 14); if (!near.length) return; const u = near[Math.floor(Math.random() * near.length)];
+    const PL = JCH[ZC.night].chat; const L = PL[Math.floor(Math.random() * PL.length)]; SPEECH.say(u.id, L[0], L[1], { prio: 0, cool: 10 }); }
+}
+
+// ---------- in battle ----------
+function jSay(ev) {
+  const sim = state.sim, h = localHero(), C = JCH[ZB.ch]; const W = (C.who || {})[ev.who] || ['', ev.who];
+  let id = -1, who = W.slice(); const ji = JR.findIndex(r => r.k === ev.who && !r.guest);
+  if (ji >= 0) { for (const uid in ZB.map) if (ZB.map[uid] === ji && sim.units[uid] && !sim.units[uid].dead && !sim.units[uid].wounded && +uid !== (h && h.id)) id = +uid; if (id >= 0) who = [JR[ji].zh, JR[ji].en]; else who = ['', 'A bannerman']; }
+  else if (sim.mg[ev.who]) { const g = sim.mg[ev.who]; id = sim.players[g.p].heroId; }
+  if (id >= 0 && sim.units[id] && sim.units[id].dead) id = -1;
+  if (id < 0 && h) { const cand = sim.teamAlive[h.team].filter(u => u.id !== h.id && !u.wounded && u.type !== 'horse' && Math.hypot(u.x - h.x, u.z - h.z) < 22); if (cand.length) id = cand[Math.floor(Math.random() * cand.length)].id; }
+  const label = who[0] ? `${who[0]} ${who[1]}` : who[1];
+  const ok = id >= 0 && SPEECH.say(id, ev.zh, ev.text, { prio: 3, loud: true, radio: true, who: label, dur: Math.min(8, 3 + ev.text.length / 20), shout: ev.who === 'hong' || ev.who === 'lookout' ? 0.3 : false });
+  if (!ok && typeof radio === 'function') radio(label, `${ev.zh ? ev.zh + '  ' : ''}${ev.text}`);
+  return true;
+}
+function jEvent(ev) {
+  const sim = state.sim; if (!sim || !sim.mission || !sim.mission.soldier) return;
+  if (ev.t === 'zpromote' && ev.p === state.localIdx) { state.fpSel = null;
+    if (ZB.ch === 1) { const q = sim.squads[ev.sq]; const w = q.unitIds.map(id => sim.units[id]).find(u => !u.dead && u.ctrl < 0 && !u.wounded);
+      if (w) setTimeout(() => SPEECH.say(w.id, `烏勒根死了！${JS.name.zh}，你說怎麼辦？`, `Ulgen's dead! ${JS.name.en}, what do we do?`, { prio: 3, dur: 5 }), 1600);
+      banner('你帶隊 · The file is yours', 'Ulgen is dead. F follow me / H halt / C charge / Z form up where you look', 6); }
+    else banner('你帶隊 · Your file', 'You lead the file: F follow me / H halt / C charge / Z form up where you look', 6); }
+  else if (ev.t === 'zwound' && ev.p === state.localIdx) { ZB.wounded = ev.id; const n = SPEECH.nameOf(ev.id);
+    SPEECH.say(ev.id, '我的腿……走不動了！', 'My leg... I can\'t walk!', { prio: 3, dur: 4 }); toast(`${n ? n.zh + ' ' + n.en : 'A man of your file'} is hit and can't walk. Get to him and press E to get him up`); }
+  else if (ev.t === 'zhelp' && ev.id === ZB.wounded) { JS.flags['helped' + ZB.ch] = true; feed(`You get ${(SPEECH.nameOf(ev.id) || { en: 'him' }).en}'s arm over your shoulder`, true); }
+  else if (ev.t === 'zcarry' && ev.p === state.localIdx) { const i = ZB.map[ev.id]; ZB.fell = true; const prev = ZB.cur; if (prev && JS.alive[prev] !== false) ZB.deadMe.push(prev);
+    ZB.cur = i !== undefined ? JR[i].k : 'stranger'; const n = SPEECH.nameOf(ev.id); const h = sim.units[ev.id]; if (h) { Input.yaw = h.yaw; Input.pitch = 0; }
+    toast(n ? `You fall. The fight goes on — you are ${n.zh} ${n.en} now` : 'You fall. The fight goes on — you are another man of the banner now'); }
+}
+function jFinish(winner) {
+  const sim = state.sim, h = localHero(), M = sim.mission, n = ZB.ch, C = JCH[n]; const won = winner === M.side;
+  const fate = {}, near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
+  for (const uid in ZB.map) { const r = JR[ZB.map[uid]]; if (!r) continue; const u = sim.units[uid];
+    // the winners keep the field and carry in their wounded; after a defeat a man who cannot walk is left behind
+    fate[r.k] = u.dead ? 'dead' : (!won && u.wounded && u.helpedBy < 0 && !near(u, 4)) ? 'lost' : 'out'; }
+  for (const k of ZB.deadMe) fate[k] = 'dead';
+  const meK = JS.me, alive = h && !h.dead, oldName = Object.assign({}, JS.name);
+  if (ZB.cur === meK || ZB.cur === 'stranger') fate[meK] = alive ? 'out' : 'dead'; else fate[meK] = 'dead';
+  if (ZB.cur && ZB.cur !== meK && ZB.cur !== 'stranger' && alive) { const nk = ZB.cur, r = jRow(nk); if (meK === 'me') JS.meName = oldName; JS.me = nk; JS.name = { zh: r.zh, en: r.en }; fate[nk] = 'out'; }
+  const list = Object.keys(fate);
+  for (const k of list) { JS.fate[k] = fate[k]; JS.alive[k] = fate[k] === 'out'; }
+  JS.stage = 'e' + n; JS.lastWon = won; jSave();
+  const ft = C.fateText, rows = list.map(k => { const r = jRow(k), f = fate[k]; const nm = k === JS.me ? `${JS.name.zh} ${JS.name.en} (you)` : k === meK && JS.me !== meK ? `${oldName.zh} ${oldName.en} (you, until you fell)` : `${r.zh} ${r.en}`; return `<li class="${f === 'out' ? 'out' : f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${nm} — ${ft[f] || ft.out}</li>`; }).join('');
+  const outN = list.filter(k => fate[k] === 'out').length;
+  $('resultTitle').textContent = won ? '勝 · The field is ours' : '退 · Pulled back'; $('resultTitle').className = won ? 'win' : 'lose';
+  $('resultText').innerHTML = `${won ? M.win : (M.loseText || 'The banners pulled back.')} ${outN} of ${list.length} of your file came through.`;
+  $('btnNext').hidden = false; $('btnNext').textContent = 'What happened →';
+  $('btnNext').onclick = () => { $('result').hidden = true; JS.stage = C.next; jSave(); zCards(C.after(won, rows, outN), () => C.next === 'done' ? jEnd() : jGo(C.next)); };
+}
+function jEnd() { JS.stage = 'done'; jSave(); location.reload(); }
+
+// ---------- hooks into the Zhejiang campaign's entry points (main.js and career.js call these by name) ----------
+{ const kE = zheKeyE, hud = zheHUD, sy = zheSay, evf = zheEvent, fin = zheFinish;
+  zheKeyE = function () { if (ZC && ZC.jin && state.sim && state.sim.mission && state.sim.mission.camp) return jKeyE(); return kE(); };
+  zheHUD = function (dt) { if (ZC && ZC.jin && state.sim && state.sim.mission && state.sim.mission.camp) return jHUD(dt); return hud(dt); };
+  zheSay = function (ev) { if (ZB && ZB.jin) return jSay(ev); return sy(ev); };
+  zheEvent = function (ev) { if (ZB && ZB.jin) return jEvent(ev); return evf(ev); };
+  zheFinish = function (w) { if (ZB && ZB.jin) return jFinish(w); return fin(w); }; }
+
+// ---------- the main menu ----------
+function jMenu() {
+  let el = $('jinCta'); const z = $('zheCta'); if (!z) return;
+  if (!el) { const st = document.createElement('style'); st.textContent = '#jinCta { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 14px 16px; margin: -6px 0 16px; border: 1px solid #5a6a8a; background: linear-gradient(100deg, rgba(220,216,204,.14), rgba(40,50,70,.08)); flex-wrap: wrap } #jinCta b { font-size: 19px; letter-spacing: .04em } #jinCta small { display: block; color: var(--ink2); max-width: 64ch; margin-top: 3px } #jinCta .btns { display: flex; gap: 8px }';
+    document.head.appendChild(st); el = document.createElement('div'); el.id = 'jinCta';
+    el.innerHTML = '<div><b>八旗 · The Plain White Niru</b><small>A story campaign from the other side. Spring 1619: a young armoured bannerman of Hong Taiji\'s Plain White Banner, his file of hunters, pearl divers, a Mongol and a Han bondservant, and the war that made the Qing.</small></div><div class="btns"><button class="btn primary" id="btnJin" type="button">Begin</button><button class="btn" id="btnJinNew" type="button" hidden>New</button></div>';
+    z.after(el); }
+  const s = jLoad(), b = $('btnJin'), nb = $('btnJinNew'); const cont = s && s.stage && s.stage !== 'done';
+  b.textContent = cont ? 'Continue' : s ? 'Play again' : 'Begin'; nb.hidden = !cont;
+  const begin = () => { AUDIO.init(); AUDIO.play('ui'); JS = jFresh(); jSave(); jStart('c1'); };
+  b.onclick = () => { if (!cont) return begin(); AUDIO.init(); AUDIO.play('ui'); const st = s.stage; jStart(/^e(\d)$/.test(st) ? JCH[+st.slice(1)].next : st); };
+  nb.onclick = begin;
+}
+jMenu();
+{ let go = null; try { go = localStorage.getItem(JGO); localStorage.removeItem(JGO); } catch (e) { } if (go) setTimeout(() => jStart(go), 60); }
+
+// ===================== 神機營 · The Divine Engine Division: a story campaign =====================
+// One three-eyed-gun team of the capital's firearms division, 1629–1631: the autumn review on the drill ground, the
+// Jin raid on Beijing (Shunyi, the Guangqu Gate), and the relief of Dalinghe at Changshan. It reuses the Zhejiang
+// machinery in zhe.js (SPEECH, camp talk, the file grid, the golden goal line) through ZHOOK / ZB.R / ZC.R and keeps
+// its own save ('mingShenji'). Sources: 趙士楨《神器譜》, 戚繼光《練兵實紀》, 茅元儀《武備志》, 《明史·兵志》, 徐光啟's memorials.
+
+// <sj-missions> (data only: the node harness evals this block on its own)
+const SJ_MISSIONS = (() => { const PI = Math.PI; const cartRow = (z, xs) => xs.map(x => [x, z, 2, 0.5, 1.5, 'mantlet']); const cartCol = (x, zs) => zs.map(z => [x, z, 0.5, 2, 1.5, 'mantlet']);
+  return {
+  // ----- prologue: the autumn review on the drill ground, which ends with a rider from the east -----
+  sjdrill: {
+    title: '校場 · The drill ground', year: 'Autumn 1629', battle: 'zroad', side: 0, soldier: { group: 'sjf' }, hidden: true, ch: 'sj0', soft: true,
+    bdef: { name: 'The drill ground', jp: '京營校場', when: 'Autumn 1629', biome: 'autumn', fog: 0.08 },
+    brief: 'The autumn review of the capital camps, on the drill ground outside Beijing\'s walls. Your three-eyed-gun team marches with the Divine Engine Division.',
+    start: [0, -110, 0],
+    zones: [{ key: 'line', x: 0, z: -62, r: 9, name: 'The firing line' }, { key: 'road', x: 0, z: 96, r: 14, name: 'The east road' }],
+    groups: {
+      sjf: { team: 0, name: 'Captain Cui Ying', zh: '崔英', army: ['rifle_spencer'], at: [0, -110, 0], dir: ['hold', 0, -106], stay: true },
+      niao: { team: 0, name: 'The bird-gun company', zh: '鳥銃隊', army: ['rifle_imp'], at: [-16, -108, 0], dir: ['hold', -16, -104], stay: true },
+      carts: { team: 0, name: 'The cart company', zh: '車營', army: ['ashigaru'], at: [16, -108, 0], dir: ['hold', 16, -104], stay: true },
+      stand: { team: 0, name: 'The eunuch inspector', zh: '提督內臣', army: ['samurai'], at: [-26, -46, PI / 2], dir: ['hold', -26, -46], stay: true },
+    },
+    phases: [
+      { title: '一 · 秋操 · The autumn review', goal: 'March to the firing line with your team', text: 'Drums, banners, the inspector on his stand. March your team up to the firing line.', show: ['line'],
+        start: [['dir', 'sjf', 'hold', 0, -62], ['dir', 'niao', 'hold', -16, -60], ['dir', 'carts', 'hold', 16, -60]],
+        obj: { all: [{ reach: 'line' }, { survive: 24 }] },
+        say: [[2, 'sj_hu', 'Step on the drum. The inspector watches the banners. I watch your feet.', '踩著鼓點走。內臣看旗，我看你們的腳。'],
+          [10, 'sj_tian', 'Is that the eunuch inspector? He has more silk on him than my whole street.', '那就是提督太監？他身上的綢子比我們整條街都多。'],
+          [18, 'sj_qian', 'Smile for him. The pay goes through his hands.', '笑一個。餉銀要從他手裡過。']] },
+      { title: '二 · 三疊 · Three ranks', goal: 'Fire at the butts on the drum, then step back and load', text: 'The front rank fires and files back to load; the next steps up. Shoot at the straw butts by the village.',
+        obj: { survive: 50 },
+        say: [[1, 'sj_lin', 'First rank, present! Wait for the drum!', '頭排——舉銃！聽鼓！'], [6, 'sj_lin', 'Fire! Back through the gaps and load. Second rank up!', '放！從空隙退回去裝藥。二排上！'],
+          [16, 'sj_hu', 'Three barrels, three shots. Then you are holding an iron club. Remember that.', '三個管子，三響。打完了你手裡就是根鐵棍。記住。'],
+          [27, 'sj_zhao', 'Not so much powder, boy! A barrel that splits takes your hand with it.', '藥別裝那麼多！管子一炸，手就沒了。'],
+          [38, 'sj_song', 'Zhao Shizhen wrote that half our guns are cast so badly they burst.', '趙士楨說，我們的銃一半鑄得不好，一放就炸。'],
+          [46, 'sj_lin', 'Better. In the south we drilled until we could load in the dark.', '好一點了。在南邊，我們練到閉著眼也能裝藥。']] },
+      { title: '三 · 急報 · A rider from the east', goal: 'Fall in and march out by the east road', text: 'A rider on a foaming horse, straight across the drill ground. The review is over.', show: ['road'], hide: ['line'],
+        start: [['dir', 'sjf', 'hold', 0, 94], ['dir', 'niao', 'hold', -14, 90], ['dir', 'carts', 'hold', 14, 90]],
+        obj: { reach: 'road' },
+        say: [[1, 'rider', 'The Jin are over the Wall at Da\'ankou! Zunhua is under siege! All camps to arms!', '金兵從大安口入塞！遵化被圍！各營整備！'],
+          [6, 'sj_tian', 'Over the Wall? That is three days from here.', '入塞？那離這兒只有三天路。'],
+          [11, 'sjf', 'Gun teams, fall in! We march with General Man Gui\'s Datong horse.', '銃隊集合！隨滿總兵大同兵出征。'],
+          [18, 'sj_gao', 'Ten years ago I marched out to Sarhu. One in five of us came back.', '十年前我出征薩爾滸。五個回來一個。'],
+          [26, 'sj_hu', 'Then this time more of us come back. Drum up!', '那這回多回來幾個。起鼓！']] },
+    ],
+    win: 'The company marched out of Beijing.',
+  },
+  // ----- chapter one: Shunyi, the eleventh month of 1629 -----
+  sj1: {
+    title: '順義 · Shunyi', year: 'November 1629', battle: 'zroad', side: 0, soldier: { group: 'sjf' }, hidden: true, ch: 'sj1',
+    bdef: { name: 'Shunyi', jp: '順義', when: 'November 1629', biome: 'winter', fog: 0.25 },
+    brief: 'Hong Taiji is through the Great Wall and moving on Beijing. Man Gui of Datong and Hou Shilu of Xuanfu march out to meet him at Shunyi. Your gun team marches behind the carts.',
+    start: [0, -84, 0],
+    zones: [{ key: 'carts', x: 0, z: -56, r: 10, name: 'The cart wall' }, { key: 'road', x: 0, z: -136, r: 14, name: 'The Beijing road' }],
+    forts: cartRow(-50, [-22, -17, -12, -7, 7, 12, 17, 22]),
+    labels: { cavalry: ['Bordered White horse', '鑲白旗騎'] },
+    groups: {
+      sjf: { team: 0, name: 'Captain Cui Ying', zh: '崔英', army: ['rifle_spencer'], at: [0, -84, 0], dir: ['hold', 0, -80], stay: true },
+      carts: { team: 0, name: 'The cart company', zh: '車營', army: ['rifle_imp', 'ashigaru'], at: [-12, -88, 0], dir: ['hold', -12, -84], stay: true },
+      mangui: { team: 0, name: 'Man Gui (Datong)', zh: '滿桂', army: ['cavalry', 'cavalry', 'samurai'], at: [-42, -74, 0], dir: ['hold', -42, -46], officer: 3, stay: true },
+      hou: { team: 0, name: 'Hou Shilu (Xuanfu)', zh: '侯世祿', army: ['cavalry', 'ashigaru', 'rifle_imp'], at: [42, -74, 0], dir: ['hold', 42, -46], stay: true },
+      jin1: { team: 1, name: 'The Bordered White van', zh: '鑲白旗', army: ['cavalry', 'archer', 'samurai'], at: [0, 138, PI], reserve: true },
+      jin2: { team: 1, name: 'Hong Taiji\'s main body', zh: '皇太極', army: ['samurai', 'samurai', 'archer', 'cavalry', 'samurai'], at: [-30, 138, PI], reserve: true },
+      khor: { team: 1, name: 'Khorchin Mongols', zh: '科爾沁', army: ['byakkotai', 'cavalry'], at: [138, 10, -PI / 2], reserve: true },
+      jin3: { team: 1, name: 'More banners', zh: '後隊', army: ['cavalry', 'samurai', 'archer', 'samurai'], at: [20, 138, PI], reserve: true },
+      chase: { team: 1, name: 'Jin horsemen', army: ['cavalry'], at: [-138, -84, PI / 2], reserve: true, n: 6 },
+    },
+    phases: [
+      { title: '一 · 列車 · The cart wall', goal: 'Take your place behind the carts', text: 'The carts are run into a line and chained. The gun teams load behind them; the Datong horse wait on the wings.', show: ['carts'],
+        start: [['dir', 'sjf', 'hold', 0, -56], ['dir', 'carts', 'hold', -12, -56]],
+        obj: { all: [{ reach: 'carts' }, { survive: 36 }] },
+        say: [[2, 'mangui', 'Gunners! You shoot, my horsemen finish. And do not shoot my horsemen.', '銃手！你們放銃，我的馬兵收拾。別打我的人。'],
+          [9, 'sj_hu', 'That is Man Gui. A Mongol by birth. Forty wounds, they say, every one in front.', '那是滿桂。蒙古人出身。身上四十多處傷，都在前面。'],
+          [18, 'sj_ma', 'Carts chained. The mules hate this cold more than I do.', '車連好了。騾子比我還怕冷。'],
+          [27, 'sj_lin', 'Light your match. Keep it under your coat until the drum.', '火繩點上。打鼓之前揣在懷裡。']] },
+      { title: '二 · 齊放 · The volley', goal: 'Hold your fire until they reach the carts, then fire', text: 'Horsemen out of the snow. Let them come inside fifty paces: a three-eyed gun is no good at a hundred.',
+        start: [['release', 'jin1'], ['dir', 'jin1', 'hold', 0, -50]],
+        obj: { survive: 70 }, at: [[42, ['wound', 5]]],
+        say: [[1, 'lookout', 'Riders on the road! White banners edged in red!', '路上有馬兵——白旗鑲紅！'], [6, 'sj_lin', 'Not yet... not yet... fifty paces!', '還不到……還不到……五十步！'],
+          [13, 'sj_hu', 'Fire! Back and load! Next rank!', '放！退後裝藥！下一排！'],
+          [43, 'sj_hu', 'Zhao\'s gun has burst! Get him back from the carts!', '老趙的銃炸了！把他拖下去！'],
+          [48, 'sj_zhao', 'My hand... it\'s still there. It\'s still there!', '我的手……還在。還在！'], [60, 'mangui', 'Datong! Ride!', '大同兵！衝！']] },
+      { title: '三 · 短兵 · In close', goal: 'Club them off the carts with your gun', text: 'They are over the carts. A spent three-eyed gun is a yard of iron: swing it.',
+        start: [['release', 'jin2'], ['release', 'khor'], ['dir', 'jin2', 'hold', 0, -52], ['dir', 'khor', 'hold', 20, -56], ['break', 'hou']],
+        obj: { survive: 75 },
+        say: [[2, 'lookout', 'Hou Shilu\'s banners are going back! Xuanfu is running!', '侯總兵的旗退了！宣府兵跑了！'], [6, 'sj_hu', 'Swing it like a flail! Three pounds of iron on the end!', '當連枷掄！頭上三斤鐵！'],
+          [14, 'sj_wu', 'Ha! Like threshing millet!', '哈！跟打穀子一樣！'], [30, 'sj_tian', 'There are too many. Where are they all coming from?', '太多了。哪來這麼多人？'],
+          [52, 'mangui', 'Back to Beijing! Gunners first, the horse behind!', '退回京城！銃手先走，馬兵斷後！']] },
+      { title: '四 · 回京 · The road home', goal: 'Fall back down the road with your wounded', text: 'Man Gui\'s horse holds the road while the gun teams fall back toward Beijing. Bring everyone who can walk.', show: ['road'], hide: ['carts'],
+        start: [['dir', 'mangui', 'hold', 0, -64], ['dir', 'carts', 'hold', 0, -124], ['release', 'jin3'], ['dir', 'jin3', 'hold', 0, -60], ['calm', 'jin3', 22], ['calm', 'jin1', 22], ['calm', 'jin2', 22], ['calm', 'khor', 22]],
+        obj: { extract: 'road' }, limit: 360, fail: 'The Jin horse got round the carts and cut the road.',
+        waves: [[18, 'chase', ['hold', -30, -110]]], at: [[19, ['calm', 'chase', 30]]],
+        say: [[2, 'sj_hu', 'Walk, don\'t run. Running men get ridden down.', '走，別跑。跑的人會被馬踩死。'], [18, 'lookout', 'Horsemen on the left, by the trees!', '左邊樹林裡有馬兵！'],
+          [32, 'sj_gao', 'Same snow as Sarhu. Same sound.', '跟薩爾滸一樣的雪。一樣的聲音。']] },
+    ],
+    win: 'You got back to Beijing.',
+  },
+  // ----- chapter two: the Guangqu Gate, the twentieth day of the eleventh month (December 1629) -----
+  sj2: {
+    title: '廣渠門 · The Guangqu Gate', year: 'December 1629', battle: 'aizu', side: 0, soldier: { group: 'sjf' }, hidden: true, ch: 'sj2',
+    bdef: { name: 'The Guangqu Gate', jp: '廣渠門', when: 'December 1629', biome: 'winter', fog: 0.15 },
+    brief: 'The Jin army is under the walls of Beijing. Yuan Chonghuan\'s Liaodong horse have ridden round it to stand before the Guangqu Gate. Your gun team stands with them, outside the wall.',
+    start: [6, 54, PI],
+    zones: [{ key: 'gate', x: 6, z: 46, r: 10, name: 'Before the Guangqu Gate' }, { key: 'canal', x: 0, z: -92, r: 16, name: 'The canal' }],
+    forts: cartRow(40, [-22, -17, -12, -7, 7, 12, 17, 22]),
+    labels: { samurai: ['Plain Blue bannermen', '正藍旗甲兵'] },
+    groups: {
+      sjf: { team: 0, name: 'Captain Cui Ying', zh: '崔英', army: ['rifle_spencer'], at: [6, 56, PI], dir: ['hold', 6, 52], stay: true },
+      yuan: { team: 0, name: 'Yuan Chonghuan', zh: '袁崇煥', army: ['cavalry', 'cavalry', 'samurai', 'rifle_imp'], at: [-10, 58, PI], dir: ['hold', -10, 46], officer: 3, stay: true },
+      zu: { team: 0, name: 'Zu Dashou', zh: '祖大壽', army: ['cavalry', 'samurai', 'ashigaru'], at: [-52, 52, PI], dir: ['hold', -52, 40], officer: 2, stay: true },
+      wall: { team: 0, name: 'Guns on the wall', zh: '城上砲', army: ['armstrong', 'rifle_imp'], at: [18, 70, PI], dir: ['hold', 18, 68], stay: true },
+      amba: { team: 1, name: 'Manggūltai\'s Plain Blue', zh: '莽古爾泰', army: ['samurai', 'samurai', 'archer', 'cavalry', 'samurai'], at: [0, -138, 0], reserve: true },
+      hooge: { team: 1, name: 'Hooge\'s horse', zh: '豪格', army: ['cavalry', 'cavalry', 'byakkotai'], at: [-138, 10, PI / 2], reserve: true },
+    },
+    phases: [
+      { title: '一 · 城下 · Under the wall', goal: 'Form your guns before the gate', text: 'The outer wall at your back, the frozen suburb in front. Yuan Chonghuan\'s riders came two hundred li in two days to be here.', show: ['gate'],
+        start: [['dir', 'sjf', 'hold', 6, 46]],
+        obj: { all: [{ reach: 'gate' }, { survive: 34 }] },
+        say: [[2, 'yuan', 'Gunners from the capital? My Liaodong men have shot at the Jin before. Learn from them, and fast.', '京營的銃手？我的遼兵打過金人。跟著學，學快點。'],
+          [11, 'sj_song', 'That is Yuan Chonghuan. The man who held Ningyuan against Nurhaci himself.', '那就是袁崇煥。在寧遠打退努爾哈赤本人的人。'],
+          [20, 'sj_qian', 'Then why does the city say he let the Jin through?', '那城裡怎麼都說是他放金兵進來的？'], [27, 'sj_hu', 'Shut up and load.', '閉嘴，裝藥。']] },
+      { title: '二 · 正藍旗 · The Plain Blue Banner', goal: 'Fire by ranks and keep the line loaded', text: 'Blue banners in the streets of the suburb. Never let the whole line be empty at once.',
+        start: [['release', 'amba'], ['dir', 'amba', 'hold', 0, 42]],
+        obj: { survive: 90 }, at: [[55, ['wound', 4]]],
+        say: [[1, 'lookout', 'Blue banners in the streets!', '街上有藍旗！'], [6, 'sj_lin', 'By ranks! First fires, second waits! Never all at once!', '分排！頭排放，二排等！不許一齊放空！'],
+          [22, 'sj_song', 'The wall guns. Listen: Western pattern. Red cannon.', '城上的砲——聽。西洋式的，紅夷砲。'],
+          [56, 'sj_hu', 'A gun has burst! Get him behind the carts!', '有銃炸了！拖到車後面去！'],
+          [70, 'yuan', 'Hold! They came a thousand li to die before this gate. Let them.', '頂住！他們跑了千里來這門前送死，就成全他們。']] },
+      { title: '三 · 肉搏 · Hand to hand', goal: 'Turn and club the riders off your guns', text: 'Hooge\'s horse come round through the alleys onto your flank.',
+        start: [['release', 'hooge'], ['dir', 'hooge', 'hold', 10, 46]],
+        obj: { survive: 80 },
+        say: [[1, 'lookout', 'Horse in the alleys on the left!', '左邊巷子裡有馬兵！'], [5, 'sj_hu', 'Club them! Go for the horses\' legs!', '掄起來！打馬腿！'],
+          [30, 'soldier', 'The Governor is hit! Arrows in his armour like a hedgehog. He is still on his horse!', '督師中箭了！甲上的箭跟刺蝟一樣——他還在馬上！'],
+          [62, 'yuan', 'They waver. Liaodong, forward!', '他們動搖了。遼兵，前進！']] },
+      { title: '四 · 運河 · To the canal', goal: 'Drive them back to the canal', text: 'The Jin are going back through the suburb. Push them to the canal, and no farther.', show: ['canal'], hide: ['gate'],
+        start: [['dir', 'yuan', 'hold', 0, -80], ['dir', 'zu', 'hold', -40, -80], ['dir', 'sjf', 'hold', 4, -84]],
+        obj: { all: [{ reach: 'canal' }, { survive: 40 }] }, limit: 300, fail: 'The attack stalled in the suburb.',
+        at: [[28, ['break', 'amba']], [30, ['break', 'hooge']]],
+        say: [[2, 'sj_hu', 'Forward, but together. A chasing line is a broken line.', '前進，但別散。追的人最容易散。'], [31, 'lookout', 'They are over the canal! They are running!', '他們過河了！跑了！'],
+          [35, 'sj_tian', 'We beat them. We actually beat them!', '我們打贏了。真打贏了！'], [39, 'sj_gao', 'This time.', '這一回。']] },
+    ],
+    win: 'The Jin were driven back from the Guangqu Gate.',
+  },
+  // ----- chapter three: Changshan, the relief of Dalinghe, autumn 1631 -----
+  sj3: {
+    title: '長山 · Changshan', year: 'October 1631', battle: 'field', side: 0, soldier: { group: 'sjf' }, hidden: true, ch: 'sj3',
+    bdef: { name: 'Changshan', jp: '長山', when: 'October 1631', biome: 'autumn', fog: 0.18 },
+    brief: 'Zu Dashou is starving in Dalinghe. Zhang Chun\'s relief army has crossed the Xiaoling River and camped on a long hill behind a square of carts. Your gun team holds the north side.',
+    start: [4, -4, 0],
+    zones: [{ key: 'carts', x: 4, z: 12, r: 10, name: 'The north carts' }, { key: 'river', x: 0, z: -134, r: 15, name: 'The Xiaoling River' }],
+    forts: cartRow(18, [-17, -12, -7, 7, 12, 17]).concat(cartCol(-21, [-12, -7, -2, 3, 8, 13]), cartCol(21, [-12, -7, -2, 3, 8, 13])),
+    labels: { cannon4: ['Red cannon (Ujen Cooha)', '紅衣砲'] },
+    groups: {
+      sjf: { team: 0, name: 'Captain Cui Ying', zh: '崔英', army: ['rifle_spencer'], at: [4, -4, 0], dir: ['hold', 4, 0], stay: true },
+      zhang: { team: 0, name: 'Zhang Chun', zh: '張春', army: ['rifle_imp', 'ashigaru', 'gatling'], at: [0, -16, 0], dir: ['hold', 0, -10], officer: 2, stay: true },
+      songwei: { team: 0, name: 'Song Wei', zh: '宋偉', army: ['rifle_imp', 'samurai', 'ashigaru'], at: [26, -10, 0], dir: ['hold', 26, -4], stay: true },
+      wuxiang: { team: 0, name: 'Wu Xiang', zh: '吳襄', army: ['cavalry', 'cavalry'], at: [-36, -18, 0], dir: ['hold', -36, -12], stay: true },
+      guns: { team: 1, name: 'The red cannon', zh: '烏真超哈砲', army: ['cannon4', 'cannon4', 'rifle_sho'], at: [0, 112, PI], reserve: true, stay: true, dir: ['hold', 0, 98] },
+      hong: { team: 1, name: 'Hong Taiji\'s banners', zh: '皇太極', army: ['samurai', 'samurai', 'archer', 'shinsengumi', 'cavalry', 'samurai', 'archer'], at: [0, 138, PI], reserve: true },
+      east: { team: 1, name: 'The Plain Yellow banner', zh: '正黃旗', army: ['samurai', 'samurai', 'shinsengumi', 'cavalry'], at: [138, 20, -PI / 2], reserve: true },
+      left: { team: 1, name: 'Mongol horse', zh: '蒙古騎', army: ['byakkotai', 'cavalry'], at: [-138, 40, PI / 2], reserve: true },
+      right: { team: 1, name: 'Jin horse', army: ['cavalry', 'samurai'], at: [138, -60, -PI / 2], reserve: true },
+    },
+    phases: [
+      { title: '一 · 車營 · The cart camp', goal: 'Stand to behind the north carts', text: 'Forty thousand men on the long hill, behind a square of carts. Dalinghe is a day\'s march north.', show: ['carts'],
+        start: [['dir', 'sjf', 'hold', 4, 12]],
+        obj: { all: [{ reach: 'carts' }, { survive: 40 }] },
+        say: [[2, 'zhang', 'Zu Dashou has eaten his horses. Then worse. We reach him tomorrow.', '祖大壽已經殺馬而食，然後……更糟。明天我們就到。'],
+          [12, 'sj_hu', 'Zhang Chun. A civil official, sixty years old, in armour. He walked the whole line last night.', '張春。文官，六十歲了，穿著甲。昨晚他把整條線都走了一遍。'],
+          [22, 'sj_ma', 'Carts chained. Mules fed. Me too, a bit.', '車連好了。騾子餵了。我也吃了一點。'], [32, 'sj_lin', 'Dry your match. There\'s mist off the river.', '火繩烤乾。河上起霧了。']] },
+      { title: '二 · 紅衣砲 · Their guns', goal: 'Keep your head down and hold the carts', text: 'Smoke on the ridge to the north, then the sound: heavy guns. The Jin have cannon now.',
+        start: [['release', 'guns']],
+        obj: { survive: 70 }, at: [[48, ['wound', 6]]],
+        say: [[3, 'lookout', 'Guns! The Jin have guns on the ridge!', '砲！金人在嶺上有砲！'],
+          [9, 'sj_song', 'Red cannon, cast this year in Shenyang by Han craftsmen. Our own art, turned on us.', '紅衣砲。今年在瀋陽鑄的，漢人工匠鑄的。我們的手藝，打我們自己。'],
+          [20, 'sj_hu', 'Down! Behind the carts! Let them waste powder.', '趴下！躲車後面！讓他們費藥。'], [49, 'sj_hu', 'A gun has burst! Ours! Pull him back!', '又一門炸了——我們的！拖回來！'],
+          [60, 'zhang', 'Gunners, stand up! Foot soldiers are coming on behind their guns.', '銃手，起來！砲後面有步兵上來了！']] },
+      { title: '三 · 風 · The wind turns', goal: 'Hold the cart wall and club them when they reach you', text: 'The grass is burning, and the wind has turned the smoke onto the camp. Out of it come the banners.',
+        start: [['release', 'hong'], ['release', 'left'], ['dir', 'hong', 'hold', 4, 16], ['dir', 'left', 'hold', -30, 0], ['break', 'wuxiang']],
+        obj: { survive: 90 }, waves: [[55, 'east', ['hold', 20, 0]]],
+        say: [[2, 'lookout', 'Wu Xiang\'s horse is leaving! The cavalry is riding off!', '吳總兵的馬兵走了！騎兵跑了！'], [6, 'sj_qian', 'There goes the cavalry. Of course it does.', '騎兵走了。當然走了。'],
+          [10, 'sj_hu', 'Let them go. Carts and guns. That is all we ever had.', '讓他們走。車和銃。我們從來就只有這些。'], [40, 'sj_lin', 'Load in the smoke, by feel! As we drilled!', '煙裡摸著裝！跟練的一樣！'],
+          [76, 'soldier', 'The east side is broken! They are in the camp!', '東邊破了！他們進營了！']] },
+      { title: '四 · 潰 · Break out', goal: 'Get your team down the hill to the river', text: 'The camp is lost. Get down off the hill to the Xiaoling River: whoever can walk, and whoever you can carry.', show: ['river'], hide: ['carts'],
+        start: [['break', 'zhang'], ['calm', 'hong', 24], ['calm', 'guns', 10], ['calm', 'left', 24], ['calm', 'east', 24], ['dir', 'songwei', 'hold', 10, -100]],
+        obj: { extract: 'river' }, limit: 420, fail: 'The banners closed the ring around the hill.',
+        waves: [[10, 'right', ['hold', 30, -92]]], at: [[4, ['promote']], [11, ['calm', 'right', 30]]],
+        say: [[1, 'soldier', 'Zhang Chun is taken! They have the Intendant!', '張監軍被俘了！'], [13, 'lookout', 'Horsemen between us and the river!', '河邊有馬兵擋著！']] },
+    ],
+    win: 'You got down to the Xiaoling River.',
+  },
+  }; })();
+// </sj-missions>
+if (typeof SIM !== 'undefined') Object.assign(SIM.MISSIONS, SJ_MISSIONS);
+
+// ---------- the team ----------
+// slot order = the squad's places: 0 the team chief, 1 you, then the rest. New drafts fill the places of the dead.
+const SR = [
+  { k: 'sj_hu', zh: '胡老鐵', en: 'Hu Laotie', t: 'team chief · 隊長 · twenty years on the Xuanfu frontier' },
+  { k: 'sjme', zh: '李順', en: 'Li Shun', t: 'three-eyed gun · 三眼銃手' },
+  { k: 'sj_tian', zh: '田小鷹', en: 'Tian Xiaoying', t: 'three-eyed gun · 17 · born by the Chongwen Gate' },
+  { k: 'sj_lin', zh: '林阿水', en: 'Lin Ashui', t: 'bird-gun instructor · 鳥銃教師 · from Zhangzhou' },
+  { k: 'sj_ma', zh: '馬大車', en: 'Ma Dache', t: 'cart driver · 車夫 · a Hui of Wanping' },
+  { k: 'sj_zhao', zh: '趙獨眼', en: 'One-Eye Zhao', t: 'powder man · 火藥匠' },
+  { k: 'sj_song', zh: '宋秀才', en: 'Song the Scholar', t: 'three-eyed gun · failed the exams four times' },
+  { k: 'sj_wu', zh: '武二愣', en: 'Wu Erleng', t: 'three-eyed gun · a farm boy from Baoding' },
+  { k: 'sj_qian', zh: '錢串子', en: 'Qian "String-of-Cash"', t: 'three-eyed gun · sells anything' },
+  { k: 'sj_gao', zh: '高老槍', en: 'Old Gao', t: 'kuaiqiang gun · 快槍 · came back from Sarhu' },
+  // new drafts, in the order they are sent
+  { k: 'sj_n1', zh: '孫小毛', en: 'Sun Xiaomao', t: 'new draft · says he is 18 · from Tongzhou', draft: 1 },
+  { k: 'sj_n3', zh: '杜三更', en: 'Du Sangeng', t: 'new draft · was a night watchman', draft: 1 },
+  { k: 'sj_n4', zh: '葛鐵匠', en: 'Ge the Smith', t: 'new draft · a smith from the Ministry of Works', draft: 1 },
+  { k: 'sj_n6', zh: '何順', en: 'He Shun', t: 'new draft · an apprentice with debts', draft: 1 },
+  { k: 'sj_n5', zh: '曹阿四', en: 'Cao Asi', t: 'new draft · trained by the Portuguese at Dengzhou', draft: 2 },
+  { k: 'sj_n2', zh: '白大', en: 'Bai Da', t: 'new draft · a Mongol of the Xuanfu garrison', draft: 2 },
+  // commanders, met in person
+  { k: 'sjf', zh: '崔英', en: 'Captain Cui Ying', t: 'company captain · 把總', guest: true },
+  { k: 'mangui', zh: '滿桂', en: 'Man Gui', t: 'regional commander of Datong · 大同總兵', guest: true },
+  { k: 'yuan', zh: '袁崇煥', en: 'Yuan Chonghuan', t: 'Governor of Jiliao · 督師 · held Ningyuan in 1626', guest: true },
+  { k: 'zu', zh: '祖大壽', en: 'Zu Dashou', t: 'Liaodong general · 總兵', guest: true },
+  { k: 'zhang', zh: '張春', en: 'Zhang Chun', t: 'intendant of the relief army · 監軍道 · sixty years old', guest: true },
+];
+const SLOOK = {
+  sj_hu: { h: 1.04, brows: 'knit', beard: 'longmous', grey: true, scar: true, skin: 0xb88c66 },
+  sjme: { h: 1.0, brows: 'thin', skin: 0xd8b08a },
+  sj_tian: { h: 0.88, brows: 'high', young: true, rosy: true, skin: 0xe8c6a2 },
+  sj_lin: { h: 0.95, brows: 'thin', beard: 'goatee', skin: 0xb07e58 },
+  sj_ma: { h: 1.13, brows: 'thick', beard: 'full', bulk: true, bigNose: true, skin: 0xc49a72 },
+  sj_zhao: { h: 0.97, brows: 'sad', beard: 'stubble', patch: true, scar: true, skin: 0xc8a07a },
+  sj_song: { h: 1.02, brows: 'thin', beard: 'mous', skin: 0xe2c4a0 },
+  sj_wu: { h: 1.1, brows: 'thick', bulk: true, rosy: true, grin: true, skin: 0xcd9f78 },
+  sj_qian: { h: 0.93, brows: 'high', beard: 'mous', grin: true, skin: 0xd6a880 },
+  sj_gao: { h: 0.99, brows: 'sad', beard: 'longmous', longBeard: true, grey: true, skin: 0xb48a62 },
+  sj_n1: { h: 0.84, brows: 'high', young: true, skin: 0xdcb48e },
+  sj_n3: { h: 1.0, brows: 'knit', beard: 'stubble', skin: 0xc49a72 },
+  sj_n4: { h: 1.06, brows: 'thick', beard: 'full', bulk: true, skin: 0xb88c66 },
+  sj_n6: { h: 0.96, brows: 'thin', young: true, skin: 0xe2bc96 },
+  sj_n5: { h: 1.01, brows: 'thick', beard: 'mous', skin: 0xc8a07a },
+  sj_n2: { h: 1.08, brows: 'thick', beard: 'goatee', rosy: true, skin: 0xb07e58 },
+  sjf: { h: 1.05, brows: 'knit', beard: 'mous', skin: 0xc49a72 },
+  mangui: { h: 1.12, brows: 'thick', beard: 'full', scar: true, bulk: true, rosy: true, skin: 0xa87a54 },
+  yuan: { h: 0.98, brows: 'knit', beard: 'longmous', longBeard: true, skin: 0xc8a07a },
+  zu: { h: 1.06, brows: 'thick', beard: 'full', skin: 0xbf9670 },
+  zhang: { h: 0.96, brows: 'sad', beard: 'longmous', longBeard: true, grey: true, skin: 0xd8b088 },
+};
+const SKEY = 'mingShenji';
+const sIdx = (k) => SR.findIndex(r => r.k === k);
+const sRow = (k) => SR.find(r => r.k === k);
+function sDress(u, ci) { const r = SR[ci]; if (!u || !r) return; u.look = Object.assign({ id: r.k }, SLOOK[r.k] || {}); if (state.renderer) state.renderer.colorFigure(u.id, u); }
+function sjFresh() { const s = { v: 1, sj: true, stage: 'drill', name: { zh: '李順', en: 'Li Shun' }, me: 'sjme', team: SR.slice(0, 10).map(r => r.k), alive: {}, fate: {}, bond: {}, talked: {}, flags: {}, newMen: [], lost: [] };
+  for (const r of SR) { s.alive[r.k] = !r.draft; s.bond[r.k] = 0; } return s; }
+function sjName() { const r = sRow('sjme'); if (ZS && ZS.name && ZS.me === 'sjme') { r.zh = ZS.name.zh; r.en = ZS.name.en; } else if (ZS && ZS.oldName) { r.zh = ZS.oldName.zh; r.en = ZS.oldName.en; } }
+// who says the scripted lines (commanders by their group id)
+const SJWHO = { sjf: ['崔英', 'Captain Cui Ying'], mangui: ['滿桂', 'General Man Gui'], hou: ['侯世祿', 'General Hou Shilu'], yuan: ['袁崇煥', 'Governor Yuan Chonghuan'], zu: ['祖大壽', 'General Zu Dashou'], zhang: ['張春', 'Intendant Zhang Chun'], wuxiang: ['吳襄', 'General Wu Xiang'] };
+function sjActivate() {
+  ZKEY = SKEY; Object.assign(ZHOOK, { talk: sjTalk, sleep: sjSleep, finish: sjFinish, who: SJWHO, chatter: sjChatter, event: sjEvent });
+}
+function sjGo(scene) { try { localStorage.setItem('mingShenjiGo', scene); } catch (e) { } location.reload(); }
+// the dead stay dead: before a new chapter every empty place gets a named draft
+function sjRefill(ch) {
+  ZS.newMen = [];
+  for (let i = 0; i < ZS.team.length; i++) { const k = ZS.team[i]; if (ZS.alive[k]) continue;
+    const used = new Set(ZS.team); const pool = SR.filter(r => r.draft && !used.has(r.k) && !ZS.fate[r.k]).sort((a, b) => (a.draft === ch ? -1 : 0) - (b.draft === ch ? -1 : 0));
+    const nr = pool[0]; if (!nr) continue; if (!ZS.lost.includes(k)) ZS.lost.push(k); ZS.team[i] = nr.k; ZS.alive[nr.k] = true; ZS.newMen.push(nr.k); }
+  // you always stand in the second place; the senior living man is chief
+  const mi = ZS.team.indexOf(ZS.me); if (mi > 1) { const t = ZS.team[1]; ZS.team[1] = ZS.me; ZS.team[mi] = t; } else if (mi === 0) { const t = ZS.team[1]; ZS.team[1] = ZS.me; ZS.team[0] = t; }
+}
+const sjLost = () => ZS.lost.filter(k => k !== ZS.me && !ZS.alive[k] && sRow(k));
+const sjFile = () => ZS.team.filter(k => k !== ZS.me && ZS.alive[k]);
+
+// ---------- cards ----------
+const SJ_INTRO = [
+  { title: '神機營 · The Divine Engine Division', year: '1410 – 1629', p: ['When the Yongle Emperor\'s armies came back from the war in Annam, they brought its gunners with them. In the capital he founded a camp of firearms: the Shenjiying, the Divine Engine Division, one of the Three Great Camps that guarded Beijing.',
+    'Two hundred years later its soldiers still come from hereditary soldier families. Half the names on its rolls are empty, and many of the men who exist are hired out as labourers by their officers. But some teams still drill.'], zh: '永樂中，平交阯，得神機槍砲法，特置神機營肄習。— 《明史·兵志》' },
+  { title: '三眼銃 · The three-eyed gun', year: 'The weapons of the camp', p: ['Your team carries the <b>three-eyed gun</b>: three short iron barrels on one pole, fired one after another, then swung as a club. Beside it the camp has the <b>bird-gun</b> (鳥銃) learned from the coast, the old <b>kuaiqiang</b>, the breech-loading <b>falangji</b>, and the <b>side-box carts</b> (偏廂車) that are chained into a wall.',
+    'In 1598 Zhao Shizhen warned the court in his <i>Shenqi pu</i> that half of these guns are cast so badly they burst. Thirty years on, Xu Guangqi is begging the court for Western cannon and Portuguese gunners from Macao.'] },
+  { title: '你 · You', year: 'The autumn of 1629 · 崇禎二年', p: ['You are a gunner from a Wanping soldier family, in a three-eyed-gun team of ten. Tomorrow is the autumn review on the drill ground outside the walls.'],
+    html: '<p><label style="font:14px sans-serif">Your name <input id="sjNm" value="李順" maxlength="6" style="width:6em;font-size:15px"> <input id="sjNmEn" value="Li Shun" maxlength="14" style="width:8em;font-size:15px"></label></p>',
+    onNext: () => { const zh = ($('sjNm').value || '李順').trim().slice(0, 6), en = ($('sjNmEn').value || 'Li Shun').trim().slice(0, 14); ZS.name = { zh, en }; zSave(); }, btn: 'To the drill ground →' },
+];
+function sjNewMenCard() { if (!ZS.newMen.length) return null;
+  return { title: '新兵 · New men', year: `${ZS.newMen.length} sent to fill the team`, p: ZS.newMen.map(k => { const r = sRow(k); return `<b>${r.zh} ${r.en}</b> — ${r.t.replace(/^new draft · /, '')}.`; }).concat(['Talk to them in camp. They take the places of the men who did not come back.']) }; }
+function sjTeamList(where) { return `<ul>${ZS.team.concat(ZS.lastDead || []).filter((k, i, a) => a.indexOf(k) === i).map(k => { const r = sRow(k); const f = k === ZS.me ? 'out' : ZS.fate[k] || 'out'; const nm = k === ZS.me ? `${ZS.name.zh} ${ZS.name.en} (you)` : `${r.zh} ${r.en}`; return `<li class="${f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${nm} — ${f === 'out' ? where : f === 'dead' ? 'killed' : 'missing'}</li>`; }).join('')}</ul>`; }
+
+// ---------- camp ----------
+const SJPROPS = [['pot', 8, -5, 0], ['banner', -3, -7.5, 0.3, '神'], ['rack', -7.5, -3.5, 0.9], ['wagon', 13, -11, 0.5], ['wagon', -12, -9, -0.4], ['log', 0, 2.9, 0], ['log', -2.6, -1.4, 1.1], ['log', 2.7, -1.2, -1.1]];
+const SJGUEST = ['mangui', 'yuan', 'zhang'];
+function sjCampCfg(night) {
+  const beds = [], npcs = [], n = ZS.team.length;
+  ZS.team.forEach((k, i) => { const a = -0.5 + (i / n) * Math.PI * 1.55 + Math.PI * 0.55; beds.push([+(Math.sin(a) * 6.3).toFixed(2), +(Math.cos(a) * 6.3).toFixed(2), +(a + Math.PI).toFixed(3), false]); });
+  const file = sjFile(); file.forEach((k, i) => { const a = (i / Math.max(1, file.length)) * Math.PI * 2 + 0.4, r = 2.4 + (i % 2) * 0.5; const x = Math.sin(a) * r, z = Math.cos(a) * r;
+    npcs.push({ role: 'lead', x: +x.toFixed(2), z: +z.toFixed(2), yaw: +Math.atan2(-x, -z).toFixed(3), ci: sIdx(k), pose: (i % 3 === 2) ? 'stand' : 'squat' }); });
+  const g = SJGUEST[night]; if (g) npcs.push({ role: 'lead', x: -3.4, z: -6.2, yaw: +Math.atan2(3.4, 6.2).toFixed(3), ci: sIdx(g), pose: 'stand' });
+  const mb = beds[ZS.team.indexOf(ZS.me)] || beds[1]; ZC = { bed: [mb[0], mb[1]], map: {}, R: SR, night, chatT: 6 };
+  return { type: 'rifle_spencer', team: 0, fires: [[0, 0], [8, -5]], tents: [[-10, 4, 1.7, 2.5, 2.1], [-4.5, 10.5, 1.7, 2.5, 2.1], [4.5, 10.5, 1.7, 2.5, 2.1], [10, 4, 1.7, 2.5, 2.1]], props: SJPROPS, bedrolls: beds, npcs, me: { x: 0.4, z: -3.4, yaw: 0, role: 'lead' } };
+}
+const SJCAMPTXT = [['營 · Outside Shunyi', 'The night before the Jin. Walk among your team (look at a man and press E to talk). When you are ready, lie down on your bedroll.'],
+  ['營 · Under the Guangqu Gate', 'Inside the outer city, under the gate. Talk with your team (E). Your bedroll is by the cart.'],
+  ['營 · The long hill', 'The camp on the hill above the Xiaoling River. Talk with your team (E), then lie down on your bedroll.']];
+function sjCamp(night) {
+  const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: ZS.name.zh || 'You', team: 0, connected: true }];
+  const camp = sjCampCfg(night); startGame({ seed, battle: 'zcamp', mode: 'campaign', mission: 'zcamp', camp, players: pl }, 0, null, 1);
+  for (const u of state.sim.units) if (u.camp) { ZC.map[u.id] = u.ci; sDress(u, u.ci); } { const me = state.sim.units[state.sim.players[0].heroId]; sDress(me, sIdx(ZS.me)); }
+  MUSIC.play('menu'); MUSIC.setIntensity(0.15); AUDIO.setFire(0.6); $('army').hidden = true;
+  setTimeout(() => storyCard(SJCAMPTXT[night][1], SJCAMPTXT[night][0]), 900);
+}
+function sjSleep() {
+  const N = ZC.night;
+  const D = [['黎明 · Dawn', 'November 1629', ['Snow before light. The carts are greased, the match-cord coiled under coats. Chief Hu walks down the team and taps each gun once, as if counting.'], 'battle1'],
+    ['黎明 · Dawn', 'The twentieth day of the eleventh month', ['The gate behind you stays shut. Smoke from the suburb; drums from the south.'], 'battle2'],
+    ['黎明 · Dawn', 'October 1631', ['Mist on the river below the hill. Somewhere north, Dalinghe is waiting.'], 'battle3']][N];
+  ZS.stage = D[3]; zSave(); zCards([{ title: D[0], year: D[1], p: D[2], btn: 'Stand to →' }], () => sjGo(D[3]));
+}
+function sjChatter(night) {
+  return [[['這雪下得早。', 'Early snow this year.'], ['明天走多少里？', 'How far tomorrow?'], ['誰還有火石？', 'Anyone got a flint?'], ['京城的城牆，從這兒還看得見。', 'You can still see the city wall from here.']],
+    [['城門不給我們開。', 'They won\'t open the gate for us.'], ['城裡在罵袁督師。', 'They\'re cursing the Governor in the city.'], ['……', '...'], ['火藥乾不乾？', 'Is the powder dry?']],
+    [['大凌河城裡吃人。', 'They\'re eating people in Dalinghe.'], ['吳總兵的騎兵在那邊烤火。', 'Wu Xiang\'s riders are warming themselves over there.'], ['這山叫長山。好長。', 'They call this the long hill. It is long.'], ['想家了。', 'I miss home.']]][night] || [['……', '...']];
+}
+
+// ---------- dialogue ----------
+function sjTalk(k, night) {
+  const S = ZS, nm = S.name, lost = sjLost().map(x => sRow(x)), alive = (x) => S.alive[x] && S.team.includes(x), n = S.team.filter(x => S.alive[x]).length;
+  const D = sjDraftTalk(k, night); if (D) return D;
+  const T0 = {
+    sj_hu: { g: ['睡吧。明天站車後面，比站校場難。', 'Sleep. Standing behind a cart is harder than standing on the drill ground.'], t: [
+      { q: 'How do we fight horsemen with these?', a: [['三眼銃，近了才打得著。五十步內，三管連發。', 'The three-eyed gun only hits close. Inside fifty paces, three barrels one after another.'], ['打完了別裝藥——掄。馬腿、馬臉、人手。', 'When it\'s spent, don\'t reload: swing. Horse legs, horse faces, men\'s hands.']] },
+      { q: 'You were on the frontier?', bond: 1, a: [['宣府，二十年。蒙古人一年來兩回。', 'Xuanfu, twenty years. The Mongols came twice a year.'], ['那時候我跟田小鷹一樣傻。……你多看著他點。', 'I was as green as Tian Xiaoying then. ...Keep an eye on him.']] }] },
+    sj_tian: { g: ['我爹說，神機營三輩子沒出過京城。', 'My father says the Divine Engine Division hasn\'t left the capital in three generations.'], t: [
+      { q: 'Why did you join?', a: [['軍戶。我爹是，我爺爺是。名冊上寫著，就得來。', 'A soldier family. My father, my grandfather. It\'s in the rolls, so I came.'], ['我爹的名字也在冊上，可他在崇文門賣了二十年豆腐。', 'My father\'s name is on the rolls too. He\'s sold bean curd at the Chongwen Gate for twenty years.']] },
+      { q: 'Stay by me tomorrow.', bond: 1, flag: 'promise', a: [['……好。你放，我就放。', '...All right. When you fire, I fire.']] }] },
+    sj_lin: { g: ['北方的火繩，一受潮就啞。', 'Northern match-cord. Goes dead the moment it\'s damp.'], t: [
+      { q: 'Where did you learn guns?', bond: 1, a: [['漳州，海船上。佛郎機、鳥銃，紅毛人、倭寇都打過。', 'Zhangzhou, on the sea junks. Falangji and bird-guns. I\'ve fought the red-haired Dutch and the wokou both.'], ['鳥銃要瞄。三眼銃不用瞄：靠近了就打得著。', 'A bird-gun you aim. A three-eyed gun you don\'t: get close enough and it hits.']] },
+      { q: 'What is the three-rank drill?', a: [['戚少保《練兵實紀》：頭排放，退後裝；二排上，三排等。', 'Marshal Qi\'s drill: the front rank fires and falls back to load, the second steps up, the third waits.'], ['銃永遠不空。這就是全部的秘密。', 'The line is never empty. That\'s the whole secret.']] }] },
+    sj_ma: { g: ['這是偏廂車。一面有板，擋得住箭。', 'This is a side-box cart. Boarded on one side. Stops arrows.'], t: [
+      { q: 'Tell me about the carts.', a: [['車連起來就是一道牆。銃在車後，馬兵在兩翼。', 'Chain them and they\'re a wall. Guns behind the carts, horse on the wings.'], ['我只管騾子。騾子不打仗，騾子只想回家。', 'I just look after the mules. Mules don\'t fight. Mules only want to go home.']] },
+      { q: 'Give the mule some of your bread.', bond: 1, a: [['（他咧嘴一笑，掰了一半給你，一半給騾子。）', '(He grins, breaks his own in half, and gives one half to you and one to the mule.)']] }] },
+    sj_zhao: { g: ['藥是我配的。硝七成五，硫一成，炭一成五。', 'I mixed the powder. Seventy-five saltpetre, ten sulphur, fifteen charcoal.'], t: [
+      { q: 'How did you lose the eye?', bond: 1, a: [['工部鑄的銃。管壁薄得像紙，第一響就炸了。', 'A gun from the Ministry of Works foundry. Walls thin as paper. It burst on the first shot.'], ['趙士楨說得對：銃少不怕，就怕爛。', 'Zhao Shizhen had it right: few guns is bad, bad guns are worse.']] }] },
+    sj_song: { g: ['你知道徐光啟大人嗎？', 'Have you heard of Lord Xu Guangqi?'], t: [
+      { q: 'Who is he?', a: [['翰林，跟利瑪竇學過算學。他要用西洋大砲，請澳門的葡萄牙砲手來教。', 'A Hanlin scholar who studied mathematics with Matteo Ricci. He wants Western cannon, and Portuguese gunners from Macao to teach us.'], ['朝中有人說用夷人是恥辱。輸給金人就不恥辱？', 'Some at court say using foreigners is shameful. And losing to the Jin isn\'t?']] },
+      { q: 'Why does a scholar carry a gun?', bond: 1, a: [['考了四回，沒中。家裡窮。餉銀按月發……有時候按月。', 'Four tries at the exams. My family\'s poor. The pay comes every month... some months.']] }] },
+    sj_wu: { g: ['這銃比我家的連枷還重。', 'This gun is heavier than our flail at home.'], t: [
+      { q: 'Are you afraid?', a: [['怕啥？金人也是人。挨一棍子都疼。', 'Of what? The Jin are men. Every man hurts when you hit him with a stick.']] },
+      { q: 'Show me how you swing it.', bond: 1, a: [['（他把三眼銃掄了一圈，差點打翻了鍋。大家都笑了。）', '(He swings the gun round and nearly knocks over the pot. Everyone laughs.)']] }] },
+    sj_qian: { g: ['要菸葉嗎？三個錢。給你算兩個。', 'Tobacco? Three coins. For you, two.'], t: [
+      { q: 'Where do you get all this?', a: [['冊上三千人，校場上一千。空額的餉，總得有人花。', 'Three thousand on the rolls, a thousand on the drill ground. Somebody has to spend the empty men\'s pay.']] },
+      { q: 'Buy the tobacco.', bond: 1, a: [['好兄弟！明天你要是倒了，我不收錢，把你拖回來。', 'Brother! If you go down tomorrow, I\'ll drag you back free of charge.']] }] },
+    sj_gao: { g: ['快槍。一管，一響。我用了三十年。', 'Kuaiqiang. One barrel, one shot. Thirty years I\'ve carried it.'], t: [
+      { q: 'You were at Sarhu?', bond: 1, a: [['杜松那一路。渾河水齊腰，火藥全濕了。', 'Du Song\'s column. The Hun River up to our waists. Every grain of powder got wet.'], ['那天晚上我躺在死人堆裡，一直躺到天亮。', 'That night I lay among the dead until it was light.']] }] },
+    mangui: { g: ['你是銃手？手穩不穩？', 'You a gunner? Steady hands?'], t: [
+      { q: 'Steady enough, General.', bond: 1, a: [['好。我是蒙古人，我爹放羊。我不認字，可我認得金人的旗。', 'Good. I\'m a Mongol; my father herded sheep. I can\'t read, but I know the Jin banners.'], ['明天你們打前面的，我的人打後面的。別把我的人當金人打了。', 'Tomorrow you shoot the ones in front, my men ride down the rest. Don\'t shoot my men by mistake.']] },
+      { q: 'They say you have forty wounds.', a: [['四十二。都在前面。背上一處也沒有。', 'Forty-two. All in front. Not one on my back.']] }] },
+  };
+  const T1 = {
+    sj_hu: { g: [`回來${n}個。`, `${n} of us came back.`], t: [
+      { q: 'What happens tomorrow?', a: [['金兵到廣渠門。我們站在城外，城門不會為我們開。', 'The Jin reach the Guangqu Gate. We stand outside the wall. The gate won\'t open for us.']] }].concat(lost.slice(0, 2).map(r => ({ q: `About ${r.en}...`, bond: 1, a: [[`${r.zh}……`, `${r.en}...`], ['名字我記下了。回城我去他家。', 'I\'ve written his name down. When we get back, I\'ll go to his family.']] }))) },
+    sj_tian: { g: S.flags.promise ? ['你說話算話。我也是。', 'You kept your word. So did I.'] : ['我放了三銃，一個都沒打中。', 'I fired three barrels and didn\'t hit a thing.'], t: [
+      { q: 'Nobody hits anything the first time.', bond: 1, a: [['胡頭兒也這麼說。他說第二回就打中了。', 'Chief Hu says that too. He says you hit the second time.']] }] },
+    sj_lin: { g: ['你裝藥快了。', 'You load faster now.'], t: [
+      { q: 'What did we do wrong at Shunyi?', a: [['沒錯。三千銃，一千騎兵，對面一萬五。', 'Nothing. Three thousand guns and a thousand horse, against fifteen thousand.'], ['戚少保說，車營要有步兵、騎兵、砲。我們只有車和銃。', 'Marshal Qi said a cart camp needs foot, horse and cannon. We had carts and guns.']] }] },
+    sj_zhao: { g: S.flags.helpedZhao ? ['你把我拖回來的。這隻手是你的。', 'You dragged me back. This hand is yours.'] : ['手還在。五個指頭，我數過了。', 'The hand\'s still there. Five fingers. I counted.'], t: [
+      { q: 'Will you still mix the powder?', bond: 1, a: [['我不配，誰配？……少裝一點，記住。', 'If not me, who? ...Less powder. Remember.']] }] },
+    sj_song: { g: ['城裡在傳，袁督師跟金人有約。', 'They\'re saying in the city that the Governor has a pact with the Jin.'], t: [
+      { q: 'Do you believe it?', a: [['他兩天跑了兩百里來救京城。有約的人不會這麼跑。', 'He rode two hundred li in two days to save the capital. A man with a pact doesn\'t ride like that.'], ['可皇上信什麼，不由我們。', 'But what the Emperor believes isn\'t up to us.']] }] },
+    sj_wu: { g: ['我那一棍子，把一個馬兵打下來了！', 'That one swing knocked a horseman clean off!'], t: [{ q: 'Are you all right?', a: [['不疼。……就是晚上睡不著。', 'Doesn\'t hurt. ...Just can\'t sleep.']] }] },
+    sj_qian: { g: ['菸葉漲價了。打仗嘛。', 'Tobacco\'s gone up. It\'s the war.'], t: [{ q: 'You dragged a man back yesterday.', bond: 1, a: [['……別到處說。壞了我的名聲。', '...Don\'t spread it around. You\'ll ruin my reputation.']] }] },
+    sj_gao: { g: ['又是一場雪。', 'Snow again.'], t: [{ q: 'It wasn\'t Sarhu. We got out.', bond: 1, a: [['是。這回我沒躺在死人堆裡。', 'True. This time I didn\'t lie among the dead.']] }] },
+    sj_ma: { g: ['車丟了七輛。騾子……我不想說。', 'Seven carts lost. The mules... I don\'t want to talk about it.'], t: [{ q: 'You saved the rest.', a: [['剩下的都牽回來了。一頭沒扔。', 'I led back every one that was left. Didn\'t leave one.']] }] },
+    yuan: { g: ['京營的兵？順義打過了？', 'Capital troops? You were at Shunyi?'], t: [
+      { q: 'We were, Governor.', bond: 1, a: [['打過一回的兵，比沒打過的值十個。', 'A man who has fought once is worth ten who haven\'t.'], ['寧遠我們靠城和砲守住。明天沒有城，只有你們的銃和我的馬。', 'We held Ningyuan with walls and cannon. Tomorrow there are no walls. Only your guns and my horses.']] },
+      { q: 'People in the city say...', a: [['我知道他們說什麼。', 'I know what they say.'], ['仗打完了再說。', 'We\'ll talk when the fighting is done.']] }] },
+  };
+  const T2 = {
+    sj_hu: { g: ['袁督師……凌遲。京城的人搶著買他的肉。', 'The Governor... death by slicing. People in the capital paid for pieces of his flesh.'], t: [
+      { q: 'Then why are we here?', bond: 1, a: [['祖大壽在大凌河城裡。三萬人，吃馬，吃人。', 'Zu Dashou is in Dalinghe. Thirty thousand people, eating horses, eating men.'], ['他是袁督師的人。我們去救他。就這樣。', 'He was the Governor\'s man. We go to get him out. That\'s all.']] }].concat(lost.slice(0, 2).map(r => ({ q: `Do you still think of ${r.en}?`, a: [['每天。', 'Every day.']] }))) },
+    sj_song: { g: ['孫元化大人在登州練兵，用西洋砲和葡萄牙教官。', 'Lord Sun Yuanhua drills men at Dengzhou with Western guns and Portuguese instructors.'], t: [
+      { q: 'Will they come?', a: [['聽說孔有德帶著登州兵往這邊來了。', 'They say Kong Youde is marching this way with the Dengzhou men.'], ['毛文龍的舊部，遼東人。不知道能不能信。', 'One of Mao Wenlong\'s old officers. A Liaodong man. I don\'t know if he can be trusted.']] }] },
+    sj_lin: { g: ['火繩泡過桐油了。這回不怕霧。', 'I soaked the match in tung oil. Mist won\'t kill it this time.'], t: [
+      { q: 'Teach me to load in the dark.', bond: 1, a: [['手記得，眼睛就不用。倒藥、壓實、裝子、點火門。再來。', 'When your hands remember, your eyes don\'t matter. Powder, ram, ball, priming. Again.'], ['（你們練到你閉著眼也不灑藥。）', '(You drill until you can do it eyes shut without spilling a grain.)']] }] },
+    sj_tian: { g: ['我二十了。', 'I\'m twenty now.'], t: [{ q: 'You\'ve changed.', a: [['我爹的豆腐攤，去年被兵搶了。我們自己的兵。', 'My father\'s bean-curd stall was looted last year. By soldiers. Our own.']] }] },
+    sj_zhao: { g: ['這回的銃是新鑄的。我一門一門試過。', 'These guns are newly cast. I tested every one.'], t: [{ q: 'Any bad ones?', a: [['三門。我拿錘子砸了。工部的人罵我。讓他罵。', 'Three. I smashed them with a hammer. The Ministry man cursed me. Let him.']] }] },
+    sj_wu: { g: ['我娶媳婦了！去年冬天。', 'I got married! Last winter.'], t: [{ q: 'Congratulations!', bond: 1, a: [['她說，回來給她帶塊遼東的狐皮。', 'She said to bring her back a Liaodong fox fur.']] }] },
+    sj_qian: { g: ['這回不賣了。送你。', 'Not selling this time. It\'s yours.'], t: [{ q: 'What\'s wrong?', a: [['大凌河城裡吃人。我們要是也被圍了呢？', 'They\'re eating people in Dalinghe. What if we get surrounded too?']] }] },
+    sj_gao: { g: ['這是我最後一仗。打完回家。', 'This is my last fight. After this I go home.'], t: [{ q: 'Where is home?', bond: 1, a: [['通州。有個侄子。還有棵棗樹。', 'Tongzhou. A nephew. And a jujube tree.']] }] },
+    sj_ma: { g: ['車比兩年前多了。騾子也胖了。', 'More carts than two years ago. Fatter mules too.'], t: [{ q: 'That\'s good.', a: [['好什麼。車多了，跑不動。', 'What\'s good about it? More carts, and we can\'t run.']] }] },
+    zhang: { g: ['你們是神機營的？我是張春。', 'You\'re the Divine Engine men? I\'m Zhang Chun.'], t: [
+      { q: 'Sir, aren\'t you a civil official?', bond: 1, a: [['六十歲的書生，穿著甲走路。好笑吧。', 'A sixty-year-old scholar walking about in armour. Funny, isn\'t it.'], ['可朝廷讓我來，我就來。祖大壽在等。', 'But the court sent me, so I came. Zu Dashou is waiting.']] },
+      { q: 'Will we win?', a: [['吳襄的騎兵、宋偉的步兵、你們的銃。四萬人。', 'Wu Xiang\'s horse, Song Wei\'s foot, your guns. Forty thousand.'], ['……就看騎兵走不走。', '...It depends on whether the cavalry stays.']] }] },
+  };
+  const T = [T0, T1, T2][night] || T0; return T[k] || (alive(k) ? { g: ['……', '...'], t: [] } : null);
+}
+function sjDraftTalk(k, night) {
+  const r = sRow(k); if (!r || !r.draft) return null; const fresh = ZS.newMen.includes(k);
+  const D = {
+    sj_n1: [['我十八。真的。', 'I\'m eighteen. Really.'], [{ q: 'Where are you from?', a: [['通州。房子燒了。金兵燒的。', 'Tongzhou. The house burned. The Jin burned it.']] }, { q: 'Stay behind me.', bond: 1, a: [['……嗯。', '...Mm.']] }]],
+    sj_n3: [['我打了十年更。現在打銃。', 'Ten years beating the night watch. Now I fire guns.'], [{ q: 'Is it different?', bond: 1, a: [['打更是叫人醒。打銃是叫人睡。', 'The watch wakes people up. A gun puts them to sleep.']] }]],
+    sj_n4: [['銃管我會修。', 'I can fix a barrel.'], [{ q: 'Look at mine?', bond: 1, a: [['給我。……誰鑄的？管口都歪了。', 'Give it here. ...Who cast this? The muzzle\'s crooked.']] }]],
+    sj_n6: [['……別問我為什麼來。', '...Don\'t ask why I joined.'], [{ q: 'Why did you join?', a: [['欠了賭債。當兵，債主就找不到我了。', 'Gambling debts. In the army, they can\'t find me.']] }]],
+    sj_n5: [['我在登州跟葡萄牙人學過放砲。', 'I learned gunnery from the Portuguese at Dengzhou.'], [{ q: 'What are they like?', bond: 1, a: [['鼻子高，說話快，砲打得準。量角度用一把銅尺。', 'High noses, fast talkers, straight shooters. They measure the angle with a brass quadrant.']] }]],
+    sj_n2: [['我是蒙古人。我替大明打仗。', 'I\'m a Mongol. I fight for the Ming.'], [{ q: 'Why?', bond: 1, a: [['滿總兵也是蒙古人。我跟著他。他死在永定門外，我就跟著你們。', 'General Man Gui was a Mongol too. I followed him. He died outside the Yongding Gate, so now I follow you.']] }]],
+  }[k]; if (!D) return null;
+  return { g: fresh ? D[0] : ['還活著。', 'Still alive.'], t: fresh ? D[1] : [] };
+}
+
+// ---------- battles ----------
+const SJBAT = {
+  battle1: ['sj1', '順義 · Shunyi', 'November 1629. Your team marches behind the carts. Stay with your team: the chief calls the drill. Fire when the drum rolls, then swing the empty gun.', [['sjf', 'sjf'], ['mangui', 'mangui']]],
+  battle2: ['sj2', '廣渠門 · The Guangqu Gate', 'The twentieth day of the eleventh month. Before the Guangqu Gate with Yuan Chonghuan\'s Liaodong men. Fire by ranks; never all at once.', [['sjf', 'sjf'], ['yuan', 'yuan'], ['zu', 'zu']]],
+  battle3: ['sj3', '長山 · Changshan', 'October 1631. The cart camp on the long hill. Hold the north carts with your team.', [['sjf', 'sjf'], ['zhang', 'zhang']]],
+  drill: ['sjdrill', '校場 · The drill ground', 'The autumn review. Stay with your team and march on the drum. Left mouse fires the three barrels one after another; R reloads.', [['sjf', 'sjf']]],
+};
+function sjBattle(scene) {
+  const B = SJBAT[scene], M = SJ_MISSIONS[B[0]]; const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: ZS.name.zh || 'You', team: 0, connected: true }];
+  startGame({ seed, battle: M.battle, mode: 'campaign', mission: B[0], players: pl }, 0, null, 1);
+  const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq];
+  ZB = { map: {}, R: SR, sq: q.id, first: me.heroId, cur: ZS.me, fell: false, ch2: true, sj: true, scene };
+  const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = sIdx(ZS.me);
+  ZS.team.forEach((k, i) => { if (k === ZS.me || !ZS.alive[k]) return; let id = q.unitIds[i]; if (id === undefined || used[id]) id = q.unitIds.find(x => !used[x]); if (id === undefined) return; used[id] = 1; ZB.map[id] = sIdx(k); });
+  for (const uid in ZB.map) sDress(sim.units[uid], ZB.map[uid]);
+  for (const [g, k] of B[3]) { const G = sim.mg[g]; if (G) sDress(sim.units[sim.players[G.p].heroId], sIdx(k)); }
+  setTimeout(() => storyCard(B[2], B[1]), 700);
+}
+function sjEvent(ev) {
+  const sim = state.sim; if (!ZB || !ZB.sj || !sim) return;
+  if (ev.t === 'zhelp' && ev.id === ZB.wounded && ZB.scene === 'battle1' && ZB.map[ev.id] === sIdx('sj_zhao')) ZS.flags.helpedZhao = true;
+  if (ev.t === 'zpromote' && ev.p === state.localIdx) { const n = SPEECH.nameOf(ev.chief); const q = sim.squads[ev.sq]; const w = q.unitIds.map(id => sim.units[id]).find(u => !u.dead && u.ctrl < 0 && !u.wounded);
+    if (w) setTimeout(() => SPEECH.say(w.id, `${n ? n.zh : '隊長'}死了！${ZS.name.zh}，你帶隊！`, `${n ? n.en : 'The chief'} is dead! ${ZS.name.en}, you lead us!`, { prio: 3, dur: 5 }), 1500); }
+}
+// a battle is over: who came out, who is dead, who is missing
+function sjFinish(winner) {
+  const sim = state.sim, h = localHero(); if (!ZB) return; const M = sim.mission, won = winner === M.side, scene = ZB.scene;
+  const z = sim.missionZone(scene === 'battle1' ? 'road' : scene === 'battle3' ? 'river' : 'nowhere'); const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
+  const fate = {};
+  for (const uid in ZB.map) { const r = SR[ZB.map[uid]]; if (!r) continue; const u = sim.units[uid]; if (u.dead) { fate[r.k] = 'dead'; continue; }
+    const inZ = z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 12, left = u.wounded && u.helpedBy < 0 && !near(u, 5) && !inZ;
+    fate[r.k] = left && (z || !won) ? 'lost' : (!z ? won || near(u, 14) : inZ || near(u, won ? 30 : 12)) ? 'out' : 'lost'; }
+  for (const k of ZB.deadMe || []) fate[k] = 'dead';
+  if (fate[ZS.me] === undefined) fate[ZS.me] = h && !h.dead ? 'out' : 'dead';
+  if (M.soft) for (const k in fate) fate[k] = 'out';
+  // you go on as whoever you became
+  if (ZB.cur && ZB.cur !== ZS.me && ZB.cur !== 'stranger' && fate[ZS.me] === 'dead') { const nk = ZB.cur; ZS.oldName = ZS.name; sjName(); ZS.me = nk; ZS.name = { zh: sRow(nk).zh, en: sRow(nk).en }; fate[nk] = 'out'; }
+  ZS.lastDead = [];
+  for (const k in fate) { ZS.fate[k] = fate[k]; ZS.alive[k] = fate[k] === 'out'; if (fate[k] !== 'out') ZS.lastDead.push(k); }
+  const B = { drill: ['camp0', null], battle1: ['ch2', 'back in Beijing'], battle2: ['ch3', 'before the gate'], battle3: ['end', 'across the river'] }[scene];
+  ZS.stage = B[0]; zSave();
+  if (scene === 'drill') { zCards([{ title: '出征 · Marching out', year: 'The eleventh month of 1629', p: ['The Jin army is through the Great Wall. Zunhua falls; the old general Zhao Shuaijiao, riding to its relief from Shanhai Pass, is killed outside it.', 'The capital camps are sent out to meet the raiders before they reach the walls. Your company goes with Man Gui\'s horsemen from Datong, north-east to Shunyi.'], btn: 'Make camp →' }], () => sjGo('camp0')); return; }
+  const outN = ZS.team.filter(k => ZS.alive[k]).length, names = ZS.lastDead.map(k => sRow(k)).filter(Boolean);
+  $('resultTitle').textContent = won ? M.win.split('.')[0] : 'Cut off'; $('resultTitle').className = won ? 'win' : 'lose';
+  $('resultText').innerHTML = `${won ? M.win : 'The ring closed, but a few of you crawled out after dark.'} ${outN} of ten came out.${names.length ? ' Lost: ' + names.map(r => r.k === ZS.me ? ZS.name.en : r.en).join(', ') + '.' : ''}`;
+  $('btnNext').hidden = false; $('btnNext').textContent = 'What happened →';
+  $('btnNext').onclick = () => { $('result').hidden = true; zCards(SJAFTER[scene]().concat([{ title: '隊 · Your team', year: `${outN} of ten`, html: sjTeamList(B[1]), btn: B[0] === 'end' ? 'Epilogue →' : 'Go on →' }]), () => sjGo(B[0])); };
+}
+const SJAFTER = {
+  battle1: () => [{ title: '順義 · Shunyi', year: 'The eleventh month of 1629', p: ['Man Gui and Hou Shilu were beaten at Shunyi and fell back on Beijing. The Jin rode on, burning the villages around the capital.', 'Three days later Yuan Chonghuan arrived with nine thousand Liaodong horsemen. He had ridden round the Jin army to put himself between it and the city.'], zh: '滿桂、侯世祿戰順義，敗績。' }],
+  battle2: () => [{ title: '廣渠門 · The Guangqu Gate', year: 'The twentieth day of the eleventh month', p: ['Yuan Chonghuan\'s men fought outside the Guangqu Gate from noon until dark, and drove the Jin back over the canal. Yuan was in the fight himself; arrows stuck in his armour like the quills of a hedgehog.', 'The same day, outside the Desheng Gate, Man Gui fought under the walls, and the guns on the wall fired into his own men.'], zh: '兩肋如蝟，賴有重甲不透。' },
+    { title: '督師 · The Governor', year: 'Winter 1629 – autumn 1630', p: ['The Jin let it be known that Yuan had a secret pact with them. Ten days after the battle the Chongzhen Emperor called Yuan into the palace and arrested him. Zu Dashou took the Liaodong army and rode east in fury. Man Gui was given the command and was killed outside the Yongding Gate a few weeks later.',
+      'In 1630 the Ming took back Zunhua and the walled towns the Jin had held inside the Wall. In the eighth month Yuan Chonghuan was executed by slicing in the market of the capital.'] },
+    { title: '西洋砲 · Western guns', year: '1630 – 1631', p: ['Xu Guangqi had his way. A company of Portuguese gunners came up from Macao with their cannon and helped hold Zhuozhou. His student Sun Yuanhua went to Dengzhou on the Shandong coast to train Ming gunners in the Western way, with Liaodong refugees under Kong Youde and Geng Zhongming.',
+      'In the eighth month of 1631 Hong Taiji came back and besieged Zu Dashou in the new fort of Dalinghe, beyond Jinzhou. A relief army was gathered. Your team marched with it.'] }],
+  battle3: () => [{ title: '長山 · Changshan', year: 'The ninth month of 1631', p: ['Zhang Chun\'s relief army was attacked on the hill at Changshan. For the first time the Jin brought red cannon of their own, cast in Shenyang that year by Han craftsmen under Tong Yangxing. Wu Xiang\'s cavalry fled; the cart camp was broken.',
+      'Zhang Chun was captured. He refused to kneel to Hong Taiji. A month later, after the people inside had eaten the dead, Zu Dashou surrendered Dalinghe, then talked his way back to Jinzhou and its walls.'], zh: '張春被執，不屈。' }],
+};
+const SJ_END = () => [
+  { title: '吳橋 · Wuqiao', year: 'The winter of 1631–1632', p: ['Kong Youde\'s men from Dengzhou, sent north to relieve Dalinghe, mutinied in the snow at Wuqiao, unpaid and starving. They turned back and took Dengzhou itself, with its Western cannon and the gunners Sun Yuanhua had trained. Sun Yuanhua was executed for it.',
+    'In 1633 Kong Youde and Geng Zhongming sailed to the Jin with their ships, their guns, and men who knew how to serve them. From then on the Jin had both.'], zh: '孔有德、耿仲明以登州砲手航海降金。' },
+  { title: '終 · The end', year: '1641 – 1644', p: ['At Songshan and Jinzhou in 1641–1642 the Jin, now the Qing, broke the last Ming field army in the north with cannon of their own. In 1644 the Ming dynasty fell.', `${ZS.team.filter(k => ZS.alive[k]).length} of your team walked home from the long hill. ${ZS.alive.sj_gao ? 'Old Gao went back to Tongzhou and his jujube tree.' : ''}`] },
+];
+function sjEnd() { ZS.stage = 'done'; zSave(); zCards(SJ_END().concat([{ title: '隊 · Your team', year: 'The end of the campaign', html: sjTeamList('came home'), btn: 'Back to the menu' }]), () => location.reload()); }
+
+// ---------- flow ----------
+function sjStart(scene) {
+  sjActivate(); ZS = zLoad(); if (!ZS || !ZS.sj) ZS = sjFresh(); sjName();
+  $('menu').hidden = true; state.lowfx = $('lowfxIn').checked; state.fog = false;
+  if (scene === 'ch2' || scene === 'ch3') { const ch = scene === 'ch2' ? 1 : 2; if (ZS.refilled !== scene) { sjRefill(ch); ZS.refilled = scene; zSave(); }
+    const nc = sjNewMenCard(); const C = scene === 'ch2' ? [{ title: '京城 · The capital', year: 'The eleventh month of 1629', p: ['The gates of the inner city are shut. Your company is quartered in the outer city, under the Guangqu Gate, where the road comes in from the east.'] }] : [{ title: '大凌河 · Dalinghe', year: 'Autumn 1631', p: ['Two years on. The team marches north-east up the coast road, past Shanhai Pass and Ningyuan, with Zhang Chun\'s relief army.'] }];
+    zCards(C.concat(nc ? [nc] : []), () => { ZS.stage = scene === 'ch2' ? 'camp1' : 'camp2'; zSave(); sjStart(ZS.stage); }); return; }
+  if (/^camp[012]$/.test(scene)) return sjCamp(+scene[4]);
+  if (SJBAT[scene]) return sjBattle(scene);
+  if (scene === 'end' || scene === 'done') return sjEnd();
+}
+function sjMenu() {
+  const host = $('zheCta'); if (!host || $('sjCta')) return;
+  const st = document.createElement('style'); st.textContent = '#sjCta { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 14px 16px; margin: -6px 0 16px; border: 1px solid #5a6474; background: linear-gradient(100deg, rgba(40,52,74,.22), rgba(40,30,20,.06)); flex-wrap: wrap; } #sjCta b { font-size: 19px; letter-spacing: .04em; } #sjCta small { display: block; color: var(--ink2); max-width: 64ch; margin-top: 3px; } #sjCta .btns { display: flex; gap: 8px; }';
+  document.head.appendChild(st);
+  const d = document.createElement('div'); d.id = 'sjCta';
+  d.innerHTML = '<div><b>神機營 · The Divine Engine Division</b><small>A story campaign, 1629–1631. A three-eyed-gun team of the capital\'s firearms camp marches out against the Jin raid on Beijing. Volleys behind the cart wall, the gun swung as a club when they close, and the men beside you.</small></div><div class="btns"><button class="btn primary" id="btnSj" type="button">Begin</button><button class="btn" id="btnSjNew" type="button" hidden>New</button></div>';
+  host.after(d);
+  let s = null; try { s = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { }
+  const cont = s && s.sj && s.stage && s.stage !== 'done'; $('btnSj').textContent = cont ? 'Continue' : s ? 'Play again' : 'Begin'; $('btnSjNew').hidden = !cont;
+  const begin = () => { AUDIO.init(); AUDIO.play('ui'); sjActivate(); ZS = sjFresh(); zSave(); $('menu').hidden = true; zCards(SJ_INTRO, () => { ZS.stage = 'drill'; zSave(); sjStart('drill'); }); };
+  $('btnSj').onclick = () => { if (cont) { AUDIO.init(); AUDIO.play('ui'); sjStart(s.stage); } else begin(); };
+  $('btnSjNew').onclick = begin;
+}
+sjMenu();
+{ let go = null; try { go = localStorage.getItem('mingShenjiGo'); localStorage.removeItem('mingShenjiGo'); } catch (e) { } if (go) setTimeout(() => sjStart(go), 60); }
 
 })();
 </script>
