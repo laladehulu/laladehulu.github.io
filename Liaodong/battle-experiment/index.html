@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v27</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v28</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1493,7 +1493,7 @@ class Sim {
     } else if (!blk) u.blocking = false;
     u.atkHeld = atk; u.blockHeld = blk;
   }
-  startWindup(u, dir) { u.wMul = 1; if (this.xc && u.ctrl < 0 && u.target >= 0) { const t = this.units[u.target]; if (t && t.ctrl >= 0 && !this.players[t.ctrl].ai) u.wMul = 1.3; } u.heavy = false; u.aiHeavy = u.ctrl < 0 && !u.ctrlActive && this.rng.next() < (u.def.overhead ? 0.4 : 0.18); u.st = ST_WINDUP; u.stT = 0; u.atkDir = dir; u.relQ = false; u.windupId++; u.swingHit = false; u.blocking = false; u.aiming = false; this.events.push({ t: 'windup', id: u.id, dir }); }
+  startWindup(u, dir) { if (u.hrT > 0) return; u.wMul = 1; if (this.xc && u.ctrl < 0 && u.target >= 0) { const t = this.units[u.target]; if (t && t.ctrl >= 0 && !this.players[t.ctrl].ai) u.wMul = 1.3; } u.heavy = false; u.aiHeavy = u.ctrl < 0 && !u.ctrlActive && this.rng.next() < (u.def.overhead ? 0.4 : 0.18); u.st = ST_WINDUP; u.stT = 0; u.atkDir = dir; u.relQ = false; u.windupId++; u.swingHit = false; u.blocking = false; u.aiming = false; this.events.push({ t: 'windup', id: u.id, dir }); }
   footControl(u, keys, a, disabled) {
     if (!u.champ && u.dodgeT > 0) { const k = u.dodgeT / 0.32, sp = (this.real ? 10.5 : 12.5) * (0.55 + 0.75 * k); u.mx = u.dodgeX * sp; u.mz = u.dodgeZ * sp; return; } // a low slide: fast off the mark, bleeding speed // mid-dash: the body is committed
     if (disabled || u.airborne) { u.mx = 0; u.mz = 0; return; }
@@ -1813,6 +1813,7 @@ class Sim {
     if (u.flinchT > 0) u.flinchT -= DT;
     if (u.counterT > 0) u.counterT -= DT;
     if (u.hitT > 0) u.hitT -= DT;
+    if (u.hrA !== undefined) this.hrTick(u);
     if (!u.champ && (u.dodgeT > 0 || u.dodgeCd > 0 || u.iframe > 0)) { if (u.dodgeCd > 0) u.dodgeCd -= DT; if (u.iframe > 0) u.iframe -= DT; if (u.dodgeT > 0) u.dodgeT -= DT; }
     // no knockdowns: every blow that used to floor a man now just staggers him for a moment
     if (u.downT > 0 && u.type !== 'horse') { const k = u.downT; u.downT = 0; if (!u.dead && u.st !== ST_RELOAD) { u.st = ST_STUN; u.stT = 0; u.stunDur = Math.min(0.55, 0.25 + k * 0.15); u.blocking = false; u.aiming = false; } u.mx *= 0.3; u.mz *= 0.3; }
@@ -2292,6 +2293,7 @@ class Sim {
         this.applyDamage(def_, dmg * 0.5, att.id, nx * 2.5, 0, nz * 2.5, 'melee', hx, hy, hz); att.heavy = false; return; }
       att.st = ST_STUN; att.stT = 0; att.stunDur = 0.35; this.posture(def_, dmg * (heavy ? 1.6 : 1) * (def_.def.shield ? 0.6 : 1) * (att.def.posture || 1), att); this.posture(att, 6, def_);
       if (att.def.crush) this.applyDamage(def_, dmg * att.def.crush * (def_.def.shield ? 0.6 : 1), att.id, nx * 1.2, 0, nz * 1.2, 'melee', hx, hy, hz);
+      if (this.xc) this.hitReact(def_, att, 'block', heavy, true);
       this.events.push({ t: 'block', x: hx, y: hy, z: hz, perfect: false, by: def_.id, att: att.id, shield: !!def_.def.shield }); att.heavy = false; return;
     }
     if ((def_.mounted || def_.type === 'horse' || def_.mount >= 0) && !(att.mounted || att.mount >= 0)) { const hs = def_.type === 'horse' ? def_ : def_.mounted ? def_ : this.units[def_.mount]; const fast = hs && Math.abs(hs.hspeed) > 5; dmg *= fast ? 0.95 : 1.4; if (hs) hs.hspeed *= fast ? 0.85 : 0.35; } // a galloping horseman is a glancing target; a halted one is cut down
@@ -2300,7 +2302,7 @@ class Sim {
     if (att.def.brush && def_.type !== 'horse') { def_.entT = Math.max(def_.entT, def_.champ ? 0.6 : 1.8); this.posture(def_, 26, att); this.events.push({ t: 'entangle', id: def_.id, x: hx, y: hy, z: hz }); }
     this.posture(def_, dmg * (heavy ? 0.9 : 0.45) * (att.def.posture || 1), att);
     this.applyDamage(def_, dmg, att.id, nx * kb, heavy ? 1.2 : 0, nz * kb, 'melee', hx, hy, hz);
-    if (!def_.dead) { def_.flinchT = heavy ? 0.6 : 0.35; if (def_.st === ST_WINDUP || def_.st === ST_AIM) { def_.st = ST_IDLE; def_.stT = 0; } }
+    if (!def_.dead) { if (this.xc) this.hitReact(def_, att, dir === DIR_DOWN || att.weapon === 'yari' ? 'thrust' : 'cut', heavy, false); else { def_.flinchT = heavy ? 0.6 : 0.35; if (def_.st === ST_WINDUP || def_.st === ST_AIM) { def_.st = ST_IDLE; def_.stT = 0; } } }
     if (att.ctrl >= 0 || def_.ctrl >= 0) this.events.push({ t: 'hitq', att: att.id, def: def_.id, q, heavy, x: hx, y: hy, z: hz });
     att.heavy = false;
   }
@@ -2475,7 +2477,7 @@ class Sim {
     if (victim) {
       const f = (head ? 2.5 : 1) * (1 + clamp((u.y - victim.y) * 0.025, -0.1, 0.2)); victim.lastAttacker = u.id;
       this.applyDamage(victim, dmg * f, u.id, dx * 2.5, 0.3, dz * 2.5, causeOverride === 'gatling' ? 'gatling' : head ? 'headshot' : 'shot', hx, hy, hz);
-      if (!victim.dead) { victim.flinchT = Math.max(victim.flinchT, 0.25); if (victim.st === ST_WINDUP || victim.st === ST_AIM) { victim.st = ST_IDLE; victim.stT = 0; } }
+      if (!victim.dead) { if (this.xc) this.hitReact(victim, u, 'shot', false, false); else { victim.flinchT = Math.max(victim.flinchT, 0.25); if (victim.st === ST_WINDUP || victim.st === ST_AIM) { victim.st = ST_IDLE; victim.stT = 0; } } }
     }
   }
   ballistic(u, tx, tz, v, err) {
@@ -2542,7 +2544,7 @@ class Sim {
               if (p.kind === 'arrow' && v.def.shield && !v.dead && v.st !== ST_RELEASE && Math.abs(wrap(atan2(p.x - v.x, p.z - v.z) - v.yaw)) < 1.1 && this.rng.next() < 0.75) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
               if (p.kind === 'arrow' && v.ctrl >= 0 && !v.dead && (v.iframe > 0 || (v.blocking && Math.abs(wrap(atan2(p.x - v.x, p.z - v.z) - v.yaw)) < 1.2 && this.rng.next() < (v.def.shield ? 1 : 0.8)))) { this.events.push({ t: v.iframe > 0 ? 'evade' : 'arrowstick', id: v.id, x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); if (v.iframe <= 0) this.events.push({ t: 'block', x: p.x, y: p.y, z: p.z, perfect: false, by: v.id, att: -1, shield: !!v.def.shield }); done = true; break; } // you can slide under an arrow or turn it on your guard
               if (p.kind === 'arrow' && v.zfile && !v.dead && this.coverShield(v, p)) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
-              if (p.kind === 'arrow') { v.lastAttacker = p.owner; this.applyDamage(v, this.units[p.owner].def.bow.dmg * (v.def.ai === 'cannon' ? 0.3 : 1) * (v.ctrl >= 0 && !(this.players[v.ctrl] && this.players[v.ctrl].ai) ? 0.65 : 1), p.owner, p.vx * 0.03, 0, p.vz * 0.03, 'arrow', p.x, p.y, p.z); if (!v.dead) { v.flinchT = Math.max(v.flinchT, 0.25); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } } this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); done = true; break; }
+              if (p.kind === 'arrow') { v.lastAttacker = p.owner; this.applyDamage(v, this.units[p.owner].def.bow.dmg * (v.def.ai === 'cannon' ? 0.3 : 1) * (v.ctrl >= 0 && !(this.players[v.ctrl] && this.players[v.ctrl].ai) ? 0.65 : 1), p.owner, p.vx * 0.03, 0, p.vz * 0.03, 'arrow', p.x, p.y, p.z); if (!v.dead) { if (this.xc) this.hitReact(v, this.units[p.owner], 'shot', false, false); else { v.flinchT = Math.max(v.flinchT, 0.25); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } } } this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); done = true; break; }
               if (p.bolt) { v.lastShotBy = p; p.hits++; this.applyDamage(v, 80, p.owner, p.vx * 0.05, 1, p.vz * 0.05, 'arrow', p.x, p.y, p.z); if (!v.dead && v.mass < 5) v.downT = Math.max(v.downT, 0.8); this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); if (p.hits >= 3) { done = true; break; } continue; }
               // solid shot: bowl through
               const sp = len(p.vx, p.vz) || 1; const nx = p.vx / sp, nz = p.vz / sp;
@@ -3246,9 +3248,9 @@ const MISSIONS = {
       rw: { team: 1, name: 'The right wing', army: ['samurai', 'samurai', 'ashigaru', 'archer', 'cavalry'], at: [100, 138, PI], reserve: true, stay: true },
       guns: { team: 1, name: 'The Shenyang guns', army: ['cannon4', 'rifle_sho'], at: [86, 112, PI], reserve: true, stay: true, dir: ['hold', 86, 92] },
       lw: { team: 1, name: 'The left wing', army: ['samurai', 'samurai', 'archer', 'cavalry'], at: [-30, 130, PI], reserve: true },
-      east: { team: 1, name: 'Banners from the east', army: ['samurai', 'byakkotai', 'archer'], at: [140, -40, -PI / 2], reserve: true },
+      east: { team: 1, name: 'Banners from the east', army: ['samurai', 'archer'], at: [140, -40, -PI / 2], reserve: true },
       night: { team: 1, name: 'Daišan\'s banners', zh: '代善', army: ['shinsengumi', 'samurai', 'samurai', 'cavalry'], at: [140, -110, -PI / 2], reserve: true },
-      cut: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'byakkotai'], at: [-140, -96, PI / 2], reserve: true },
+      cut: { team: 1, name: 'Jin horsemen', army: ['cavalry'], at: [-140, -96, PI / 2], reserve: true },
     },
     phases: [
       { title: '一 · 橋北 · North of the bridge', goal: 'Stand to in camp and watch the far bank', text: 'The White Poles have crossed to the north bank. Stand to in the Zhejiang camp with your file and watch the far bank.', show: ['camp'],
@@ -3269,22 +3271,22 @@ const MISSIONS = {
           [73, 'lookout', 'Qin Bangping is down! Zhou Dunji is down! The Sichuan men are coming back over the bridge!', '秦邦屏陣亡！周敦吉陣亡！川兵退過橋來了！']] },
       { title: '三 · 車營 · The wagon camp', goal: 'Get back inside the camp and hold the wagons', text: 'The Jin left wing is over the river. Get your file back inside the camp and hold the line of wagons and palisades.', show: ['camp'], hide: ['sbridge'],
         start: [['release', 'lw'], ['dir', 'lw', 'hold', 58, -58], ['dir', 'chen', 'hold', 64, -56], ['dir', 'zhe', 'hold', 58, -60]],
-        obj: { survive: 110 }, waves: [[40, 'east', ['hold', 58, -60]]],
+        obj: { survive: 110 }, waves: [[60, 'east', ['hold', 58, -60]]],
         at: [[64, ['wound', 3]]],
         say: [[3, 'qi', 'Wagons together! Muskets to the palisade — let them come onto the guns.', '車並起來！銃手上柵——讓他們撞上來。'],
           [36, 'lookout', 'Shield carts! They are pushing shield carts at the ditch!', '盾車！他們推盾車來填壕了！'],
           [85, 'qi', 'The powder is nearly gone. Spears forward, shields close up!', '火藥快盡了！長槍向前，藤牌靠攏！']] },
       { title: '四 · 夜 · The last stand', goal: 'Take your file and wounded down the Liaoyang road', text: 'Night. The camp cannot hold. Qi Jin orders you out: take your file and your wounded down the Liaoyang road, so that someone lives to tell what happened here.', show: ['road'], hide: ['camp'],
-        start: [['release', 'night'], ['dir', 'night', 'hold', 58, -60], ['kill', 'chen']],
+        start: [['release', 'night'], ['dir', 'night', 'hold', 58, -60], ['kill', 'chen'], ['calm', 'bayara', 24], ['calm', 'rw', 24], ['calm', 'lw', 24], ['calm', 'east', 24], ['calm', 'night', 24], ['dir', 'bayara', 'hold', 58, -60], ['dir', 'rw', 'hold', 58, -60], ['dir', 'lw', 'hold', 58, -60], ['dir', 'east', 'hold', 58, -60]],
         obj: { extract: 'road' }, limit: 420, fail: 'The ring closed around the camp.',
-        waves: [[14, 'cut', ['attack']]], at: [[55, ['kill', 'zhe']]],
+        waves: [[14, 'cut', ['hold', -62, -118]]], at: [[15, ['calm', 'cut', 30]], [95, ['kill', 'zhe']]],
         say: [[1, 'lookout', 'The big banner on the east side — it\'s down!', '東邊的大旗倒了！'], [2, 'soldier', 'General Chen Ce is dead!', '陳總兵陣亡了！'],
           [4, 'fang', 'The general who asked about our feet last night...', '昨晚問我們腳冷不冷的那個總兵……'],
           [6, 'qi', 'A man repays his country today, of all days.', '大丈夫報國，就在今日。'],
           [12, 'qi', 'You — take your file and your wounded down the Liaoyang road. Someone must live to tell them what happened here.', '你——帶你的人和傷兵走遼陽大路。總得有人活著，把這裡的事說出去。'],
           [16, 'lookout', 'Horsemen on the road ahead!', '前面路上有馬兵！'],
-          [55, 'lookout', 'The drum... listen. The drum has stopped.', '鼓……你聽，鼓停了。'], [56, 'lookout', 'General Qi has fallen!', '戚副將陣亡了！'],
-          [60, 'he', 'He sat at our fire last night. He knew our names.', '他昨晚還跟我們烤火。他記得我們的名字。']] },
+          [95, 'lookout', 'The drum... listen. The drum has stopped.', '鼓……你聽，鼓停了。'], [96, 'lookout', 'General Qi has fallen!', '戚副將陣亡了！'],
+          [100, 'he', 'He sat at our fire last night. He knew our names.', '他昨晚還跟我們烤火。他記得我們的名字。']] },
     ],
     win: 'You got out by the Liaoyang road.',
   },
@@ -3525,6 +3527,7 @@ Sim.prototype.mAct = function (a) {
   else if (a[0] === 'kill') { const g = this.mg[a[1]]; if (g) { const h = this.units[this.players[g.p].heroId]; if (h && !h.dead) { h.officer = false; this.applyDamage(h, 1e6, -1, 0, 0, 0, 'arrow'); } this.events.push({ t: 'mkill', gid: a[1], name: g.G.name, zh: g.G.zh || '' }); } }
   else if (a[0] === 'promote') this.zPromote();
   else if (a[0] === 'break') this.mBreak(a[1]);
+  else if (a[0] === 'calm') { const g = this.mg[a[1]]; if (g) { g.calm = a[2]; const p = this.players[g.p]; if (g.released && !g.broken) p.aggr = a[2]; } }
   else if (a[0] === 'wound') this.zWound(a[1] | 0);
   else if (a[0] === 'sector') { this.sector = a[1] | 0; if (a[2] && this.sg) for (const f of TERR.sditch.fills) if (!f.done) { f.done = true; this.sgRewater(f); this.events.push({ t: 'sgfill', x: f.x, z: TERR.sditch.zc }); } if (this.sg) { this.navBoxes(); this.siegeDirs(); } }
 };
@@ -3663,6 +3666,8 @@ Sim.prototype.mAggro = function () {
   const M = this.mission, side = M.side;
   for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team === side || !g.released || g.broken || p.fleeing) continue; p.aggr = 55;
     if (!g.G.officer && this.mGroupFrac(gid) < 0.12) { this.mBreak(gid); continue; } // a general with no men left quits the field
+    // a scripted 'calm' pins a group to its directive with a short reach (e.g. the Jin busy storming a camp)
+    if (g.calm !== undefined) { p.aggr = g.calm; continue; }
     const D = p.directive; if (!D || D.kind !== DIR_HOLD) { g.idle = 0; continue; }
     let gx = 0, gz = 0, gn = 0; for (const id of p.squads) { const q = this.squads[id]; if (q.alive && !q.inactive) { gx += q.cx; gz += q.cz; gn++; } } if (!gn) continue; gx /= gn; gz /= gn;
     let dm = 1e9; for (const q of this.squads) if (q.alive && !q.inactive && q.team === side) dm = Math.min(dm, len(q.cx - gx, q.cz - gz));
@@ -3685,7 +3690,7 @@ Sim.prototype.assaultDirs = function () {
   const D = 1 - A; let j = 0; for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== D) continue; const di = +gid.slice(1), home = gid[0] === 'd' ? this.missionZone(this.defKey(di)) : null; if (home && home.owner === D) { p.directive = { kind: DIR_HOLD, x: home.x, z: home.z, by: -1 }; continue; } const nz = zt[j++ % zt.length]; if (nz) p.directive = { kind: DIR_HOLD, x: nz.x, z: nz.z, by: -1 }; }
 };
 Sim.prototype.reviveUnit = function (u, x, z) {
-  u.dead = false; u.hp = u.def.hp; u.x = u.px = x; u.z = u.pz = z; u.y = u.py = terrainH(x, z); u.vx = u.vy = u.vz = 0; u.mx = u.mz = 0; u.st = ST_IDLE; u.stT = 0; u.downT = 0; u.flinchT = 0; u.blocking = false; u.aiming = false; u.target = -1; u.deathTick = -1;
+  u.dead = false; u.hp = u.def.hp; u.x = u.px = x; u.z = u.pz = z; u.y = u.py = terrainH(x, z); u.vx = u.vy = u.vz = 0; u.mx = u.mz = 0; u.st = ST_IDLE; u.stT = 0; u.downT = 0; u.flinchT = 0; u.blocking = false; u.aiming = false; u.target = -1; u.deathTick = -1; if (u.hrA !== undefined) { u.hrT = 0; u.hrImm = 0; u.hrA = 9; }
   u.pos = 0; u.entT = 0; u.openT = 0; u.fat = 0; u.shots = Math.max(u.shots || 0, 24); const g = gunOf(u.def, u.weapon); if (g) { u.ammo = g.mag || 1; u.loaded = true; }
   const q = this.squads[u.squad]; if (q) q.alive = true; this.events.push({ t: 'revive', id: u.id });
 };
@@ -3957,6 +3962,46 @@ Sim.prototype.xcEbb = function () { // clash, pause, clash: count the blows each
     else if (e.t === 'block' && e.att >= 0 && e.by >= 0) { const a = U[e.att], v = U[e.by]; if (a && v) bump(a, v); } }
 };
 
+// ---- hit reactions (experimental combat only): a short, readable flinch that stops a man attacking, never a lock ----
+// six kinds: 0 head snapped back, 1 twisted aside, 2 doubled over, 3 stagger back with arms flung, 4 buckled to one knee, 5 guard driven back.
+// Anti-lock: a running reaction is never extended or restarted; when it ends the man has 0.7 s in which further hits hurt but
+// cannot stagger him (only a cosmetic flinch); and he is never reeling for more than 0.6 s out of any 2 s.
+const HR_IMM = 0.7, HR_WIN = 60, HR_CAP = 0.6;
+Sim.prototype.hitReact = function (u, a, kind, heavy, blocked) {
+  if (!this.xc || u.dead || u.type === 'horse' || u.def.ai === 'cannon' || u.champ) return false;
+  if (u.hrA === undefined) { u.hrT = 0; u.hrImm = 0; u.hrA = 9; u.hrK = 0; u.hrD = 0.3; u.hrS = 1; u.hrL = []; u.hrF = 0; u.hrFS = 1; }
+  const sd = a ? wrap(atan2(a.x - u.x, a.z - u.z) - u.yaw) : 0, sgn = sd < 0 ? -1 : 1;
+  const flick = () => { if (!blocked) { u.hrF = 0.16; u.hrFS = sgn; } return false; };
+  if (u.hrT > 0 || u.hrImm > 0 || u.st === ST_STUN) return flick();
+  if (u.mounted || u.mount >= 0 || u.braceT > 0 || u.dashT > 0 || u.guardT > 0 || u.downed || u.wounded) return flick();
+  let k, d;
+  if (blocked) { k = 5; d = heavy ? 0.2 : 0.15; }
+  else if (heavy && u.hp < u.def.hp * 0.35) { k = 4; d = 0.5; }
+  else if (heavy) { k = 3; d = 0.45; }
+  else { const r = this.rng.next();
+    if (kind === 'thrust') k = r < 0.7 ? 2 : 0;
+    else if (kind === 'shot') k = r < 0.45 ? 2 : r < 0.75 ? 0 : 1;
+    else if (Math.abs(sd) > 0.5) k = r < 0.8 ? 1 : 0;
+    else k = r < 0.6 ? 0 : r < 0.85 ? 1 : 2;
+    d = k === 2 ? 0.34 : k === 1 ? 0.3 : 0.27; if (kind === 'shot') d *= 0.8; }
+  if (u.ctrl >= 0 && !(this.players[u.ctrl] && this.players[u.ctrl].ai)) d *= 0.6;
+  // the 2-second budget: never reeling more than HR_CAP seconds out of any HR_WIN ticks
+  const t = this.tick; let used = 0; for (const iv of u.hrL) used += Math.max(0, Math.min(iv[1], t) - Math.max(iv[0], t - HR_WIN));
+  d = Math.min(d, HR_CAP - used * DT); if (d < 0.1) return flick();
+  u.hrT = d; u.hrD = d; u.hrK = k; u.hrS = sgn; u.hrA = 0; u.hrF = 0;
+  u.hrL.push([t, t + Math.round(d / DT) + 1]); if (u.hrL.length > 4) u.hrL.shift();
+  if (!blocked) { u.flinchT = Math.max(u.flinchT, d); if (u.st === ST_WINDUP || u.st === ST_AIM) { u.st = ST_IDLE; u.stT = 0; } }
+  if (k === 3 && a) { const dx = u.x - a.x, dz = u.z - a.z, l = len(dx, dz) || 1; u.vx += dx / l * 1.4; u.vz += dz / l * 1.4; }
+  this.events.push({ t: 'hitreact', id: u.id, k });
+  return true;
+};
+Sim.prototype.hrTick = function (u) {
+  if (u.hrT > 0) { u.hrT -= DT; if (u.hrT <= 1e-6) { u.hrT = 0; u.hrImm = HR_IMM; } }
+  else if (u.hrImm > 0) u.hrImm -= DT;
+  if (u.st === ST_STUN) u.hrImm = Math.max(u.hrImm, 0.5);
+  if (u.hrF > 0) u.hrF -= DT;
+  if (u.hrA < 5) u.hrA += DT;
+};
 return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, spacingOf, gunOf,
   KEY_W, KEY_S, KEY_A, KEY_D, A_ATK, A_BLOCK, A_FIRE, A_AIM, A_KICK, A_MOUNT, A_JUMP, A_SWAP, A_RELOAD, A_CMD, A_RALLY, A_READY, A_THROW, A_DUEL, AIM_RAISE, A_AB1, A_AB2, A_AB3, A_ULT, A_DODGE, A_DASHL, A_DASHR, KEY_SPRINT, ORD_SPAWN, ORD_CLASS, HCLASS, HAB, SCEN, BOMBS, FURY_MAX, SROLE, ARMS, RANGED, MISSIONS, OPS,
   DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT, ST_IDLE, ST_WINDUP, ST_RELEASE, ST_RECOVER, ST_STUN, ST_RELOAD, ST_AIM, ST_SWAP, ST_KICK, ST_BURST,
@@ -4519,6 +4564,18 @@ const GJ = { hipL: 0, kneeL: 3, footL: 6, hipR: 9, kneeR: 12, footR: 15, shL: 18
 const GEAR_K = { b: 40, c: 4, y: 5 };
 const uhash = (id, k) => (((id + 1) * 2654435761 + (k || 0) * 40503) >>> 0) % 1000 / 1000;
 const GEAR_CACHE = new Map();
+// hit reaction envelope: snaps in over 70 ms (ease-out), holds while he reels, eases back out over 0.25 s after the stun ends
+const hrEnv = (u, alpha) => { if (u.hrA === undefined) return 0; const t = u.hrA + alpha * DT, D = u.hrD || 0.3; if (t >= D + 0.25) return 0;
+  if (t < 0.07) { const q = t / 0.07; return 1 - (1 - q) * (1 - q); } if (t < D) return 1 - 0.15 * (t - 0.07) / Math.max(0.01, D - 0.07); const q = (t - D) / 0.25; return 0.85 * (1 - q * q * (3 - 2 * q)); };
+// pose offsets per kind: lean (fwd +), twist, roll, crouch, stance, lunge, head pitch (back -), weapon/hands offset y, z (chest-local)
+const HR_POSE = [
+  [-0.18, 0, 0, 0, 0, -0.04, -0.6, 0.04, -0.05],   // 0 head snapped back
+  [-0.05, 0.6, 0.18, 0.04, 0, 0, -0.15, 0.02, -0.08],  // 1 twisted aside (signed by the side he was hit from)
+  [0.6, 0, 0, 0.14, 0.4, -0.12, 0.35, -0.12, -0.1],  // 2 doubled over the blow
+  [-0.45, 0.12, 0.08, 0, 0, -0.2, -0.3, 0.3, -0.2],  // 3 stagger back, arms flung up
+  [0.35, 0.1, 0.12, 0.42, 1, -0.05, 0.2, -0.2, 0.02],   // 4 buckled to one knee
+  [-0.1, 0.12, 0, 0.03, 0.3, -0.06, -0.08, 0.1, -0.2] // 5 guard driven back
+];
 const GEAR_HOOK = { fn: null }; // an edition may supply its own uniforms (the realism edition does)
 // ---- the named men of the story file: each his own face and headgear (u.look is set by the story module; render-only) ----
 function lookGear(L, b, c, y, hatOn, part) {
@@ -6032,7 +6089,7 @@ class Renderer {
       else { lerp3(tg.wp, KW.guard.g, KW.carry.g, r); nrm3(lerp3(tg.wd, KW.guard.d, KW.carry.d, r)); tg.wp[1] += Math.abs(Math.sin(ph)) * 0.02 * mv; }
       if (anchor === 'R') { set3(tg.rh, tg.wp); for (let j = 0; j < 3; j++) tg.lh[j] = tg.wp[j] + tg.wd[j] * KW.off2; }
     } else { fkR = true; fkL = true; }
-    if (u.flinchT > 0) { lean -= 0.3 * (u.flinchT / 0.35); }
+    if (u.flinchT > 0 && !(u.hrA < 1)) { lean -= 0.3 * (u.flinchT / 0.35); }
     if (u.champ) { // acrobatics: low dodges, a tucked leap, a coiled spin, a long lunge
       if (u.dodgeT > 0) { const k = Math.sin(clamp(u.dodgeT / 0.34, 0, 1) * PI); lean += (u.dodgeFwd ? 0.45 : -0.2) * k; crouch += 0.22 * k; twist += 0.25 * k * (u.dodgeX * Math.cos(yaw) - u.dodgeZ * Math.sin(yaw) > 0 ? -1 : 1) * (u.dodgeFwd ? 0 : 1); rateB = 24; }
       if (u.airborne) { crouch += u.plunge ? 0.05 : 0.18; lean += u.plunge ? 0.35 : 0.08; rateB = 18; }
@@ -6049,7 +6106,17 @@ class Renderer {
     const kw = 1 - Math.exp(-rateW * dt), kb = 1 - Math.exp(-rateB * dt), ks = 1 - Math.exp(-6 * dt);
     for (let j = 0; j < 3; j++) { a.wp[j] += (tg.wp[j] - a.wp[j]) * kw; a.wd[j] += (tg.wd[j] - a.wd[j]) * kw; a.rh[j] += (tg.rh[j] - a.rh[j]) * kw; a.lh[j] += (tg.lh[j] - a.lh[j]) * kw; }
     nrm3(a.wd);
+    if (a.hro) { const o = a.hro; a.lean -= o[0]; a.twist -= o[1]; a.roll -= o[2]; a.crouch -= o[3]; a.stance -= o[4]; a.lunge -= o[5]; for (let j = 0; j < 3; j++) { a.wp[j] -= o[6 + j]; a.rh[j] -= o[6 + j]; a.lh[j] -= o[6 + j]; } a.hro = null; }
     a.lean += (lean - a.lean) * kb; a.twist += (twist - a.twist) * kb; a.roll += (roll - a.roll) * kb; a.lunge += (lunge - a.lunge) * kb; a.crouch += (crouch - a.crouch) * kb; a.stance += (stance - a.stance) * ks;
+    a.hrh = 0; { // hit reaction: added on top of the smoothed pose (and taken off again next frame) so it snaps in and out crisply
+      const e = mounted || down ? 0 : hrEnv(u, alpha), fl = u.hrF > 0 ? Math.sin(clamp(u.hrF / 0.16, 0, 1) * PI) * 0.35 : 0;
+      if (e > 0.001 || fl > 0.001) { const P0 = HR_POSE[u.hrK || 0], s = u.hrS || 1, F0 = HR_POSE[0], fs = u.hrFS || 1;
+        const v = (i) => (e > 0.001 ? P0[i] * e : 0) + F0[i] * fl;
+        const o = a.hro = a.hroB || (a.hroB = new Float64Array(9));
+        o[0] = v(0); o[1] = (e > 0.001 ? P0[1] * e * s : 0) + 0.25 * fl * fs; o[2] = (e > 0.001 ? P0[2] * e * s : 0); o[3] = v(3); o[4] = Math.min(v(4), Math.max(0, 1 - a.stance)); o[5] = v(5);
+        o[6] = (e > 0.001 && u.hrK === 1 ? -0.1 * s * e : 0); o[7] = v(7); o[8] = v(8);
+        a.lean += o[0]; a.twist += o[1]; a.roll += o[2]; a.crouch += o[3]; a.stance += o[4]; a.lunge += o[5]; for (let j = 0; j < 3; j++) { a.wp[j] += o[6 + j]; a.rh[j] += o[6 + j]; a.lh[j] += o[6 + j]; }
+        a.hrh = v(6); } }
     // ---------- legs (root-local; +x left, +z forward) ----------
     const LT = 0.46, LS = 0.46;
     const legs = this._legs || (this._legs = new Float64Array(18)); // hipL,kneeL,footL,hipR,kneeR,footR
@@ -6146,7 +6213,7 @@ class Renderer {
     this.boxB(f.torso, slot, G[18 + 24], G[18 + 25], G[18 + 26], CB, 0.5, 0.64, 0.3);
     this.boxB(f.hips, slot, G[60], G[61], G[62], CB, 0.4, 0.22, 0.27);
     // head stays nearer upright than the chest
-    const HB = this._HB || (this._HB = new Float64Array(9)); { const hl = -a.lean * 0.5, ht = -a.twist * 0.35; const ch = Math.cos(hl), sh = Math.sin(hl), cth = Math.cos(ht), sth = Math.sin(ht); const ax = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; for (let i = 0; i < 3; i++) { const v = ax[i]; const y1 = v[1] * ch - v[2] * sh, z1 = v[1] * sh + v[2] * ch; const x2 = v[0] * cth + z1 * sth, z2 = -v[0] * sth + z1 * cth; const vx = CB[0] * x2 + CB[3] * y1 + CB[6] * z2, vy = CB[1] * x2 + CB[4] * y1 + CB[7] * z2, vz = CB[2] * x2 + CB[5] * y1 + CB[8] * z2; HB[i * 3] = vx; HB[i * 3 + 1] = vy; HB[i * 3 + 2] = vz; } }
+    const HB = this._HB || (this._HB = new Float64Array(9)); { const hl = -a.lean * 0.5 + (a.hrh || 0), ht = -a.twist * 0.35; const ch = Math.cos(hl), sh = Math.sin(hl), cth = Math.cos(ht), sth = Math.sin(ht); const ax = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; for (let i = 0; i < 3; i++) { const v = ax[i]; const y1 = v[1] * ch - v[2] * sh, z1 = v[1] * sh + v[2] * ch; const x2 = v[0] * cth + z1 * sth, z2 = -v[0] * sth + z1 * cth; const vx = CB[0] * x2 + CB[3] * y1 + CB[6] * z2, vy = CB[1] * x2 + CB[4] * y1 + CB[7] * z2, vz = CB[2] * x2 + CB[5] * y1 + CB[8] * z2; HB[i * 3] = vx; HB[i * 3 + 1] = vy; HB[i * 3 + 2] = vz; } }
     if (vsc !== 1) for (let i = 0; i < 9; i++) HB[i] *= vsc;
     const hx = G[18 + 27], hy = G[18 + 28], hz = G[18 + 29];
     this.boxB(f.head, slot, hx, hy, hz, HB, 0.28, 0.3, 0.28);
@@ -6440,6 +6507,7 @@ class Renderer {
         if (RP) { target = P(lerp(target.px, RP.px, rk), lerp(target.py, RP.py, rk), lerp(target.pz, RP.pz, rk), lerp(target.rx, RP.rx, rk), lerp(target.ry, RP.ry, rk), lerp(target.rz, RP.rz, rk)); speed = Math.max(speed, 12); } } }
     if (hero.st === ST_SWAP) { target = P(target.px, target.py - 0.6, target.pz, target.rx + 0.8, target.ry, target.rz); speed = 12; }
     if (hero.st === ST_KICK) { target = P(target.px + 0.1, target.py - 0.15, target.pz, target.rx + 0.3, target.ry, target.rz); camPitch = -0.03; }
+    { const he = hrEnv(hero, this.alpha === undefined ? 1 : this.alpha); if (he > 0.01) { const hs = hero.hrS || 1, jb = hero.hrK === 5; target = P(target.px + 0.05 * hs * he, target.py - (jb ? 0.05 : 0.12) * he, target.pz + (jb ? 0.14 : 0.08) * he, target.rx + (jb ? 0.15 : 0.35) * he, target.ry, target.rz + 0.15 * hs * he); speed = Math.max(speed, 34); camPitch += (jb ? 0.012 : 0.035) * he; camRoll += -0.035 * hs * he; } }
     const k = 1 - Math.exp(-speed * dt), kh = 1 - Math.exp(-16 * dt);
     st.pos.x += (target.px - st.pos.x) * k; st.pos.y += (target.py - st.pos.y) * k; st.pos.z += (target.pz - st.pos.z) * k;
     st.rot.x += (target.rx - st.rot.x) * k; st.rot.y += (target.ry - st.rot.y) * k; st.rot.z += (target.rz - st.rot.z) * k;
@@ -9294,6 +9362,9 @@ function zGoal() {
   let g = P.goal || (P.text || '').split(/(?<=[.!?])\s/)[0]; if (g.length > 70) g = g.slice(0, 67).replace(/\s\S*$/, '') + '…';
   const z = P.obj && (P.obj.extract || P.obj.reach) ? sim.missionZone(P.obj.extract || P.obj.reach) : null, h = localHero();
   if (z && h && !h.dead) g += ` · ${Math.round(Math.hypot(z.x - h.x, z.z - h.z))} m`;
+  // a phase you only have to live through shows how long is left, so nobody thinks he must kill every banner
+  const sv = P.obj && (P.obj.survive || (P.obj.all && (P.obj.all.find(o => o.survive) || {}).survive));
+  if (sv) { const left = Math.max(0, Math.ceil(sv - (sim.tick - sim.mv.t0) / 30)); if (left > 0) g += ` · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
   return g;
 }
 function zheHUD(dt) {
