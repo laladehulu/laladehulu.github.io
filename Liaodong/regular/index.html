@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v12</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v13</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -3092,12 +3092,11 @@ const MISSIONS = {
           [52, 'chief', 'They give way! Hold the line — nobody chases!', '他們退了！穩住，不許追！']] },
       { title: '三 · 皇太極 · The ridge', text: 'A second Jin host comes down the west ridge into the side of the column.', start: [['release', 'hong'], ['release', 'ridge'], ['dir', 'hong', 'attack']],
         obj: { survive: 48 },
-        at: [[13, ['kill', 'liu']], [17, ['promote']], [23, ['wound', 3]], [30, ['break', 'tusi']]],
+        at: [[13, ['kill', 'liu']], [17, ['promote']], [23, ['wound', 3]]],
         say: [[1, 'fang', 'The west ridge — more banners! The rider lied. Du Song is not coming!', '西嶺上還有！那人是假的，杜總兵不會來了！'],
           [6, 'lookout', 'Arrows from the east slope!', '東坡有弓手！'],
           [14, 'soldier', 'General Liu has fallen! Liu Ting is dead!', '劉總兵陣亡了！']] },
       { title: '四 · 突圍 · Break out', text: 'The column is broken. Get your file back down the valley to the south gorge, where the Koreans are camped. Leave no one who can still walk.', show: ['mouth'],
-        start: [['break', 'liu'], ['dir', 'kang', 'hold', 0, -122]],
         obj: { extract: 'mouth' }, limit: 420, fail: 'The valley closed behind you.',
         waves: [[3, 'chase', ['attack']], [30, 'chase2', ['attack']]],
         say: [[2, 'fang', 'The way we came — the gorge to the south! The Korean camp is beyond it!', '回頭，往南邊的峽口！朝鮮兵在那邊扎營！'],
@@ -7019,7 +7018,7 @@ function storyLock() { const s = state.sim; return !!(s && s.mission && (s.missi
 function toggleCmd(force) {
   closeOrders();
   const want = force === undefined ? !Input.cmdMode : force;
-  if (want && storyLock()) { Input.cmdMode = false; $('cmdui').hidden = true; const now = performance.now(); if (now - (state.lockToast || 0) > 3000) { state.lockToast = now; toast('You are one man in the ranks: there is no overview here. Your file follows your F / C / H / Z once it is yours'); } return; }
+  if (want && storyLock()) { Input.cmdMode = false; $('cmdui').hidden = true; const now = performance.now(); if (now - (state.lockToast || 0) > 3000) { state.lockToast = now; toast('One man in the ranks: no overview here'); } return; }
   Input.cmdMode = want; $('cmdui').hidden = !want;
   if (want) { if (document.pointerLockElement) document.exitPointerLock(); $('pause').hidden = true; const h = localHero(), r = state.renderer; if (h && r) { const sqs = ownSquads(); let ax = h.x, az = h.z; if (sqs.length) { let sx = 0, sz = 0; for (const sq of sqs) { sx += sq.cx; sz += sq.cz; } ax = (h.x + sx / sqs.length) / 2; az = (h.z + sz / sqs.length) / 2; } r.cmdCam.x = ax; r.cmdCam.z = az; r.cmdCam.h = Math.max(r.cmdCam.h, 70); } Input.lmb = false; Input.rmb = false; Input.ads = false; Input.mouseMoved = false; }
   else { requestLock(); const h = localHero(); if (h) { Input.yaw = h.yaw; } }
