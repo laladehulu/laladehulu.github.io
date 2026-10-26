@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v73</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v74</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -486,7 +486,7 @@ body.zgrid #comms { top: 158px; }
           <div><span>Feint</span><kbd>RMB</kbd> during windup</div>
           <div><span>Sprint (drains stamina)</span>hold <kbd>Shift</kbd></div>
           <div><span>Slide left / right / back (dodge)</span>double-tap <kbd>A</kbd> / <kbd>D</kbd> / <kbd>S</kbd></div>
-          <div><span>Switch weapon</span><kbd>Q</kbd> (or wheel while holding a gun or bow)</div>
+          <div><span>Switch weapon</span><kbd>Q</kbd> (or wheel while holding a gun or bow)</div><div><span>Gun: club / shoot</span><kbd>X</kbd></div>
           <div><span>Gun / bow: fire / aim (toggle) / reload</span><kbd>LMB</kbd> / <kbd>RMB</kbd> / <kbd>R</kbd></div>
           <div><span>Mount or dismount (near a horse) · otherwise kick</span><kbd>E</kbd></div>
           <div><span>Horse: speed / turn</span><kbd>W S</kbd> / <kbd>A D</kbd></div>
@@ -675,7 +675,7 @@ const TICK = 30, DT = 1 / 30, HALF = 150, GRAV = 22;
 const KEY_W = 1, KEY_S = 2, KEY_A = 4, KEY_D = 8, KEY_SPRINT = 16;
 const A_ATK = 1, A_BLOCK = 2, A_FIRE = 4, A_AIM = 8, A_KICK = 16, A_MOUNT = 32, A_JUMP = 64, A_SWAP = 128, A_RELOAD = 256, A_CMD = 512, A_RALLY = 1024, A_READY = 2048, A_THROW = 4096, A_DUEL = 8192;
 const BOMBS = 0, FURY_MAX = 100, AIM_RAISE = 0.6;
-const A_AB1 = 16384, A_AB2 = 32768, A_AB3 = 65536, A_ULT = 131072, A_DODGE = 262144, A_DASHL = 524288, A_DASHR = 1048576, ORD_CLASS = 11;
+const A_AB1 = 16384, A_AB2 = 32768, A_AB3 = 65536, A_ULT = 131072, A_DODGE = 262144, A_DASHL = 524288, A_DASHR = 1048576, A_GRIP = 2097152, ORD_CLASS = 11;
 const HAB = [{ key: 'whirl', name: 'Whirlwind', cd: 8 }, { key: 'dash', name: 'Dragon charge', cd: 10 }, { key: 'guard', name: 'Iron guard', cd: 12 }, { key: 'cry', name: 'War cry', cd: 25 }];
 const DIR_UP = 0, DIR_RIGHT = 1, DIR_DOWN = 2, DIR_LEFT = 3;
 const ST_IDLE = 0, ST_WINDUP = 1, ST_RELEASE = 2, ST_RECOVER = 3, ST_STUN = 4, ST_RELOAD = 5, ST_AIM = 6, ST_SWAP = 7, ST_KICK = 8, ST_BURST = 9;
@@ -1520,7 +1520,8 @@ class Sim {
     const kitH = u.kit ? this.kitInput(u, a, wsel) : false; const ws = kitH ? [u.weapon] : u.def.weapons;
     if ((a & A_SWAP) && ws.length > 1) { u.nextWeapon = ws[(ws.indexOf(u.weapon) + 1) % ws.length]; u.swapQ = true; }
     // a man with only a gun turns it round to fight with it as a club (and back); turning it breaks off a reload
-    else if (!kitH && (a & A_SWAP) && ws.length === 1 && u.weapon === 'rifle' && (u.st === ST_IDLE || u.st === ST_RELOAD || u.st === ST_AIM)) { u.club = !u.club; u.aiming = false; u.fireQ = 0; if (u.st !== ST_IDLE) { u.st = ST_IDLE; u.stT = 0; } this.events.push({ t: 'grip', id: u.id, club: u.club }); }
+    /* Q switches weapons; X turns a gun round to club with it (and back), whatever else he carries */
+    if ((a & A_GRIP) && u.weapon === 'rifle' && (u.st === ST_IDLE || u.st === ST_RELOAD || u.st === ST_AIM)) { u.club = !u.club; u.aiming = false; u.fireQ = 0; if (u.st !== ST_IDLE) { u.st = ST_IDLE; u.stT = 0; } this.events.push({ t: 'grip', id: u.id, club: u.club }); }
     if (wsel > 0 && wsel <= ws.length) { const w = ws[wsel - 1]; if (w !== u.weapon) { u.nextWeapon = w; u.swapQ = true; } else u.swapQ = false; }
     if (u.swapQ && (u.st === ST_RELOAD || u.st === ST_AIM)) { u.st = ST_IDLE; u.stT = 0; u.aiming = false; } // drawing the other weapon breaks off a reload
     if (u.swapQ && u.st === ST_IDLE) { u.swapQ = false; if (u.nextWeapon && u.nextWeapon !== u.weapon) { u.st = ST_SWAP; u.stT = 0; u.blocking = false; u.aiming = false; } }
@@ -2573,7 +2574,13 @@ class Sim {
     this.events.push({ t: 'shot', from: [ox, oy, oz], to: [hx, hy, hz], dir: [dx, dy, dz], kind, team: u.team, head, shooter: u.id, victim: victim ? victim.id : -1, hero: u.ctrl >= 0, weapon: causeOverride || u.weapon });
     if (victim) {
       const f = (head ? 2.5 : 1) * (1 + clamp((u.y - victim.y) * 0.025, -0.1, 0.2)); victim.lastAttacker = u.id;
-      this.applyDamage(victim, dmg * f, u.id, dx * 2.5, 0.3, dz * 2.5, causeOverride === 'gatling' ? 'gatling' : head ? 'headshot' : 'shot', hx, hy, hz);
+      let dmS = dmg * f;
+      /* your own musket ball drops a common soldier outright; the three-eyed gun's shorter, cruder barrels kill four times in five and otherwise leave him badly hurt */
+      if (u.ctrl >= 0 && !(this.players[u.ctrl] && this.players[u.ctrl].ai) && !causeOverride && u.weapon === 'rifle' && victim.team !== u.team && !victim.champ && victim.type !== 'hero' && victim.type !== 'horse' && victim.def.ai !== 'cannon') {
+        const tri = u.def.rifle === DEFS.rifle_spencer.rifle;
+        if (!tri || head || this.rng.next() < 0.8) dmS = Math.max(dmS, victim.hp * 4 + 300); else dmS = Math.max(dmS, victim.hp * 0.7);
+      }
+      this.applyDamage(victim, dmS, u.id, dx * 2.5, 0.3, dz * 2.5, causeOverride === 'gatling' ? 'gatling' : head ? 'headshot' : 'shot', hx, hy, hz);
       if (!victim.dead) { if (this.xc) this.hitReact(victim, u, 'shot', false, false); else { victim.flinchT = Math.max(victim.flinchT, 0.25); if (victim.st === ST_WINDUP || victim.st === ST_AIM) { victim.st = ST_IDLE; victim.stT = 0; } } }
     }
   }
@@ -4938,7 +4945,7 @@ Sim.prototype.hrTick = function (u) {
   if (u.hrA < 5) u.hrA += DT;
 };
 return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, YY_SLOT, FORM_COLUMN, WPN, spacingOf, gunOf,
-  KEY_W, KEY_S, KEY_A, KEY_D, A_ATK, A_BLOCK, A_FIRE, A_AIM, A_KICK, A_MOUNT, A_JUMP, A_SWAP, A_RELOAD, A_CMD, A_RALLY, A_READY, A_THROW, A_DUEL, AIM_RAISE, A_AB1, A_AB2, A_AB3, A_ULT, A_DODGE, A_DASHL, A_DASHR, KEY_SPRINT, ORD_SPAWN, ORD_CLASS, HCLASS, HAB, SCEN, BOMBS, FURY_MAX, SROLE, ARMS, RANGED, MISSIONS, OPS,
+  KEY_W, KEY_S, KEY_A, KEY_D, A_ATK, A_BLOCK, A_FIRE, A_AIM, A_KICK, A_MOUNT, A_JUMP, A_SWAP, A_RELOAD, A_CMD, A_RALLY, A_READY, A_THROW, A_DUEL, AIM_RAISE, A_AB1, A_AB2, A_AB3, A_ULT, A_DODGE, A_DASHL, A_DASHR, A_GRIP, KEY_SPRINT, ORD_SPAWN, ORD_CLASS, HCLASS, HAB, SCEN, BOMBS, FURY_MAX, SROLE, ARMS, RANGED, MISSIONS, OPS,
   DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT, ST_IDLE, ST_WINDUP, ST_RELEASE, ST_RECOVER, ST_STUN, ST_RELOAD, ST_AIM, ST_SWAP, ST_KICK, ST_BURST,
   ORD_WAVE, ORD_MOVE, ORD_CHARGE, ORD_HOLD, ORD_FOLLOW, ORD_FORM, ORD_FIRE, ORD_CONTROL, ORD_AUTO, ORD_ABILITY, ORD_NAVAL, ORD_DIRECTIVE, DIR_ATTACK, DIR_HOLD, DIR_SUPPORT, DIR_FLANK, AI_NAMES, MODES, SCORE_WIN, FIRE_CS, abilityOf, ABILITY, FORM_LINE, FORM_COLUMN, FORM_WEDGE, FORM_LOOSE, RELEASE_T, KICK_T, SWAP_T };
 })();
@@ -6193,7 +6200,7 @@ KF.club = {
   guard: KP([-0.14, -0.2, 0.28], N3(-0.25, 0.9, 0.22)),
   carry: KP([-0.2, -0.2, 0.14], N3(-0.22, 0.75, -0.62)),
   atk: [
-    [KP([-0.08, 0.42, 0.02], N3(0, 0.12, -1)), KP([-0.06, 0.32, 0.4], N3(0, 1, 0.22)), KP([-0.04, -0.34, 0.46], N3(0, -0.62, 0.78))],
+    [KP([-0.08, 0.42, 0.04], N3(0.05, 0.6, -0.8)), KP([-0.06, 0.32, 0.4], N3(0, 1, 0.22)), KP([-0.04, -0.3, 0.46], N3(0, -0.82, 0.57))],
     [KP([-0.42, 0.12, -0.06], N3(-0.75, 0.4, -0.52)), KP([-0.1, -0.04, 0.48], N3(0.05, 0.12, 1)), KP([0.36, -0.16, 0.22], N3(0.92, -0.12, -0.2))],
     null,
     [KP([0.3, 0.12, -0.02], N3(0.75, 0.4, -0.52)), KP([0.04, -0.04, 0.48], N3(-0.05, 0.12, 1)), KP([-0.4, -0.16, 0.22], N3(-0.92, -0.12, -0.2))],
@@ -9881,7 +9888,7 @@ function wpnName(h, w) {
   return w;
 }
 function localHero() { const sim = state.sim; if (!sim) return null; const p = sim.players[state.localIdx]; return p ? sim.units[p.heroId] : null; }
-// a man whose only weapon is a gun (the three-eyed gun, a plain musket) turns it round with Q/X to fight with it as a club (sim: u.club)
+// a man whose only weapon is a gun (the three-eyed gun, a plain musket) turns it round with X to fight with it as a club (sim: u.club)
 // manning a bed crossbow or a gun: the weapon panel shows the piece, and an elevation scale with the range of the fall of shot
 // sits under the sights (the renderer works out the fall with the sim's own projectile steps)
 function empHUD(hero) {
@@ -9955,7 +9962,8 @@ document.addEventListener('keydown', (e) => {
     case 'Space': Input.pressed |= S.A_JUMP; e.preventDefault(); break;
     case 'KeyE': { if (typeof zheKeyE === 'function' && zheKeyE()) break; const h = localHero(); const sim = state.sim; const nearHorse = h && (h.mount >= 0 || sim.units.some(v => v.type === 'horse' && !v.dead && v.rider < 0 && Math.abs(v.x - h.x) + Math.abs(v.z - h.z) < 4)); Input.pressed |= nearHorse ? S.A_MOUNT : S.A_KICK; break; }
     case 'KeyR': if (!tapAttack(S.DIR_DOWN)) Input.pressed |= S.A_RELOAD; break;
-    case 'KeyQ': case 'KeyX': Input.pressed |= S.A_SWAP; Input.ads = false; break;
+    case 'KeyQ': Input.pressed |= S.A_SWAP; Input.ads = false; break;
+    case 'KeyX': Input.pressed |= S.A_GRIP; Input.ads = false; break; /* X: turn the gun round to club with it, and back to shoot */
     case 'Digit1': Input.wsel = 1; Input.ads = false; break;
     case 'Digit2': Input.wsel = 2; Input.ads = false; break;
     case 'Digit3': Input.wsel = 3; Input.ads = false; break;
@@ -10613,7 +10621,7 @@ function updateHUD(dt) {
     { let sb = document.getElementById('stam'); if (!sb) { sb = document.createElement('div'); sb.id = 'stam'; sb.innerHTML = '<i></i>'; sb.style.cssText = 'position:fixed;left:50%;bottom:86px;width:180px;height:5px;margin-left:-90px;background:rgba(0,0,0,.45);border:1px solid rgba(240,230,210,.25);border-radius:3px;overflow:hidden;pointer-events:none;transition:opacity .4s;z-index:5'; sb.firstChild.style.cssText = 'display:block;height:100%;background:#d9cfb6'; document.body.appendChild(sb); }
       const st = hero.champ ? Math.min(1, Math.max(0, (hero.sta || 0) / 100)) : 1 - Math.min(1, Math.max(0, (hero.fat || 0) / 100)); const show = !hero.dead && !Input.cmdMode && (st < 0.97 || hero.sprint);
       sb.style.opacity = show ? 1 : 0; sb.firstChild.style.width = (st * 100).toFixed(1) + '%'; sb.firstChild.style.background = hero.winded ? '#c0452e' : '#d9cfb6'; }
-    const w = hero.weapon; $('weapon').textContent = hero.dead ? 'Fallen' : w === 'rifle' ? (Input.bayonet || hero.club ? (hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun · club (Q: shoot)' : 'Musket · club (Q: shoot)') : (hero.def.key === 'hero' ? (me.team === 0 ? 'Niaochong musket' : 'Heavy musket') : hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun' : 'Musket')) : w === 'revolver' ? 'Three-eyed hand cannon' : w === 'bow' ? 'Horn bow' : w === 'yari' ? 'Qiang spear' : 'Dao';
+    const w = hero.weapon; $('weapon').textContent = hero.dead ? 'Fallen' : w === 'rifle' ? (Input.bayonet || hero.club ? (hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun · club (X: shoot)' : 'Musket · club (X: shoot)') : (hero.def.key === 'hero' ? (me.team === 0 ? 'Niaochong musket' : 'Heavy musket') : hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun' : 'Musket')) : w === 'revolver' ? 'Three-eyed hand cannon' : w === 'bow' ? 'Horn bow' : w === 'yari' ? 'Qiang spear' : 'Dao';
     const mounted = hero.mount >= 0 || hero.mounted;
     $('mode').textContent = hero.dead ? 'Commanding from above' : Input.cmdMode ? 'Command view' : mounted ? 'Mounted' : hero.st === S.ST_STUN ? 'Staggered' : hero.counterT > 0 ? 'Counter!' : hero.downT > 0 ? 'Knocked down' : '';
     const g = S.gunOf(hero.def, w);
@@ -10623,7 +10631,7 @@ function updateHUD(dt) {
         if (hero.st === S.ST_RELOAD) { $('ammoFill').style.width = (hero.stT / Math.max(0.1, hero.reloadT) * 100).toFixed(0) + '%'; $('ammoText').textContent = 'Nocking…' + q; }
         else { $('ammoFill').style.width = (hero.ammo > 0 ? (d > 0 ? d * 100 : 100) : 0).toFixed(0) + '%'; $('ammoText').textContent = (hero.ammo > 0 ? (d > 0 ? (d >= 1 ? 'Full draw · let go' : 'Drawing…') : 'Hold LMB to draw') : 'No arrow') + q; } }
       else if (hero.st === S.ST_RELOAD && hero.reloadT > 0.6) { $('ammoFill').style.width = (hero.stT / hero.reloadT * 100).toFixed(1) + '%'; $('ammoText').textContent = mag > 1 ? `Reloading… ${have}/${mag}` : 'Reloading…'; }
-      else { $('ammoFill').style.width = (have / mag * 100).toFixed(0) + '%'; $('ammoText').textContent = mag > 1 ? `${'●'.repeat(have)}${'○'.repeat(mag - have)}${have === 0 ? ' · R reload · Q club' : ''}` : (have > 0 ? 'Loaded' : 'Empty · R reload' + (hero.def.weapons.length > 1 ? '' : ' · Q club')); }
+      else { $('ammoFill').style.width = (have / mag * 100).toFixed(0) + '%'; $('ammoText').textContent = mag > 1 ? `${'●'.repeat(have)}${'○'.repeat(mag - have)}${have === 0 ? ' · R reload · X club' : ''}` : (have > 0 ? 'Loaded' : 'Empty · R reload' + (hero.def.weapons.length > 1 ? '' : ' · X club')); }
     } else { $('ammoFill').style.width = (hero.st === S.ST_WINDUP ? Math.min(1, (hero.stT) / 0.28) * 100 : hero.blocking ? 100 : 0).toFixed(0) + '%'; $('ammoText').textContent = hero.st === S.ST_WINDUP ? `Winding up: ${DIRN[hero.atkDir]}` : hero.blocking ? `Blocking ${BLKN[hero.blockDir]}` : hero.st === S.ST_RECOVER ? 'Recovering' : ''; }
     $('dirText').textContent = (!hero.dead && !Input.cmdMode && !gunMode()) ? (hero.weapon === 'yari' ? 'LMB thrust · wheel↑ slam · RMB block · double-tap A/D slide' : 'LMB slash · hold heavy · wheel↑ overhead · R stab · RMB block · double-tap A/D slide') : (me.rallyT > 0 ? `rally in ${Math.ceil(me.rallyT / 30)}s` : 'V · rally');
     empHUD(hero);
@@ -13096,7 +13104,7 @@ const SJBAT = {
   battle1: ['sj1', '順義 · Shunyi', 'November 1629. Your team marches behind the carts. Stay with your team: the chief calls the drill. Fire when the drum rolls, then swing the empty gun.', [['sjf', 'sjf'], ['mangui', 'mangui']]],
   battle2: ['sj2', '廣渠門 · The Guangqu Gate', 'The twentieth day of the eleventh month. Before the Guangqu Gate with Yuan Chonghuan\'s Liaodong men. Fire by ranks; never all at once.', [['sjf', 'sjf'], ['yuan', 'yuan'], ['zu', 'zu']]],
   battle3: ['sj3', '長山 · Changshan', 'October 1631. The cart camp on the long hill. Hold the north carts with your team.', [['sjf', 'sjf'], ['zhang', 'zhang']]],
-  battleA: ['sjamb', '村 · The village', 'A village east of Tongzhou, on the road back to Beijing. Search it with your team. Point-blank, the three barrels; then turn the gun round (Q) and swing it.', [['sjf', 'sjf']]],
+  battleA: ['sjamb', '村 · The village', 'A village east of Tongzhou, on the road back to Beijing. Search it with your team. Point-blank, the three barrels; then turn the gun round (X) and swing it.', [['sjf', 'sjf']]],
   drill: ['sjdrill', '校場 · The drill ground', 'The autumn review. Stay with your team and march on the drum. Left mouse fires the three barrels one after another; R reloads.', [['sjf', 'sjf']]],
 };
 function sjBattle(scene) {
@@ -13978,6 +13986,7 @@ function chDecide(spec, done) {
   const pick = (i) => { if (phase !== 'pick') return; const o = spec.opts[i]; if (!o) return; phase = 'after'; cancelAnimationFrame(raf); AUDIO.play('ui');
     chRecord(C, spec, i); const more = o.fx ? o.fx(C) : null; C.save();
     const after = (o.a || []).concat(more && more.a ? more.a : []);
+    const lsEl = box.querySelector('.ls'); if (lsEl) lsEl.style.display = 'none'; const wEl = box.querySelector('.who'); if (wEl) wEl.innerHTML = `「${o.q}」`;
     box.querySelector('.ops').outerHTML = `<div class="ls2">${after.map(ln).join('')}</div><button type="button" class="go">${spec.go || '……'}</button>`; const tm = box.querySelector('.tm'); if (tm) tm.remove();
     const l2 = [...box.querySelectorAll('.ls2 .l')]; let j = 0; const rv = () => { if (j < l2.length) { l2[j++].classList.add('on'); setTimeout(rv, 1300); } }; rv();
     const go = box.querySelector('.go'); go.onclick = () => close(more); };
