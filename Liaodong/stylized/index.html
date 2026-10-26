@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v36</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v37</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -3516,7 +3516,7 @@ const MISSIONS = {
     start: [-92, 14, PI / 2],
     zones: [{ key: 'road', x: 0, z: -98, r: 16, name: 'The road where the southerners stand' }],
     groups: {
-      niru: { team: 1, name: 'Tobohui', zh: '托博輝', army: ['samurai'], at: [-92, 14, PI / 2], dir: ['hold', -90, 14], stay: true },
+      niru: { team: 1, name: 'Tobohui', zh: '托博輝', army: ['samurai'], at: [-80, 16, PI / 2], dir: ['hold', -78, 16], stay: true },
       hong: { team: 1, name: 'Hong Taiji', zh: '皇太極', army: ['cavalry', 'samurai', 'samurai', 'byakkotai', 'archer', 'cavalry', 'samurai'], at: [-106, -8, PI / 2], dir: ['hold', -100, -8], stay: true },
       daisan: { team: 1, name: 'Daišan', zh: '代善', army: ['cavalry', 'samurai', 'samurai', 'archer', 'cavalry'], at: [0, 138, PI], reserve: true },
       ridge: { team: 1, name: 'Archers on the east ridge', army: ['archer'], at: [72, -20, -PI / 2], reserve: true, stay: true, dir: ['hold', 34, -24] },
@@ -3530,13 +3530,14 @@ const MISSIONS = {
       { title: '一 · 西嶺 · The west ridge', goal: 'Wait in the trees with your niru', text: 'Hong Taiji\'s banners lie hidden in the woods of the west ridge. Below, Liu Ting\'s column hurries north toward Hetu Ala. Wait with your niru.',
         obj: { survive: 56 },
         at: [[18, ['dir', 'liu', 'hold', 0, -50]], [34, ['dir', 'liu', 'hold', 0, -32]], [34, ['dir', 'tusi', 'hold', 0, -4]]],
-        say: [[2, 'niru', 'Down on one knee, and keep your helmets out of the sun. Nobody moves before the conch.', '都跪下，盔別反光。海螺不響，誰也不許動。'],
-          [9, 'ulgen', 'The old man under the big standard, that\'s Liu Ting. They say his sword weighs a hundred and twenty jin.', '大纛底下那個老頭就是劉綎。聽說他的刀有一百二十斤。'],
+        say: [[7, 'niru', 'Down on one knee, and keep your helmets out of the sun. Nobody moves before the conch.', '都跪下，盔別反光。海螺不響，誰也不許動。'],
+          [12, 'ulgen', 'The old man under the big standard, that\'s Liu Ting. They say his sword weighs a hundred and twenty jin.', '大纛底下那個老頭就是劉綎。聽說他的刀有一百二十斤。'],
           [16, 'hong', 'Plain White. Whose niru is this?', '正白旗的。這是誰的牛錄？'],
-          [19, 'niru', 'Tobohui\'s, my Beile. Every man who can wear armour is here.', '托博輝的，貝勒爺。能披甲的全在這兒。'],
-          [23, 'hong', 'Good. When my elder brother strikes the head of that column, you strike its side. Not one breath before.', '好。等我二哥打他的頭，你們打他的腰。早一口氣也不行。'],
-          [32, 'muktan', 'The man in Ming red who rode down to them last night carried Du Song\'s own command arrow. Du Song has been dead three days.', '昨晚穿紅衣下去的那個人，拿的是杜松自己的令箭。杜松已經死了三天了。'],
-          [41, 'ilan', 'So the old man is hurrying to a feast that\'s already been eaten.', '所以那老頭是趕著去吃一桌早散了的席。'],
+          [21, 'niru', 'Tobohui\'s, my Beile. Every man who can wear armour is here.', '托博輝的，貝勒爺。能披甲的全在這兒。'],
+          [26, 'hong', 'Good. When my elder brother strikes the head of that column, you strike its side. Not one breath before.', '好。等我二哥打他的頭，你們打他的腰。早一口氣也不行。'],
+          [33, 'muktan', 'The man in Ming red who rode down last night carried Du Song\'s own command arrow.', '昨晚穿紅衣下去的那個人，拿的是杜松自己的令箭。'],
+          [38, 'muktan', 'Du Song has been dead three days.', '杜松已經死了三天了。'],
+          [44, 'ilan', 'So the old man is hurrying to a feast that\'s already been eaten.', '所以那老頭是趕著去吃一桌早散了的席。'],
           [50, 'sose', 'Their guns are falling behind. The column is stretching like a wet bowstring.', '他們的砲落後了。隊伍拉得跟濕弓弦一樣長。']] },
       { title: '二 · 代善 · The first charge', goal: 'Hold the ridge and watch the pass', text: 'Daišan\'s banners strike the head of the column in the pass. Hold your place on the ridge until the conch.', start: [['release', 'daisan'], ['dir', 'daisan', 'hold', 0, -20]],
         obj: { survive: 60 },
@@ -3560,7 +3561,7 @@ const MISSIONS = {
         say: [[2, 'muktan', 'Southerners. They fight in twelves: the shields, then those bamboo things, then the spears.', '南兵。他們十二個人一隊：藤牌在前，竹子在中間，長槍在後。'],
           [6, 'ulgen', 'Don\'t go into the shields. Get round them. The bamboo can\'t turn quickly!', '別往藤牌上撞！繞過去，那竹子轉不快！'],
           [11, 'soldier', 'Ulgen is down! The bošokū is down!', '烏勒根倒了！撥什庫倒了！'],
-          [14, 'niru', 'His file is yours now. Bring them in on the left!', '他的人歸你了。從左邊帶上去！'],
+          [16, 'niru', 'His file is yours now. Bring them in on the left!', '他的人歸你了。從左邊帶上去！'],
           [60, 'lookout', 'They\'re not running. Heaven, they\'re not running.', '他們不跑。老天，他們不跑。'],
           [31, 'lookout', 'Amin\'s banners on the ridge! More of ours coming down!', '二貝勒的旗下嶺了！我們的人來了！']] },
     ],
@@ -3589,19 +3590,19 @@ const MISSIONS = {
     phases: [
       { title: '一 · 白杆兵 · The White Poles', goal: 'Charge the White Pole camp beside the Bayara', text: 'Across the open ground north of the river stands the camp of the Sichuan White Poles. The Bayara go in first. Your file goes with them.', show: ['wpcamp'],
         start: [['dir', 'niru', 'hold', 72, 40], ['dir', 'bayara', 'hold', 74, 38], ['dir', 'white', 'hold', 84, 40]], obj: { survive: 46 }, at: [[1, ['lead']]],
-        say: [[2, 'niru', 'Bošokū! Your file goes in beside the Bayara. Where the red armour goes, you go.', '撥什庫！你的人跟著巴牙喇上。紅甲往哪去，你們就往哪去。'],
-          [10, 'muktan', 'Shenyang fell in one morning. These men came too late to save it, and they came anyway.', '瀋陽一個早上就破了。這些人來晚了，可他們還是來了。'],
+        say: [[7, 'niru', 'Bošokū! Your file goes in beside the Bayara. Where the red armour goes, you go.', '撥什庫！你的人跟著巴牙喇上。紅甲往哪去，你們就往哪去。'],
+          [14, 'muktan', 'Shenyang fell in one morning. These men came too late to save it, and they came anyway.', '瀋陽一個早上就破了。這些人來晚了，可他們還是來了。'],
           [22, 'lookout', 'They\'re not breaking! Long poles with hooks on the ends: they\'re pulling the riders down!', '他們不退！長桿子，頭上帶鉤，把騎兵拉下馬來！'],
           [32, 'sose', 'White-poled spears. Those are Qin Liangyu\'s men, the woman general of Shizhu.', '白杆槍。是石柱那個女將軍秦良玉的兵。'],
           [40, 'niru', 'Back! Back to the banner! Re-form!', '退！退回旗下！重新列隊！']] },
       { title: '二 · 退 · Back to the banner', goal: 'Fall back to the banner and re-form', text: 'The first charge has been thrown back. Pull your file back to the banner and wait for the guns.', show: ['rally'], hide: ['wpcamp'],
-        start: [['dir', 'niru', 'hold', 68, 98], ['dir', 'bayara', 'hold', 58, 104], ['dir', 'white', 'hold', 86, 104]], obj: { all: [{ reach: 'rally' }, { survive: 30 }] },
+        start: [['dir', 'niru', 'hold', 68, 98], ['dir', 'bayara', 'hold', 58, 104], ['dir', 'white', 'hold', 86, 104]], obj: { all: [{ reach: 'rally' }, { survive: 20 }] },
         say: [[3, 'manggu', 'Thrown back. By foot soldiers with sticks.', '被一群拿棍子的步兵打回來了。'],
           [12, 'niru', 'The Khan is sending up the guns. Li Yongfang found Ming gunners among the Shenyang prisoners.', '汗把砲調上來了。李永芳在瀋陽的俘虜裡找出了明朝的砲手。'],
           [20, 'lier', 'Those gunners are Shenyang men. They\'ll fire on their own people, for silver and their lives.', '那些砲手是瀋陽人。為了銀子，為了活命，朝自己人開砲。']] },
       { title: '三 · 砲 · The guns', goal: 'Go in again behind the guns', text: 'The captured Ming cannon fire into the White Pole camp. When it breaks, go in again.', show: ['wpcamp'], hide: ['rally'],
-        start: [['release', 'guns'], ['dir', 'guns', 'hold', 90, 92]], obj: { all: [{ defeat: ['sichuan'], frac: 0.7 }, { survive: 50 }] },
-        at: [[14, ['dir', 'niru', 'attack']], [14, ['dir', 'bayara', 'attack']], [14, ['dir', 'white', 'attack']], [40, ['wound', 4]], [60, ['kill', 'sichuan']]],
+        start: [['release', 'guns'], ['dir', 'guns', 'hold', 90, 92]], obj: { survive: 72 },
+        at: [[14, ['dir', 'niru', 'attack']], [14, ['dir', 'bayara', 'attack']], [14, ['dir', 'white', 'attack']], [40, ['wound', 4]], [60, ['kill', 'sichuan']], [66, ['break', 'sichuan']]],
         say: [[2, 'lookout', 'The guns are firing into their camp!', '砲打進他們營裡了！'],
           [13, 'niru', 'Now! In again, while they\'re still picking themselves up!', '趁現在！再衝一次，趁他們還沒爬起來！'],
           [61, 'lookout', 'Their general is down! The white banners are going down!', '他們的將軍倒了！白旗一面一面倒了！']] },
@@ -3640,25 +3641,26 @@ const MISSIONS = {
     phases: [
       { title: '一 · 盾車 · The shield carts', goal: 'Advance behind the carts to the ditch', text: 'Ningyuan stands alone beyond the frozen Liao River. Advance behind the shield carts and fill the ditch under the walls.', show: ['ditchW', 'ditchE'],
         obj: { survive: 70 }, at: [[1, ['lead']], [55, ['sector', 1, 'fill']]],
-        say: [[2, 'niru', 'Keep behind the carts! Their guns reach farther than any bow.', '躲在車後面！他們的砲比弓射得遠。'],
-          [10, 'muktan', 'Every fort beyond the Pass was given up without a fight. Only this one stayed. Yuan Chonghuan.', '山海關外的城都不戰而棄了，只有這一座沒走。袁崇煥。'],
+        say: [[7, 'niru', 'Keep behind the carts! Their guns reach farther than any bow.', '躲在車後面！他們的砲比弓射得遠。'],
+          [14, 'muktan', 'Every fort beyond the Pass was given up without a fight. Only this one stayed. Yuan Chonghuan.', '山海關外的城都不戰而棄了，只有這一座沒走。袁崇煥。'],
           [20, 'lookout', 'Fire on the wall! The red cannon!', '城上開火了！紅衣砲！'],
           [30, 'alin', 'Thirty years I\'ve followed the Khan. I\'ve never seen guns like these.', '跟了汗三十年，從沒見過這樣的砲。'],
           [45, 'manggu', 'The ditch is filling. Throw the bundles in, quick!', '壕快填平了！快把柴捆扔進去！'],
           [56, 'niru', 'The ditch is filled! Ladders to the wall!', '壕填平了！雲梯上前！']] },
-      { title: '二 · 雲梯 · The ladders', goal: 'Raise a ladder at the foot of the wall (E) and climb', text: 'The ditch is filled. Get the ladders up against the wall and climb.', hide: ['ditchW', 'ditchE'],
-        start: [['release', 'van2']], obj: { survive: 100 }, at: [[60, ['wound', 3]]],
+      { title: '二 · 雲梯 · The ladders', goal: 'Raise a ladder at the wall (E) and climb', text: 'The ditch is filled. Get the ladders up against the wall and climb.', hide: ['ditchW', 'ditchE'],
+        start: [['release', 'van2']], obj: { survive: 75 }, at: [[50, ['wound', 3]]],
         say: [[3, 'niru', 'Ladders up! Get them up against the wall!', '豎梯子！靠上城牆！'],
           [20, 'lookout', 'They\'re throwing down fire! Bundles of burning straw!', '他們往下扔火！一捆一捆燒著的草！'],
           [40, 'ilan', 'It\'s so cold the blood freezes on the rungs.', '冷得血都凍在梯子上了。'],
-          [70, 'sose', 'I can\'t shoot up at them. The parapets cover them.', '我往上射不著，垛口擋著他們。']] },
+          [60, 'sose', 'I can\'t shoot up at them. The parapets cover them.', '我往上射不著，垛口擋著他們。'],
+          [66, 'niru', 'Off the ladders! Back under the carts and catch your breath!', '下梯子！退回車底下喘口氣！']] },
       { title: '三 · 鑿城 · Under the wall', goal: 'Hold under the carts while the sappers dig', text: 'The sappers have reached the foot of the wall and are chiselling at the frozen earth under the shield carts. Hold beside them.',
-        start: [['release', 'sap']], obj: { survive: 90 },
+        start: [['release', 'sap']], obj: { survive: 70 },
         say: [[3, 'niru', 'The ground is frozen like iron. Dig anyway!', '地凍得跟鐵一樣。照樣挖！'],
           [20, 'lookout', 'They\'re dropping fire onto the carts! Oil and powder wrapped in quilts!', '他們往車上扔火！被子裹著油和火藥！'],
           [40, 'lier', 'The southerners call that one the ten-thousand-man enemy: a pot of powder that rolls along the ground.', '南邊人管那叫萬人敵，一罐火藥，在地上滾。'],
           [60, 'bahai', 'The cart\'s on fire! Get out from under it!', '車著火了！快從底下出來！']] },
-      { title: '四 · 汗 · The Khan', goal: 'Get your file back to the camp, wounded too', text: 'Something has happened at the Khan\'s standard. The horns sound the withdrawal. Bring your file back across the plain to the camp, and leave no one who can still walk.', show: ['jcamp'],
+      { title: '四 · 汗 · The Khan', goal: 'Bring your file and wounded back to camp', text: 'Something has happened at the Khan\'s standard. The horns sound the withdrawal. Bring your file back across the plain to the camp, and leave no one who can still walk.', show: ['jcamp'],
         start: [['sector', 2], ['break', 'van'], ['break', 'van2'], ['break', 'carts'], ['break', 'sap'], ['dir', 'niru', 'hold', -30, -110]], obj: { extract: 'jcamp' }, limit: 400, fail: 'The guns found you on the open plain.',
         say: [[1, 'lookout', 'The Khan\'s standard is going back! They\'re carrying someone wrapped in red cloth!', '汗的大纛往後退了！他們用紅布裹著抬一個人！'],
           [6, 'niru', 'The horns! Back to the camp! Carry the wounded!', '號角響了！退回營去！把傷的抬上！'],
@@ -3688,8 +3690,8 @@ const MISSIONS = {
     phases: [
       { title: '一 · 小凌河 · The Xiaoling River', goal: 'Ride out with the banners to the ford', text: 'The Ming relief army has crossed the Xiaoling River and halted on the long hill beyond. Their cavalry comes out to meet you at the ford.', show: ['ford'],
         obj: { all: [{ reach: 'ford' }, { survive: 40 }] }, at: [[1, ['lead']], [2, ['dir', 'niru', 'hold', -4, -60]], [2, ['dir', 'hong', 'hold', 12, -64]], [2, ['dir', 'white', 'hold', -24, -62]], [32, ['break', 'wu']]],
-        say: [[3, 'niru', 'The Khan rides with us today. Show him what the Plain White are.', '今天汗親自出馬。讓他看看正白旗是什麼樣的。'],
-          [9, 'hong', 'Their horse first. Wu Xiang\'s men have run from us before. Make them run again.', '先打他們的馬兵。吳襄的人跑過一回，讓他們再跑一回。'],
+        say: [[7, 'niru', 'The Khan rides with us today. Show him what the Plain White are.', '今天汗親自出馬。讓他看看正白旗是什麼樣的。'],
+          [13, 'hong', 'Their horse first. Wu Xiang\'s men have run from us before. Make them run again.', '先打他們的馬兵。吳襄的人跑過一回，讓他們再跑一回。'],
           [20, 'muktan', 'Forty thousand, they say. Come to save Zu Dashou, who\'s been eating horses inside Dalinghe for a month.', '說是四萬人，來救祖大壽。祖大壽在大凌河城裡吃馬已經吃了一個月了。'],
           [33, 'lookout', 'Their horse is breaking! Wu Xiang is running!', '他們的馬兵散了！吳襄跑了！']] },
       { title: '二 · 車營 · The wagon wall', goal: 'Charge the wagon line on the hill', text: 'The Ming infantry have closed their wagons on the long hill. Go up at them.', show: ['wagons'], hide: ['ford'],
@@ -3697,7 +3699,7 @@ const MISSIONS = {
         say: [[3, 'niru', 'Up the hill! Get in among the wagons before they can reload!', '上坡！趁他們裝藥，衝進車陣！'],
           [18, 'lookout', 'Their guns! The whole wagon line is firing!', '開砲了！整條車陣都在打！'],
           [40, 'niru', 'Back! Back down the hill! Wait for our own guns!', '退！退下坡！等我們自己的砲！']] },
-      { title: '三 · 風 · Fire and wind', goal: 'Hold below the hill while our guns break the wagons', text: 'For the first time the banners have red cannon of their own, cast in Shenyang and served by Han gunners. Hold below the hill while they fire.',
+      { title: '三 · 風 · Fire and wind', goal: 'Hold below the hill while our guns fire', text: 'For the first time the banners have red cannon of their own, cast in Shenyang and served by Han gunners. Hold below the hill while they fire.',
         start: [['release', 'ujen'], ['dir', 'niru', 'hold', -6, -56], ['dir', 'white', 'hold', -22, -58], ['dir', 'hong', 'hold', 14, -60]], obj: { survive: 66 },
         at: [[20, ['burn', -26, 26, -30]], [40, ['wound', 4]]],
         say: [[3, 'sabu', 'Our guns! Lord Tong\'s guns! Look at them!', '我們的砲！佟大人的砲！你們看！'],
@@ -4389,10 +4391,10 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, H
   ];
   const FINAL = [['FIN', 'N'], ['B', 'E'], ['H', 'W'], ['C', 'NE'], ['D', 'NW'], ['G', 'E']];
   // with two or more defenders each raid brings one more party, from another flank
-  const EXTRA = [['X1', 'E'], ['X2', 'W'], ['X1', 'N'], ['X2', 'E'], ['X1', 'W'], ['X2', 'NW'], ['X1', 'NE'], ['X2', 'NW']];
+  const EXTRA = [null, ['X1', 'W'], ['X1', 'N'], ['X2', 'E'], ['X1', 'W'], ['X2', 'NW'], ['X2', 'NE'], ['X2', 'NW']];
   // what the quartermaster can send up from the road: [type, cost, how many companies the road holds]
   const SHOP = [['ashigaru', 25, 2], ['rifle_imp', 35, 2], ['yuanyang', 45, 1], ['rifle_spencer', 40, 1], ['cavalry', 50, 1], ['gatling', 60, 1]];
-  const MEND = 20, FALL = 20, WAVE_MAX = 180, NFIRE = 5, LULL = 30, LULL0 = 40, LIGHT = 3, RELIEF_AT = 40;
+  const MEND = 20, FALL = 20, WAVE_MAX = 180, NFIRE = 5, LULL = 30, LULL0 = 40, LIGHT = 3, RELIEF_AT = 55;
   const groups = {
     garrison: { team: 0, name: 'Tower garrison', zh: '墩軍', army: ['rifle_imp', 'yuanyang'], at: [0, 0, 0], dir: ['hold', 0, 2], stay: true },
     relief: { team: 0, name: 'Guanning relief', zh: '關寧援兵', army: ['cavalry', 'cavalry', 'cavalry', 'rifle_imp'], at: [0, -132, 0], reserve: true, dir: ['hold', 0, 20] },
@@ -4418,7 +4420,7 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, H
   const humans = (sim) => sim.players.filter(p => !p.ai);
   P.beaconInit = function () {
     const nh = humans(this).length;
-    this.bc = { stage: 'lull', n: 0, fires: 0, lit: false, light: 0, t0: this.tick, silver: 40 + 15 * (nh - 1), kills: 0, wave: [], log: [], relief: false, nh };
+    this.bc = { stage: 'lull', n: 0, fires: 0, lit: false, light: 0, t0: this.tick, silver: 40 + 25 * (nh - 1), kills: 0, wave: [], log: [], relief: false, nh };
     for (const k of ['stoves', 'tower']) { const z = this.missionZone(k); if (z) z.hidden = false; }
     for (const gid in this.mg) { if (gid === 'bandFIN' || gid === 'garrison') continue; const p = this.players[this.mg[gid].p];
       for (const uid of [p.heroId, p.horseId]) { const u = uid >= 0 ? this.units[uid] : null; if (u && !u.dead) { u.dead = true; u.hp = 0; u.inactive = true; u.bcCut = true; u.bcPaid = true; } } }
@@ -4464,7 +4466,7 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, H
     g.G.exit = [sp[0], sp[1]]; this.mRelease(gid); this.mDir(gid, ['hold', 0, -4]); return gid;
   };
   P.beaconWave = function (i) {
-    const B = this.bc, fin = i < 0; const list = (fin ? FINAL : WAVES[i]).slice(); if (B.nh >= 2) list.push(EXTRA[fin ? 7 : i]);
+    const B = this.bc, fin = i < 0; const list = (fin ? FINAL : WAVES[i]).slice(); const ex = EXTRA[fin ? 7 : i]; if (B.nh >= 2 && ex) list.push(ex);
     B.wave = list.map(([k, side]) => this.beaconArm(k, side)).filter(Boolean); B.stage = fin ? 'final' : 'wave'; B.t0 = this.tick; if (!fin) B.n++;
     this.events.push({ t: 'bwave', n: fin ? -1 : B.n });
   };
@@ -10586,7 +10588,8 @@ JCH[1] = {
     { title: '建州 · Jianzhou', year: 'Spring 1619 · 天命四年', p: ['For thirty years Nurhaci has gathered the Jurchen tribes under one hand: Hada, Hoifa, Ula, one after another. In 1616 he named his state the Later Jin and himself its Khan.',
       'Last spring he declared Seven Grievances against the Ming before Heaven and took Fushun. This spring the Ming have answered with four armies.'], zh: '天命三年四月，汗以七大恨告天。' },
     { title: '八旗 · The Eight Banners', year: 'Niru · jalan · gūsa', p: ['Every Jurchen household belongs to a niru, about three hundred men under a captain. Five niru make a jalan, five jalan a banner, and there are eight banners. In war each niru sends out its armoured men.',
-      'You are one of them: a young 披甲, an armoured man, in a niru of the Plain White Banner, the banner of the Khan\'s fourth son, Hong Taiji.'],
+      'Your niru belongs to the Plain White Banner, the banner of the Khan\'s fourth son, Hong Taiji.'] },
+    { title: '你 · You', year: '披甲 · An armoured man', p: ['You are nineteen, the second son of a hunting family. This is your second campaign in armour.'],
       html: '<p><label style="font:14px sans-serif">Your name <input id="jName" value="阿克敦" maxlength="6" style="width:6em;font-size:15px"> <input id="jNameEn" value="Akdun" maxlength="14" style="width:8em;font-size:15px"></label></p>',
       onNext: () => { const zh = ($('jName').value || '阿克敦').trim().slice(0, 6), en = ($('jNameEn').value || 'Akdun').trim().slice(0, 14); JS.name = { zh, en }; jSave(); } },
     { title: '薩爾滸 · Sarhu', year: 'The third month of 1619', p: ['The Ming came by four roads, and the Khan went out by one. Two days ago at Sarhu your banners destroyed Du Song\'s column in the snow. Yesterday Ma Lin\'s broke in the north.',
@@ -10802,7 +10805,7 @@ function jCampCfg(n) {
     npcs.push({ role: 'spear', x, z, yaw: +Math.atan2(-x, -z).toFixed(3), ci: jIdx(r.k), pose: i % 3 === 2 ? 'stand' : 'squat' }); });
   (C.guests || []).forEach((k, i) => npcs.push({ role: 'spear', x: 7 - i * 1.5, z: -2.6, yaw: 2.6, ci: jIdx(k), pose: 'stand' }));
   ZC = { bed: [beds[0][0], beds[0][1]], jin: true, R: JR, map: {}, night: n };
-  return { type: 'samurai', team: 1, fires: JCAMP.fires, tents: JCAMP.tents, props: JCAMP.props, bedrolls: beds, npcs, me: { x: 0.4, z: -3.4, yaw: 0, role: 'spear' } };
+  return { type: 'samurai', team: 1, fires: JCAMP.fires, tents: JCAMP.tents, props: JCAMP.props, bedrolls: beds, npcs, me: { x: 0.6, z: -6.6, yaw: 0, role: 'spear' } };
 }
 function jStart(scene) {
   JS = jLoad() || jFresh(); jMeRow(); $('menu').hidden = true; state.lowfx = $('lowfxIn').checked; state.fog = false;
@@ -10929,7 +10932,8 @@ function jFinish(winner) {
   const ft = C.fateText, rows = list.map(k => { const r = jRow(k), f = fate[k]; const nm = k === JS.me ? `${JS.name.zh} ${JS.name.en} (you)` : k === meK && JS.me !== meK ? `${oldName.zh} ${oldName.en} (you, until you fell)` : `${r.zh} ${r.en}`; return `<li class="${f === 'out' || f === 'home' ? 'out' : f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : f === 'home' ? '·' : '?'} ${nm} — ${ft[f] || ft.out}</li>`; }).join('');
   const outN = list.filter(k => fate[k] === 'out').length;
   $('resultTitle').textContent = won ? '勝 · The field is ours' : '退 · Pulled back'; $('resultTitle').className = won ? 'win' : 'lose';
-  $('resultText').innerHTML = `${won ? M.win : (M.loseText || 'The banners pulled back.')} ${outN} of ${list.length} of your file came through.`;
+  const head = outN <= 1 ? (won ? 'The field is the banners\', but of your file almost no one is left to stand on it.' : 'You came back alone.') : won ? M.win : (M.loseText || 'The banners pulled back.');
+  $('resultText').innerHTML = `${head} ${outN} of ${list.length} of your file came through.`;
   $('btnNext').hidden = false; $('btnNext').textContent = 'What happened →';
   $('btnNext').onclick = () => { $('result').hidden = true; JS.stage = C.next; jSave(); zCards(C.after(won, rows, outN), () => C.next === 'done' ? jEnd() : jGo(C.next)); };
 }
@@ -10988,7 +10992,7 @@ const SJ_MISSIONS = (() => { const PI = Math.PI; const cartRow = (z, xs) => xs.m
         say: [[6, 'sj_hu', 'Step on the drum. The inspector watches the banners. I watch your feet.', '踩著鼓點走。內臣看旗，我看你們的腳。'],
           [13, 'sj_tian', 'Is that the eunuch inspector? He has more silk on him than my whole street.', '那就是提督太監？他身上的綢子比我們整條街都多。'],
           [20, 'sj_qian', 'Smile for him. The pay goes through his hands.', '笑一個。餉銀要從他手裡過。']] },
-      { title: '二 · 三疊 · Three ranks', goal: 'Fire at the butts on the drum, then step back and load', text: 'Fire on the drum, then step back.',
+      { title: '二 · 三疊 · Three ranks', goal: 'Fire on the drum, then step back', text: 'Fire on the drum, then step back.',
         show: ['butts'], hide: ['line'], obj: { survive: 50 },
         say: [[1, 'sj_lin', 'First rank, present! Wait for the drum!', '頭排——舉銃！聽鼓！'], [6, 'sj_lin', 'Fire! Back through the gaps and load. Second rank up!', '放！從空隙退回去裝藥。二排上！'],
           [16, 'sj_hu', 'Three barrels, three shots. Then you are holding an iron club. Remember that.', '三個管子，三響。打完了你手裡就是根鐵棍。記住。'],
@@ -11034,7 +11038,7 @@ const SJ_MISSIONS = (() => { const PI = Math.PI; const cartRow = (z, xs) => xs.m
           [13, 'sj_hu', 'That is Man Gui. A Mongol by birth. Forty wounds, they say, every one in front.', '那是滿桂。蒙古人出身。身上四十多處傷，都在前面。'],
           [21, 'sj_ma', 'Carts chained. The mules hate this cold more than I do.', '車連好了。騾子比我還怕冷。'],
           [27, 'sj_lin', 'Light your match. Keep it under your coat until the drum.', '火繩點上。打鼓之前揣在懷裡。']] },
-      { title: '二 · 齊放 · The volley', goal: 'Hold your fire until they reach the carts, then fire', text: 'Riders out of the snow. Wait for fifty paces.',
+      { title: '二 · 齊放 · The volley', goal: 'Hold fire until fifty paces, then fire', text: 'Riders out of the snow. Wait for fifty paces.',
         start: [['release', 'jin1'], ['dir', 'jin1', 'hold', 0, -50]],
         obj: { survive: 70 }, at: [[42, ['wound', 5]]],
         say: [[1, 'lookout', 'Riders on the road! White banners edged in red!', '路上有馬兵——白旗鑲紅！'], [6, 'sj_lin', 'Not yet... not yet... fifty paces!', '還不到……還不到……五十步！'],
@@ -11118,9 +11122,9 @@ const SJ_MISSIONS = (() => { const PI = Math.PI; const cartRow = (z, xs) => xs.m
       zhang: { team: 0, name: 'Zhang Chun', zh: '張春', army: ['rifle_imp', 'ashigaru', 'gatling'], at: [0, -16, 0], dir: ['hold', 0, -10], officer: 2, stay: true },
       songwei: { team: 0, name: 'Song Wei', zh: '宋偉', army: ['rifle_imp', 'samurai', 'ashigaru'], at: [26, -10, 0], dir: ['hold', 26, -4], stay: true },
       wuxiang: { team: 0, name: 'Wu Xiang', zh: '吳襄', army: ['cavalry', 'cavalry'], at: [-36, -18, 0], dir: ['hold', -36, -12], stay: true },
-      guns: { team: 1, name: 'The red cannon', zh: '烏真超哈砲', army: ['cannon4', 'cannon4', 'cannon4', 'rifle_sho'], at: [0, 84, PI], reserve: true, stay: true, dir: ['hold', 0, 64] },
-      hong: { team: 1, name: 'Hong Taiji\'s banners', zh: '皇太極', army: ['samurai', 'samurai', 'archer', 'shinsengumi', 'cavalry', 'archer'], at: [0, 138, PI], reserve: true },
-      east: { team: 1, name: 'The Plain Yellow banner', zh: '正黃旗', army: ['samurai', 'samurai', 'shinsengumi', 'cavalry'], at: [138, 20, -PI / 2], reserve: true },
+      guns: { team: 1, name: 'The red cannon', zh: '烏真超哈砲', army: ['cannon4', 'cannon4', 'cannon4', 'rifle_sho'], at: [0, 62, PI], reserve: true, stay: true, dir: ['hold', 0, 44] },
+      hong: { team: 1, name: 'Hong Taiji\'s banners', zh: '皇太極', army: ['samurai', 'samurai', 'archer', 'shinsengumi', 'cavalry'], at: [0, 138, PI], reserve: true },
+      east: { team: 1, name: 'The Plain Yellow banner', zh: '正黃旗', army: ['samurai', 'samurai', 'cavalry'], at: [138, 20, -PI / 2], reserve: true },
       left: { team: 1, name: 'Mongol horse', zh: '蒙古騎', army: ['byakkotai', 'cavalry'], at: [-138, 40, PI / 2], reserve: true },
       right: { team: 1, name: 'Jin horse', army: ['cavalry'], at: [138, -60, -PI / 2], reserve: true, n: 6 },
     },
@@ -11138,7 +11142,7 @@ const SJ_MISSIONS = (() => { const PI = Math.PI; const cartRow = (z, xs) => xs.m
           [9, 'sj_song', 'Red cannon, cast this year in Shenyang by Han craftsmen. Our own art, turned on us.', '紅衣砲。今年在瀋陽鑄的，漢人工匠鑄的。我們的手藝，打我們自己。'],
           [20, 'sj_hu', 'Down! Behind the carts! Let them waste powder.', '趴下！躲車後面！讓他們費藥。'], [49, 'sj_hu', 'A gun has burst! Ours! Pull him back!', '又一門炸了——我們的！拖回來！'],
           [60, 'zhang', 'Gunners, stand up! Foot soldiers are coming on behind their guns.', '銃手，起來！砲後面有步兵上來了！']] },
-      { title: '三 · 風 · The wind turns', goal: 'Hold the cart wall and club them when they reach you', text: 'The wind turns the smoke onto the camp.',
+      { title: '三 · 風 · The wind turns', goal: 'Hold the carts and club them back', text: 'The wind turns the smoke onto the camp.',
         start: [['release', 'left'], ['dir', 'hong', 'hold', 4, 16], ['dir', 'left', 'hold', -30, 0], ['break', 'wuxiang']],
         obj: { survive: 90 }, waves: [[65, 'east', ['hold', 20, 0]]],
         say: [[2, 'lookout', 'Wu Xiang\'s horse is leaving! The cavalry is riding off!', '吳總兵的馬兵走了！騎兵跑了！'], [6, 'sj_qian', 'There goes the cavalry. Of course it does.', '騎兵走了。當然走了。'],
@@ -11597,7 +11601,7 @@ function beaconVisuals(sim) {
 function beaconFrame() {
   requestAnimationFrame(beaconFrame);
   const sim = state.sim; if (!sim || !sim.mission || !sim.mission.beacon) { if (BCN.open) beaconShop(false); return; }
-  if (BCN.sim !== sim) { BCN.sim = sim; BCN.fires = -1; BCN.stage = ''; BCN.log = 0; BCN.vis = null; BCN.lastN = 0; }
+  if (BCN.sim !== sim) { BCN.sim = sim; BCN.sum = false; BCN.fires = -1; BCN.stage = ''; BCN.log = 0; BCN.vis = null; BCN.lastN = 0; }
   const B = sim.bc; const m = $('mobj'); if (m) m.style.display = 'none';
   if (!BCN.vis && state.renderer && state.renderer.scene) BCN.vis = beaconVisuals(sim);
   if (BCN.vis) { const now = performance.now() / 1000; BCN.vis.stoves.forEach((s, i) => { const on = !!B && i < B.fires; s.fl.visible = on; s.sm.visible = on;
@@ -11616,6 +11620,8 @@ function beaconFrame() {
   if (B.log.length && B.log[B.log.length - 1][0] !== BCN.log) { const L = B.log[B.log.length - 1]; BCN.log = L[0];
     if (L[4] === 'ready') toast('Ready. The raid comes on in three seconds'); else if (L[1] === state.localIdx) { if (!L[3]) toast(L[4] === 'none' ? 'The road has no more of those to send' : L[4] === 'fire' ? 'Light the fire first' : 'Not enough silver'); else if (L[2] === S.BEACON.SHOP.length) toast('Your men are bound up and fed'); }
     beaconShopDraw(); }
+  // the result card: what the tower did
+  if (sim.mwin !== undefined && !BCN.sum) { const r = $('result'), t = $('resultText'); if (r && !r.hidden && t && t.textContent) { BCN.sum = true; t.textContent += ` Fires lit: ${B.fires} of ${S.BEACON.NFIRE} · raids beaten: ${B.n - (B.stage === 'wave' ? 1 : 0)} · raiders slain: ${B.kills}.`; } }
   BCN.t -= 1 / 60; if (BCN.t <= 0) { BCN.t = 0.25; beaconShopDraw(); }
 }
 requestAnimationFrame(beaconFrame);
