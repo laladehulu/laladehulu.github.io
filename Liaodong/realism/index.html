@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v64</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v65</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1899,6 +1899,7 @@ class Sim {
     if (u.downT > 0 && u.type !== 'horse') { const k = u.downT; u.downT = 0; if (!u.dead && u.st !== ST_RELOAD) { u.st = ST_STUN; u.stT = 0; u.stunDur = Math.min(0.55, 0.25 + k * 0.15); u.blocking = false; u.aiming = false; } u.mx *= 0.3; u.mz *= 0.3; }
     if (u.downT > 0) { u.downT -= DT; u.blocking = false; u.aiming = false; if (u.st !== ST_RELOAD) { u.st = ST_IDLE; u.stT = 0; } u.mx = 0; u.mz = 0; if (u.mounted || u.type === 'horse') u.hspeed *= 0.8; }
     if (!u.ctrlActive) this.unitAI(u);
+    if (!u.ctrlActive && u.mount < 0 && !u.mounted && u.type !== 'horse' && !u.airborne && u.def.ai !== 'cannon') this.paceMove(u);
     if (!u.ctrlActive && u.mount < 0 && !u.mounted && u.type !== 'horse' && !u.airborne && u.def.ai !== 'cannon') this.steerAround(u);
     this.updateCombatState(u);
     this.integrate(u);
@@ -2149,7 +2150,7 @@ class Sim {
       const sm = (u.st === ST_WINDUP || u.st === ST_RELEASE) ? 0.45 : (u.st === ST_AIM && !def.skirmish) || u.st === ST_STUN ? 0 : (u.st === ST_RELOAD) ? 0.6 : 1;
       u.mx *= sm; u.mz *= sm;
     }
-    this.turnTo(u, wantYaw, (u.st === ST_AIM ? 2.4 : u.st === ST_WINDUP || u.st === ST_RELEASE ? 3.5 : 6) * DT);
+    if (!(u.faceLock > 0)) this.turnTo(u, wantYaw, (u.st === ST_AIM ? 2.4 : u.st === ST_WINDUP || u.st === ST_RELEASE ? 3.5 : 6) * DT);
   }
   aiReload(u) {
     const g = gunOf(u.def, u.weapon); if (!g) return;
@@ -4106,6 +4107,48 @@ Sim.prototype.freeRun = function (u, hx, hz, L) {
     for (let k = 0; k < bl.length; k++) { const b = this.boxes[bl[k]]; if (b.hw < 0.1 || b.kind === 'gate' || (b.lad && b.lad.up)) continue;
       if (Math.abs(px - b.x) < b.hw + r + 0.08 && Math.abs(pz - b.z) < b.hd + r + 0.08) return t - 0.5; } }
   return best;
+};
+// ---- pace: how a man on foot moves, not just where (choreography) ----
+// The AI only says where to go; this decides how fast and which way he faces. Men in formation march at a walk and
+// keep the pace of the line (the duck team closes to contact in step, like a phalanx); a man well out of his place
+// jogs, a long way off he runs; only charges, lunges, routs and the fight itself go at full speed. Speed changes
+// with a limited acceleration (no sudden rushes), slows into the slot (no rocking back and forth around it), and a
+// man going more than a few paces faces the way he walks instead of skating backward.
+// u.pace (for the renderer's gait): 0 still, 1 walk, 2 jog, 3 run, 4 sprint
+const PACE_WALK = 0.5, PACE_JOG = 0.75;
+Sim.prototype.paceMove = function (u) {
+  if (u.dead || u.downed || u.wounded || u.inactive) { u.vs = 0; u.pace = 0; return; }
+  const def = u.def, base = def.speed, m = len(u.mx, u.mz), sq = u.squad >= 0 ? this.squads[u.squad] : null, order = sq ? sq.order : ORD_HOLD;
+  const tgt = u.target >= 0 ? this.units[u.target] : null, td = tgt && !tgt.dead ? len(tgt.x - u.x, tgt.z - u.z) : 1e9;
+  const fighting = u.st === ST_WINDUP || u.st === ST_RELEASE || u.st === ST_RECOVER || u.st === ST_STUN || u.blocking || u.lunge || td < (def.reach || 2) + 2.5 || (u.entT || 0) > 0;
+  const sd = sq && u.slotX !== undefined ? len(u.slotX - u.x, u.slotZ - u.z) : -1;
+  let cap = base * 1.6;
+  if (u.camp) cap = base * PACE_WALK * 0.75;
+  else if (fighting || (sq && sq.routing) || u.flee) cap = base * 1.6;
+  else if (order === ORD_CHARGE) { // a charge: a disciplined close-order team keeps together (the slowest man's pace) until the last few paces
+    cap = def.yuanyang || def.shield ? base * (td < 8 ? 1 : 0.8) : base * 1.6; }
+  else if (sd >= 0) {
+    // where he stands in the company's shape (his offset from the men around him vs his offset in the formation):
+    // a man in his place marches with the rest; a straggler jogs, a man far adrift runs to rejoin
+    if (sq.paceTk !== this.tick) { sq.paceTk = this.tick; let ax = 0, az = 0, bx = 0, bz = 0, k = 0; for (const id of sq.unitIds) { const v = this.units[id]; if (v.dead || v.ctrl >= 0 || v.downed || v.wounded) continue; ax += v.x; az += v.z; bx += v.slotX; bz += v.slotZ; k++; } sq.pcx = k ? ax / k : 0; sq.pcz = k ? az / k : 0; sq.psx = k ? bx / k : 0; sq.psz = k ? bz / k : 0; }
+    const e = len((u.x - sq.pcx) - (u.slotX - sq.psx), (u.z - sq.pcz) - (u.slotZ - sq.psz));
+    cap = order === ORD_FOLLOW ? (sd > 12 ? base : sd > 5 ? base * PACE_JOG : base * PACE_WALK) : sd > 35 ? base * PACE_JOG : base * PACE_WALK; // following his leader he keeps the leader's pace; otherwise the company marches
+    const away = tgt && m > 0.01 && ((tgt.x - u.x) * u.mx + (tgt.z - u.z) * u.mz) < -0.3 * td * m; // falling back from the enemy: no strolling
+    if (away && td < 40 && sd > 3) cap = base;
+    else if (td < 30 && order !== ORD_FOLLOW) cap = base * PACE_WALK; // advancing to contact: the line walks in step
+    if (e > 10) cap = Math.max(cap, base); else if (e > 4) cap = Math.max(cap, base * PACE_JOG);
+    if (sd < 1.6) cap = Math.min(cap, base * PACE_WALK * Math.max(0.3, sd / 1.6));
+    if (sd < 0.35 && !u.role) cap = 0; } // in his place: stand, don't rock on the spot
+  const want = Math.min(m, cap), vs0 = u.vs || 0;
+  const vs = want > vs0 ? Math.min(want, vs0 + (fighting ? 14 : 5.5) * DT) : Math.max(want, vs0 - 11 * DT);
+  if (m > 0.01) { u.pdx = u.mx / m; u.pdz = u.mz / m; }
+  if (vs > 0.02 && u.pdx !== undefined) { u.mx = u.pdx * vs; u.mz = u.pdz * vs; } else { u.mx = 0; u.mz = 0; }
+  u.vs = m > 0.01 || vs > 0.02 ? vs : 0;
+  const r = u.vs / base; u.pace = r < 0.05 ? 0 : r < 0.62 ? 1 : r < 0.88 ? 2 : r < 1.08 ? 3 : 4;
+  // facing: going somewhere more than a few paces off (not in a fight), he turns and walks it
+  const far = sd < 0 ? m > base * 0.4 : sd > 3;
+  if (!fighting && far && u.vs > base * 0.3 && u.st !== ST_AIM && u.st !== ST_RELOAD) { this.turnTo(u, atan2(u.mx, u.mz), 7 * DT); u.faceLock = 2; }
+  else if (u.faceLock > 0) u.faceLock--;
 };
 Sim.prototype.steerAround = function (u) {
   if (u.ghostT > 0) u.ghostT -= DT; if (u.unstickT > 0) u.unstickT -= DT;
@@ -8066,12 +8109,12 @@ class Renderer {
     vm.updateMatrix();
     // forearms run from the hands down and back toward the bottom corners of the view
     const elbowA = [new THREE.Vector3(0.24, -0.5, -0.16), new THREE.Vector3(-0.24, -0.52, -0.18)];
-    const shoulder = [new THREE.Vector3(0.3, -0.75, -0.06), new THREE.Vector3(-0.3, -0.75, -0.08)];
+    const shoulder = [new THREE.Vector3(0.32, -0.84, -0.02), new THREE.Vector3(-0.32, -0.84, -0.04)]; // longer arms in first person too
     const hands = [this.vmHandR.position.clone().applyMatrix4(vm.matrix), this.vmHandL.position.clone().applyMatrix4(vm.matrix)];
     for (let i = 0; i < 2; i++) {
       const vis = i === 0 || two; this.vmFore[i].visible = vis; this.vmUpper[i].visible = vis; if (!vis) continue;
       const h = hands[i]; const dir = elbowA[i].clone().sub(h); const dl = dir.length(); dir.normalize();
-      const e = h.clone().addScaledVector(dir, Math.min(0.27, dl));
+      const e = h.clone().addScaledVector(dir, Math.min(0.31, dl));
       this.placeSeg(this.vmFore[i], h, e, 0.042); this.placeSeg(this.vmUpper[i], e, shoulder[i], 0.05);
     }
   }
