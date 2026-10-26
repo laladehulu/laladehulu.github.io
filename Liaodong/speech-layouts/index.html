@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v53</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v54</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -4176,8 +4176,10 @@ Sim.prototype.campThink = function (u) {
   let h = null; for (const p of this.players) { if (p.ai) continue; const v = this.units[p.heroId]; if (v && !v.dead) { h = v; break; } }
   if (h) { const dx = u.x - h.x, dz = u.z - h.z, d = len(dx, dz), face = d > 0.01 ? (dx * sin(h.yaw) + dz * cos(h.yaw)) / d : 0;
     const was = u.cLook; u.cLook = d < 2.9 && face > 0.55 ? 1 : d < 1.7 ? 1 : 0; if (u.cLook && !was && u.cAct === 11) { u.cAct = 0; }
+    if (u.cAct === 7 && d < 1.5 && face > 0.7) { u.cAct = 1; u.cT = 30 * 15; } // a sleeper you stand over wakes and sits up
     u.cRise = u.cLook && d < 2.2 && u.cAct !== 7 ? 1 : 0;
-    if (u.cLook) { this.turnTo(u, atan2(h.x - u.x, h.z - u.z), 3 * DT); return; } }
+    // only a man on his feet (or one getting up to talk) turns his body toward you, and not in one jerk; the rest just look
+    if (u.cLook && (!u.cSeat || u.cRise) && u.cAct !== 7) { this.turnTo(u, atan2(h.x - u.x, h.z - u.z), 2.2 * DT); return; } }
   if (--u.cT <= 0) { // time for something else
     u.cMate = -1;
     if (u.cSeat) { u.cAct = CAMP_SEAT[(rng.next() * CAMP_SEAT.length) | 0];
@@ -7439,6 +7441,10 @@ class Renderer {
     if (u.camp && !u.dead && u.cAct !== undefined) { const P = this.campPoseT(u, a, w); a.cProp = P.prop; a.cPropH = P.ph;
       lean = P.lean; twist = P.twist; crouch = P.crouch; stance = P.stance; roll = P.roll; rateB = 5;
       if (P.anchor !== 'skip') { anchor = P.anchor; fkL = P.fkL; fkR = P.fkR; two = P.two; rateW = 6; } }
+    if (u.camp) { // a man who looks up at you turns his head first (the body only turns if he gets up to talk)
+      let want = 0; const lp = this.sim.players[this.localIdx], hh = lp ? this.sim.units[lp.heroId] : null;
+      if (u.cLook && u.cAct !== 7 && hh && !hh.dead) want = clamp(wrapA(Math.atan2(hh.x - x, hh.z - z) - yaw), -1.05, 1.05);
+      a.hYw = (a.hYw || 0) + (want - (a.hYw || 0)) * (1 - Math.exp(-4 * dt)); } else a.hYw = 0;
     if (u.wounded && !u.dead) { if (u.helpedBy >= 0) { lean = 0.28; crouch = Math.max(crouch, 0.16); roll = 0.12 * Math.sin(ph); } else { crouch = 0.62; lean = 0.62; roll = 0.1; stance = 0.4; } rateB = 8; } // doubled over / limping on a friend's shoulder
     // ---------- smoothing ----------
     a.recoil = Math.max(0, a.recoil - dt * 3.2);
@@ -7580,9 +7586,10 @@ class Renderer {
     else if (anchor === 'R' && KW) { ik(0, 6, J[18] + J[21] * KW.off2, J[19] + J[22] * KW.off2, J[20] + J[23] * KW.off2, 1); }
     else { toRoot(a.lh, tmpA, 0); ik(0, 6, tmpA[0], tmpA[1], tmpA[2], 1); }
     if (fkR && w !== 'bow' && w !== '') { J[18] = J[15]; J[19] = J[16]; J[20] = J[17]; const fx = J[15] - J[12], fy = J[16] - J[13], fz = J[17] - J[14]; const l = Math.hypot(fx, fy, fz) || 1; const cdir = routing ? [fx / l * 0.3 - C[6], fy / l * 0.3 - C[7] - 0.4, fz / l * 0.3 - C[8]] : [C[6], C[7] + 0.3, C[8]]; const cl2 = Math.hypot(cdir[0], cdir[1], cdir[2]) || 1; J[21] = cdir[0] / cl2; J[22] = cdir[1] / cl2; J[23] = cdir[2] / cl2; }
+    if (lie && lie.k > 0.01) this.lieArms(lie, J, C, pel, toRoot, ik);
     // ---------- to world ----------
-    const dp = wdp !== null ? wdp : down ? (u.downed && u.crawling ? 1.22 + Math.sin((this.time || 0) * 5 + u.id) * 0.07 : u.downed ? -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1) : -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4))) : (u.camp && a.cl ? (-1.42 + (a.cTilt || 0)) * a.cl : 0), cP = Math.cos(dp), sP = Math.sin(dp); // a downed man is propped on an elbow or half-sitting, and rises as he is hauled up
-    const oy = wdp !== null ? woy : down ? 0.15 : u.camp && a.cl ? 0.12 * a.cl : 0;
+    const dp = wdp !== null ? wdp : down ? (u.downed && u.crawling ? 1.22 + Math.sin((this.time || 0) * 5 + u.id) * 0.07 : u.downed ? -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1) : -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4))) : (u.camp && a.cl ? (a.cTilt || 0) * a.cl : 0), cP = Math.cos(dp), sP = Math.sin(dp); // a downed man is propped on an elbow or half-sitting, and rises as he is hauled up
+    const oy = wdp !== null ? woy : down ? 0.15 : 0;
     const vsc = u.look && u.look.h ? u.look.h : (u.type === 'byakkotai' ? 0.9 : 1) * (u.champ ? S.HCLASS[u.hclass | 0].scale : u.type === 'hero' ? 1.04 : 0.88 + uhash(u.id, 7) * 0.24); // men come in all sizes: about 12% either way
     const Wp = (lx, ly, lz, out, o) => { lx *= vsc; ly *= vsc; lz *= vsc; const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = x + lx * cy + z2 * sy; out[o + 1] = y + oy + y2; out[o + 2] = z - lx * sy + z2 * cy; };
     const Wd = (lx, ly, lz, out, o) => { const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = lx * cy + z2 * sy; out[o + 1] = y2; out[o + 2] = -lx * sy + z2 * cy; };
@@ -7598,7 +7605,7 @@ class Renderer {
     this.boxB(f.torso, slot, G[18 + 24], G[18 + 25], G[18 + 26], CB, 0.5, 0.64, 0.3);
     this.boxB(f.hips, slot, G[60], G[61], G[62], CB, 0.4, 0.22, 0.27);
     // head stays nearer upright than the chest
-    const HB = this._HB || (this._HB = new Float64Array(9)); { const hl = -a.lean * 0.5 + (a.hrh || 0), ht = -a.twist * 0.35; const ch = Math.cos(hl), sh = Math.sin(hl), cth = Math.cos(ht), sth = Math.sin(ht); const ax = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; for (let i = 0; i < 3; i++) { const v = ax[i]; const y1 = v[1] * ch - v[2] * sh, z1 = v[1] * sh + v[2] * ch; const x2 = v[0] * cth + z1 * sth, z2 = -v[0] * sth + z1 * cth; const vx = CB[0] * x2 + CB[3] * y1 + CB[6] * z2, vy = CB[1] * x2 + CB[4] * y1 + CB[7] * z2, vz = CB[2] * x2 + CB[5] * y1 + CB[8] * z2; HB[i * 3] = vx; HB[i * 3 + 1] = vy; HB[i * 3 + 2] = vz; } }
+    const HB = this._HB || (this._HB = new Float64Array(9)); { const hl = -a.lean * a.hK + (a.hrh || 0), ht = -a.twist * 0.35 + (a.hYw || 0); const ch = Math.cos(hl), sh = Math.sin(hl), cth = Math.cos(ht), sth = Math.sin(ht); const ax = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; for (let i = 0; i < 3; i++) { const v = ax[i]; const y1 = v[1] * ch - v[2] * sh, z1 = v[1] * sh + v[2] * ch; const x2 = v[0] * cth + z1 * sth, z2 = -v[0] * sth + z1 * cth; const vx = CB[0] * x2 + CB[3] * y1 + CB[6] * z2, vy = CB[1] * x2 + CB[4] * y1 + CB[7] * z2, vz = CB[2] * x2 + CB[5] * y1 + CB[8] * z2; HB[i * 3] = vx; HB[i * 3 + 1] = vy; HB[i * 3 + 2] = vz; } }
     if (vsc !== 1) for (let i = 0; i < 9; i++) HB[i] *= vsc;
     const hx = G[18 + 27], hy = G[18 + 28], hz = G[18 + 29];
     this.boxB(f.head, slot, hx, hy, hz, HB, 0.28, 0.3, 0.28);
@@ -7949,7 +7956,7 @@ class Renderer {
   ownMarkStart(fp) {
     if (!this.omPts) { const N = this.sim.units.length; const g = new THREE.BufferGeometry(); this.omPos = new Float32Array(N * 3); g.setAttribute('position', new THREE.BufferAttribute(this.omPos, 3)); g.setDrawRange(0, 0);
       const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'); c.translate(32, 32); c.beginPath(); c.moveTo(0, 26); c.lineTo(15, 2); c.lineTo(0, -14); c.lineTo(-15, 2); c.closePath(); c.fillStyle = 'rgba(6,20,10,.6)'; c.lineWidth = 7; c.strokeStyle = 'rgba(6,20,10,.6)'; c.stroke(); c.fillStyle = '#6fe08a'; c.fill();
-      const tex = new THREE.CanvasTexture(cv); this.omPts = new THREE.Points(g, new THREE.PointsMaterial({ map: tex, size: 0.85, sizeAttenuation: true, transparent: true, depthWrite: false, alphaTest: 0.08, fog: false })); this.omPts.frustumCulled = false; this.omPts.renderOrder = 5; this.scene.add(this.omPts); this.omSpr = []; this.omTex = {}; }
+      const tex = new THREE.CanvasTexture(cv); this.omPts = new THREE.Points(g, new THREE.PointsMaterial({ map: tex, size: 1.25, sizeAttenuation: true, transparent: true, depthWrite: false, alphaTest: 0.08, fog: false })); this.omPts.frustumCulled = false; this.omPts.renderOrder = 5; this.scene.add(this.omPts); this.omSpr = []; this.omTex = {}; }
     if (!fp) { this.omPts.visible = false; for (const sp of this.omSpr) sp.visible = false; return null; }
     this.omN = 0; const P = this.omPos, self = this; return { push(x, y, z) { const k = self.omN++ * 3; if (k + 2 < P.length) { P[k] = x; P[k + 1] = y; P[k + 2] = z; } } };
   }
@@ -8046,7 +8053,7 @@ class Renderer {
       const u = units[i];
       if (u.dead || u.inactive) continue;
       const x = lerp(u.px, u.x, alpha), y = lerp(u.py, u.y, alpha), z = lerp(u.pz, u.z, alpha);
-      if (om && u.squad >= 0 && i !== heroId && u.type !== 'horse') { const q = sim.squads[u.squad]; if (q && (q.owner === this.localIdx || (q.id === sim.players[this.localIdx].soldierSq && sim.mission && sim.mission.soldier))) { const top = y + (u.mounted ? 2.75 : 2.05); om.push(x, top, z); if (capt[u.squad] === undefined) capt[u.squad] = [x, top, z]; } }
+      if (om && u.squad >= 0 && i !== heroId && u.type !== 'horse') { const q = sim.squads[u.squad]; if (q && (q.owner === this.localIdx || (q.id === sim.players[this.localIdx].soldierSq && sim.mission && sim.mission.soldier))) { const top = y + (u.mounted ? 3.15 : 2.55) * (u.look && u.look.h ? u.look.h : 1); om.push(x, top, z); if (capt[u.squad] === undefined) capt[u.squad] = [x, top, z]; } }
       const far = (x - cx) * (x - cx) + (z - cz) * (z - cz) > 330 * 330;
       if (this.fog && u.team !== this.localTeam && !this.seen[i]) { if (this.wasSeen[i]) { this.wasSeen[i] = 0; this.hideFigure(i); const hs = this.horseSlot.get(u.id); if (hs !== undefined) this.hideHorse(hs); const cs = this.cannonSlot.get(u.id); if (cs !== undefined) for (const k in this.cannon) this.cannon[k].setMatrixAt(cs, T.zero); } continue; }
       if (this.fog) this.wasSeen[i] = 1;
@@ -8425,6 +8432,30 @@ Renderer.prototype.gearFollow = function (u, p, F, G) {
 };
 // ---- camp life, drawn: relaxed poses and small activities for the men at the fire (sim sets u.cAct; see campThink) ----
 // Sets the hand/weapon targets in this.tg (chest-local: +x left, +y up from the shoulders, +z forward) and returns the body.
+// arms of a man on the ground (root-local; +x his left, +z forward, y from the ground): on his back one arm props him on
+// the elbow and the other holds the wound, now and then reaching out for help; face down the arms reach and pull in
+// turn; asleep one hand is under his head. The weapon lies by his side. Blended in by lie.k as he goes down.
+Renderer.prototype.lieArms = function (lie, J, C, pel, toRoot, ik) {
+  const k = lie.k, T = this._lieT || (this._lieT = new Float64Array(6)), tt = lie.tt, sA = lie.sA;
+  const bump = (per, on) => { const c = ((tt / per) % 1 + 1) % 1; return c < on ? Math.sin(c / on * Math.PI) : 0; };
+  const put = (so, ho, side, tx, ty, tz) => { const hx = J[ho] + (tx - J[ho]) * k, hy = J[ho + 1] + (ty - J[ho + 1]) * k, hz = J[ho + 2] + (tz - J[ho + 2]) * k; ik(so, ho, hx, hy, hz, side); };
+  const sp = sA > 0 ? 0 : 9, fr = sA > 0 ? 9 : 0, sps = sA > 0 ? 1 : -1; // propping arm and free arm
+  if (lie.kind === 'back') {
+    put(sp, sp + 6, sps, J[sp] + sps * 0.1, 0.05, J[sp + 2] + 0.12);
+    toRoot([-sps * 0.05, -0.3, 0.17], T, 0); let tx = T[0], ty = T[1], tz = T[2];
+    if (lie.call) { const r = bump(4.6, 0.42); tx += (J[fr] * 0.6 - tx) * r; ty += (pel + 0.72 - ty) * r; tz += (0.42 - tz) * r; }
+    put(fr, fr + 6, -sps, tx, ty, tz);
+  } else if (lie.kind === 'crawl') {
+    for (const [so, sd, ph] of [[0, 1, 0], [9, -1, Math.PI]]) { const c = lie.c + ph, r = 0.5 + 0.5 * Math.sin(c), up = Math.max(0, Math.cos(c)) * 0.12;
+      put(so, so + 6, sd, J[so] + sd * 0.06, 0.05 + up, J[so + 2] + 0.1 + 0.36 * r); }
+  } else {
+    put(sp, sp + 6, sps, J[27] + sps * 0.13, Math.max(0.06, J[28] - 0.06), J[29] - 0.06);
+    toRoot([-sps * 0.06, -0.3, 0.17], T, 0); put(fr, fr + 6, -sps, T[0], T[1], T[2]);
+  }
+  // the weapon lies on the ground beside him
+  const gx = -0.42 * sps, gz = 0.15; J[18] += (gx - J[18]) * k; J[19] += (0.05 - J[19]) * k; J[20] += (gz - J[20]) * k;
+  let dx = J[21] * (1 - k) + 0.08 * k, dy = J[22] * (1 - k), dz = J[23] * (1 - k) + k; const l = Math.hypot(dx, dy, dz) || 1; J[21] = dx / l; J[22] = dy / l; J[23] = dz / l;
+};
 Renderer.prototype.campPoseT = function (u, a, w) {
   const tg = this.tg, t = (this.time || 0) + uhash(u.id, 31) * 20, dt = this.fdt || 0.016, act = u.cAct | 0, rise = !!u.cRise, look = !!u.cLook;
   const lie = act === 7 && !rise, squat = !!u.cSeat && (act === 4 || act === 12) && !rise && !lie, sit = !!u.cSeat && !lie && !squat && !rise;
@@ -9782,7 +9813,7 @@ function updateLabels() {
 const markPool = [];
 function updateMarks() {
   const sim = state.sim, box = $('fpmarks'); let n = 0; const pt = {}; const w = canvas.clientWidth, h = canvas.clientHeight; const hero = localHero(); const me = sim.players[state.localIdx];
-  if (!Input.cmdMode && hero && !hero.dead && sim.phase >= 0) { const own = me.squads; const cam = state.renderer.camera.position;
+  if (false && !Input.cmdMode && hero && !hero.dead && sim.phase >= 0) { const own = me.squads; const cam = state.renderer.camera.position; // the ▲ / ▼ over other squads is switched off
     for (const sq of sim.squads) { if (!sq.alive || sq.inactive) continue; const mineSq = sq.owner === state.localIdx, ally = sq.team === me.team;
       const d = Math.hypot(sq.cx - cam.x, sq.cz - cam.z); if (mineSq) continue; if (d > (ally ? 110 : 80)) continue; // your own men carry in-world markers (renderer) if (!ally && state.renderer.fog && !state.renderer.seenSq[sq.id]) continue;
       squadScreen(sq, pt); if (!pt.visible || pt.x < 0 || pt.x > w || pt.y < 0 || pt.y > h) continue;
