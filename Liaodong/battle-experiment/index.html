@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v15</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v16</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1111,7 +1111,7 @@ class Sim {
     u.ctrl = p.idx; u.target = -1; u.st = ST_IDLE; u.stT = 0; p.heroId = u.id; if (p.squads.length) p.commanderId = u.id; p.respawnAt = 0;
     const k = (this.cfg.players[p.idx] || {}).kit;
     if (k) { const d = u.def, n = Object.assign({}, d); n.hp = d.hp * (k.hp || 1); n.dmg = d.dmg.map(x => x * (k.melee || 1)); if (d.rifle) n.rifle = Object.assign({}, d.rifle, { reload: d.rifle.reload * (k.reload || 1), spread: d.rifle.spread * (k.aim || 1), ads: (d.rifle.ads || d.rifle.spread * 0.3) * (k.aim || 1) }); if (d.bow) n.bow = Object.assign({}, d.bow, { reload: d.bow.reload * (k.reload || 1) }); u.def = n; u.hp = Math.min(n.hp, u.hp * (k.hp || 1)); }
-    if (k && k.arms) armUnit(u, k.arms, (k.melee || 1) * (this.tuned ? 1.5 : 1));
+    if (k && k.arms && this.mode !== 'assault' && !(this.mission && this.mission.soldier)) armUnit(u, k.arms, (k.melee || 1) * (this.tuned ? 1.5 : 1)); // in assault and the story you take up the man's own kit; the menu's blade/shield choice is for your own character
     this.events.push({ t: 'possess', p: p.idx, id: u.id, sq: u.squad });
     return true;
   }
@@ -1580,6 +1580,7 @@ class Sim {
     for (let i = 0; i < sq.unitIds.length; i++) {
       const u = units[sq.unitIds[i]]; if (u.dead) continue;
       let [lat, dep] = slotOffset(sq.formation, k++, n, s, sq.cols); if (sq.def.yuanyang && sq.formation !== FORM_COLUMN) { const r = YY_SLOT[i % 12]; lat = r[0] * 0.92; dep = r[1] * 0.82; }
+      if (u.restT > this.tick) dep -= 3.4;
       u.slotX = clamp(sq.tx + ox + rx * lat + fx * dep, -HALF, HALF); u.slotZ = clamp(sq.tz + oz + rz * lat + fz * dep, -HALF, HALF);
       for (const p of this.players) { if (p.ai || p.team !== sq.team) continue; const h = units[p.heroId]; if (!h || h.dead || h === u) continue; const hx = u.slotX - h.x, hz = u.slotZ - h.z, hd = len(hx, hz); if (hd < 1.9) { const e = hd > 0.05 ? 1.9 / hd : 0; u.slotX = h.x + (hd > 0.05 ? hx * e : rx * 1.9); u.slotZ = h.z + (hd > 0.05 ? hz * e : rz * 1.9); } } // leave the player room to move
       if (sq.def.ai === 'ranged' && sq.order === ORD_HOLD) this.coverSlot(u, fx, fz);
@@ -1804,18 +1805,39 @@ class Sim {
     if (d < 0.01) { u.mx = 0; u.mz = 0; return u.yaw; }
     const sp = Math.min(speed * this.zoneSpeed(u.x, u.z), d * 3); u.mx = dx / d * sp; u.mz = dz / d * sp; return atan2(dx, dz);
   }
-  cavSteer(u, gx, gz, desired) {
+  cavSteer(u, gx, gz, desired, keep) { // keep: hold the pace through a turn (a wheel at the gallop) instead of reining in
     desired *= this.fatMul(u);
     { const wp = this.navPoint(u, gx, gz); if (wp) { gx = wp[0]; gz = wp[1]; } }
     const dx = gx - u.x, dz = gz - u.z, d = len(dx, dz);
     const ang = d > 0.01 ? atan2(dx, dz) : u.hyaw;
     const diff = wrap(ang - u.hyaw); const rate = (2.6 - 1.7 * Math.abs(u.hspeed) / 9) * DT;
     if (diff > rate) u.hyaw = wrap(u.hyaw + rate); else if (diff < -rate) u.hyaw = wrap(u.hyaw - rate); else u.hyaw = ang;
-    if (Math.abs(diff) > 1.2) desired = Math.min(desired, 2.5);
+    if (Math.abs(diff) > 1.2) desired = Math.min(desired, keep ? 6.5 : 2.5);
     desired *= this.zoneSpeed(u.x, u.z);
     if (u.hspeed < desired) u.hspeed = Math.min(desired, u.hspeed + 6 * DT); else u.hspeed = Math.max(desired, u.hspeed - 8 * DT);
     u.mx = sin(u.hyaw) * u.hspeed; u.mz = cos(u.hyaw) * u.hspeed;
     return ang;
+  }
+  // A charge is a pass, not a halt: the horseman runs up at full gallop, rides through the enemy line (the men in his path
+  // are knocked aside in trample), carries on 26-40 m beyond, wheels about and comes again. If he is stopped in the press
+  // (a braced spear, a snare, too many men) he backs out of it rather than standing in the melee to be cut down.
+  cavCharge(u, tgt, d) {
+    const def = u.def; u.cvT = (u.cvT || 0) + DT; let st = u.cv | 0;
+    if (st !== 3 && Math.abs(u.hspeed) < 1.6 && d < 3.6) { u.cvStuck = (u.cvStuck || 0) + DT;
+      if (u.cvStuck > 0.7) { const ax = u.x - tgt.x, az = u.z - tgt.z, al = len(ax, az) || 1, sd = (u.id & 1) ? 1 : -1;
+        u.cvX = clamp(u.x + (ax / al) * 14 + (az / al) * sd * 6, -HALF + 4, HALF - 4); u.cvZ = clamp(u.z + (az / al) * 14 - (ax / al) * sd * 6, -HALF + 4, HALF - 4); u.cv = st = 3; u.cvT = 0; u.cvStuck = 0; } }
+    else u.cvStuck = 0;
+    if (st === 0) { // run-up: full gallop straight at him; inside 8 m, fix a point well beyond and ride for it
+      if (d < 8) { const fx = (tgt.x - u.x) / (d || 1), fz = (tgt.z - u.z) / (d || 1), far = 26 + this.rng.next() * 14;
+        u.cvX = clamp(tgt.x + fx * far, -HALF + 4, HALF - 4); u.cvZ = clamp(tgt.z + fz * far, -HALF + 4, HALF - 4); u.cv = 1; u.cvT = 0; this.cavSteer(u, u.cvX, u.cvZ, def.speed); return; }
+      this.cavSteer(u, tgt.x, tgt.z, def.speed); return; }
+    if (st === 1) { this.cavSteer(u, u.cvX, u.cvZ, def.speed); if (len(u.cvX - u.x, u.cvZ - u.z) < 6 || u.cvT > 7) { u.cv = 2; u.cvT = 0; } return; }
+    if (st === 3) { this.cavSteer(u, u.cvX, u.cvZ, 6, true); if (len(u.cvX - u.x, u.cvZ - u.z) < 4 || u.cvT > 2.6) { u.cv = 2; u.cvT = 0; } return; }
+    // wheel: come round at a canter; charge again once facing him with room for a run-up (or give room first)
+    const off = Math.abs(wrap(atan2(tgt.x - u.x, tgt.z - u.z) - u.hyaw));
+    if (d < 13 && off < 1.0) { const ax = u.x - tgt.x, az = u.z - tgt.z, al = len(ax, az) || 1; u.cvX = clamp(u.x + (ax / al) * 12, -HALF + 4, HALF - 4); u.cvZ = clamp(u.z + (az / al) * 12, -HALF + 4, HALF - 4); u.cv = 3; u.cvT = 0; return; }
+    this.cavSteer(u, tgt.x, tgt.z, off < 0.6 ? def.speed : 6.5, true);
+    if ((off < 0.5 && d >= 13) || u.cvT > 5) { u.cv = 0; u.cvT = 0; }
   }
   gunRange(def, w, u) { const g = gunOf(def, w); return g ? g.range * this.rangeMul * (u ? 1 + clamp(u.y * 0.02, 0, 0.3) : 1) : 0; }
   findTarget(u, sq) {
@@ -1834,7 +1856,7 @@ class Sim {
     const eng = (!ranged && !u.mounted) ? this.engaged() : null; // men already swarming a foe make him a worse pick: spread out along the enemy line
     for (let i = 0; i < enemies.length; i++) { const v = enemies[i]; if (v.inactive || (v.duelWith >= 0 && v.duelWith !== undefined)) continue; const dx = v.x - u.x, dz = v.z - u.z; let d2 = dx * dx + dz * dz;
       if (eng) { const n = eng[v.id] - (u.target === v.id ? 1 : 0); if (n >= 3) d2 *= 5; else if (n === 2) d2 *= 2.2; else if (n === 1) d2 *= 1.25; }
-      if (this.xc && ranged && v.ctrl >= 0 && !this.players[v.ctrl].ai) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 3) d2 *= 8; } if (v.squad >= 0 && this.squads[v.squad].routing && !u.mounted) d2 *= 1.6; if (sq && sq.focus >= 0 && v.squad === sq.focus && ranged) d2 *= 0.45; if (d2 < bd) { bd = d2; best = v.id; } }
+      if (this.xc && ranged && v.ctrl >= 0 && !this.players[v.ctrl].ai) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 3) d2 *= 8; } if (v.wounded) d2 *= 6; if (this.story && v.zfile && ranged) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 2) d2 *= 4; else if (sh === 1) d2 *= 1.8; } if (v.squad >= 0 && this.squads[v.squad].routing && !u.mounted) d2 *= 1.6; if (sq && sq.focus >= 0 && v.squad === sq.focus && ranged) d2 *= 0.45; if (d2 < bd) { bd = d2; best = v.id; } }
     return best;
   }
   aimedAt(id) { if (this.aimTick !== this.tick) { this.aimTick = this.tick; if (!this.aimN || this.aimN.length < this.units.length) this.aimN = new Int16Array(this.units.length + 64); else this.aimN.fill(0); for (const v of this.units) if (!v.dead && v.target >= 0 && isGun(v.def, v.weapon)) this.aimN[v.target]++; } return this.aimN[id]; }
@@ -1889,6 +1911,8 @@ class Sim {
     u.atkHeld = false; u.blockHeld = false;
     if (u.camp) { u.mx = 0; u.mz = 0; u.target = -1; return; } // a man at the fire
     if (u.wounded) { this.woundedAI(u); return; }
+    if (this.story && u.team === this.mission.side && u.ctrl < 0 && !u.mounted && def.ai !== 'cannon' && this.aiMedic(u)) return;
+    if (u.restT > this.tick && u.hp < u.def.hp * 0.6) u.hp += u.def.hp * 0.012 * DT * 30 / 30; // catching his breath in the second rank
     if (u.type === 'horse') { this.horseIdle(u); return; }
     if (def.ai === 'cannon') { this.cannonAI(u, sq); return; }
     if (u.downT > 0 || u.airborne) { if (!u.mounted) { u.mx = 0; u.mz = 0; } return; }
@@ -1934,17 +1958,18 @@ class Sim {
         const tsd = leash < 1e9 ? len(tgt.x - u.slotX, tgt.z - u.slotZ) : 0;
         if (tsd > leash + reach) { this.goSlot(u, sq, ang); } // hold the formation: step out only for a foe who comes to the line, rear ranks wait their turn
         else if (u.mounted) {
-          const desired = d > 9 ? def.speed : (d > reach ? 4 : 2.5);
-          this.cavSteer(u, tgt.x, tgt.z, desired);
+          if (u.ctrl < 0) this.cavCharge(u, tgt, d); // shock cavalry: run up, ride through, wheel, come again
+          else { const desired = d > 9 ? def.speed : (d > reach ? 4 : 2.5); this.cavSteer(u, tgt.x, tgt.z, desired); }
         } else if (d > reach - 0.5) { const sp = def.speed * (u.st === ST_IDLE ? 1 : 0.6); this.steerFoot(u, tgt.x, tgt.z, sp); }
         else { u.mx = 0; u.mz = 0; }
         if (u.role && sq && !sq.routing) { const sd = len(u.slotX - u.x, u.slotZ - u.z); if (sd > 2.2 && d > reach) this.steerFoot(u, u.slotX, u.slotZ, def.speed); else if (d > reach && sd < 2.2) { u.mx *= 0.3; u.mz *= 0.3; } }
-        const eager = u.role === 'spear' && tgt.entT > 0 ? 0.35 : u.role === 'brush' ? 0.2 : u.role === 'shield' ? 0.05 : 0.09;
-        if (d <= reach + 0.3 && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && this.rng.next() < eager) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
+        const eager = u.mounted ? 0.35 : u.role === 'spear' && tgt.entT > 0 ? 0.35 : u.role === 'brush' ? 0.2 : u.role === 'shield' ? 0.05 : 0.09;
+        if (d <= (u.mounted ? reach + Math.abs(u.hspeed) * 0.4 : reach + 0.3) && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && this.rng.next() < eager) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
         if (this.xc && u.circleT > 0 && !u.mounted && u.st === ST_IDLE) { u.circleT -= DT; const sd = (u.id & 1) ? 1 : -1, nx = dx / (d || 1), nz = dz / (d || 1), keep = reach + 1.1; const rad = (d - keep) * 1.6; u.mx = nx * rad + nz * sd * 1.4; u.mz = nz * rad - nx * sd * 1.4; if (!u.blocking && this.rng.next() < 0.02) { u.blocking = true; u.blockT = 0; u.blockDir = DIR_UP; u.blockHold = 0.5; } }
         this.aiBlock(u, tgt);
       }
     } else {
+      if (u.mounted) u.cv = 0;
       wantYaw = this.goSlot(u, sq, u.yaw);
       if (ranged && u.st === ST_IDLE && u.ammo < (gunOf(def, u.weapon).mag || 1) && u.flinchT <= 0) this.aiReload(u);
     }
@@ -2188,7 +2213,7 @@ class Sim {
       if (att.def.crush) this.applyDamage(def_, dmg * att.def.crush * (def_.def.shield ? 0.6 : 1), att.id, nx * 1.2, 0, nz * 1.2, 'melee', hx, hy, hz);
       this.events.push({ t: 'block', x: hx, y: hy, z: hz, perfect: false, by: def_.id, att: att.id, shield: !!def_.def.shield }); att.heavy = false; return;
     }
-    if ((def_.mounted || def_.type === 'horse' || def_.mount >= 0) && !(att.mounted || att.mount >= 0)) { dmg *= 1.4; const hs = def_.type === 'horse' ? def_ : def_.mounted ? def_ : this.units[def_.mount]; if (hs) hs.hspeed *= 0.35; }
+    if ((def_.mounted || def_.type === 'horse' || def_.mount >= 0) && !(att.mounted || att.mount >= 0)) { const hs = def_.type === 'horse' ? def_ : def_.mounted ? def_ : this.units[def_.mount]; const fast = hs && Math.abs(hs.hspeed) > 5; dmg *= fast ? 0.95 : 1.4; if (hs) hs.hspeed *= fast ? 0.85 : 0.35; } // a galloping horseman is a glancing target; a halted one is cut down
     def_.lastAttacker = att.id;
     const kb = (dir === DIR_UP ? 2.2 : 1.6) * (heavy ? 1.8 : 1);
     if (att.def.brush && def_.type !== 'horse') { def_.entT = Math.max(def_.entT, def_.champ ? 0.6 : 1.8); this.posture(def_, 26, att); this.events.push({ t: 'entangle', id: def_.id, x: hx, y: hy, z: hz }); }
@@ -2243,7 +2268,9 @@ class Sim {
     if (iy > 0 && u.mass < 5) { u.vy += iy * m; u.y += 0.05; u.airborne = true; }
     if (u.ctrl >= 0 && !this.xc && !u.mounted && attackerId >= 0 && (cause === 'melee' || cause === 'shot' || cause === 'arrow' || cause === 'spear')) { const a = this.units[attackerId]; const dx = u.x - a.x, dz = u.z - a.z, d = len(dx, dz) || 1, kb = cause === 'melee' || cause === 'spear' ? 1.8 : 1.1; u.vx += dx / d * kb; u.vz += dz / d * kb; u.flinchT = Math.max(u.flinchT, 0.3); } // a blow that lands staggers you
     this.events.push({ t: 'hit', id: u.id, x: hx === undefined ? u.x : hx, y: hy === undefined ? u.y + 1.1 : hy, z: hz === undefined ? u.z : hz, dmg: dmg * mult, cause, att: attackerId, killed: u.hp <= 0 });
+    if (u.hp <= 0 && this.story && this.zDown(u, dmg, cause)) return false;
     if (u.hp <= 0) { this.kill(u, ix * m + (u.mx * 0.3), iy * m + 1.5, iz * m + (u.mz * 0.3), cause, attackerId); return true; }
+    if (u.zfile && !u.wounded && u.ctrl < 0 && u.hp < u.def.hp * 0.45 && this.tick >= (u.restCd || 0)) { u.restT = this.tick + 30 * 6; u.restCd = this.tick + 30 * 22; } // a hurt man steps back a rank to catch his breath; the next man takes the front
     return false;
   }
   kill(u, ix, iy, iz, cause, killerId) {
@@ -2426,6 +2453,7 @@ class Sim {
             if (dx * dx + dz * dz < rr * rr && Math.abs(dy) < 1.3 + v.def.r) {
               if (p.kind === 'shell') { this.explode(p.x, p.y, p.z, p.team, p.owner, 7.5, 170); done = true; break; }
               if (p.kind === 'arrow' && v.def.shield && !v.dead && v.st !== ST_RELEASE && Math.abs(wrap(atan2(p.x - v.x, p.z - v.z) - v.yaw)) < 1.1 && this.rng.next() < 0.75) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
+              if (p.kind === 'arrow' && v.zfile && !v.dead && this.coverShield(v, p)) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
               if (p.kind === 'arrow') { v.lastAttacker = p.owner; this.applyDamage(v, this.units[p.owner].def.bow.dmg * (v.def.ai === 'cannon' ? 0.3 : 1), p.owner, p.vx * 0.03, 0, p.vz * 0.03, 'arrow', p.x, p.y, p.z); if (!v.dead) { v.flinchT = Math.max(v.flinchT, 0.25); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } } this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); done = true; break; }
               // solid shot: bowl through
               const sp = len(p.vx, p.vz) || 1; const nx = p.vx / sp, nz = p.vz / sp;
@@ -2921,11 +2949,17 @@ class Sim {
       if (dot > 0.2) { if (b.hitT > 0.1) return; b.hitT = 0.3; const victim = a; this.applyDamage(victim, 55, b.id, -nx * 4, 1.5, -nz * 4, 'spear', a.x, a.y + 1.2, a.z); a.hspeed = 0; a.mx = 0; a.mz = 0; if (!victim.dead) { victim.downT = Math.max(victim.downT, 0.6); } this.events.push({ t: 'spearwall', x: b.x, y: b.y + 1.2, z: b.z }); return; }
     }
     if (b.hitT > 0.1 && b.downT > 0) return;
+    if (b.hitT > 0.25) return; // already bowled aside by this pass
     const sp = a.speedNow; const att = a.rider >= 0 ? a.rider : a.id; const shielded = b.blocking && front > 0.3 && b.def.shield;
-    const killed = this.applyDamage(b, Math.min(sp * 4.5, 42) * (shielded ? 0.3 : 1) * (this.abActive(a.rider >= 0 ? this.units[a.rider] : a, 'wedge') ? 1.4 : 1), att, nx * sp * 0.75, 4.5 + sp * 0.2, nz * sp * 0.75, 'trample', b.x, b.y + 1, b.z);
-    if (!killed) { b.downT = Math.max(b.downT, 1.4); b.st = ST_IDLE; b.stT = 0; b.blocking = false; if (b.squad >= 0) { const sq = this.squads[b.squad]; if (!sq.def.fearless) sq.morale = Math.max(0, sq.morale - 4); } }
-    a.hspeed *= shielded ? 0.4 : 0.6; // every man it hits slows the horse: charges bog down in deep ranks
-    this.events.push({ t: 'trample', x: b.x, y: b.y, z: b.z });
+    // the horse bowls him aside: a shove off its line (and a little along it), a stagger, sometimes a fall; light damage
+    const hy = a.type === 'horse' ? a.yaw : a.hyaw, fx = sin(hy), fz = cos(hy); const side = (b.x - a.x) * fz - (b.z - a.z) * fx >= 0 ? 1 : -1; const sx = fz * side, sz = -fx * side;
+    const push = (shielded ? 2.6 : 4.2) * clamp(sp / 8, 0.6, 1.3);
+    const killed = this.applyDamage(b, Math.min(sp * 2, 18) * (shielded ? 0.35 : 1) * (this.abActive(a.rider >= 0 ? this.units[a.rider] : a, 'wedge') ? 1.4 : 1), att, sx * push + fx * 1.6, 0.8, sz * push + fz * 1.6, 'trample', b.x, b.y + 1, b.z);
+    if (!killed) { b.hitT = 0.4; b.blocking = false; if (b.st === ST_WINDUP || b.st === ST_AIM) { b.st = ST_IDLE; b.stT = 0; }
+      if (this.rng.next() < (shielded ? 0.08 : 0.24) * clamp(sp / 8, 0.5, 1.3)) b.downT = Math.max(b.downT, 1.1); else b.flinchT = Math.max(b.flinchT, 0.45);
+      if (b.squad >= 0) { const sq = this.squads[b.squad]; if (!sq.def.fearless) sq.morale = Math.max(0, sq.morale - 2.5); } }
+    a.hspeed *= shielded ? 0.75 : 0.94; // each man knocked aside costs the horse a little pace; deep, braced ranks still stop it
+    this.events.push({ t: 'trample', x: b.x, y: b.y, z: b.z, sx, sz, down: b.downT > 0 });
   }
 }
 // ===== Scripted battles: the co-op commander campaign and Assault operations =====
@@ -3168,7 +3202,8 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     const g = this.mg[M.soldier.group], gp = g ? this.players[g.p] : null;
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; p.team = M.side; p.auto = false; p.ready = true; p.heroId = -1; p.commanderId = -1; p.squads = [];
       const sq = gp ? gp.squads.map(id => this.squads[id]).filter(q => q.def.yuanyang)[i] || this.squads[gp.squads[0]] : null; p.soldierSq = sq ? sq.id : 0; this.possess(p, sq, c.yyRole || 'shield');
-      if (sq) for (const id of sq.unitIds) { const u = this.units[id]; u.def = Object.assign({}, u.def, { hp: u.def.hp * 1.7 }); u.hp = u.def.hp; } }); // your file: hardened Yiwu men, and the story's heart
+      if (sq) for (const id of sq.unitIds) { const u = this.units[id]; u.def = Object.assign({}, u.def, { hp: u.def.hp * 1.5 }); u.hp = u.def.hp; u.zfile = true; } });
+    this.story = true; // your file: hardened Yiwu men, and the story's heart
   } else if (!ass) {
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; const t = roleType(c.role, M.side); p.team = M.side; p.army = humans.length === 1 ? [t, M.soloExtra || 'ashigaru'] : [t];
       const s = M.start; const px = s[0] + (i - (humans.length - 1) / 2) * 26; this.placeArmy({ player: p, army: p.army }, M.side, px, s[1], s[2]); p.auto = false; p.ready = true;
@@ -3237,13 +3272,55 @@ Sim.prototype.zWound = function (k) {
     u.wounded = true; u.helpedBy = -1; u.hp = Math.max(u.hp, u.def.hp * 0.35); u.st = ST_IDLE; u.stT = 0; u.blocking = false; u.downT = Math.max(u.downT, 1);
     this.events.push({ t: 'zwound', p: p.idx, id: u.id, x: u.x, z: u.z }); }
 };
-Sim.prototype.helpWounded = function (u) { // E beside a wounded comrade: get his arm over your shoulder
+Sim.prototype.helpWounded = function (u) { // E beside a downed or wounded comrade: haul him up, or get his arm over your shoulder
   if (u.dead || u.mounted) return false; let best = null, bd = 2.6;
   for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.helpedBy >= 0 || v === u) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
-  if (!best) return false; best.helpedBy = u.id; this.events.push({ t: 'zhelp', id: best.id, by: u.id }); return true;
+  if (!best) return false;
+  if (best.downed) { if (best.reviveBy !== u.id) { best.reviveBy = u.id; best.reviveT = 0; this.events.push({ t: 'zrevive0', id: best.id, by: u.id }); } return true; }
+  best.helpedBy = u.id; this.events.push({ t: 'zhelp', id: best.id, by: u.id }); return true;
 };
+// story chapters: a man who would die is often only knocked down — bleeding, until someone gets him up or the blood runs out
+Sim.prototype.zDown = function (u, dmg, cause) {
+  if (u.wounded || u.mounted || u.ctrl >= 0 || u.type === 'horse' || u.type === 'hero' || u.def.ai === 'cannon' || u.team !== this.mission.side) return false;
+  if (dmg >= 1e5 || cause === 'explosion' || cause === 'solid' || cause === 'canister' || cause === 'headshot' || cause === 'lightning' || cause === 'fire' || cause === 'fall' || cause === 'bleed') return false; // the script's deaths, and blows no one gets up from
+  let chance = 0;
+  if (u.zfile) chance = 0.82;
+  else { for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead && len(h.x - u.x, h.z - u.z) < 30) chance = 0.22; } }
+  if (!chance || this.rng.next() >= chance) return false;
+  u.hp = 1; u.wounded = true; u.downed = true; u.helpedBy = -1; u.reviveBy = -1; u.reviveT = 0; u.bleed = 30 * (u.zfile ? 45 : 30); u.medic = -1;
+  u.st = ST_IDLE; u.stT = 0; u.blocking = false; u.aiming = false; u.target = -1; u.downT = Math.max(u.downT, 1.2); u.mx = 0; u.mz = 0;
+  this.events.push({ t: 'zdown', id: u.id, x: u.x, z: u.z, file: !!u.zfile }); return true;
+};
+Sim.prototype.zRevive = function (u, by) {
+  const h = this.units[by]; const limp = this.mv && this.mission && this.mv.ph >= this.mission.phases.length - 1; // in the break-out he can walk, not fight
+  u.downed = false; u.reviveBy = -1; u.reviveT = 0; u.bleed = 0; u.downT = 0; u.hp = Math.max(u.hp, u.def.hp * 0.4);
+  if (limp && h && h.ctrl >= 0) { u.helpedBy = by; } else { u.wounded = false; u.helpedBy = -1; u.restT = this.tick + 30 * 5; }
+  this.events.push({ t: 'zrevive', id: u.id, by, limp: !!(limp && h && h.ctrl >= 0) });
+};
+Sim.prototype.coverShield = function (v, p) { // a rattan shield beside you turns the arrow meant for you
+  const src = atan2(-p.vx, -p.vz); const n = this.gatherNear(v.x, v.z, 1.9);
+  for (let i = 0; i < n; i++) { const s = this.units[this.nearBuf[i]]; if (s === v || s.dead || s.wounded || s.team !== v.team || !s.def.shield || s.st === ST_STUN) continue; if (Math.abs(wrap(src - s.yaw)) < 1.2) return this.rng.next() < 0.5; }
+  return false;
+};
+// a comrade with no enemy close goes to a downed friend and hauls him up
+Sim.prototype.aiMedic = function (u) {
+  if (u.medicOf >= 0 && u.medicOf !== undefined) { const v = this.units[u.medicOf];
+    const foe = u.target >= 0 ? this.units[u.target] : null; const threat = foe && !foe.dead && len(foe.x - u.x, foe.z - u.z) < 7;
+    if (!v || v.dead || !v.downed || threat || (v.reviveBy >= 0 && v.reviveBy !== u.id)) { if (v && v.medic === u.id) v.medic = -1; if (v && v.reviveBy === u.id) v.reviveBy = -1; u.medicOf = -1; return false; }
+    const d = len(v.x - u.x, v.z - u.z); if (d > 1.6) { const y = this.steerFoot(u, v.x, v.z, u.def.speed); this.turnTo(u, y, 6 * DT); } else { u.mx = 0; u.mz = 0; if (v.reviveBy < 0) { v.reviveBy = u.id; v.reviveT = 0; this.events.push({ t: 'zrevive0', id: v.id, by: u.id }); } }
+    u.blocking = false; if (u.st === ST_AIM) { u.st = ST_IDLE; u.stT = 0; } return true; }
+  if ((this.tick + u.id) % 15 !== 0 || u.st !== ST_IDLE) return false;
+  let best = null, bd = 12; for (const v of this.teamAlive[u.team]) { if (!v.downed || v.reviveBy >= 0 || (v.medic >= 0 && v.medic !== u.id)) continue; if (!(u.zfile ? v.zfile || u.squad === v.squad : u.squad === v.squad)) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
+  if (!best) return false;
+  let ed = 1e9; for (const e of this.teamAlive[1 - u.team]) { if (e.inactive) continue; const d = len(e.x - best.x, e.z - best.z); if (d < ed) ed = d; if (ed < 12) break; } if (ed < 12) return false;
+  best.medic = u.id; u.medicOf = best.id; return true;
+};
+
 Sim.prototype.woundedAI = function (u) {
   u.target = -1; u.blocking = false; if (u.st !== ST_IDLE && u.st !== ST_STUN) { u.st = ST_IDLE; u.stT = 0; }
+  if (u.downed) { u.mx = 0; u.mz = 0; u.downT = Math.max(u.downT, 0.2);
+    if (u.reviveBy >= 0) { const r = this.units[u.reviveBy]; if (!r || r.dead || r.wounded || len(r.x - u.x, r.z - u.z) > 2.9) { u.reviveBy = -1; u.reviveT = 0; } else if (++u.reviveT >= 45) { this.zRevive(u, r.id); return; } }
+    if (--u.bleed <= 0) { u.downed = false; this.kill(u, 0, 0, 0, 'bleed', -1); } return; }
   const h = u.helpedBy >= 0 ? this.units[u.helpedBy] : null; if (h && h.dead) u.helpedBy = -1;
   if (u.helpedBy < 0 || !h) { u.mx = 0; u.mz = 0; return; }
   const bx = h.x - sin(h.yaw) * 1.3 + cos(h.yaw) * 0.5, bz = h.z - cos(h.yaw) * 1.3 - sin(h.yaw) * 0.5, d = len(bx - u.x, bz - u.z);
@@ -8006,7 +8083,10 @@ const SPEECH = (() => {
     const cam = r.camera, W = canvas.clientWidth, H = canvas.clientHeight;
     for (let i = live.length - 1; i >= 0; i--) { const l = live[i]; l.t += dt; const u = unit(l.id);
       if (l.t > l.dur || !u || (u.dead && l.t > 0.8)) { kill(i); continue; }
-      const al = r.alpha === undefined ? 1 : Math.max(0, Math.min(1, r.alpha)); v3.set(u.px + (u.x - u.px) * al, u.py + (u.y - u.py) * al + (u.mounted ? 2.9 : 2.15), u.pz + (u.z - u.pz) * al); // the caption rides the drawn body, not the 30 Hz sim position const d = cam.position.distanceTo(v3); v3.project(cam);
+      // the caption rides the drawn body, not the 30 Hz sim position
+      const al = r.alpha === undefined ? 1 : Math.max(0, Math.min(1, r.alpha)); v3.set(u.px + (u.x - u.px) * al, u.py + (u.y - u.py) * al + (u.mounted ? 2.9 : 2.15), u.pz + (u.z - u.pz) * al); const d = cam.position.distanceTo(v3); v3.project(cam);
+      { const me = state.sim.players[state.localIdx]; if (me && l.id === me.heroId && r.lastMode === 'fp') { // your own voice: a subtitle at the bottom of the screen, not a caption over your own head
+        l.e.style.transform = `translate(${(W / 2).toFixed(1)}px, ${(H * 0.8).toFixed(1)}px) translate(-50%, -100%)`; l.e.style.opacity = Math.min(1, l.t * 5, (l.dur - l.t) * 2).toFixed(2); continue; } }
       if (v3.z > 1 || Math.abs(v3.x) > 1.15 || Math.abs(v3.y) > 1.2) { l.e.style.opacity = 0; continue; }
       const sx = (v3.x + 1) / 2 * W, sy = (1 - v3.y) / 2 * H; const k = Math.max(0.62, Math.min(1.15, 9 / Math.max(3, d)));
       l.e.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -100%) scale(${k.toFixed(3)})`;
