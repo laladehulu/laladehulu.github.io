@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v49</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v50</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1502,10 +1502,10 @@ class Sim {
     if (u.manE >= 0 && this.sg && this.empControl(u, a)) return;
     // E beside a free piece mans it whatever you were doing (reloading, aiming, mid-swing)
     if ((a & A_KICK) && this.sg && this.phase === 1 && u.mount < 0 && !u.mounted && this.sg.emp.some(e => e.team === u.team && e.man < 0 && len(e.x - u.x, e.z - u.z) < 2.6)) { u.st = ST_IDLE; u.stT = 0; u.aiming = false; u.blocking = false; this.siegeInteract(u); return; }
-    const ws = u.def.weapons;
+    const kitH = u.kit ? this.kitInput(u, a, wsel) : false; const ws = kitH ? [u.weapon] : u.def.weapons;
     if ((a & A_SWAP) && ws.length > 1) { u.nextWeapon = ws[(ws.indexOf(u.weapon) + 1) % ws.length]; u.swapQ = true; }
     // a man with only a gun turns it round to fight with it as a club (and back); turning it breaks off a reload
-    else if ((a & A_SWAP) && ws.length === 1 && u.weapon === 'rifle' && (u.st === ST_IDLE || u.st === ST_RELOAD || u.st === ST_AIM)) { u.club = !u.club; u.aiming = false; u.fireQ = 0; if (u.st !== ST_IDLE) { u.st = ST_IDLE; u.stT = 0; } this.events.push({ t: 'grip', id: u.id, club: u.club }); }
+    else if (!kitH && (a & A_SWAP) && ws.length === 1 && u.weapon === 'rifle' && (u.st === ST_IDLE || u.st === ST_RELOAD || u.st === ST_AIM)) { u.club = !u.club; u.aiming = false; u.fireQ = 0; if (u.st !== ST_IDLE) { u.st = ST_IDLE; u.stT = 0; } this.events.push({ t: 'grip', id: u.id, club: u.club }); }
     if (wsel > 0 && wsel <= ws.length) { const w = ws[wsel - 1]; if (w !== u.weapon) { u.nextWeapon = w; u.swapQ = true; } else u.swapQ = false; }
     if (u.swapQ && (u.st === ST_RELOAD || u.st === ST_AIM)) { u.st = ST_IDLE; u.stT = 0; u.aiming = false; } // drawing the other weapon breaks off a reload
     if (u.swapQ && u.st === ST_IDLE) { u.swapQ = false; if (u.nextWeapon && u.nextWeapon !== u.weapon) { u.st = ST_SWAP; u.stT = 0; u.blocking = false; u.aiming = false; } }
@@ -1520,7 +1520,7 @@ class Sim {
     } else u.aiming = false;
     if (this.phase === 1) {
       this.meleeControl(u, a, inp[4] | 0, inp[5] | 0);
-      if ((a & A_KICK) && u.st === ST_IDLE && u.mount < 0 && !u.mounted && !this.helpWounded(u) && !(this.sg && this.siegeInteract(u))) { u.st = ST_KICK; u.stT = 0; u.kickHit = false; u.blocking = false; this.events.push({ t: 'kick', id: u.id }); }
+      if ((a & A_KICK) && u.st === ST_IDLE && u.mount < 0 && !u.mounted && !this.helpWounded(u) && !(this.sg && this.siegeInteract(u)) && !this.pkTry(u)) { u.st = ST_KICK; u.stT = 0; u.kickHit = false; u.blocking = false; this.events.push({ t: 'kick', id: u.id }); }
     } else { u.atkHeld = !!(a & A_ATK); u.blockHeld = !!(a & A_BLOCK); u.blocking = false; }
   }
   startReload(u, dur, fill) { u.st = ST_RELOAD; u.stT = 0; u.reloadT = dur; u.reloadFill = fill; u.blocking = false; this.events.push({ t: 'reload', id: u.id, dur }); }
@@ -2431,6 +2431,7 @@ class Sim {
     return false;
   }
   kill(u, ix, iy, iz, cause, killerId) {
+    if (!u.dead) this.pkOnDeath(u);
     u.dead = true; u.hp = 0; u.blocking = false; u.st = ST_IDLE; u.deathTick = this.tick; u.mx = 0; u.mz = 0;
     if (u.rider >= 0) { const r = this.units[u.rider]; r.mount = -1; r.mounted = false; r.downT = Math.max(r.downT, 1.6); r.vy = 3; r.y += 0.05; r.airborne = true; r.vx += ix * 0.5; r.vz += iz * 0.5; u.rider = -1; }
     if (u.mount >= 0) { const h = this.units[u.mount]; h.rider = -1; u.mount = -1; }
@@ -3856,7 +3857,8 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     const g = this.mg[M.soldier.group], gp = g ? this.players[g.p] : null;
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; p.team = M.side; p.auto = false; p.ready = true; p.heroId = -1; p.commanderId = -1; p.squads = [];
       const sq = gp ? gp.squads.map(id => this.squads[id]).filter(q => q.def.yuanyang)[i] || this.squads[gp.squads[0]] : null; p.soldierSq = sq ? sq.id : 0; this.possess(p, sq, c.yyRole || 'shield');
-      if (sq) for (const id of sq.unitIds) { const u = this.units[id]; u.def = Object.assign({}, u.def, { hp: u.def.hp * 1.5 }); u.hp = u.def.hp; u.zfile = true; } });
+      if (sq) for (const id of sq.unitIds) { const u = this.units[id]; u.def = Object.assign({}, u.def, { hp: u.def.hp * 1.5 }); u.hp = u.def.hp; u.zfile = true; }
+      if (c.kit && c.kit.length && p.heroId >= 0) this.kitGive(this.units[p.heroId], c.kit); });
     this.story = true; // your file: hardened Yiwu men, and the story's heart
   } else if (!ass) {
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; const t = roleType(c.role, M.side); p.team = M.side; p.army = humans.length === 1 ? [t, M.soloExtra || 'ashigaru'] : [t];
@@ -3939,7 +3941,7 @@ Sim.prototype.helpWounded = function (u) { // E beside a downed or wounded comra
   for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.aided || v.helpedBy >= 0 || v === u) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
   if (!best) return false;
   if (best.downed) { if (best.reviveBy !== u.id) { best.reviveBy = u.id; best.reviveT = 0; this.events.push({ t: 'zrevive0', id: best.id, by: u.id }); } return true; }
-  best.helpedBy = u.id; this.events.push({ t: 'zhelp', id: best.id, by: u.id }); return true;
+  return false; // walking wounded make their own way after their file for now (no carrying)
 };
 // story chapters: a man who would die is often only knocked down — bleeding, until someone gets him up or the blood runs out
 Sim.prototype.zDown = function (u, dmg, cause) {
@@ -3956,10 +3958,103 @@ Sim.prototype.zDown = function (u, dmg, cause) {
 Sim.prototype.zRevive = function (u, by) {
   const h = this.units[by]; const limp = this.mv && this.mission && this.mv.ph >= this.mission.phases.length - 1; // in the break-out he can walk, not fight
   u.downed = false; u.reviveBy = -1; u.reviveT = 0; u.bleed = 0; u.downT = 0; u.hp = Math.max(u.hp, u.def.hp * 0.4);
-  if (limp && h && h.ctrl >= 0) { u.helpedBy = by; } else { u.wounded = false; u.helpedBy = -1; u.restT = this.tick + 30 * 5; }
-  this.events.push({ t: 'zrevive', id: u.id, by, limp: !!(limp && h && h.ctrl >= 0) });
+  // (the arm-over-the-shoulder carry is set aside until it is reworked: a man hauled up simply gets up and goes on)
+  u.wounded = false; u.helpedBy = -1; u.restT = this.tick + 30 * 5;
+  this.events.push({ t: 'zrevive', id: u.id, by, limp: false });
 };
 // a raid, a picket, a handful of scouts: keep the first n men of a group and send its general and the rest away before the field opens
+// ---- weapons on the ground, and the kit a man carries ----
+// Every man who falls leaves his weapon (and shield) where he fell. A man you play can pick one up (E, after helping
+// the wounded / crewing a piece / a ladder) and carries up to four, switching with 1-4, Q/X or the wheel. Each kind
+// brings its own stats; the weapon he started with keeps his own def exactly. All of it is sim state, so lockstep-safe.
+const WPN = {
+  dao:     { n: '腰刀 Dao', w: 'katana', d: { weapons: ['katana'], reach: 2.2, dmg: [54, 42, 34, 42], windup: 0.45, recover: 0.4, block: 0.45 } },
+  jsword:  { n: '順刀 Jin sword', w: 'katana', d: { weapons: ['katana'], reach: 2.2, dmg: [56, 44, 34, 44], windup: 0.42, recover: 0.4, block: 0.4 } },
+  spear:   { n: '長槍 Spear', w: 'yari', role: 'spear', two: 1, d: { weapons: ['yari'], reach: 4.4, dmg: [46, 0, 52, 0], windup: 0.5, recover: 0.45, block: 0.15 } },
+  qiang:   { n: '槍 Qiang', w: 'yari', two: 1, d: { weapons: ['yari'], reach: 3.0, dmg: [42, 0, 40, 0], windup: 0.5, recover: 0.45, block: 0.2 } },
+  brush:   { n: '狼筅 Wolf-brush', w: 'yari', role: 'brush', two: 1, d: { weapons: ['yari'], reach: 5.0, dmg: [16, 0, 18, 0], windup: 0.4, recover: 0.45, block: 0.35, brush: true } },
+  trident: { n: '鎲鈀 Trident', w: 'yari', role: 'trident', two: 1, d: { weapons: ['yari'], reach: 2.9, dmg: [44, 0, 42, 0], windup: 0.45, recover: 0.4, block: 0.4, trident: true } },
+  musket:  { n: '鳥銃 Musket', w: 'rifle', two: 1, gun: 1, d: { weapons: ['rifle'], reach: 2.3, dmg: [38, 30, 32, 30], windup: 0.45, recover: 0.4, block: 0.2, rifle: DEFS.rifle_imp.rifle } },
+  jmusket: { n: '漢軍銃 Jin musket', w: 'rifle', two: 1, gun: 1, d: { weapons: ['rifle'], reach: 2.3, dmg: [32, 0, 36, 0], windup: 0.5, recover: 0.45, block: 0.1, rifle: DEFS.rifle_sho.rifle } },
+  sanyan:  { n: '三眼銃 Three-eyed gun', w: 'rifle', two: 1, gun: 1, d: { weapons: ['rifle'], reach: 2.3, dmg: [36, 0, 40, 0], windup: 0.5, recover: 0.45, block: 0.15, rifle: DEFS.rifle_spencer.rifle } },
+  bow:     { n: '弓 Bow', w: 'bow', two: 1, gun: 1, d: { weapons: ['bow'], reach: 2.1, dmg: [28, 0, 28, 0], windup: 0.5, recover: 0.45, block: 0.1, bow: Object.assign({}, DEFS.archer.bow, { dmg: DEFS.archer.bow.dmg * 0.9 }) } },
+  jbow:    { n: '角弓 Horn bow', w: 'bow', two: 1, gun: 1, d: { weapons: ['bow'], reach: 2.1, dmg: [28, 0, 28, 0], windup: 0.5, recover: 0.45, block: 0.1, bow: DEFS.archer.bow } },
+  shield:  { n: '藤牌 Rattan shield', sh: 1 },
+  jshield: { n: '盾 Jin shield', sh: 1 },
+};
+const KIT_MAX = 4, PK_MAX = 60;
+// what a man drops: his weapon, by side and trade
+function kitKindOf(u, w) {
+  w = w || u.weapon; const jin = u.team === 1;
+  if (w === 'katana') return jin ? 'jsword' : 'dao';
+  if (w === 'yari') return u.def.brush || u.role === 'brush' ? 'brush' : u.def.trident || u.role === 'trident' ? 'trident' : u.def.yuanyang || u.role === 'spear' || u.def.reach >= 4 ? 'spear' : 'qiang';
+  if (w === 'rifle') return u.def.rifle && u.def.rifle.mag > 1 ? 'sanyan' : jin ? 'jmusket' : 'musket';
+  if (w === 'bow') return u.def.bow && u.def.bow.xbow ? null : jin ? 'jbow' : 'bow';
+  return null;
+}
+Sim.prototype.pkDrop = function (x, z, k, am) {
+  if (!k || !WPN[k]) return; const P = this.pickups || (this.pickups = []); this.pkSeq = (this.pkSeq || 0) + 1;
+  P.push({ id: this.pkSeq, x, z, k, am: am === undefined ? -1 : am, t: this.tick }); if (P.length > PK_MAX) P.shift();
+};
+// a man falls: his weapon goes to the ground beside him (horses, guns on carriages and phantom units drop nothing)
+Sim.prototype.pkOnDeath = function (u) {
+  if (u.type === 'horse' || u.inactive || u.trimmed || u.camp || u.def.ai === 'cannon' || u.def.gun) return;
+  const s = (u.id % 7) * 0.9 - 2.7; const ox = cos(u.yaw) * 0.7, oz = -sin(u.yaw) * 0.7;
+  if (u.kit) { const sl = u.kit[u.kitI]; if (sl) this.pkDrop(u.x + ox, u.z + oz, sl.k, u.ammo); if (u.kitSh) this.pkDrop(u.x - ox, u.z - oz, u.team === 1 ? 'jshield' : 'shield'); return; }
+  this.pkDrop(u.x + ox + s * 0.05, u.z + oz, kitKindOf(u), u.ammo);
+  if (u.def.shield && u.weapon === 'katana') this.pkDrop(u.x - ox, u.z - oz, u.team === 1 ? 'jshield' : 'shield');
+};
+// the kit: slots { k: kind, o: 1 for a weapon of his own def, w: its weapon key, am: rounds in it when stowed }
+Sim.prototype.kitInit = function (u) {
+  if (u.kit) return; u.baseDef = u.def; u.baseRole = u.role; u.kitSh = false;
+  u.kit = (u.def.weapons || []).filter(w => w === 'katana' || w === 'yari' || w === 'rifle' || w === 'bow').map(w => ({ k: kitKindOf(u, w) || 'dao', o: 1, w, am: w === u.weapon ? u.ammo : undefined }));
+  if (!u.kit.length) u.kit = [{ k: 'dao', o: 1, w: u.weapon || 'katana' }];
+  u.kitI = Math.max(0, u.kit.findIndex(s => s.w === u.weapon));
+};
+Sim.prototype.kitDef = function (u, sl) {
+  let d;
+  if (sl.o) d = u.baseDef;
+  else { const C = this.kitCache || (this.kitCache = new Map()); let m = C.get(u.baseDef); if (!m) { m = {}; C.set(u.baseDef, m); }
+    d = m[sl.k] || (m[sl.k] = Object.assign({}, u.baseDef, { shield: false, brush: false, trident: false, rifle: undefined, bow: undefined, revolver: undefined }, WPN[sl.k].d)); }
+  if (u.kitSh && !WPN[sl.k].two && !d.shield) { const C2 = this.kitCache2 || (this.kitCache2 = new Map()); let s = C2.get(d); if (!s) { s = Object.assign({}, d, { shield: true, block: Math.max(d.block || 0, 0.8) }); C2.set(d, s); } d = s; }
+  return d;
+};
+// switch to slot i (an ST_SWAP: the old weapon is stowed, the new one drawn)
+Sim.prototype.kitSwitch = function (u, i) {
+  if (!u.kit || i === u.kitI || i < 0 || i >= u.kit.length) return false;
+  if (!(u.st === ST_IDLE || u.st === ST_RELOAD || u.st === ST_AIM)) return false;
+  const cur = u.kit[u.kitI]; if (cur) cur.am = u.ammo;
+  const sl = u.kit[i]; u.kitI = i; u.def = this.kitDef(u, sl); const w = sl.o ? sl.w : WPN[sl.k].w;
+  u.role = WPN[sl.k].role || u.baseRole; u.club = false;
+  const g = gunOf(u.def, w); u.ammo = sl.am !== undefined ? sl.am : g ? (g.mag || 1) : 0; if (g) u.shots = Math.max(u.shots || 0, 20);
+  u.nextWeapon = w; u.st = ST_SWAP; u.stT = 0; u.blocking = false; u.aiming = false; u.fireQ = 0;
+  this.events.push({ t: 'kitswap', id: u.id, k: sl.k }); return true;
+};
+// the input: Q/X/wheel cycles, 1-4 picks a slot; returns true when the kit took the input
+Sim.prototype.kitInput = function (u, a, wsel) {
+  if (!u.kit || u.kit.length < 2) return false;
+  if (a & A_SWAP) { this.kitSwitch(u, (u.kitI + 1) % u.kit.length); return true; }
+  if (wsel > 0) { if (wsel <= u.kit.length) this.kitSwitch(u, wsel - 1); return true; }
+  return false;
+};
+// E near a weapon on the ground: take it (a full kit swaps it for the one in your hands, which goes to the ground)
+Sim.prototype.pkTry = function (u) {
+  const P = this.pickups; if (!P || !P.length || u.mount >= 0 || u.mounted) return false;
+  let bi = -1, bd = 1.9; for (let i = 0; i < P.length; i++) { const p = P[i]; const d = len(p.x - u.x, p.z - u.z); if (d < bd) { bd = d; bi = i; } }
+  if (bi < 0) return false; const p = P[bi]; P.splice(bi, 1); this.kitInit(u);
+  const pl = u.ctrl >= 0 ? this.players[u.ctrl] : null; if (pl) { (pl.picked || (pl.picked = [])).push(p.k); }
+  if (WPN[p.k].sh) { if (u.kitSh) this.pkDrop(u.x, u.z, p.k === 'shield' ? 'jshield' : 'shield'); u.kitSh = true; u.def = this.kitDef(u, u.kit[u.kitI]); this.events.push({ t: 'pkget', id: u.id, k: p.k }); return true; }
+  const nsl = { k: p.k, o: 0, am: p.am >= 0 ? p.am : undefined };
+  if (u.kit.length < KIT_MAX) { u.kit.push(nsl); this.kitSwitch(u, u.kit.length - 1); }
+  else { const old = u.kit[u.kitI]; this.pkDrop(u.x + 0.4, u.z + 0.4, old.k, u.ammo); const i = u.kitI; u.kit[i] = nsl; u.kitI = -1; this.kitSwitch(u, i); }
+  this.events.push({ t: 'pkget', id: u.id, k: p.k }); return true;
+};
+// a story loadout: the weapons from your arsenal you chose to carry into battle
+Sim.prototype.kitGive = function (u, kinds) {
+  if (!u || u.dead) return; this.kitInit(u);
+  for (const k of kinds) { if (!WPN[k]) continue; if (WPN[k].sh) { u.kitSh = true; continue; } if (u.kit.length >= KIT_MAX || u.kit.some(s => s.k === k)) continue; u.kit.push({ k, o: 0 }); }
+  u.def = this.kitDef(u, u.kit[u.kitI]);
+};
 // assault: however big the manpower pool, no more than about 64 men per side stand on the field at once
 Sim.prototype.assaultCap = function () {
   const M = this.mission, A = M.attacker, CAP = M.cap || 64; const size = (p) => { let n = 0; for (const id of p.squads) { const q = this.squads[id]; for (const uid of q.unitIds) if (!this.units[uid].dead) n++; } return n; };
@@ -4111,7 +4206,8 @@ Sim.prototype.woundedAI = function (u) {
     if (--u.bleed <= 0) { u.downed = false; this.kill(u, 0, 0, 0, 'bleed', -1); return; }
     if (u.reviveBy < 0 && u.ctrl < 0) this.zCrawl(u); return; }
   const h = u.helpedBy >= 0 ? this.units[u.helpedBy] : null; if (h && h.dead) u.helpedBy = -1;
-  if (u.helpedBy < 0 || !h) { u.mx = 0; u.mz = 0; return; }
+  if (u.helpedBy < 0 || !h) { // limps after his own people on his own
+    const q = u.squad >= 0 ? this.squads[u.squad] : null; if (q && q.alive && len(q.cx - u.x, q.cz - u.z) > 4) { const y = this.steerFoot(u, q.cx, q.cz, u.def.speed * 0.55); this.turnTo(u, y, 4 * DT); } else { u.mx = 0; u.mz = 0; } return; }
   { const A = this.aidPost(); if (A && len(u.x - A.x, u.z - A.z) < A.r) { this.zAid(u, h.id); return; } }
   // his arm over the helper's shoulder: at the helper's left side, half a pace back, leaning on him
   const bx = h.x - sin(h.yaw) * 0.25 - cos(h.yaw) * 0.55, bz = h.z - cos(h.yaw) * 0.25 + sin(h.yaw) * 0.55, d = len(bx - u.x, bz - u.z);
@@ -4676,7 +4772,7 @@ Sim.prototype.hrTick = function (u) {
   if (u.hrF > 0) u.hrF -= DT;
   if (u.hrA < 5) u.hrA += DT;
 };
-return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, YY_SLOT, FORM_COLUMN, spacingOf, gunOf,
+return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, YY_SLOT, FORM_COLUMN, WPN, spacingOf, gunOf,
   KEY_W, KEY_S, KEY_A, KEY_D, A_ATK, A_BLOCK, A_FIRE, A_AIM, A_KICK, A_MOUNT, A_JUMP, A_SWAP, A_RELOAD, A_CMD, A_RALLY, A_READY, A_THROW, A_DUEL, AIM_RAISE, A_AB1, A_AB2, A_AB3, A_ULT, A_DODGE, A_DASHL, A_DASHR, KEY_SPRINT, ORD_SPAWN, ORD_CLASS, HCLASS, HAB, SCEN, BOMBS, FURY_MAX, SROLE, ARMS, RANGED, MISSIONS, OPS,
   DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT, ST_IDLE, ST_WINDUP, ST_RELEASE, ST_RECOVER, ST_STUN, ST_RELOAD, ST_AIM, ST_SWAP, ST_KICK, ST_BURST,
   ORD_WAVE, ORD_MOVE, ORD_CHARGE, ORD_HOLD, ORD_FOLLOW, ORD_FORM, ORD_FIRE, ORD_CONTROL, ORD_AUTO, ORD_ABILITY, ORD_NAVAL, ORD_DIRECTIVE, DIR_ATTACK, DIR_HOLD, DIR_SUPPORT, DIR_FLANK, AI_NAMES, MODES, SCORE_WIN, FIRE_CS, abilityOf, ABILITY, FORM_LINE, FORM_COLUMN, FORM_WEDGE, FORM_LOOSE, RELEASE_T, KICK_T, SWAP_T };
@@ -9753,7 +9849,7 @@ function helpPrompt(h, u) { // 'E · help him up' beside a downed man, and the p
   const sim = state.sim; if (!h || h.dead || !sim) { el.hidden = true; return; }
   const busy = sim.teamAlive[h.team].find(v => v.downed && v.reviveBy === h.id);
   if (busy) { el.hidden = false; el.innerHTML = `<b>扶起</b> getting him up… <i style="--p:${Math.min(100, Math.round(busy.reviveT / 45 * 100))}%"></i>`; return; }
-  if (!u) { el.hidden = true; return; }
+  if (!u || !u.downed) { el.hidden = true; return; }
   const nm = typeof SPEECH !== 'undefined' ? SPEECH.nameOf(u.id) : null; el.hidden = false;
   el.innerHTML = `<kbd>E</kbd> ${u.downed ? 'help him up' : 'get his arm over your shoulder'}${nm ? ` · <span>${typeof nm === 'string' ? nm : nm.zh + ' ' + nm.en}</span>` : ''}`;
 }
