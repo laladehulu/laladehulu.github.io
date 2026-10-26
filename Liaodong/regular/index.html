@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v57</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v58</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -424,7 +424,7 @@ body.zgrid #comms { top: 158px; }
     <div class="panel">
       <div class="title"><h1>明清戰爭</h1><span class="en">Ming Dynasty · 1619</span></div>
       <p class="sub">The Ming Dynasty against the rising Manchu Later Jin. Build an army squad by squad, ride in at its head, fight with dao and rifle in first person, or climb to a bird's-eye view and give orders. Deterministic lockstep keeps every peer's battle identical.</p>
-      <p class="sub" style="font-size:12px">Sound: instrument recordings from the Versilian Community Sample Library and VSCO-2 Community Edition (CC0, Versilian Studios); erhu and suona are physical models written for this game; battle effects and the war-drum recordings and the Han-civilization pieces “Red Dawn” and “Hill of Sorrows” (music by Omri Lahav) from <a href="https://play0ad.com" target="_blank" rel="noopener">0 A.D.</a> © Wildfire Games, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>, trimmed and re-encoded. Soldiers' voices: shouts and orders synthesised for this game; grunts, cries of pain and death from Warfork and the “80 CC0 creature SFX” packs via the <a href="https://github.com/lavenderdotpet/CC0-Public-Domain-Sounds" target="_blank" rel="noopener">CC0 Public Domain Sounds</a> collection (CC0). <label style="white-space:nowrap"><input type="checkbox" id="optVoice" checked> soldiers' voices</label></p>
+      <p class="sub" style="font-size:12px">Sound: instrument recordings from the Versilian Community Sample Library and VSCO-2 Community Edition (CC0, Versilian Studios); erhu and suona are physical models written for this game; battle effects and the war-drum recordings and the Han-civilization pieces “Red Dawn” and “Hill of Sorrows” (music by Omri Lahav) from <a href="https://play0ad.com" target="_blank" rel="noopener">0 A.D.</a> © Wildfire Games, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>, trimmed and re-encoded. Soldiers' voices: cries of pain and death from Warfork and the “80 CC0 creature SFX” packs via the <a href="https://github.com/lavenderdotpet/CC0-Public-Domain-Sounds" target="_blank" rel="noopener">CC0 Public Domain Sounds</a> collection (CC0). <label style="white-space:nowrap"><input type="checkbox" id="optVoice" checked> soldiers' voices</label></p>
       <div class="row">
         <label class="lbl" for="nameIn">Name</label><input type="text" id="nameIn" maxlength="16" value="Commander">
         <label class="lbl" for="factionSeg">Faction</label>
@@ -1818,7 +1818,7 @@ class Sim {
           const close = !pl.fleeing && d < (def.ai === 'ranged' ? 0 : def.mounted ? (pl.aggr ? pl.aggr + 15 : 45) : (pl.aggr || 32)) && D.kind !== DIR_FLANK && !this.navBlockedLine(sq.cx, sq.cz, e.cx, e.cz);
           if (close) { sq.order = ORD_CHARGE; sq.tx = e.cx; sq.tz = e.cz; sq.facing = ang; continue; }
           const eang = this.dirAng(pl, enemies, px, pz, e), rx = -cos(eang), rz = sin(eang), n = squadIds.length;
-          const lat = (i - (n - 1) / 2) * 20, back = def.ai === 'cannon' ? (pl.standoff ? -70 : -14) : def.mounted ? -8 : (pl.standoff && def.ai === 'ranged' ? -38 : 0);
+          const lat = (i - (n - 1) / 2) * (this.mode === 'assault' ? 7 : 20), back = def.ai === 'cannon' ? (pl.standoff ? -70 : -14) : def.mounted ? -8 : (pl.standoff && def.ai === 'ranged' ? -38 : 0);
           const tx = px + rx * lat + sin(eang) * back, tz = pz + rz * lat + cos(eang) * back;
           if (len(sq.cx - tx, sq.cz - tz) > 3) { sq.order = ORD_MOVE; sq.tx = clamp(tx, -HALF + 5, HALF - 5); sq.tz = clamp(tz, -HALF + 5, HALF - 5); sq.facing = eang; }
           else { if (sq.order !== ORD_HOLD) { sq.tx = sq.cx; sq.tz = sq.cz; } sq.order = ORD_HOLD; sq.facing = eang; }
@@ -4592,7 +4592,7 @@ Sim.prototype.siegeThink = function () {
     const moving = pushers >= e.need && foes <= pushers && e.z < tz - 0.05;
     if (moving) { const st = S.sp * 15 * DT * (pushers >= e.need * 2 ? 1.25 : 1); e.z = Math.min(tz, e.z + st); e.x += clamp(lane - e.x, -st, st); }
     if (e.kind === 'tower' && !e.docked && e.z >= e.tz - 0.05) { e.docked = true; e.lad.up = true; nav = true; this.events.push({ t: 'sgdock', x: e.x, z: e.z }); }
-    if (e.kind === 'ram') { e.atGate = e.z >= e.tz - 0.05; if (e.atGate && sg.gateHp > 0 && pushers >= 1) { this.sgGate(44 + pushers * 4); if (this.tick % 45 === 0) this.events.push({ t: 'sgram', x: 0, z: W.z0 }); } }
+    if (e.kind === 'ram') { e.atGate = e.z >= e.tz - 0.05; if (e.atGate && sg.gateHp > 0 && pushers >= 1) { this.sgGate(26 + (pushers - crew) * 6 + crew * 2); if (this.tick % 45 === 0) this.events.push({ t: 'sgram', x: 0, z: W.z0 }); } }
   }
   // sappers at the shield carts chisel through the wall face
   for (const L of sg.holes) { if (L.up) continue; const n = this.sgCount(L.x, W.z0 - 1.6, 3.5, A); const cart = sg.engines.find(e => e.kind === 'cart' && e.lane === L.x && e.hp > 0 && e.z > W.z0 - 6);
@@ -7546,7 +7546,8 @@ class Renderer {
       { const br = 0.025 * Math.sin(tt * 1.9), sh = 0.04 * Math.sin(tt * 0.37); // on his back, up on an elbow, one knee up; breathing hard, shifting
         KG[0] = 2.05 + sh; KG[1] = 1.42 + sh; KG[2] = 1.42; KG[3] = 0.28 + 0.08 * Math.sin(tt * 0.23); KG[4] = 0.17; KG[5] = -1.02 + br; KG[6] = 0; KG[7] = -0.2 * sA; KG[8] = -0.1 * sA; KG[9] = 0.12 * sA; }
       { a.crPh = (a.crPh || 0) + dt * (a.spd > 0.12 ? 3.4 : 0.5); const c = a.crPh, s1 = Math.sin(c); // face down: the arms pull in turn, one leg drawn up to push, the other dragging
-        KC[0] = -1.32 + 0.38 * s1; KC[1] = 0.55 + 0.75 * Math.max(0, s1); KC[2] = -1.38 - 0.12 * s1; KC[3] = 0.3 + 0.75 * Math.max(0, -s1); KC[4] = 0.17; KC[5] = 1.36; KC[6] = 0; KC[7] = 0.1 * s1; KC[8] = -sA * (0.3 + 0.3 * Math.max(0, s1)); KC[9] = sA * (0.3 + 0.3 * Math.max(0, -s1)); }
+        const pA = Math.max(0, s1), pB = Math.max(0, -s1); // A draws its knee up and out to push while B drags, then they change over
+        KC[0] = -1.42 + 0.6 * pA; KC[1] = 0.25 + 1.15 * pA; KC[2] = -1.42 + 0.6 * pB; KC[3] = 0.25 + 1.15 * pB; KC[4] = 0.2; KC[5] = 1.2 + 0.05 * Math.sin(c * 2); KC[6] = 0; KC[7] = 0.14 * s1; KC[8] = -sA * (0.15 + 0.6 * pA); KC[9] = sA * (0.15 + 0.6 * pB); }
       for (let j = 0; j < 10; j++) KD[j] = KG[j] + (KC[j] - KG[j]) * a.cw;
       const KS = [0.05, 0.1, -0.05, 0.1, 0.91, 0, 0, 0, 0, 0], KT = [0.35, 0.5, -0.25, 0.25, 0.84, 0.32, 0, 0.12 * sA, 0, 0], KN = [1.1, 1.5, 0.1, 1.6, 0.5, 0.25, 0, 0.1 * sA, 0, 0];
       const KB = [1.3, 0.55, 1.45, 0.3, 0.2, -1.25, 0.05, -0.12 * sA, 0, 0]; // sat down hard and going over backwards
@@ -7565,8 +7566,9 @@ class Renderer {
     } else if (u.camp && a.cl > 0.02) { // asleep: down on his back, a knee drawn up (or both legs out), an arm under his head
       const k = a.cl, ss = a.cSl === undefined ? (a.cSl = uhash(u.id, 41) < 0.5 ? 1 : -1) : a.cSl, kv = uhash(u.id, 43) < 0.55, tt = (this.time || 0) + u.id;
       const k2 = clamp((k - 0.15) / 0.85, 0, 1), sk = k2 * k2 * (3 - 2 * k2);
-      legPlane(0, 1, lerp(0.06, kv && ss > 0 ? 1.9 : 1.47, k), lerp(0.12, kv && ss > 0 ? 1.15 : 0.18, k), lerp(0, -0.06, k)); legPlane(9, -1, lerp(0.02, kv && ss < 0 ? 1.9 : 1.5, k), lerp(0.2, kv && ss < 0 ? 1.15 : 0.22, k), lerp(0, 0.1, k));
-      pel = lerp(0.92, 0.14, k); a.lean = lerp(a.lean, -1.5 + 0.018 * Math.sin(tt * 1.25), sk); a.roll = lerp(a.roll, 0.1 * ss, sk); a.twist *= 1 - sk; a.hK = lerp(0.5, 0.08, sk);
+      // the knee on the side he's turned toward is drawn up and falls a little across; the other leg lies out, slightly bent
+      const kU = kv ? 1.95 : 1.7, nU = kv ? 1.25 : 0.85; legPlane(0, 1, lerp(0.06, ss > 0 ? kU : 1.45, k), lerp(0.12, ss > 0 ? nU : 0.3, k), lerp(0, ss > 0 ? -0.35 : 0.05, k)); legPlane(9, -1, lerp(0.02, ss < 0 ? kU : 1.45, k), lerp(0.2, ss < 0 ? nU : 0.3, k), lerp(0, ss < 0 ? 0.35 : -0.05, k));
+      pel = lerp(0.92, 0.15, k); a.lean = lerp(a.lean, -1.45 + 0.02 * Math.sin(tt * 1.25), sk); a.roll = lerp(a.roll, 0.32 * ss, sk); a.twist = lerp(a.twist, 0.12 * ss, sk); a.hK = lerp(0.5, 0.12, sk);
       lie = { k: sk, kind: 'sleep', sA: ss, c: 0, call: false, tt };
       // lying on a slope: tilt with the ground between his feet and his head so neither end sinks into it
       { const hb = terrainH(x - sy * 0.95, z - cy * 0.95), hf = terrainH(x + sy * 0.6, z + cy * 0.6); a.cTilt = clamp(Math.atan2(hb - hf, 1.55), -0.4, 0.4); }
@@ -8507,8 +8509,8 @@ Renderer.prototype.lieArms = function (lie, J, C, pel, toRoot, ik) {
     if (lie.call) { const r = bump(4.6, 0.42); tx += (J[fr] * 0.6 - tx) * r; ty += (pel + 0.72 - ty) * r; tz += (0.42 - tz) * r; }
     put(fr, fr + 6, -sps, tx, ty, tz);
   } else if (lie.kind === 'crawl') {
-    for (const [so, sd, ph] of [[0, 1, 0], [9, -1, Math.PI]]) { const c = lie.c + ph, r = 0.5 + 0.5 * Math.sin(c), up = Math.max(0, Math.cos(c)) * 0.12;
-      put(so, so + 6, sd, J[so] + sd * 0.06, 0.05 + up, J[so + 2] + 0.1 + 0.36 * r); }
+    for (const [so, sd, ph] of [[0, 1, 0], [9, -1, Math.PI]]) { const c = lie.c + ph, r = 0.5 + 0.5 * Math.sin(c), up = Math.max(0, Math.cos(c)) * 0.14;
+      put(so, so + 6, sd, J[so] + sd * (0.2 - 0.1 * r), 0.05 + up, J[so + 2] + 0.05 + 0.5 * r); } // reach ahead, grip, drag the body up to the hand
   } else {
     put(sp, sp + 6, sps, J[27] + sps * 0.13, Math.max(0.06, J[28] - 0.06), J[29] - 0.06);
     toRoot([-sps * 0.06, -0.3, 0.17], T, 0); put(fr, fr + 6, -sps, T[0], T[1], T[2]);
