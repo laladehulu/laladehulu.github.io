@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v43</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v44</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1597,6 +1597,7 @@ class Sim {
   applyCommand(p, c) {
     const type = c[1] | 0;
     if (type === 21) { if (this.beaconBuy) this.beaconBuy(p, c[2] | 0); return; }
+    if (type === 31) { this.debugCmd(p, c[2] | 0, c[3] | 0); return; }
     if (type === ORD_SPAWN) { if ((this.mode === 'assault' || this.mode === 'campaign') && !p.ai) this.deploy(p, c[0] | 0, c[2] | 0); return; }
     if (this.mode === 'assault' && type === ORD_DIRECTIVE) return; // in an assault you are a soldier: the generals are not yours to command
     if (this.chaos && type !== ORD_CONTROL) return; // no orders in chaos: only body-hopping
@@ -2397,6 +2398,7 @@ class Sim {
   }
   applyDamage(u, dmg, attackerId, ix, iy, iz, cause, hx, hy, hz) {
     if (u.dead || u.inactive) return false;
+    if (u.ctrl >= 0 && this.players[u.ctrl] && this.players[u.ctrl].god) return false; // debug mode: the tester cannot be hurt
     if (this.xc && u.ctrl >= 0 && !this.players[u.ctrl].ai && (cause === 'melee' || cause === 'trample' || cause === 'spear' || cause === 'counter' || cause === 'arrow' || cause === 'shot')) { // no instant deaths in a crowd or under a whole company's volley
       const dec = (this.tick - (u.xcT === undefined ? this.tick : u.xcT)) * DT * 0.3 * u.def.hp; u.xcB = Math.max(0, (u.xcB || 0) - dec); u.xcT = this.tick;
       const room = Math.max(0, u.def.hp * 0.4 - u.xcB); if (dmg > room) dmg = room + (dmg - room) * 0.15;
@@ -4166,6 +4168,27 @@ Sim.prototype.missionThink = function () {
   if (r < 0) { this.mOver(false, lost ? 'Your companies are gone.' : (P.fail || 'The objective is lost.')); return; }
   if (r > 0) { for (const a of P.done || []) this.mAct(a); for (const k of P.hide || []) this.mAct(['hide', k]); if (mv.ph + 1 >= M.phases.length) { this.mOver(true, M.win); return; } mv.ph++; mv.t0 = this.tick; this.mStart(); }
 };
+// ---- debug / testing (solo only: travels in the input stream like any order, so it stays deterministic) ----
+Sim.prototype.debugCmd = function (p, sub, val) {
+  if (this.players.filter(q => !q.ai).length !== 1 || p.ai) return;
+  if (sub === 1) { p.god = !!val; this.events.push({ t: 'dbg', what: 'god', v: p.god ? 1 : 0 }); return; }
+  if (sub === 0 && this.mission && this.mode !== 'assault' && this.mwin === undefined) this.mJump(val);
+};
+// skip straight to phase ph: the skipped phases' waves, timed actions and closing actions all happen at once, as
+// if they had been played (groups released, the script's deaths applied), then the new phase starts as usual
+Sim.prototype.mJump = function (ph) {
+  const M = this.mission, mv = this.mv; if (!M || !M.phases || M.camp) return;
+  if (mv.ph < 0) { mv.ph = 0; mv.t0 = this.tick; this.mStart(); }
+  ph = clamp(ph | 0, 0, M.phases.length); if (ph <= mv.ph) return;
+  while (mv.ph < ph) { const P = M.phases[mv.ph];
+    for (const [t, gid, dir] of P.waves || []) { const k = mv.ph + ':' + gid; if (!mv.waves[k]) { mv.waves[k] = 1; this.mRelease(gid); if (dir) this.mDir(gid, dir); } }
+    for (const [t, a] of P.at || []) { const k = mv.ph + ':at:' + t; if (!mv.ats[k]) { mv.ats[k] = 1; this.mAct(a); } }
+    for (const s of P.say || []) mv.said[mv.ph + ':' + s[0]] = 1;
+    for (const a of P.done || []) this.mAct(a); for (const k of P.hide || []) this.mAct(['hide', k]);
+    if (mv.ph + 1 >= M.phases.length) { this.mOver(true, M.win); return; }
+    mv.ph++; mv.t0 = this.tick; this.mStart(); }
+  this.events.push({ t: 'dbg', what: 'jump', v: mv.ph });
+};
 Sim.prototype.mStart = function () { const P = this.mission.phases[this.mv.ph]; for (const k of P.show || []) this.mAct(['show', k]); for (const k of P.hide || []) this.mAct(['hide', k]); for (const a of P.start || []) this.mAct(a); this.events.push({ t: 'mphase', ph: this.mv.ph, title: P.title, text: P.text });
   for (const p of this.players) { if (p.ai || !p.levyIds) continue; const ids = p.levyIds.filter(id => this.squads[id].levyPh === this.mv.ph); p.levyIds = p.levyIds.filter(id => !ids.includes(id)); for (const id of ids) this.mJoin(p, id, true); } };
 // enemy generals in the campaign do not sit on ground nobody contests: once their post is quiet they go hunting
@@ -4642,7 +4665,7 @@ Sim.prototype.hrTick = function (u) {
   if (u.hrF > 0) u.hrF -= DT;
   if (u.hrA < 5) u.hrA += DT;
 };
-return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, spacingOf, gunOf,
+return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, YY_SLOT, FORM_COLUMN, spacingOf, gunOf,
   KEY_W, KEY_S, KEY_A, KEY_D, A_ATK, A_BLOCK, A_FIRE, A_AIM, A_KICK, A_MOUNT, A_JUMP, A_SWAP, A_RELOAD, A_CMD, A_RALLY, A_READY, A_THROW, A_DUEL, AIM_RAISE, A_AB1, A_AB2, A_AB3, A_ULT, A_DODGE, A_DASHL, A_DASHR, KEY_SPRINT, ORD_SPAWN, ORD_CLASS, HCLASS, HAB, SCEN, BOMBS, FURY_MAX, SROLE, ARMS, RANGED, MISSIONS, OPS,
   DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT, ST_IDLE, ST_WINDUP, ST_RELEASE, ST_RECOVER, ST_STUN, ST_RELOAD, ST_AIM, ST_SWAP, ST_KICK, ST_BURST,
   ORD_WAVE, ORD_MOVE, ORD_CHARGE, ORD_HOLD, ORD_FOLLOW, ORD_FORM, ORD_FIRE, ORD_CONTROL, ORD_AUTO, ORD_ABILITY, ORD_NAVAL, ORD_DIRECTIVE, DIR_ATTACK, DIR_HOLD, DIR_SUPPORT, DIR_FLANK, AI_NAMES, MODES, SCORE_WIN, FIRE_CS, abilityOf, ABILITY, FORM_LINE, FORM_COLUMN, FORM_WEDGE, FORM_LOOSE, RELEASE_T, KICK_T, SWAP_T };
@@ -9234,7 +9257,7 @@ function fpAimPoint() { const r = state.renderer; return r.groundFromScreen(canv
 function fpLayout() {
   const sim = state.sim; const g = fpAimPoint(); if (!g || !state.fpSel.length) return null;
   const sqs = state.fpSel.map(id => sim.squads[id]).filter(q => q && q.alive);
-  let W = -4; for (const q of sqs) W += lineCols(q.aliveCount) * S.spacingOf(q.def) * (q.def.skirmish ? 2 : 1) + 4;
+  let W = -4; for (const q of sqs) W += (q.def.yuanyang && q.formation !== S.FORM_COLUMN ? 4.2 : lineCols(q.aliveCount) * S.spacingOf(q.def) * (q.def.skirmish ? 2 : 1)) + 4;
   W = Math.max(4, W); const fy = enemyFacing(g.x, g.z, sqs[0] ? sqs[0].team : 0, Input.yaw); const rx = -Math.cos(fy), rz = Math.sin(fy);
   const keep = state.selected; state.selected = state.fpSel.slice();
   const lay = layoutLine({ x: g.x - rx * W / 2, z: g.z - rz * W / 2 }, { x: g.x + rx * W / 2, z: g.z + rz * W / 2 });
@@ -9376,7 +9399,9 @@ function layoutLine(a, b) {
     const cx = a.x + ux * (cursor + w / 2), cz = a.z + uz * (cursor + w / 2); cursor += w;
     out.push({ sq, cx, cz, cols });
     const fx = Math.sin(facing), fz = Math.cos(facing), rx = -Math.cos(facing), rz = Math.sin(facing);
-    for (let i = 0; i < sq.aliveCount; i++) { const [lat, dep] = S.slotOffset(sq.formation, i, sq.aliveCount, sp, cols); ghost.push([cx + rx * lat + fx * dep, cz + rz * lat + fz * dep, facing]); }
+    // a mandarin-duck team stands in its own 鴛鴦陣 layout (leader, shields, brushes, spears, tridents), not a line
+    if (sq.def.yuanyang && sq.formation !== S.FORM_COLUMN && S.YY_SLOT) { sq.unitIds.forEach((uid, i) => { const u = sim.units[uid]; if (!u || u.dead) return; const r = S.YY_SLOT[i % 12], lat = r[0] * 0.92, dep = r[1] * 0.82; ghost.push([cx + rx * lat + fx * dep, cz + rz * lat + fz * dep, facing]); }); }
+    else for (let i = 0; i < sq.aliveCount; i++) { const [lat, dep] = S.slotOffset(sq.formation, i, sq.aliveCount, sp, cols); ghost.push([cx + rx * lat + fx * dep, cz + rz * lat + fz * dep, facing]); }
   }
   return { out, facing, ghost };
 }
