@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v62</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v63</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6293,6 +6293,9 @@ const BIOMES = {
 // the shadow edge bleeds and wanders (wet-in-wet), ink pools darker along the rim of each wash, and the shaded
 // area is broken by dry-brush granulation so it never reads as flat black. Noise is anchored in world space.
 const INK_SHIFT = { value: new THREE.Vector2() };
+// arm proportions: upper arm and forearm about 15% longer than they were (0.30 / 0.29), and hand targets pushed out from
+// the shoulder by ARM_REACH, so swings, thrusts and gestures sweep wider arcs and read from further away
+const ARM_U = 0.345, ARM_F = 0.335, ARM_REACH = 1.12;
 (function inkShadows() {
   const REAL = typeof window !== 'undefined' && window.MING_REAL;
   const C = THREE.ShaderChunk; let src = C.shadowmap_pars_fragment; if (!src || src.indexOf('getShadowBase') >= 0) return;
@@ -7245,6 +7248,7 @@ class Renderer {
             const k = vic && vic.def ? clamp((ev.dmg || 20) / Math.max(40, vic.def.hp * 0.5), 0.3, 1.5) * (heavyB ? 1.35 : 1) * (ev.killed ? 1.3 : 1) : 0.6;
             if (melee) {
               this.blood(ev.x, ev.y, ev.z, mine ? (heavyB ? 16 : 11) : 7, dx * 2.2, 1, dz * 2.2);
+              if (mine) for (let i = 0; i < (heavyB ? 6 : 4); i++) this.smoke.spawn(ev.x, ev.y, ev.z, dx * rnd(1, 2.5) + rnd(-0.5, 0.5), rnd(0.2, 1.2), dz * rnd(1, 2.5) + rnd(-0.5, 0.5), rnd(0.22, 0.38), 0.12, heavyB ? 0.6 : 0.42, 0.42, 0.03, 0.04, 0.75, 0.9, 6); // a red mist off the cut, gone in a breath
               if (armd) this.burstSparks(ev.x, ev.y, ev.z, mine ? 10 : 5, 4, 1, 0.8, 0.45, 0.25, 0.07);
               if (heavyB && vic) this.dust(vic.x, vic.y + 0.15, vic.z, 4, dx * 1.2, 0.5, dz * 1.2, 0.6, 0.5, 0.25, 0.7);
               AUDIO.play(armd ? 'strikearmor' : heavyB ? 'strikeheavy' : 'strike', ev.x, ev.y, ev.z, mine ? 1.25 : 0.95);
@@ -7528,7 +7532,7 @@ class Renderer {
     if (u.flinchT > 0 && !(u.hrA < 1)) { lean -= 0.3 * (u.flinchT / 0.35); }
     if (a.hiOn) { // hit impulse (hitImpulse): critically damped springs on a shove offset and a bend away from the blow
       const n = Math.max(1, Math.ceil(dt / 0.01)), h = dt / n; for (let i = 0; i < n; i++) { a.kbVx -= (a.kbX * 90 + a.kbVx * 19) * h; a.kbVz -= (a.kbZ * 90 + a.kbVz * 19) * h; a.kbX += a.kbVx * h; a.kbZ += a.kbVz * h; a.hbV -= (a.hb * 110 + a.hbV * 21) * h; a.hb += a.hbV * h; a.hsV -= (a.hs * 110 + a.hsV * 21) * h; a.hs += a.hsV * h; }
-      x += a.kbX; z += a.kbZ; lean += a.hb; twist += a.hs * 0.7; roll += a.hs * 0.45;
+      x += a.kbX; z += a.kbZ; lean += a.hb; twist += a.hs * 0.7; roll += a.hs * 0.45; crouch += Math.min(0.25, Math.abs(a.hb) * 0.35); // the knees give a little under the blow
       if (Math.abs(a.kbX) + Math.abs(a.kbZ) + Math.abs(a.hb) + Math.abs(a.hs) + Math.abs(a.kbVx) + Math.abs(a.hbV) < 0.002) a.hiOn = false; }
     if (u.champ) { // acrobatics: low dodges, a tucked leap, a coiled spin, a long lunge
       if (u.dodgeT > 0) { const k = Math.sin(clamp(u.dodgeT / 0.34, 0, 1) * PI); lean += (u.dodgeFwd ? 0.45 : -0.2) * k; crouch += 0.22 * k; twist += 0.25 * k * (u.dodgeX * Math.cos(yaw) - u.dodgeZ * Math.sin(yaw) > 0 ? -1 : 1) * (u.dodgeFwd ? 0 : 1); rateB = 24; }
@@ -7663,8 +7667,8 @@ class Renderer {
     toRoot([0.2, 0, 0], J, 0); toRoot([-0.2, 0, 0], J, 9);
     toRoot([0, -0.22, 0], J, 24); toRoot([0, 0.25, 0.01], J, 27);
     const ik = (so, ho, tx, ty, tz, side) => {
-      const sx = J[so], sy2 = J[so + 1], sz = J[so + 2]; let dx = tx - sx, dy = ty - sy2, dz = tz - sz; let d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-4; dx /= d; dy /= d; dz /= d;
-      const A1 = 0.3, A2 = 0.29; d = clamp(d, 0.08, A1 + A2 - 0.002);
+      const sx = J[so], sy2 = J[so + 1], sz = J[so + 2]; let dx = (tx - sx) * ARM_REACH, dy = (ty - sy2) * ARM_REACH, dz = (tz - sz) * ARM_REACH; let d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-4; dx /= d; dy /= d; dz /= d;
+      const A1 = ARM_U, A2 = ARM_F; d = clamp(d, 0.08, A1 + A2 - 0.002);
       const ca = (A1 * A1 + d * d - A2 * A2) / (2 * A1 * d), sa = Math.sqrt(Math.max(0, 1 - ca * ca));
       let px = C[0] * side * 0.7 - C[3] * 1 - C[6] * 0.35, py = C[1] * side * 0.7 - C[4] - C[7] * 0.35, pz2 = C[2] * side * 0.7 - C[5] - C[8] * 0.35;
       const dp = px * dx + py * dy + pz2 * dz; px -= dx * dp; py -= dy * dp; pz2 -= dz * dp; const pl = Math.sqrt(px * px + py * py + pz2 * pz2) || 1; px /= pl; py /= pl; pz2 /= pl;
@@ -7675,9 +7679,9 @@ class Renderer {
       const ux = side * 0.12, uy = -Math.cos(alpha2), uz = Math.sin(alpha2), fx = side * 0.05, fy = -Math.cos(alpha2 + bend), fz = Math.sin(alpha2 + bend);
       const tmp = this._tmp3 || (this._tmp3 = new Float64Array(3));
       dirRoot([ux, uy, uz], tmp, 0); const l1 = Math.hypot(tmp[0], tmp[1], tmp[2]);
-      J[ho - 3] = J[so] + tmp[0] / l1 * 0.3; J[ho - 2] = J[so + 1] + tmp[1] / l1 * 0.3; J[ho - 1] = J[so + 2] + tmp[2] / l1 * 0.3;
+      J[ho - 3] = J[so] + tmp[0] / l1 * ARM_U; J[ho - 2] = J[so + 1] + tmp[1] / l1 * ARM_U; J[ho - 1] = J[so + 2] + tmp[2] / l1 * ARM_U;
       dirRoot([fx, fy, fz], tmp, 0); const l2 = Math.hypot(tmp[0], tmp[1], tmp[2]);
-      J[ho] = J[ho - 3] + tmp[0] / l2 * 0.29; J[ho + 1] = J[ho - 2] + tmp[1] / l2 * 0.29; J[ho + 2] = J[ho - 1] + tmp[2] / l2 * 0.29;
+      J[ho] = J[ho - 3] + tmp[0] / l2 * ARM_F; J[ho + 1] = J[ho - 2] + tmp[1] / l2 * ARM_F; J[ho + 2] = J[ho - 1] + tmp[2] / l2 * ARM_F;
     };
     const armA = (0.22 * (1 - r) + 0.7 * r) * mv, armBend = 0.25 + 1.15 * r + (routing ? 0.3 : 0);
     const tmpA = this._tmpA || (this._tmpA = new Float64Array(6));
@@ -7728,7 +7732,7 @@ class Renderer {
     const o = 18;
     this.seg(f.uarmL, slot, G[o], G[o + 1], G[o + 2], G[o + 3], G[o + 4], G[o + 5], 0.13, 0.13); this.seg(f.farmL, slot, G[o + 3], G[o + 4], G[o + 5], G[o + 6], G[o + 7], G[o + 8], 0.11, 0.11);
     this.seg(f.uarmR, slot, G[o + 9], G[o + 10], G[o + 11], G[o + 12], G[o + 13], G[o + 14], 0.13, 0.13); this.seg(f.farmR, slot, G[o + 12], G[o + 13], G[o + 14], G[o + 15], G[o + 16], G[o + 17], 0.11, 0.11);
-    this.boxB(f.hand, slot * 2, G[o + 6], G[o + 7], G[o + 8], CB, 0.09, 0.09, 0.1); this.boxB(f.hand, slot * 2 + 1, G[o + 15], G[o + 16], G[o + 17], CB, 0.09, 0.09, 0.1);
+    this.boxB(f.hand, slot * 2, G[o + 6], G[o + 7], G[o + 8], CB, 0.105, 0.1, 0.115); this.boxB(f.hand, slot * 2 + 1, G[o + 15], G[o + 16], G[o + 17], CB, 0.105, 0.1, 0.115);
     // ---------- weapon ----------
     const gx = G[o + 18], gy = G[o + 19], gz = G[o + 20], dx = G[o + 21], dy = G[o + 22], dz = G[o + 23];
     const Z = this.tmp.zero;
@@ -7928,9 +7932,9 @@ class Renderer {
   // can read a.kbX/a.kbZ (shove offset), a.hb (bend back, rad, negative = away from the front) and a.hs (twist/side bend) instead
   hitImpulse(id, dx, dz, k, heavy) {
     const u = this.sim.units[id]; if (!u || u.type === 'horse') return; const a = this.anim(id); if (!a.hiOn) { a.kbX = a.kbZ = a.kbVx = a.kbVz = a.hb = a.hbV = a.hs = a.hsV = 0; } a.hiOn = true;
-    const sp = (heavy ? 3.2 : 2.0) * k; a.kbVx += dx * sp; a.kbVz += dz * sp;
+    const sp = (heavy ? 6.0 : 3.6) * k; a.kbVx += dx * sp; a.kbVz += dz * sp;
     const fwd = dx * Math.sin(u.yaw) + dz * Math.cos(u.yaw), side = dx * -Math.cos(u.yaw) + dz * Math.sin(u.yaw); // the blow's direction in his own frame
-    a.hbV += (fwd >= 0 ? 1 : -1) * Math.abs(fwd) * (heavy ? 9 : 6) * k - 2 * k; a.hsV += side * (heavy ? 8 : 5.5) * k;
+    a.hbV += (fwd >= 0 ? 1 : -1) * Math.abs(fwd) * (heavy ? 17 : 11) * k - 3 * k; a.hsV += side * (heavy ? 14 : 9) * k + (Math.random() - 0.5) * 3 * k;
   }
   impStep(dt) { // critically-damped-ish springs, sub-stepped so a long frame can't explode them
     const I = this.imp, n = Math.max(1, Math.ceil(dt / 0.008)), h = dt / n;
