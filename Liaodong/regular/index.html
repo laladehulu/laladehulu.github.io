@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v19</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v20</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -322,6 +322,14 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 #hudmarks .hm.file b { width: 30px; height: 30px; font: 700 15px serif; background: rgba(10,46,20,.88); border: 2px solid #8ff0a4; color: #c6f9d0; }
 #hudmarks .hm.place b { width: 22px; height: 22px; border-radius: 3px; transform: rotate(45deg); background: rgba(120,240,150,.25); border: 2px solid #9ff5b0; color: transparent; }
 #hudmarks .hm.place i { color: #b9f7c6; }
+#hudmarks .hm.down b { width: 30px; height: 30px; font-size: 18px; color: #fff; background: radial-gradient(circle, rgba(190,30,26,.95) 55%, transparent 57%), conic-gradient(#ffd0c0 var(--bl, 360deg), rgba(60,10,8,.6) 0); border: none; animation: hmDown .7s infinite alternate; }
+#hudmarks .hm.down.file b { box-shadow: 0 0 0 2px #6fe08a, 0 1px 4px rgba(0,0,0,.6); }
+#hudmarks .hm.down.busy b { animation: none; background: radial-gradient(circle, rgba(60,140,70,.95) 55%, transparent 57%), conic-gradient(#ffd0c0 var(--bl, 360deg), rgba(60,10,8,.6) 0); }
+#hudmarks .hm.down.carry b { width: 24px; height: 24px; font: 700 13px serif; background: rgba(10,40,18,.85); border: 2px solid #6fe08a; animation: none; }
+@keyframes hmDown { to { transform: scale(1.14); filter: brightness(1.25); } }
+#helpprompt { position: fixed; left: 50%; top: 60%; transform: translateX(-50%); z-index: 21; pointer-events: none; font: 600 14px sans-serif; color: #f4ecd8; background: rgba(20,14,10,.72); border: 1px solid #8a6a3c; border-radius: 5px; padding: 6px 12px; text-shadow: 0 1px 2px #000; }
+#helpprompt kbd { margin-right: 6px; } #helpprompt span { color: #9ff0a8; } #helpprompt b { color: #ffd36a; margin-right: 6px; }
+#helpprompt i { display: inline-block; width: 90px; height: 6px; margin-left: 8px; vertical-align: middle; background: linear-gradient(90deg, #6fe08a var(--p), rgba(255,255,255,.18) 0); border-radius: 3px; }
 #hudmarks .hm i { font: 600 10px sans-serif; font-style: normal; color: #fff; text-shadow: 0 1px 2px #000; margin-top: 1px; }
 #hudmarks .hm.edge.l b::before, #hudmarks .hm.edge.r b::after { content: ''; position: absolute; border: 6px solid transparent; }
 #hudmarks .hm.edge.l b::before { margin-left: -36px; border-right-color: rgba(255,255,255,.85); }
@@ -332,6 +340,22 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 .ztag i { font-style: normal; } .ztag i.w { color: #f0c060; } .ztag i.d { color: #ff7a6a; }
 .zroster { display: flex; flex-wrap: wrap; gap: 3px 6px; margin: 4px 0 2px 22px; max-width: 300px; }
 .zroster .zr { font: 600 11px sans-serif; font-weight: 600; white-space: nowrap; } .zroster .zr.a { color: #9fe0a8; } .zroster .zr.w { color: #f0c060; } .zroster .zr.d { color: #ff7a6a; } .zroster .zr.x { color: #8a8680; text-decoration: line-through; }
+#sgbar { position: fixed; right: 14px; top: 300px; width: 230px; background: rgba(20,16,12,.78); border-left: 3px solid #b8322a; color: #efe6d0; font: 12px sans-serif; padding: 8px 10px; z-index: 18; pointer-events: none; }
+#sgbar b { display: block; font: 600 13px Georgia, serif; margin-bottom: 4px; color: #f0d38a; }
+#sgbar .r { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 3px 0; } #sgbar .r.x { opacity: .4; text-decoration: line-through; }
+#sgbar em { flex: 0 0 90px; height: 6px; background: #3a302a; display: block; } #sgbar em i { display: block; height: 100%; background: #c9a24a; }
+#sgprompt { position: fixed; left: 50%; top: 60%; transform: translateX(-50%); background: rgba(20,16,12,.8); color: #f6e6b0; font: 600 14px sans-serif; padding: 5px 12px; border-radius: 4px; z-index: 21; pointer-events: none; }
+body.deploying #sgbar, body.deploying #sgprompt { visibility: hidden; }
+#dlgcard { position: fixed; left: 18px; bottom: 150px; z-index: 21; display: flex; gap: 12px; align-items: center; max-width: 520px; padding: 10px 14px 10px 10px; background: linear-gradient(90deg, rgba(18,13,9,.92), rgba(18,13,9,.78)); border: 1px solid #6a5236; border-left: 3px solid #c8962e; border-radius: 6px; color: #f3e8cf; pointer-events: none; opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; }
+#dlgcard.on { opacity: 1; transform: none; }
+#dlgcard .f { flex: none; width: 76px; height: 76px; border-radius: 5px; background: #2a2018 center/cover no-repeat; border: 1px solid #8a6a3c; }
+#dlgcard .f.none { background: #2a2018 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='15' r='8' fill='%235a4a36'/%3E%3Cpath d='M6 38c2-9 8-13 14-13s12 4 14 13z' fill='%235a4a36'/%3E%3C/svg%3E") center/70% no-repeat; }
+#dlgcard .t b { display: block; font: 600 11px sans-serif; color: #e8c27a; letter-spacing: .06em; margin-bottom: 2px; }
+#dlgcard .t .z { display: block; font: 700 18px 'Noto Serif CJK TC', serif; line-height: 1.3; }
+#dlgcard .t .e { display: block; font: 13px sans-serif; opacity: .88; line-height: 1.35; margin-top: 2px; }
+.spk.edge { background: rgba(70,16,12,.82); border: 1px solid #e0705a; border-radius: 6px; padding: 5px 9px; white-space: normal; max-width: 230px; text-align: left; }
+.spk.edge.l { border-left: 4px solid #ff8a6a; } .spk.edge.r { border-right: 4px solid #ff8a6a; text-align: right; }
+.spk.edge .z { font-size: 15px; } .spk.edge .e { font-size: 11px; }
 </style>
 <div id="app">
   <canvas id="c"></canvas>
@@ -356,7 +380,7 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
       </div>
       <div id="zheCta"><div><b>浙兵 · The Zhejiang Company</b><small>A story campaign. Spring 1619: a mandarin duck team of Yiwu miners marches into the mountains of Liaodong with Liu Ting's column. Live with your file in camp, fight the battles as they really happened, and bring home whoever you can.</small></div><div class="btns"><button class="btn primary" id="btnZhe" type="button">Begin</button><button class="btn" id="btnZheNew" type="button" hidden>New</button></div></div>
       <h3 class="sect">Mode</h3>
-      <div class="seg modes" id="modeSeg"><button type="button" data-m="standard" class="on"><b>Field battle</b><small>Your army against theirs</small></button><button type="button" data-m="grand"><b>Grand battle</b><small>A council of AI commanders on each side. Command your allies.</small></button><button type="button" data-m="chaos"><b>Chaos</b><small>No orders, no fear, no deployment. Earthquakes, fleets and fire.</small></button><button type="button" data-m="officers"><b>Officers · co-op</b><small>Every player leads one squad in person beside AI generals. Peer-to-peer.</small></button><button type="button" data-m="heroes"><b>Heroes</b><small>Be a champion in a phased historical siege. No orders, only your blade and abilities. Co-op or versus.</small></button><button type="button" data-m="soldier"><b>小兵之路 · Path of a Soldier</b><small>One man in the ranks. Lethal muskets, long reloads, drums and gongs. A career from recruit to general, or co-op with friends.</small></button><button type="button" data-m="campaign"><b>Co-op campaign</b><small>Historical missions in phases: ambushes, relief, sieges and break-outs. Each player leads a squad they choose, beside AI generals.</small></button><button type="button" data-m="assault"><b>Assault</b><small>Attackers with limited manpower storm fortified lines point by point; defenders fall back to the next. You fight as a soldier.</small></button><button type="button" data-m="story"><b>Story</b><small>Seven battles from Sarhu to Yangzhou, as the Ming or the Jin.</small></button></div>
+      <div class="seg modes" id="modeSeg"><button type="button" data-m="standard" class="on"><b>Field battle</b><small>Your army against theirs</small></button><button type="button" data-m="grand"><b>Grand battle</b><small>A council of AI commanders on each side. Command your allies.</small></button><button type="button" data-m="chaos"><b>Chaos</b><small>No orders, no fear, no deployment. Earthquakes, fleets and fire.</small></button><button type="button" data-m="officers"><b>Officers · co-op</b><small>Every player leads one squad in person beside AI generals. Peer-to-peer.</small></button><button type="button" data-m="heroes"><b>Heroes</b><small>Be a champion in a phased historical siege. No orders, only your blade and abilities. Co-op or versus.</small></button><button type="button" data-m="soldier"><b>小兵之路 · Path of a Soldier</b><small>One man in the ranks. Lethal muskets, long reloads, drums and gongs. A career from recruit to general, or co-op with friends.</small></button><button type="button" data-m="campaign"><b>Co-op campaign</b><small>Historical missions in phases: ambushes, relief, sieges and break-outs. Each player leads a squad they choose, beside AI generals.</small></button><button type="button" data-m="assault"><b>Assault</b><small>Attackers with limited manpower storm fortified lines point by point; defenders fall back to the next. You fight as a soldier.</small></button><button type="button" data-m="siege"><b>攻守城 · Siege</b><small>A walled town in stages: fill the ditch, raise ladders and towers, ram the gate, fight through the streets. Attack or defend as a soldier.</small></button><button type="button" data-m="story"><b>Story</b><small>Seven battles from Sarhu to Yangzhou, as the Ming or the Jin.</small></button></div>
       <p class="note" id="modeNote" style="margin:-6px 0 12px"></p>
       <div id="storyPanel" hidden><h3 class="sect">Campaign</h3><div class="chapters" id="storyList"></div><div id="warchest"></div></div>
       <div id="soldierPanel" hidden>
@@ -613,7 +637,7 @@ const DEFS = {
   jigen:         { name: 'Zhanmadao Horse-Cutters', jp: '斬馬刀', hp: 110, speed: 4.6, r: 0.38, weapons: ['katana'], reach: 2.3, dmg: [88, 44, 36, 44], windup: 0.42, recover: 0.5, block: 0.35, cost: 320, count: 10, hat: 'none', ai: 'melee', mass: 1, overhead: 0.7, morale: 120, desc: 'Two-handed horse-cutting blades. One devastating overhead blow.' },
   shinsengumi:   { name: 'Bayara Guard', jp: '巴牙喇', hp: 115, speed: 4.4, r: 0.38, weapons: ['katana'], reach: 2.2, dmg: [48, 38, 34, 38], windup: 0.34, recover: 0.3, block: 0.65, cost: 320, count: 10, hat: 'band', ai: 'melee', mass: 1, morale: 120, desc: "The Khan's elite guard. Fast, disciplined and hard to hit." },
   byakkotai:     { name: 'Khorchin Mongols', jp: '科爾沁', hp: 70, speed: 4.9, r: 0.36, weapons: ['katana'], reach: 2.1, dmg: [44, 36, 30, 36], windup: 0.4, recover: 0.35, block: 0.25, cost: 150, count: 12, hat: 'none', ai: 'melee', mass: 1, morale: 100, fearless: true, desc: 'Mongol allies of the Jin on foot. Cheap and quick, and they never run.' },
-  archer:        { name: 'Manchu Archers', jp: '滿洲弓手', hp: 70, speed: 4.3, r: 0.36, weapons: ['bow'], reach: 2.1, dmg: [28, 0, 28, 0], windup: 0.5, recover: 0.45, block: 0.1, cost: 220, count: 12, hat: 'jingasa', ai: 'ranged', mass: 1, morale: 90, bow: { dmg: 46, reload: 2.4, range: 62, aim: 0.6, speed: 40 }, desc: 'Heavy arrows from powerful horn bows, in volleys that arc over your own lines.' },
+  archer:        { name: 'Manchu Archers', jp: '滿洲弓手', hp: 70, speed: 4.3, r: 0.36, weapons: ['bow'], reach: 2.1, dmg: [28, 0, 28, 0], windup: 0.5, recover: 0.45, block: 0.1, cost: 220, count: 12, hat: 'jingasa', ai: 'ranged', mass: 1, morale: 90, bow: { dmg: 40, reload: 3.0, range: 62, aim: 0.6, speed: 33 }, desc: 'Heavy arrows from powerful horn bows, in volleys that arc over your own lines.' },
   cavalry:       { name: 'Guanning Iron Cavalry', jp: '關寧鐵騎', hp: 170, speed: 9.0, r: 0.75, weapons: ['katana'], reach: 2.9, dmg: [60, 48, 40, 48], windup: 0.45, recover: 0.4, block: 0.3, cost: 300, count: 6, hat: 'kabuto', ai: 'melee', mounted: true, mass: 4, morale: 105, desc: "Yuan Chonghuan's armored horsemen. They trample infantry at a gallop." },
   armstrong:     { name: 'Hongyipao', jp: '紅夷大砲', hp: 220, speed: 1.4, r: 1.2, weapons: ['cannon'], reach: 0, dmg: [0, 0, 0, 0], windup: 0, recover: 0, block: 0, cost: 300, count: 1, hat: 'none', ai: 'cannon', mass: 6, morale: 100, cannon: { reload: 9, range: 150, min: 18, speed: 50, type: 'shell' }, desc: '"Red barbarian" heavy cannon cast on European lines. Its shells burst and send men flying.' },
   cannon4:       { name: 'Ujen Cooha Gun', jp: '烏真超哈砲', hp: 220, speed: 1.4, r: 1.2, weapons: ['cannon'], reach: 0, dmg: [0, 0, 0, 0], windup: 0, recover: 0, block: 0, cost: 240, count: 1, hat: 'none', ai: 'cannon', mass: 6, morale: 100, cannon: { reload: 7, range: 130, min: 12, speed: 56, type: 'solid' }, desc: 'Jin heavy guns cast by Han artisans. Round shot that bounces and bowls through the ranks.' },
@@ -736,12 +760,13 @@ const BATTLES = {
   hakodate: { name: 'Ningyuan', jp: '寧遠', when: 'February 1626', biome: 'winter', fog: 0.05, terrain: 0.4, features: ['starfort', 'sea'], desc: 'Yuan Chonghuan\'s fortress by the Bohai Sea, its walls bristling with Portuguese-pattern cannon. The sea lies to the east.' },
   abudali:  { name: 'Abudali Pass', jp: '阿布達里岡', when: 'April 1619', biome: 'winter', fog: 0.3, terrain: 0.45, features: ['pass'], hidden: true, desc: 'A narrow valley in the mountains east of Hetu Ala, its slopes thick with pine and late snow.' },
   zcamp:    { name: 'Camp', jp: '營', when: '1619', biome: 'night', fog: 0.2, terrain: 0.25, features: [], hidden: true, desc: 'A night camp in the hills.' },
+  siegecity: { name: 'Ningyuan (siege)', jp: '寧遠', when: 'February 1626', biome: 'winter', fog: 0.12, terrain: 0.08, features: [], hidden: true, desc: 'A walled town on the frozen coast: ditch, rampart, gatehouse and streets.' },
   bonari:   { name: 'Shanhai Pass', jp: '山海關', when: 'May 1644', biome: 'spring', fog: 0.25, terrain: 0.5, features: ['pass'], desc: 'The First Pass Under Heaven: a narrow gap between steep ridges, blocked by two lines of earthworks. Flanking over the slopes is slow and costly.' },
 };
 // terrain features (deterministic: only + - * / sqrt and DM trig)
 const TERR = { scale: 1, hills: [], plateaus: [], river: null, moat: null, pass: null, sea: null };
 function sstep(a, b, x) { let t = (x - a) / (b - a); t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); }
-function setTerrain(cfg) { TERR.scale = cfg.scale; TERR.hills = cfg.hills || []; TERR.plateaus = cfg.plateaus || []; TERR.river = cfg.river || null; TERR.moat = cfg.moat || null; TERR.pass = cfg.pass || null; TERR.sea = cfg.sea || null; buildHeightCache(); }
+function setTerrain(cfg) { TERR.scale = cfg.scale; TERR.hills = cfg.hills || []; TERR.plateaus = cfg.plateaus || []; TERR.river = cfg.river || null; TERR.moat = cfg.moat || null; TERR.pass = cfg.pass || null; TERR.sea = cfg.sea || null; TERR.swall = cfg.swall || null; TERR.sditch = cfg.sditch || null; buildHeightCache(); }
 // height field component: the terrain is sampled once per battle into a grid and read back bilinearly (the analytic
 // function is dozens of sin() calls; every unit asks for its height several times a tick)
 const HC = { on: false, x0: -192, step: 1, n: 385, h: null };
@@ -758,6 +783,7 @@ function waterAt(x, z) {
   }
   const m = TERR.moat;
   if (m) { const dx = x - m.x, dz = z - m.z; const r = Math.sqrt(dx * dx + dz * dz); const ad = r > m.R ? r - m.R : m.R - r; if (ad < m.w * 0.8) { for (let i = 0; i < m.gates.length; i++) { const g = m.gates[i]; if ((x - g[0]) * (x - g[0]) + (z - g[1]) * (z - g[1]) < 36) return -1; } return 1; } }
+  if (TERR.sditch) { const r = siegeDitchWater(TERR.sditch, x, z); if (r) return r; }
   if (TERR.sea && x > TERR.sea.x0 + 10) return 1;
   return 0;
 }
@@ -782,6 +808,8 @@ function terrainHExact(x, z) {
   }
   const m = TERR.moat;
   if (m) { const dx = x - m.x, dz = z - m.z; const r = Math.sqrt(dx * dx + dz * dz); const ad = r > m.R ? r - m.R : m.R - r; if (ad < m.w) { let gate = false; for (let i = 0; i < m.gates.length; i++) { const g = m.gates[i]; if ((x - g[0]) * (x - g[0]) + (z - g[1]) * (z - g[1]) < 49) gate = true; } if (!gate) { const t = 1 - (ad / m.w) * (ad / m.w); h -= m.depth * t; } } }
+  if (TERR.swall) h = siegeWallH(TERR.swall, x, z, h);
+  if (TERR.sditch) h = siegeDitchH(TERR.sditch, x, z, h);
   const sea = TERR.sea;
   if (sea && x > sea.x0) h -= sea.depth * sstep(sea.x0, sea.x0 + 22, x);
   return h;
@@ -846,7 +874,7 @@ class Sim {
     this.initFuel();
     if (this.mode === 'officers') for (const p of this.players) if (!p.ai) for (const id of p.squads) this.squads[id].order = ORD_FOLLOW;
     this.wagons = [];
-    if (!this.heroMode && !this.chaos) for (let t = 0; t < 2; t++) { const zz = t === 0 ? -128 : 128; for (const xx of [-26, 26]) { let x = xx, z = zz; for (let k = 0; k < 8 && (waterAt(x, z) !== 0); k++) z += t === 0 ? 4 : -4; this.wagons.push({ id: this.wagons.length, team: t, x, z, burnt: false, raid: 0 }); } }
+    if (!this.heroMode && !this.chaos && this.battle !== 'siegecity') for (let t = 0; t < 2; t++) { const zz = t === 0 ? -128 : 128; for (const xx of [-26, 26]) { let x = xx, z = zz; for (let k = 0; k < 8 && (waterAt(x, z) !== 0); k++) z += t === 0 ? 4 : -4; this.wagons.push({ id: this.wagons.length, team: t, x, z, burnt: false, raid: 0 }); } }
     { const wr = new RNG(this.seed ^ 0x77a1); this.wx = { at: 30 * (110 + wr.int(130)), kind: this.rain ? 'clear' : wr.next() < 0.5 ? 'fog' : 'rain', done: !!(this.mission && (this.mission.camp || this.mission.soldier)), lift: 0 }; }
     if (this.vets && this.vets.length && this.players[0]) { // veterans of earlier chapters: their losses and their stars march with them
       const used = {}; this.vets.forEach((v) => { const sid = this.players[0].squads.find(id => !used[id] && this.squads[id].type === v.type); if (sid === undefined) return; used[sid] = 1; const sq = this.squads[sid]; const xp = clamp(v.xp | 0, 0, 200); sq.xp = xp; sq.stars = xp >= 30 ? 3 : xp >= 15 ? 2 : xp >= 6 ? 1 : 0; sq.moraleMax = (sq.def.morale || 100) + sq.stars * 10; sq.morale = sq.moraleMax; sq.veteran = true;
@@ -880,6 +908,7 @@ class Sim {
     if (b === 'aizu') { L.plateaus.push({ x: 0, z: 96, r0: 21, r1: 27, h: 8 }); L.moat = { x: 0, z: 96, R: 33, w: 5, depth: 2.8, gates: [[0, 63]] }; L.hills.push({ x: -150, z: 40, r: 60, h: 14 }); L.hills.push({ x: 160, z: -20, r: 55, h: 12 }); }
     if (b === 'hakodate') { L.plateaus.push({ x: 0, z: 74, r0: 34, r1: 38, h: 1.6 }); L.moat = { x: 0, z: 74, R: 44, w: 5, depth: 2.6, gates: [[0, 30], [0, 118]] }; L.sea = { x0: 128, depth: 7 }; }
     if (b === 'bonari') L.pass = { r0: 24, r1: 56, h: 30 };
+    if (b === 'siegecity') { L.swall = { z0: SG.z0, z1: SG.z1, h: SG.h, gate: SG.gate, ramps: [-60, -12, 12, 60] }; L.sditch = { zc: SG.ditchZ, w: SG.ditchW, depth: 2.6, bridge: SG.gate, fills: SG.fills.map((f, i) => ({ x: f[0], hw: f[1], done: false, key: i ? 'ditchE' : 'ditchW' })) }; }
     if (b === 'abudali') { L.pass = { r0: 15, r1: 46, h: 24 }; L.hills.push({ x: -34, z: 6, r: 30, h: 6 }); L.hills.push({ x: 30, z: -48, r: 26, h: 5 }); }
     if (b === 'zcamp') { L.hills.push({ x: -90, z: 60, r: 70, h: 14 }); L.hills.push({ x: 100, z: -40, r: 80, h: 16 }); L.hills.push({ x: 0, z: 130, r: 70, h: 12 }); }
     // objectives worth holding
@@ -985,17 +1014,17 @@ class Sim {
     // cover: wooden mantlets (pavises) around objectives and across the middle of the field
     const mant = (x, z) => { if (waterAt(x, z) !== 0) return; for (const q of this.boxes) if (Math.abs(q.x - x) < q.hw + 2 && Math.abs(q.z - z) < q.hd + 1.5) return; this.boxes.push({ x, z, hw: 1.15, hd: 0.2, h: 1.35, kind: 'mantlet' }); keep.push({ x, z, r: 2 }); };
     if (this.scen) { for (const c of this.scen.cover) mant(c[0], c[1]); }
-    else if (B !== 'abudali' && B !== 'zcamp') { for (const o of this.layout.objectives || []) for (const sd of [-1, 1]) for (const dx of [-5, 0, 5]) mant(o.x + dx + r.range(-1, 1), o.z + sd * (o.r + 2)); for (let i = 0; i < 14; i++) { const x = r.range(-90, 90), z = r.range(-45, 45); if (clear(x, z, 3)) { mant(x, z); mant(x + 2.6, z + r.range(-0.4, 0.4)); } } }
+    else if (B !== 'abudali' && B !== 'zcamp' && B !== 'siegecity') { for (const o of this.layout.objectives || []) for (const sd of [-1, 1]) for (const dx of [-5, 0, 5]) mant(o.x + dx + r.range(-1, 1), o.z + sd * (o.r + 2)); for (let i = 0; i < 14; i++) { const x = r.range(-90, 90), z = r.range(-45, 45); if (clear(x, z, 3)) { mant(x, z); mant(x + 2.6, z + r.range(-0.4, 0.4)); } } }
     if (this.scen) for (const L of this.scen.ladders) this.ladders.push({ x: L[0], z: L[1], hd: L[2], up: false, prog: 0, hp: 0 });
     const treeN = B === 'bonari' ? 30 : B === 'abudali' ? 190 : B === 'zcamp' ? 120 : B === 'nagaoka' ? 70 : this.bdef.biome === 'winter' ? 110 : 150;
     for (let i = 0; i < treeN; i++) {
       const x = r.range(-HALF + 8, HALF - 8), z = r.range(-98, 98);
-      if (!clear(x, z, 3)) continue; if (this.roadX !== undefined && Math.abs(x - this.roadX) < 6) continue; if (B === 'bonari' && Math.abs(x) < 26) continue; if (B === 'abudali' && Math.abs(x) < 19) continue; if (B === 'zcamp' && len(x, z) < 38) continue; if (B !== 'abudali' && Math.abs(z) > 112 && Math.abs(x) < 70) continue;
+      if (!clear(x, z, 3)) continue; if (this.roadX !== undefined && Math.abs(x - this.roadX) < 6) continue; if (B === 'bonari' && Math.abs(x) < 26) continue; if (B === 'abudali' && Math.abs(x) < 19) continue; if (B === 'siegecity' && z > -14) continue; if (B === 'zcamp' && len(x, z) < 38) continue; if (B !== 'abudali' && Math.abs(z) > 112 && Math.abs(x) < 70) continue;
       this.obstacles.push({ x, z, r: 0.45, kind: 0, variant: r.next() < 0.45 ? 1 : 0, scale: r.range(0.8, 1.5), rot: r.range(0, TAU) });
     }
     for (let i = 0; i < 38; i++) {
       const x = r.range(-HALF + 8, HALF - 8), z = r.range(-105, 105);
-      if (!clear(x, z, 4)) continue;
+      if (!clear(x, z, 4)) continue; if (B === 'siegecity' && z > -14) continue;
       this.obstacles.push({ x, z, r: r.range(0.7, 2.3), kind: 1, rot: r.range(0, TAU) });
     }
   }
@@ -1286,6 +1315,7 @@ class Sim {
     if (this.real && this.tick % 5 === 0) this.soldierThink();
     this.resolveCollisions();
     this.updateProjectiles();
+    if (this.sg) this.siegeTick();
     for (let i = 0; i < units.length; i++) { const u = units[i]; if (!u.dead && u.mount >= 0) { const h = units[u.mount]; u.x = h.x; u.z = h.z; u.y = h.y; u.vy = 0; u.airborne = h.airborne; } }
     if (this.phase === 1 && this.tick % 30 === 0 && this.tick > this.battleTick + 150 && this.winner < 0) this.checkVictory();
   }
@@ -1405,7 +1435,7 @@ class Sim {
     } else u.aiming = false;
     if (this.phase === 1) {
       this.meleeControl(u, a, inp[4] | 0, inp[5] | 0);
-      if ((a & A_KICK) && u.st === ST_IDLE && u.mount < 0 && !u.mounted && !this.helpWounded(u)) { u.st = ST_KICK; u.stT = 0; u.kickHit = false; u.blocking = false; this.events.push({ t: 'kick', id: u.id }); }
+      if ((a & A_KICK) && u.st === ST_IDLE && u.mount < 0 && !u.mounted && !this.helpWounded(u) && !(this.sg && this.siegeInteract(u))) { u.st = ST_KICK; u.stT = 0; u.kickHit = false; u.blocking = false; this.events.push({ t: 'kick', id: u.id }); }
     } else { u.atkHeld = !!(a & A_ATK); u.blockHeld = !!(a & A_BLOCK); u.blocking = false; }
   }
   startReload(u, dur, fill) { u.st = ST_RELOAD; u.stT = 0; u.reloadT = dur; u.reloadFill = fill; u.blocking = false; this.events.push({ t: 'reload', id: u.id, dur }); }
@@ -1765,6 +1795,7 @@ class Sim {
       const i0 = Math.max(0, Math.floor((b.x - b.hw - m + HALF) / C)), i1 = Math.min(W - 1, Math.floor((b.x + b.hw + m + HALF) / C));
       const j0 = Math.max(0, Math.floor((b.z - b.hd - m + HALF) / C)), j1 = Math.min(W - 1, Math.floor((b.z + b.hd + m + HALF) / C));
       for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) bl[j * W + i] |= 2; }
+    if (this.sg) this.siegeNav(bl);
     if (this.ladders) for (const L of this.ladders) if (L.up) { for (let z = L.z - L.hd - 1.5; z <= L.z + L.hd + 1.5; z += 1) for (const dx of [-0.8, 0.8]) bl[this.navCell(L.x + dx, z)] &= 1; }
     if (this.flows) { this.flows.clear(); this.flowOrder.length = 0; }
   }
@@ -1862,7 +1893,7 @@ class Sim {
     const eng = (!ranged && !u.mounted) ? this.engaged() : null; // men already swarming a foe make him a worse pick: spread out along the enemy line
     for (let i = 0; i < enemies.length; i++) { const v = enemies[i]; if (v.inactive || (v.duelWith >= 0 && v.duelWith !== undefined)) continue; const dx = v.x - u.x, dz = v.z - u.z; let d2 = dx * dx + dz * dz;
       if (eng) { const n = eng[v.id] - (u.target === v.id ? 1 : 0); if (n >= 3) d2 *= 5; else if (n === 2) d2 *= 2.2; else if (n === 1) d2 *= 1.25; }
-      if (this.xc && ranged && v.ctrl >= 0 && !this.players[v.ctrl].ai) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 3) d2 *= 8; } if (v.wounded) d2 *= v.downed ? 40 : 6; if (this.story && v.zfile && ranged) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 2) d2 *= 4; else if (sh === 1) d2 *= 1.8; } if (v.squad >= 0 && this.squads[v.squad].routing && !u.mounted) d2 *= 1.6; if (sq && sq.focus >= 0 && v.squad === sq.focus && ranged) d2 *= 0.45; if (d2 < bd) { bd = d2; best = v.id; } }
+      if (this.xc && ranged && v.ctrl >= 0 && !this.players[v.ctrl].ai) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 3) d2 *= 8; } if (v.downed && this.story) continue; if (v.wounded) d2 *= v.downed ? 40 : 6; if (this.story && v.zfile && ranged) { const sh = this.aimedAt(v.id) - (u.target === v.id ? 1 : 0); if (sh >= 2) d2 *= 4; else if (sh === 1) d2 *= 1.8; } if (v.squad >= 0 && this.squads[v.squad].routing && !u.mounted) d2 *= 1.6; if (sq && sq.focus >= 0 && v.squad === sq.focus && ranged) d2 *= 0.45; if (d2 < bd) { bd = d2; best = v.id; } }
     return best;
   }
   aimedAt(id) { if (this.aimTick !== this.tick) { this.aimTick = this.tick; if (!this.aimN || this.aimN.length < this.units.length) this.aimN = new Int16Array(this.units.length + 64); else this.aimN.fill(0); for (const v of this.units) if (!v.dead && v.target >= 0 && isGun(v.def, v.weapon)) this.aimN[v.target]++; } return this.aimN[id]; }
@@ -2417,8 +2448,11 @@ class Sim {
     this.events.push({ t: 'cannon', id: u.id, x: mx, y: my, z: mz, dx: sin(b.yaw) * ca, dy: sin(b.ang), dz: cos(b.yaw) * ca });
   }
   fireArrow(u, tgt) {
-    const bw = u.def.bow; const lead = tgt.speedNow > 0.5 ? 0.9 : 0;
-    const b = this.ballistic(u, tgt.x + tgt.mx * lead, tgt.z + tgt.mz * lead, bw.speed, 0.06);
+    // an archer leads a marching file, but cannot read a single man's next step: he aims where a player IS, and the
+    // arrow is slow enough to see coming, so a man who keeps moving across its path is hard to hit
+    const bw = u.def.bow; const human = tgt.ctrl >= 0 && !(this.players[tgt.ctrl] && this.players[tgt.ctrl].ai); const lead = tgt.speedNow > 0.5 && !human ? 0.9 : 0;
+    const dd = len(tgt.x - u.x, tgt.z - u.z), sc = (0.035 + dd * 0.0007) * (human && tgt.speedNow > 2 ? 1.8 : 1);
+    const b = this.ballistic(u, tgt.x + tgt.mx * lead, tgt.z + tgt.mz * lead, bw.speed, 0.06); b.yaw += (this.rng.next() - 0.5) * sc * 2; b.ang += (this.rng.next() - 0.5) * sc;
     const ca = cos(b.ang), v = bw.speed; const ox = u.x + sin(b.yaw) * 0.6, oy = u.y + 1.5, oz = u.z + cos(b.yaw) * 0.6;
     this.projectiles.push({ kind: 'arrow', x: ox, y: oy, z: oz, vx: sin(b.yaw) * ca * v, vy: sin(b.ang) * v, vz: cos(b.yaw) * ca * v, team: u.team, owner: u.id, life: 0, hits: 0 });
     u.ammo--; this.events.push({ t: 'arrow', id: u.id, x: ox, y: oy, z: oz });
@@ -2443,25 +2477,29 @@ class Sim {
         if (p.y <= g) {
           if (p.kind === 'shell') { this.explode(p.x, g + 0.1, p.z, p.team, p.owner, 7.5, 170); done = true; break; }
           if (p.kind === 'arrow') { this.events.push({ t: 'arrowstick', x: p.x, y: g, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); this.ignite(p.x, p.z, 0.025); done = true; break; }
+          if (p.bolt) { this.events.push({ t: 'arrowstick', x: p.x, y: g, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
           // solid shot: bounce while fast, then stop
           const hs = len(p.vx, p.vz);
           if (hs > 9 && p.vy < 0) { p.y = g + 0.15; p.vy = -p.vy * 0.32; p.vx *= 0.72; p.vz *= 0.72; this.events.push({ t: 'bounce', x: p.x, y: g, z: p.z, big: false }); }
           else { done = true; break; }
         }
         if (p.life > 0.25) {
-          const rad = p.kind === 'solid' ? 1.1 : p.kind === 'arrow' ? 0.5 : 0.6;
+          const rad = p.kind === 'solid' ? 1.1 : p.kind === 'arrow' ? 0.36 : 0.6;
           const n = this.gatherNear(p.x, p.z, 2);
           for (let k = 0; k < n; k++) {
             const v = this.units[this.nearBuf[k]]; if (v.dead || v.id === p.owner) continue;
             if (p.kind === 'arrow' && v.team === p.team) continue;
             if (p.kind === 'solid' && v.lastShotBy === p) continue;
+            if (p.bolt && v.team === p.team) continue;
             const h = (v.mounted || v.type === 'horse') ? 1.2 : v.def.ai === 'cannon' ? 0.7 : v.downT > 0 ? 0.3 : 0.9;
             const dx = v.x - p.x, dy = (v.y + h) - p.y, dz = v.z - p.z; const rr = v.def.r + rad;
             if (dx * dx + dz * dz < rr * rr && Math.abs(dy) < 1.3 + v.def.r) {
               if (p.kind === 'shell') { this.explode(p.x, p.y, p.z, p.team, p.owner, 7.5, 170); done = true; break; }
               if (p.kind === 'arrow' && v.def.shield && !v.dead && v.st !== ST_RELEASE && Math.abs(wrap(atan2(p.x - v.x, p.z - v.z) - v.yaw)) < 1.1 && this.rng.next() < 0.75) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
+              if (p.kind === 'arrow' && v.ctrl >= 0 && !v.dead && (v.iframe > 0 || (v.blocking && Math.abs(wrap(atan2(p.x - v.x, p.z - v.z) - v.yaw)) < 1.2 && this.rng.next() < (v.def.shield ? 1 : 0.8)))) { this.events.push({ t: v.iframe > 0 ? 'evade' : 'arrowstick', id: v.id, x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); if (v.iframe <= 0) this.events.push({ t: 'block', x: p.x, y: p.y, z: p.z, perfect: false, by: v.id, att: -1, shield: !!v.def.shield }); done = true; break; } // you can slide under an arrow or turn it on your guard
               if (p.kind === 'arrow' && v.zfile && !v.dead && this.coverShield(v, p)) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
-              if (p.kind === 'arrow') { v.lastAttacker = p.owner; this.applyDamage(v, this.units[p.owner].def.bow.dmg * (v.def.ai === 'cannon' ? 0.3 : 1), p.owner, p.vx * 0.03, 0, p.vz * 0.03, 'arrow', p.x, p.y, p.z); if (!v.dead) { v.flinchT = Math.max(v.flinchT, 0.25); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } } this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); done = true; break; }
+              if (p.kind === 'arrow') { v.lastAttacker = p.owner; this.applyDamage(v, this.units[p.owner].def.bow.dmg * (v.def.ai === 'cannon' ? 0.3 : 1) * (v.ctrl >= 0 && !(this.players[v.ctrl] && this.players[v.ctrl].ai) ? 0.65 : 1), p.owner, p.vx * 0.03, 0, p.vz * 0.03, 'arrow', p.x, p.y, p.z); if (!v.dead) { v.flinchT = Math.max(v.flinchT, 0.25); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } } this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); done = true; break; }
+              if (p.bolt) { v.lastShotBy = p; p.hits++; this.applyDamage(v, 80, p.owner, p.vx * 0.05, 1, p.vz * 0.05, 'arrow', p.x, p.y, p.z); if (!v.dead && v.mass < 5) v.downT = Math.max(v.downT, 0.8); this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); if (p.hits >= 3) { done = true; break; } continue; }
               // solid shot: bowl through
               const sp = len(p.vx, p.vz) || 1; const nx = p.vx / sp, nz = p.vz / sp;
               v.lastShotBy = p; p.hits++;
@@ -2562,7 +2600,7 @@ class Sim {
       }
       const bl = this.boxCells[this.cellOf(u.x, u.z)];
       if (bl) for (let k = 0; k < bl.length; k++) {
-        const b = this.boxes[bl[k]]; if (b.kind === 'gate' && (u.type === 'hero' || b.hw < 0.1)) continue; if (b.lad && b.lad.up && Math.abs(u.x - b.lad.x) < 1.5) continue;
+        const b = this.boxes[bl[k]]; if (b.kind === 'gate' && (u.type === 'hero' || b.hw < 0.1)) continue; if (b.lad && b.lad.up && Math.abs(u.x - b.lad.x) < (b.lad.w || 1.5)) continue;
         const ex = b.hw + r, ez = b.hd + r; const dx = u.x - b.x, dz = u.z - b.z;
         if (dx > -ex && dx < ex && dz > -ez && dz < ez) {
           const px = ex - Math.abs(dx), pz = ez - Math.abs(dz);
@@ -2807,7 +2845,7 @@ class Sim {
   dry(u) { return u.shots <= 0 && !u.champ && u.type !== 'hero' && u.ctrl < 0; }
   fatMul(u) { const f = u.fat || 0; return f > 85 ? 0.72 : f > 60 ? 0.86 : 1; }
   speedBoost(u) { return this.speedBoost0(u) * this.fatMul(u); }
-  speedBoost0(u) { if (u.dashT > 0) return 1; if (u.flinchT > 0 && u.ctrl >= 0 && !u.mounted) return 0.6; if (u.guardT > 0) return 0.45; if (u.frenzyT > 0) return 1.25; if (u.cryT > 0) return 1.15; if (u.squad < 0) return 1; const sq = this.squads[u.squad]; if (sq.abOn <= 0) return 1; return sq.ability === 'kiai' ? 1.3 : sq.ability === 'wedge' ? 1.2 : 1; }
+  speedBoost0(u) { if (u.dashT > 0) return 1; if (this.sg && this.sgClimb(u)) return 0.5; if (u.flinchT > 0 && u.ctrl >= 0 && !u.mounted) return 0.6; if (u.guardT > 0) return 0.45; if (u.frenzyT > 0) return 1.25; if (u.cryT > 0) return 1.15; if (u.squad < 0) return 1; const sq = this.squads[u.squad]; if (sq.abOn <= 0) return 1; return sq.ability === 'kiai' ? 1.3 : sq.ability === 'wedge' ? 1.2 : 1; }
   canister(u, sq) {
     let best = null, bd = 50 * 50; const en = this.teamAlive[1 - u.team];
     for (let i = 0; i < en.length; i++) { const v = en[i]; const dx = v.x - u.x, dz = v.z - u.z, d2 = dx * dx + dz * dz; if (d2 < bd) { bd = d2; best = v; } }
@@ -3118,17 +3156,17 @@ const MISSIONS = {
     phases: [
       { title: '一 · 入谷 · Into the valley', text: 'March with the column up the valley toward Hetu Ala. Keep up with your file.',
         obj: { survive: 58 },
-        at: [[18, ['dir', 'liu', 'hold', 0, -36]], [34, ['dir', 'liu', 'hold', 0, -8]], [34, ['dir', 'tusi', 'hold', 0, -24]]],
+        at: [[18, ['dir', 'liu', 'hold', 0, -50]], [34, ['dir', 'liu', 'hold', 0, -32]], [34, ['dir', 'tusi', 'hold', 0, -4]]],
         say: [[2, 'liu', 'Three Jin stockades burned in three days and their villages empty. The slave chief is afraid of us!', '三日連破三寨，奴酋怯矣！'],
           [10, 'chief', 'Keep the file closed up. Mountains like these have eyes.', '跟緊，莫掉隊。這山裏有眼睛。'],
           [24, 'rider', 'From Commander Du Song! He is already before Hetu Ala — he bids you make haste or miss the kill!', '杜總兵已薄赫圖阿拉，請速進兵！'],
           [31, 'liu', 'Du Song takes the Khan\'s head while we crawl through these hills? Double pace! The guns can follow!', '杜松欲獨得首功耶？倍道而進！'],
           [40, 'fang', 'A rider from Du Song, come this way through Jin country? Who let him through the passes?', '杜總兵的人，怎麼從金人地界過來的？'],
           [50, 'chief', 'Double pace, and the guns half a li behind. This is how a column gets cut in pieces.', '倍道而進，砲落後半里……這是找死。']] },
-      { title: '二 · 代善 · The first charge', text: 'Banners in the pass ahead. The duck teams must hold the head of the column.', start: [['release', 'daisan'], ['dir', 'liu', 'hold', 0, -14], ['dir', 'tusi', 'hold', 0, -26]],
+      { title: '二 · 代善 · The first charge', text: 'Banners in the pass ahead. The levies at the head of the column take the first shock; the duck teams close up behind them and wait for the gap.', start: [['release', 'daisan'], ['dir', 'liu', 'hold', 0, -36], ['dir', 'tusi', 'hold', 0, -10]],
         obj: { survive: 66 },
         say: [[1, 'lookout', 'Banners in the pass ahead — red, and red bordered in white! Those are no Ming riders!', '前面有旗！紅旗，鑲紅！不是我們的人！'],
-          [4, 'liu', 'Duck teams to the front! Let them break on us!', '鴛鴦陣向前！'],
+          [4, 'liu', 'Levies, hold them! Duck teams, close up behind and be ready!', '土兵頂住！鴛鴦陣隨後待命！'],
           [7, 'chief', 'Shields down! Brushes up! Spears behind me — as Marshal Qi taught us!', '藤牌在前，狼筅次之，長槍隨後！'],
           [52, 'chief', 'They give way! Hold the line — nobody chases!', '他們退了！穩住，不許追！']] },
       { title: '三 · 皇太極 · The ridge', text: 'A second Jin host comes down the west ridge into the side of the column.', start: [['release', 'hong'], ['release', 'ridge'], ['dir', 'hong', 'attack']],
@@ -3153,7 +3191,7 @@ const MISSIONS = {
     brief: 'Shenyang has fallen. The relief army from Liaoyang has come too late: the Sichuan White Poles are across the bridge on the north bank, the Zhejiang men dug in five li south of it. You lead your file in Qi Jin\'s camp.',
     start: [56, -64, 0],
     zones: [{ key: 'sbridge', x: 74, zr: -15, r: 10, name: 'South end of the bridge' }, { key: 'camp', x: 58, z: -62, r: 20, name: 'The Zhejiang camp', owner: 0, rate: 0.5 },
-      { key: 'road', x: -62, z: -134, r: 15, name: 'The Liaoyang road' }],
+      { key: 'road', x: -88, z: -136, r: 14, name: 'The Liaoyang road' }],
     forts: [[44, -62, 0.5, 12, 1.6, 'palisade'], [72, -62, 0.5, 12, 1.6, 'palisade'], [49.5, -49, 5.5, 0.5, 1.6, 'palisade'], [66.5, -49, 5.5, 0.5, 1.6, 'palisade'], [49, -75, 5, 0.5, 1.5, 'palisade'], [67, -75, 5, 0.5, 1.5, 'palisade'],
       [51, -53, 2, 1.1, 1.4, 'mantlet'], [58, -53, 2, 1.1, 1.4, 'mantlet'], [65, -53, 2, 1.1, 1.4, 'mantlet']],
     groups: {
@@ -3163,8 +3201,8 @@ const MISSIONS = {
       bayara: { team: 1, name: 'The red Bayara', zh: '紅巴牙喇', army: ['shinsengumi', 'shinsengumi', 'cavalry'], at: [60, 138, PI], reserve: true, stay: true },
       rw: { team: 1, name: 'The right wing', army: ['samurai', 'samurai', 'ashigaru', 'archer', 'cavalry'], at: [100, 138, PI], reserve: true, stay: true },
       guns: { team: 1, name: 'The Shenyang guns', army: ['cannon4', 'rifle_sho'], at: [86, 112, PI], reserve: true, stay: true, dir: ['hold', 86, 92] },
-      lw: { team: 1, name: 'The left wing', army: ['samurai', 'archer', 'cavalry'], at: [-30, 130, PI], reserve: true },
-      east: { team: 1, name: 'Banners from the east', army: ['samurai', 'archer'], at: [140, -40, -PI / 2], reserve: true },
+      lw: { team: 1, name: 'The left wing', army: ['samurai', 'samurai', 'archer', 'cavalry'], at: [-30, 130, PI], reserve: true },
+      east: { team: 1, name: 'Banners from the east', army: ['samurai', 'byakkotai', 'archer'], at: [140, -40, -PI / 2], reserve: true },
       night: { team: 1, name: 'Daišan\'s banners', zh: '代善', army: ['shinsengumi', 'samurai', 'samurai', 'cavalry'], at: [140, -110, -PI / 2], reserve: true },
       cut: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'byakkotai'], at: [-140, -96, PI / 2], reserve: true },
     },
@@ -3178,7 +3216,7 @@ const MISSIONS = {
           [50, 'lookout', 'They threw them back! The White Poles held!', '打退了！白杆兵頂住了！']] },
       { title: '二 · 白杆 · The White Poles', text: 'The Jin right wing comes on in strength. Take your file to the south end of the bridge and keep it open, so that whoever can get back across, can.', show: ['sbridge'],
         start: [['release', 'rw'], ['dir', 'rw', 'hold', 74, 34], ['dir', 'bayara', 'hold', 74, 34]],
-        obj: { all: [{ survive: 80 }, { hold: 'sbridge', t: 40 }] }, waves: [[28, 'guns', ['hold', 86, 92]]],
+        obj: { survive: 80 }, waves: [[28, 'guns', ['hold', 86, 92]]],
         at: [[72, ['kill', 'sichuan']], [74, ['dir', 'sichuan', 'hold', 58, -58]]],
         say: [[3, 'qi', 'Take your file to the bridge. If the Sichuan men must come back, they come back over it.', '帶你的隊到橋頭去。川兵要退，就從這座橋退。'],
           [30, 'lookout', 'Guns on the far bank — they are firing the Shenyang cannon into the Sichuan camp!', '北岸有砲！他們拿瀋陽的大砲轟川營！'],
@@ -3194,11 +3232,11 @@ const MISSIONS = {
       { title: '四 · 夜 · The last stand', text: 'Night. The camp cannot hold. Qi Jin orders you out: take your file and your wounded down the Liaoyang road, so that someone lives to tell what happened here.', show: ['road'], hide: ['camp'],
         start: [['release', 'night'], ['dir', 'night', 'hold', 58, -60], ['kill', 'chen']],
         obj: { extract: 'road' }, limit: 420, fail: 'The ring closed around the camp.',
-        waves: [[70, 'cut', ['attack']]], at: [[55, ['kill', 'zhe']]],
+        waves: [[14, 'cut', ['attack']]], at: [[55, ['kill', 'zhe']]],
         say: [[2, 'soldier', 'General Chen Ce is dead!', '陳總兵陣亡了！'],
           [6, 'qi', 'A man repays his country today, of all days.', '大丈夫報國，就在今日。'],
           [12, 'qi', 'You — take your file and your wounded down the Liaoyang road. Someone must live to tell them what happened here.', '你——帶你的人和傷兵走遼陽大路。總得有人活著，把這裡的事說出去。'],
-          [72, 'lookout', 'Horsemen on the road ahead!', '前面路上有馬兵！'],
+          [16, 'lookout', 'Horsemen on the road ahead!', '前面路上有馬兵！'],
           [56, 'lookout', 'General Qi has fallen!', '戚副將陣亡了！']] },
     ],
     win: 'You got out by the Liaoyang road.',
@@ -3206,6 +3244,20 @@ const MISSIONS = {
   zcamp: { title: '營 · Camp', year: '', battle: 'zcamp', side: 0, camp: true, hidden: true, brief: '', start: [0, 0, 0], zones: [], groups: {}, phases: [{ title: '營 · Camp', text: '', obj: { never: true } }], win: '' },
 };
 const OPS = { // Assault: attackers with limited manpower take sectors of fortified points one by one; defenders fall back
+  ningyuan_siege: {
+    siege: true, title: '寧遠攻守 · The Siege of Ningyuan', year: 'February 1626', battle: 'siegecity', attacker: 1, tickets: 640,
+    brief: 'Nurhaci brings the Eight Banners against Ningyuan in the depth of winter. Yuan Chonghuan has burned the suburbs, brought the people inside and mounted Western cannon on the walls. The Jin must fill the ditch, climb or break the walls, take the gatehouse and fight through the streets to the yamen.',
+    zones: [{ key: 'ditchW', x: -28, z: 22, r: 9, name: 'A · West ditch', rate: 0.5 }, { key: 'ditchE', x: 28, z: 22, r: 9, name: 'B · East ditch', rate: 0.5 },
+      { key: 'wallW', x: -25, z: 43.5, r: 7, name: 'A · West wall', owner: 0, rate: 0.6 }, { key: 'wallE', x: 25, z: 43.5, r: 7, name: 'B · East wall', owner: 0, rate: 0.6 },
+      { key: 'gatehouse', x: 0, z: 55, r: 8, name: 'A · The gatehouse', owner: 0, rate: 0.5 },
+      { key: 'street', x: -18, z: 80, r: 11, name: 'A · Drum-tower street', owner: 0, rate: 0.5 }, { key: 'yamen', x: 0, z: 112, r: 13, name: 'B · The yamen', owner: 0, rate: 0.4 }],
+    forts: [],
+    sectors: [['ditchW', 'ditchE'], ['wallW', 'wallE'], ['gatehouse'], ['street', 'yamen']],
+    def: [[['rifle_imp', 'rifle_imp', 'armstrong'], -28, 43.6], [['rifle_imp', 'rifle_spencer', 'armstrong'], 28, 43.6], [['samurai', 'ashigaru'], -14, 43.6], [['samurai', 'yuanyang'], 14, 43.6], [['samurai', 'ashigaru', 'rifle_imp'], 0, 58], [['ronin', 'ashigaru'], -18, 82], [['samurai', 'rifle_imp', 'jigen'], 0, 112]],
+    defRes: [[['samurai', 'rifle_imp'], 0, 96, 2], [['cavalry', 'samurai'], 0, 124, 3]],
+    att: [['samurai', 'samurai', 'archer', 'archer'], ['samurai', 'ashigaru', 'archer', 'horokutai'], ['shinsengumi', 'samurai', 'archer', 'archer'], ['samurai', 'byakkotai', 'archer'], ['samurai', 'samurai', 'archer', 'horokutai'], ['shinsengumi', 'samurai', 'archer']],
+    attAt: [0, -122, 0],
+  },
   liaoyang: {
     title: '遼陽之戰 · Assault on Liaoyang', year: 'April 1621', battle: 'aizu', attacker: 1, tickets: 520,
     brief: 'The Jin storm Liaoyang, capital of Liaodong. Three lines stand between the banners and the keep: the outer trenches, the market quarter and the city gate.',
@@ -3260,6 +3312,7 @@ Sim.prototype.setupMission = function (teams, aiPl) {
   if (!ass && !M.soldier) { // campaign balance: the enemy rank and file are a little softer, your allies a little harder (officers excepted)
     const cache = new Map(); const tune = (d, k, m) => { const key = d; if (!cache.has(key)) cache.set(key, new Map()); const c = cache.get(key); if (!c.has(k)) c.set(k, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return c.get(k); };
     for (const u of this.units) { if (u.type === 'horse' || u.officer || u.def.ai === 'cannon') continue; const foe = u.team !== M.side; u.def = foe ? tune(u.def, 0.82, 0.82) : tune(u.def, 1.12, 1.05); u.hp = u.def.hp; } }
+  if (ass && M.siege) this.siegeInit();
   if (ass) { let n = 0; for (const u of this.units) if (u.team === M.attacker && u.type !== 'horse' && u.type !== 'hero') n++; this.tickets = Math.round(n * 0.8); for (const o of this.objectives) o.rate *= 0.6; this.sector = 0; M.sectors[0].forEach(k => this.missionZone(k).hidden = false); this.assaultDirs(); this.mv.ph = 0; }
   // humans: in the campaign each leads a squad of the troops they chose (two when alone) and rides with it
   if (M.soldier) { // a story chapter: you are one man in a mandarin duck team of the named group
@@ -3470,6 +3523,7 @@ Sim.prototype.mAggro = function () {
 Sim.prototype.mOver = function (won, text) { if (this.mwin !== undefined) return; this.mwin = won ? this.mission.side : 1 - this.mission.side; this.events.push({ t: 'mend', won, text }); };
 // ---- assault
 Sim.prototype.assaultDirs = function () {
+  if (this.mission.siege && this.sg && this.sector <= 1) return this.siegeDirs();
   const M = this.mission, A = M.attacker, keys = M.sectors[this.sector] || []; const zs = keys.map(k => this.missionZone(k)).filter(z => z && z.owner !== A);
   const zt = zs.length ? zs : keys.map(k => this.missionZone(k));
   let i = 0; for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== A || g.broken) continue; const z = zt[i++ % zt.length]; if (z) { p.directive = { kind: DIR_HOLD, x: z.x, z: z.z, by: -1 }; p.standoff = true; } }
@@ -3502,6 +3556,190 @@ Sim.prototype.assaultThink = function () {
       const k = u.id % 9; this.reviveUnit(u, clamp(nz.x + (k % 3 - 1) * 3, -HALF + 4, HALF - 4), clamp(nz.z + fz * (14 + Math.floor(k / 3) * 3), -HALF + 4, HALF - 4)); } }
   const left = Object.keys(this.mg).some(g => this.mg[g].G.team === A && !this.mg[g].released);
   if (this.tickets <= 0 || (act < 8 && !left)) { this.mwin = 1 - A; this.events.push({ t: 'mend', won: false, text: 'The attackers have no men left to send.', att: A }); }
+};
+
+// ===== 攻守城 · Siege: walls, ditch, ladders, siege towers, covered rams, shield carts, sappers, oil, stones and bed crossbows =====
+// A siege is an assault operation (OPS entry with `siege`) fought over a walled town: the line of sectors is ditch → walls →
+// gatehouse → streets. Everything here is deterministic (DM trig, this.rng only) so lockstep peers stay in step.
+// Layout (south is outside): ditch at z = D.zc, wall face at W.z0, wall top to W.z1, the town and the yamen to the north.
+const SG = { z0: 40, z1: 47, h: 6, gate: 4.6, ditchZ: 30, ditchW: 4, ladders: [-32, -18, 18, 32], towers: [-40, 40], holes: [-25, 25], fills: [[-28, 14], [28, 14]],
+  bows: [[-52, 44.5], [-9, 44.5], [9, 44.5], [52, 44.5]], guns: [[-70, 44.5], [70, 44.5]], atGuns: [[-30, -48], [30, -48]] };
+// the rampart and the ditch in the height field (called from terrainHExact / waterAt; TERR.swall / TERR.sditch set by planTerrain)
+function siegeWallH(w, x, z, h) {
+  if (z < w.z0 - 0.7 || z > w.z1 + 14.5) return h;
+  let k = z >= w.z0 && z <= w.z1 ? 1 : z < w.z0 ? 1 - (w.z0 - z) / 0.7 : 1 - (z - w.z1) / 1.3;
+  for (let i = 0; i < w.ramps.length; i++) { const r = w.ramps[i]; if ((x - r < 0 ? r - x : x - r) < 3 && z > w.z1 && z < w.z1 + 14) { const kr = 1 - (z - w.z1) / 14; if (kr > k) k = kr; } }
+  if (k <= 0) return h; const ax = x < 0 ? -x : x; if (ax < w.gate) return h; if (ax < w.gate + 0.6) k *= (ax - w.gate) / 0.6;
+  return h + w.h * k;
+}
+function siegeDitchH(d, x, z, h) { const dz = z - d.zc, ad = dz < 0 ? -dz : dz; if (ad >= d.w) return h; const ax = x < 0 ? -x : x; if (ax < d.bridge) return h; const t = 1 - (ad / d.w) * (ad / d.w); return h - d.depth * t; }
+function siegeDitchWater(d, x, z) { const dz = z - d.zc, ad = dz < 0 ? -dz : dz; if (ad >= d.w * 0.8) return 0; const ax = x < 0 ? -x : x; if (ax < d.bridge) return -1;
+  for (let i = 0; i < d.fills.length; i++) { const f = d.fills[i]; if (f.done && (x - f.x < 0 ? f.x - x : x - f.x) < f.hw) return 2; } return 1; }
+Sim.prototype.siegeInit = function () {
+  const M = this.mission, A = M.attacker, D = 1 - A, W = TERR.swall; const sg = this.sg = { A, D, gateHp: 6000, gateMax: 6000, engines: [], lads: [], emp: [], holes: [], fired: false, oilT: 0, stoneT: 0, slipT: 0, ice: this.bdef.biome === 'winter', sec: -1 };
+  // the gate in its passage through the rampart
+  this.boxes.push({ x: 0, z: (W.z0 + W.z1) / 2, hw: W.gate, hd: (W.z1 - W.z0) / 2, h: W.h + 0.5, kind: 'sgate' }); sg.gateBox = this.boxes.length - 1;
+  // the outer face of the wall: parapet segments, with lanes where a ladder, a tower's bridge or a sapped hole can open a way up
+  const lanes = [];
+  SG.ladders.forEach((x) => { const L = { kind: 'ladder', x, z: W.z0, hd: 0.5, w: 1.4, up: false, prog: 0, hp: 0 }; sg.lads.push(L); lanes.push(L); });
+  SG.towers.forEach((x) => { const L = { kind: 'tower', x, z: W.z0, hd: 0.5, w: 2.4, up: false, prog: 0, hp: 0 }; lanes.push(L); sg.engines.push({ id: sg.engines.length, kind: 'tower', team: A, x, z: -82, lane: x, tz: W.z0 - 3.2, hp: 3600, max: 3600, burn: 0, docked: false, lad: L, push: 0, need: 4 }); });
+  SG.holes.forEach((x) => { const L = { kind: 'hole', x, z: W.z0, hd: 0.5, w: 1.4, up: false, prog: 0, hp: 0 }; sg.holes.push(L); lanes.push(L); sg.engines.push({ id: sg.engines.length, kind: 'cart', team: A, x, z: -62, lane: x, tz: W.z0 - 3, hp: 1300, max: 1300, burn: 0, push: 0, need: 2 }); });
+  sg.engines.push({ id: sg.engines.length, kind: 'ram', team: A, x: 0, z: -72, lane: 0, tz: W.z0 - 2.9, hp: 2400, max: 2400, burn: 0, atGate: false, push: 0, need: 2 });
+  for (const x of [-10, 10]) sg.engines.push({ id: sg.engines.length, kind: 'cart', team: A, x, z: -58, lane: x * 1.2, tz: SG.ditchZ - 6.5, hp: 1300, max: 1300, burn: 0, push: 0, need: 2, cover: true });
+  lanes.sort((a, b) => a.x - b.x);
+  for (const L of lanes) this.boxes.push({ x: L.x, z: W.z0, hw: L.w, hd: 0.5, h: 1.3, kind: 'sface', lad: L });
+  let x0 = -HALF; const gaps = lanes.map(L => [L.x - L.w, L.x + L.w]).concat([[-W.gate - 0.01, W.gate + 0.01]]).sort((a, b) => a[0] - b[0]);
+  for (const g of gaps) { if (g[0] > x0 + 0.05) this.boxes.push({ x: (x0 + g[0]) / 2, z: W.z0, hw: (g[0] - x0) / 2, hd: 0.5, h: 1.3, kind: 'sface' }); x0 = g[1]; }
+  if (x0 < HALF) this.boxes.push({ x: (x0 + HALF) / 2, z: W.z0, hw: (HALF - x0) / 2, hd: 0.5, h: 1.3, kind: 'sface' });
+  // bed crossbows (床弩) and red-barbarian guns on the wall; the besiegers' field guns before it
+  for (const e of SG.bows) sg.emp.push({ id: sg.emp.length, kind: 'bow', team: D, x: e[0], z: e[1], yaw: PI, pitch: 0, cd: 30 * 3 + sg.emp.length * 17, man: -1 });
+  for (const e of SG.guns) sg.emp.push({ id: sg.emp.length, kind: 'gun', team: D, x: e[0], z: e[1], yaw: PI, pitch: 0, cd: 30 * 5 + sg.emp.length * 23, man: -1 });
+  for (const e of SG.atGuns) sg.emp.push({ id: sg.emp.length, kind: 'gun', team: A, x: e[0], z: e[1], yaw: 0, pitch: 0, cd: 30 * 6 + sg.emp.length * 19, man: -1 });
+  for (const e of sg.emp) e.y = terrainH(e.x, e.z);
+  // the town behind the walls: rows of houses along two streets, leaving the main street and the zones clear
+  const r = new RNG(this.seed ^ 0x51e9e);
+  for (let z = 64; z < 140; z += 11) for (let x = -120; x <= 120; x += 12) { if (Math.abs(x) < 9 || (z > 74 && z < 86) || len(x - 0, z - 112) < 22 || len(x + 18, z - 80) < 14) continue; if (r.next() < 0.22) continue;
+    this.boxes.push({ x: x + r.range(-1.5, 1.5), z: z + r.range(-1, 1), hw: r.range(3, 4.4), hd: r.range(2.6, 3.6), h: r.range(3, 4), kind: 'house' }); }
+  sg.secT = 0; this.siegeDirs();
+};
+// the wall-face lanes that are open (ladder up, tower docked, hole broken) become walkable corridors
+Sim.prototype.siegeNav = function (bl) {
+  const sg = this.sg, W = TERR.swall; if (!sg) return;
+  const open = (L) => { if (!L.up) return; for (let z = W.z0 - 2.5; z <= W.z0 + 2.5; z += 1) for (let dx = -L.w + 0.6; dx <= L.w - 0.6 + 0.01; dx += 0.8) bl[this.navCell(L.x + dx, z)] &= 1; };
+  for (const L of sg.lads) open(L); for (const L of sg.holes) open(L); for (const e of sg.engines) if (e.lad) open(e.lad);
+  if (sg.gateHp <= 0) for (let z = W.z0 - 1; z <= W.z1 + 1; z += 1) for (let dx = -3; dx <= 3; dx += 1) bl[this.navCell(dx, z)] &= 1;
+};
+Sim.prototype.sgClimb = function (u) { const sg = this.sg, W = TERR.swall; if (u.z < W.z0 - 2.6 || u.z > W.z0 + 0.8) return false; for (const L of sg.lads) if (L.up && Math.abs(u.x - L.x) < 1.5) return true; return false; };
+// every tick: engines meet projectiles, manned emplacements follow their gunner
+Sim.prototype.siegeTick = function () {
+  const sg = this.sg; if (!sg) return;
+  const ps = this.projectiles;
+  for (let i = ps.length - 1; i >= 0; i--) { const p = ps[i]; if (p.kind === 'bomb') continue;
+    for (const e of sg.engines) { if (e.hp <= 0 || p.team === e.team) continue; const S = SGE[e.kind]; if (Math.abs(p.x - e.x) > S.hw || Math.abs(p.z - e.z) > S.hd || p.y > terrainH(e.x, e.z) + S.h) continue;
+      const dmg = p.kind === 'shell' ? 260 : p.kind === 'solid' ? (p.bolt ? 50 : 180) : 4; this.sgHurt(e, dmg); if (p.kind === 'arrow' && e.kind !== 'cart' && this.rng.next() < 0.04 && !this.rain) e.burn = Math.max(e.burn, 6);
+      this.events.push({ t: 'sghit', x: p.x, y: p.y, z: p.z, kind: p.kind, eng: e.kind }); ps[i] = ps[ps.length - 1]; ps.pop(); break; } }
+  for (const e of sg.emp) { if (e.cd > 0) e.cd--; if (e.man < 0) continue; const u = this.units[e.man];
+    if (!u || u.dead || len(u.x - e.x, u.z - e.z) > 3.2) { e.man = -1; if (u) u.manE = -1; continue; }
+    e.yaw = u.yaw; e.pitch = clamp(u.pitch || 0, -0.5, 0.6); const bx = e.x - sin(e.yaw) * 1.2, bz = e.z - cos(e.yaw) * 1.2; u.x = bx; u.z = bz; u.mx = 0; u.mz = 0;
+    if ((u.st === ST_WINDUP || u.st === ST_AIM || u.st === ST_RELEASE) && e.cd <= 0) { this.sgFire(e, e.yaw, e.pitch); u.st = ST_IDLE; u.stT = 0; } else if (u.st === ST_WINDUP) { u.st = ST_IDLE; u.stT = 0; } }
+  if (this.tick % 15 === 0) this.siegeThink();
+};
+const SGE = { ram: { hw: 1.5, hd: 3, h: 3.6, sp: 1.5 }, tower: { hw: 2.5, hd: 2.5, h: 9.5, sp: 1.0 }, cart: { hw: 1.7, hd: 0.9, h: 2.6, sp: 1.6 } };
+Sim.prototype.sgHurt = function (e, dmg) { if (e.hp <= 0) return; e.hp -= dmg; if (e.hp <= 0) { e.hp = 0; if (e.lad && e.lad.up) { e.lad.up = false; this.navBoxes(); } this.events.push({ t: 'sgengine', kind: e.kind, x: e.x, z: e.z }); for (const sq of this.squads) if (sq.alive && sq.team === e.team && !sq.def.fearless) sq.morale = Math.max(0, sq.morale - 6); } };
+Sim.prototype.sgFire = function (e, yaw, pitch) {
+  const bow = e.kind === 'bow', v = bow ? 62 : 78; e.cd = bow ? 30 * 5 : 30 * 9;
+  const cp = cos(pitch), x = e.x + sin(yaw) * 1.6, z = e.z + cos(yaw) * 1.6, y = e.y + (bow ? 1.4 : 1.2);
+  this.projectiles.push({ kind: 'solid', bolt: bow, x, y, z, vx: sin(yaw) * cp * v, vy: sin(pitch) * v, vz: cos(yaw) * cp * v, team: e.team, owner: -1, life: 0, hits: 0 });
+  this.events.push({ t: 'sgshot', x, y, z, dx: sin(yaw), dz: cos(yaw), gun: !bow, team: e.team });
+};
+// pick a mark for an unmanned emplacement: defenders prefer engines, then the thickest crowd of the enemy
+Sim.prototype.sgAim = function (e) {
+  let tx = 0, tz = 0, ty = 0, best = 1e18;
+  if (e.team === this.sg.D && this.rng.next() < 0.6) for (const g of this.sg.engines) { if (g.hp <= 0) continue; const d = len(g.x - e.x, g.z - e.z); if (d < 125 && d < best) { best = d; tx = g.x; tz = g.z; ty = terrainH(g.x, g.z) + 1.5; } }
+  if (best > 1e17) for (const q of this.squads) { if (!q.alive || q.inactive || q.team === e.team) continue; const d = len(q.cx - e.x, q.cz - e.z); if (d < 125 && d > 12 && d - q.aliveCount * 0.6 < best) { best = d - q.aliveCount * 0.6; tx = q.cx; tz = q.cz; ty = terrainH(q.cx, q.cz) + 1; } }
+  if (best > 1e17) return false;
+  const bow = e.kind === 'bow', v = bow ? 62 : 78, d = len(tx - e.x, tz - e.z), dy = ty - (e.y + 1.3);
+  const yaw = atan2(tx - e.x, tz - e.z) + (this.rng.next() - 0.5) * 0.04, pitch = atan2(dy, d) + 0.5 * asin(clamp(GRAV * d / (v * v), -1, 1)) + (this.rng.next() - 0.5) * 0.02;
+  e.yaw = yaw; e.pitch = pitch; this.sgFire(e, yaw, pitch); return true;
+};
+Sim.prototype.sgCount = function (x, z, r, team) { return this.countNear(x, z, r, team); };
+// every half second: engines move or burn, ladders rise and fall, the defenders pour oil and drop stones, the gate and the walls give way
+Sim.prototype.siegeThink = function () {
+  const sg = this.sg, W = TERR.swall, A = sg.A, D = sg.D, M = this.mission; let nav = false;
+  if (sg.sec !== this.sector) { sg.sec = this.sector; sg.secT = 0; this.events.push({ t: 'sgstage', stage: this.sector });
+    if (this.sector === 1 && !sg.fired && !this.rain) { sg.fired = true; for (let x = -46; x <= 46; x += FIRE_CS * 0.9) { if (Math.abs(x) < 6) continue; const c = this.fireCell(x, W.z0 - 3); if (c < 0) continue; this.fuel[c] = 1.4; this.fireState[c] = 1; this.burnT[c] = 420; } this.events.push({ t: 'sgsaltpeter', z: W.z0 - 3 }); } }
+  sg.secT++;
+  // the ditch: a ditch zone in attackers' hands is filled with fascines and earth
+  for (const f of TERR.sditch.fills) { if (f.done) continue; const z = this.missionZone(f.key); if (z && z.owner === A) { f.done = true; this.sgRewater(f); nav = true; this.events.push({ t: 'sgfill', x: f.x, z: TERR.sditch.zc }); } }
+  // engines: pushed by the besiegers behind them, hacked at and burned by the defenders
+  for (const e of sg.engines) { if (e.hp <= 0) continue; const S = SGE[e.kind];
+    const pushers = this.sgCount(e.x, e.z - S.hd - 1.5, 6, A), foes = this.sgCount(e.x, e.z, S.hw + 2.5, D); e.push = pushers;
+    if (foes) this.sgHurt(e, foes * 5);
+    if (e.burn > 0) { e.burn -= 0.5; this.sgHurt(e, e.kind === 'tower' ? 28 : 22); if (this.tick % 45 === 0) this.events.push({ t: 'sgburn', x: e.x, z: e.z, kind: e.kind }); }
+    { const c = this.fireCell(e.x, e.z); if (c >= 0 && this.fireState[c] === 1 && e.burn < 2) e.burn = 4; }
+    if (e.hp <= 0) continue;
+    let tz = e.tz; if (e.kind === 'cart' && e.cover && this.sector >= 1) tz = W.z0 - 7;
+    const lane = e.lane, crossing = e.kind !== 'ram' && e.z < TERR.sditch.zc + TERR.sditch.w; const filled = siegeDitchWater(TERR.sditch, lane, TERR.sditch.zc) !== 1;
+    if (crossing && !filled) tz = Math.min(tz, TERR.sditch.zc - TERR.sditch.w - S.hd - 0.5);
+    const moving = pushers >= e.need && foes <= pushers && e.z < tz - 0.05;
+    if (moving) { const st = S.sp * 15 * DT * (pushers >= e.need * 2 ? 1.25 : 1); e.z = Math.min(tz, e.z + st); e.x += clamp(lane - e.x, -st, st); }
+    if (e.kind === 'tower' && !e.docked && e.z >= e.tz - 0.05) { e.docked = true; e.lad.up = true; nav = true; this.events.push({ t: 'sgdock', x: e.x, z: e.z }); }
+    if (e.kind === 'ram') { e.atGate = e.z >= e.tz - 0.05; if (e.atGate && sg.gateHp > 0 && pushers >= 1) { this.sgGate(44 + pushers * 4); if (this.tick % 45 === 0) this.events.push({ t: 'sgram', x: 0, z: W.z0 }); } }
+  }
+  // sappers at the shield carts chisel through the wall face
+  for (const L of sg.holes) { if (L.up) continue; const n = this.sgCount(L.x, W.z0 - 1.6, 3.5, A); const cart = sg.engines.find(e => e.kind === 'cart' && e.lane === L.x && e.hp > 0 && e.z > W.z0 - 6);
+    if (n >= 2 && this.sector >= 1) { L.prog += n * (cart ? 1.6 : 0.6); if (L.prog >= 320) { L.up = true; nav = true; this.events.push({ t: 'sghole', x: L.x, z: W.z0 }); for (const sq of this.squads) if (sq.alive && sq.team === D && !sq.def.fearless) sq.morale = Math.max(0, sq.morale - 8); } } }
+  // the gate: men without a ram can only hack at it
+  if (sg.gateHp > 0) { const n = this.sgCount(0, W.z0 - 1.5, 4, A); if (n) this.sgGate(n * 2); }
+  // scaling ladders: raised by men at the foot (only where the ditch is filled), thrown down by defenders who outnumber the climbers at the top
+  for (const L of sg.lads) { const foot = this.sgCount(L.x, W.z0 - 2.4, 3.2, A), top = this.sgCount(L.x, W.z0 + 2, 3.2, D), up = this.sgCount(L.x, W.z0 + 2, 3.2, A);
+    const reach = siegeDitchWater(TERR.sditch, L.x, TERR.sditch.zc) !== 1;
+    if (!L.up) { if (foot >= 2 && reach && this.sector >= 1) { L.prog += 15 * Math.min(3, foot / 2); if (L.prog >= 30 * 7) { L.up = true; L.hp = 650; nav = true; this.events.push({ t: 'sgladder', x: L.x, z: W.z0, up: true }); } } else L.prog = Math.max(0, L.prog - 5); }
+    else { if (top > up + 1) L.hp -= (top - up) * 14; if (L.hp <= 0) { this.sgLadderDown(L); nav = true; } } }
+  // ice: in the frozen months the wall face is glazed and the rungs are slick
+  if (sg.ice) for (const L of sg.lads) { if (!L.up) continue; const n = this.gatherNear(L.x, W.z0 - 1, 2.5); const ids = []; for (let i = 0; i < n; i++) ids.push(this.nearBuf[i]); ids.sort((a, b) => a - b);
+    for (const id of ids) { const v = this.units[id]; if (v.dead || v.team !== A || v.mounted || Math.abs(v.x - L.x) > 1.4 || v.z < W.z0 - 2.6 || v.z > W.z0 + 0.6 || v.downT > 0) continue; if (this.rng.next() < 0.03) { v.z = W.z0 - 3.2; v.downT = 1.2; this.applyDamage(v, 18, -1, 0, 0, -2, 'fall'); if (this.tick - sg.slipT > 60) { sg.slipT = this.tick; this.events.push({ t: 'sgslip', x: v.x, z: v.z, id: v.id }); } } } }
+  // defenders: burning oil and gunpowder quilts on crowds and engines at the foot of the wall, stones on the ladders
+  sg.oilT++; sg.stoneT++;
+  if (sg.oilT >= 8) { const s = this.sgSpot(4); if (s) { sg.oilT = 0; this.sgOil(s[0], s[1]); } }
+  if (sg.stoneT >= 6) { const s = this.sgSpot(3); if (s) { sg.stoneT = 0; this.sgStone(s[0], s[1]); } }
+  // unmanned emplacements fire on their own
+  for (const e of sg.emp) if (e.man < 0 && e.cd <= 0) { if (!this.sgAim(e)) e.cd = 30; }
+  // the walls are turned once the gate is down
+  if (this.sector === 1 && sg.gateHp <= 0) for (const k of M.sectors[1]) { const z = this.missionZone(k); if (z.owner !== A) { z.owner = A; z.ctrl = A === 1 ? -100 : 100; } }
+  if (nav) this.navBoxes();
+  if (this.tick % 45 === 0 && this.sector <= 1) this.siegeDirs();
+};
+Sim.prototype.sgRewater = function (f) { const C = this.navC, bl = this.navBlk; for (let x = f.x - f.hw - C; x <= f.x + f.hw + C; x += C * 0.5) for (let z = TERR.sditch.zc - TERR.sditch.w - C; z <= TERR.sditch.zc + TERR.sditch.w + C; z += C * 0.5) { const c = this.navCell(x, z), cx = -HALF + ((c % this.navW) + 0.5) * C, cz = -HALF + (Math.floor(c / this.navW) + 0.5) * C; if (waterAt(cx, cz) === 1) bl[c] |= 1; else bl[c] &= ~1; } };
+// the best place along the wall foot for the defenders to drop something: most attackers, with defenders on the wall above
+Sim.prototype.sgSpot = function (minN) {
+  const W = TERR.swall, sg = this.sg; let best = null, bn = minN - 1;
+  for (let x = -60; x <= 60; x += 6) { const n = this.sgCount(x, W.z0 - 2.5, 3.5, sg.A) + (sg.engines.some(e => e.hp > 0 && e.kind !== 'cart' && Math.abs(e.x - x) < 4 && e.z > W.z0 - 9) ? 3 : 0); if (n > bn && this.sgCount(x, W.z0 + 2.5, 9, sg.D) >= 1) { bn = n; best = [x, W.z0 - 2.5]; } }
+  return best;
+};
+Sim.prototype.sgOil = function (x, z) {
+  const sg = this.sg, n = this.gatherNear(x, z, 4.5), ids = []; for (let i = 0; i < n; i++) ids.push(this.nearBuf[i]); ids.sort((a, b) => a - b);
+  for (const id of ids) { const v = this.units[id]; if (v.dead || v.team !== sg.A || v.type === 'horse') continue; const dd = len(v.x - x, v.z - z); if (dd > 4.5) continue; this.applyDamage(v, 52 * (1 - dd / 6), -1, 0, 0, 0, 'fire'); if (v.squad >= 0 && !this.squads[v.squad].def.fearless) this.squads[v.squad].morale = Math.max(0, this.squads[v.squad].morale - 4); }
+  for (const e of sg.engines) if (e.hp > 0 && len(e.x - x, e.z - z) < 6) e.burn = Math.max(e.burn, 10);
+  if (!this.rain) { const c = this.fireCell(x, z); if (c >= 0) { this.fuel[c] = Math.max(this.fuel[c], 1); this.fireState[c] = 1; this.burnT[c] = 240; } }
+  this.events.push({ t: 'sgoil', x, z, y: TERR.swall.h });
+};
+Sim.prototype.sgStone = function (x, z) {
+  const sg = this.sg, n = this.gatherNear(x, z, 3), ids = []; for (let i = 0; i < n; i++) ids.push(this.nearBuf[i]); ids.sort((a, b) => a - b);
+  for (const id of ids) { const v = this.units[id]; if (v.dead || v.team !== sg.A || v.type === 'horse') continue; const dd = len(v.x - x, v.z - z); if (dd > 3) continue; if (v.mass < 5) { v.downT = Math.max(v.downT, 1); } this.applyDamage(v, 46 * (1 - dd / 4), -1, 0, 0, -3, 'solid'); }
+  for (const L of sg.lads) if (L.up && Math.abs(L.x - x) < 3) { L.hp -= 220; if (L.hp <= 0) { this.sgLadderDown(L); this.navBoxes(); } }
+  for (const e of sg.engines) if (e.hp > 0 && len(e.x - x, e.z - z) < 4) this.sgHurt(e, 90);
+  this.events.push({ t: 'sgstone', x, z, y: TERR.swall.h });
+};
+Sim.prototype.sgLadderDown = function (L) { const W = TERR.swall; L.up = false; L.prog = 0; L.hp = 0; const n = this.gatherNear(L.x, W.z0 - 1.5, 3), ids = []; for (let i = 0; i < n; i++) ids.push(this.nearBuf[i]); ids.sort((a, b) => a - b);
+  for (const id of ids) { const v = this.units[id]; if (v.dead || v.team !== this.sg.A || Math.abs(v.x - L.x) > 1.6 || v.z < W.z0 - 3 || v.z > W.z0 + 0.8) continue; v.z = W.z0 - 3.4; v.downT = Math.max(v.downT, 1.2); this.applyDamage(v, 38, -1, 0, 2, -4, 'fall'); }
+  this.events.push({ t: 'sgladder', x: L.x, z: W.z0, up: false }); };
+Sim.prototype.sgGate = function (dmg) { const sg = this.sg; if (sg.gateHp <= 0) return; sg.gateHp -= dmg; if (sg.gateHp <= 0) { sg.gateHp = 0; const g = this.boxes[sg.gateBox]; g.hw = 0.01; g.hd = 0.01; g.h = 0; this.navBoxes(); this.events.push({ t: 'sgbreach', x: 0, z: g.z });
+    for (const sq of this.squads) if (sq.alive && !sq.def.fearless) { if (sq.team === sg.D) sq.morale = Math.max(0, sq.morale - 15); else sq.morale = Math.min(sq.moraleMax, sq.morale + 20); } } };
+// E: man a bed crossbow or a gun, throw a ladder down from the top, or help raise one at the foot
+Sim.prototype.siegeInteract = function (u) {
+  const sg = this.sg, W = TERR.swall; if (!sg || u.dead || u.mounted) return false;
+  if (u.manE >= 0 && sg.emp[u.manE] && sg.emp[u.manE].man === u.id) { sg.emp[u.manE].man = -1; u.manE = -1; this.events.push({ t: 'sgman', id: u.id, on: false }); return true; }
+  for (const e of sg.emp) if (e.team === u.team && e.man < 0 && len(e.x - u.x, e.z - u.z) < 2.6) { e.man = u.id; u.manE = e.id; this.events.push({ t: 'sgman', id: u.id, on: true, kind: e.kind }); return true; }
+  for (const L of sg.lads) { if (Math.abs(L.x - u.x) > 2.4) continue;
+    if (u.team === sg.D && L.up && u.z > W.z0 && u.z < W.z0 + 3.5) { L.hp -= 360; this.events.push({ t: 'sgpush', x: L.x, z: W.z0, id: u.id }); if (L.hp <= 0) { this.sgLadderDown(L); this.navBoxes(); } return true; }
+    if (u.team === sg.A && !L.up && u.z < W.z0 - 0.5 && u.z > W.z0 - 5 && this.sector >= 1 && siegeDitchWater(TERR.sditch, L.x, TERR.sditch.zc) !== 1) { L.prog += 70; return true; } }
+  return false;
+};
+// the besiegers' generals: push the engines, raise the ladders where the ditch is filled, then climb; the defenders man the walls
+Sim.prototype.siegeDirs = function () {
+  const sg = this.sg, M = this.mission, A = sg.A, D = sg.D, W = TERR.swall, s = this.sector;
+  const att = Object.keys(this.mg).filter(g => this.mg[g].G.team === A && this.mg[g].released && !this.mg[g].broken);
+  const jobs = [];
+  const eng = (k) => sg.engines.filter(e => e.kind === k && e.hp > 0);
+  const ram = eng('ram')[0]; if (ram && !(ram.atGate && sg.gateHp <= 0)) jobs.push([ram.x, ram.z - 5, false]);
+  for (const t of eng('tower')) jobs.push(t.docked ? [t.x, W.z0 + 2.5, false] : [t.x, t.z - 5, false]);
+  if (s === 0) { for (const k of M.sectors[0]) { const z = this.missionZone(k); jobs.push([z.x, z.z, true]); } for (const c of eng('cart')) if (c.cover) jobs.push([c.x, c.z - 4, false]); }
+  else { for (const L of sg.lads) jobs.push(L.up ? [L.x, W.z0 + 2.5, false] : [L.x, W.z0 - 3, false]); for (const c of eng('cart')) if (!c.cover) jobs.push([c.lane, W.z0 - 2.5, false]); if (sg.gateHp <= 0) jobs.unshift([0, W.z1 + 6, false]); }
+  att.forEach((g, i) => { const p = this.players[this.mg[g].p], j = jobs[i % jobs.length]; if (!j) return; p.directive = { kind: DIR_HOLD, x: clamp(j[0], -HALF + 3, HALF - 3), z: clamp(j[1], -HALF + 3, HALF - 3), by: -1 }; p.standoff = j[2]; });
+  // defenders: the wall garrisons stand on the wall top above the ladders; the rest hold the gatehouse and the town
+  const posts = [[-26, 43.6], [26, 43.6], [-14, 43.6], [14, 43.6], [0, W.z1 + 7], [-18, 80], [0, 110]];
+  let j = 0; for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== D || g.broken) continue; const pt = posts[j++ % posts.length]; p.directive = { kind: DIR_HOLD, x: pt[0], z: pt[1], by: -1 }; }
 };
 
 return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, spacingOf, gunOf,
@@ -4517,7 +4755,7 @@ class Renderer {
     this.deadHorses = []; this.cannonRecoil = new Map(); this.heroStates = new Map();
     this.msgs = [];
     this.localTeam = sim.cfg.players[localIdx] ? (sim.cfg.players[localIdx].team ? 1 : 0) : 0;
-    this.buildLights(); this.buildSky(); this.buildTerrain(); this.buildDeco(); this.buildStructures(); this.campFires = []; if (sim.cfg.camp) this.buildCamp(sim.cfg.camp); this.buildFigures(); this.buildHorses(); this.buildCannons(); this.buildMarkers(); this.buildFX(); this.buildViewmodel();
+    this.buildLights(); this.buildSky(); this.buildTerrain(); this.buildDeco(); this.buildStructures(); this.campFires = []; if (sim.cfg.camp) this.buildCamp(sim.cfg.camp); if (sim.sg) this.buildSiege(); this.buildFigures(); this.buildHorses(); this.buildCannons(); this.buildMarkers(); this.buildFX(); this.buildViewmodel();
     this.ragdolls = []; for (let i = 0; i < MAXRAG; i++) this.ragdolls.push(new Ragdoll());
     this.ragNext = 0;
     this.buildEnvironment(); this.buildWater();
@@ -4615,6 +4853,73 @@ class Renderer {
       else if (kind === 'wagon') { const bed = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 3), L(0x5a4430)); bed.position.y = 0.9; grp.add(bed); for (const sx of [-0.8, 0.8]) for (const sz of [-0.9, 0.9]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.1, 12), L(0x3a2c1e)); w.rotation.z = Math.PI / 2; w.position.set(sx, 0.42, sz); grp.add(w); } const load = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.6, 2.2), L(0x8a7a5a)); load.position.y = 1.45; grp.add(load); }
       else if (kind === 'shields') { for (let k = 0; k < 3; k++) { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.05, 16), L(0xa8844a)); d.rotation.x = Math.PI / 2 - 0.25; d.position.set((k - 1) * 0.5, 0.42, 0); grp.add(d); } }
       else if (kind === 'log') { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 2.2, 8), L(0x4a3a2a)); lg.rotation.z = Math.PI / 2; lg.position.y = 0.2; grp.add(lg); } }
+  }
+  // ---------- 攻守城 siege: the rampart, the gatehouse, the ditch, the engines and the emplacements ----------
+  buildSiege() {
+    const sim = this.sim, sg = sim.sg, W = SIM.TERR.swall, Dt = SIM.TERR.sditch, sc = this.scene, T = this.tmp;
+    const L = (c) => new THREE.MeshLambertMaterial({ color: c }); const brick = L(0x6f6a62), brickD = L(0x58544e), top = L(0x8a857c), wood = L(0x5a3a20), woodL = L(0x7a5a38), hide = L(0x6e5a3e), iron = L(0x34363a), red = L(0x8a2a20), tile = L(0x2c2e32);
+    const box = (w, h, d, m, x, y, z, g) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; (g || sc).add(o); return o; };
+    const gy = (x, z) => SIM.terrainH(x, z);
+    // the rampart: two long brick bodies either side of the gate passage, a walkway, battlements on the outer edge
+    const zc = (W.z0 + W.z1) / 2, dep = W.z1 - W.z0, base = -2.5;
+    for (const sx of [-1, 1]) { const x0 = W.gate, x1 = 152, cx = sx * (x0 + x1) / 2, len2 = x1 - x0; const hTop = gy(cx, zc);
+      box(len2, hTop - base, dep + 0.2, brick, cx, (hTop + base) / 2, zc); box(len2, 0.08, dep - 0.6, top, cx, hTop + 0.04, zc + 0.2); }
+    { const pos = []; for (let x = -150; x <= 150; x += 1.7) { if (Math.abs(x) < W.gate + 0.6) continue; pos.push(x); }
+      const m = new THREE.InstancedMesh(new THREE.BoxGeometry(0.8, 0.85, 0.42), brickD, pos.length); pos.forEach((x, i) => { T.m.compose(T.v.set(x, gy(x, W.z0 + 0.3) + 0.42, W.z0 + 0.22), T.q.identity(), T.v2.set(1, 1, 1)); m.setMatrixAt(i, T.m); }); m.castShadow = true; sc.add(m); }
+    // scaling ladders (雲梯) leaning on the face when raised
+    this.sgLad = sg.lads.map(Ld => { const g = new THREE.Group(); const H = W.h + 0.4; for (const sx of [-0.45, 0.45]) box(0.12, H, 0.12, woodL, sx, H / 2, 0, g); for (let k = 0; k < 9; k++) box(0.9, 0.08, 0.08, woodL, 0, 0.4 + k * 0.66, 0, g); box(0.5, 0.25, 0.25, iron, 0, H, 0, g); g.position.set(Ld.x, gy(Ld.x, W.z0 - 2.8), W.z0 - 2.8); g.visible = false; sc.add(g); return g; });
+    // inner ramps (stairways up from the town)
+    for (const r of W.ramps) { const z0 = W.z1, z1 = W.z1 + 14, h0 = gy(r, z0 - 1); const len2 = Math.hypot(z1 - z0, h0); const o = box(6, 0.5, len2, brickD, r, h0 / 2, (z0 + z1) / 2); o.rotation.x = Math.atan2(h0, z1 - z0); }
+    // the gatehouse (城樓) over the passage, with its two-eaved roof
+    { const g = new THREE.Group(); const hTop = gy(W.gate + 2, zc); g.position.set(0, hTop, zc); sc.add(g);
+      box(2 * W.gate + 0.2, 1.4, dep + 0.2, brick, 0, 0.7 - 1.4 + 0.02, 0, g); box(16, 0.3, dep + 1.6, top, 0, 0.15, 0, g);
+      for (const x of [-6.5, -2.2, 2.2, 6.5]) for (const z of [-2.6, 2.6]) box(0.45, 4.2, 0.45, red, x, 2.25, z, g);
+      box(14.4, 3.6, 5.4, L(0x7a3a28), 0, 2.2, 0, g); const roof = (w, d, y, h) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 1, 1, 4, 1), tile); o.rotation.y = Math.PI / 4; o.scale.set(w * 0.72, h, d * 0.72); o.position.y = y; o.castShadow = true; g.add(o); };
+      roof(19, 8.5, 5.0, 1.6); box(11, 2, 4.4, L(0x7a3a28), 0, 6.4, 0, g); roof(14.5, 7, 8.1, 2.2);
+      const banner = box(0.08, 4, 0.08, wood, 7.6, 9.5, 2.7, g); }
+    // the gate doors in the passage
+    { const g = new THREE.Group(); g.position.set(0, gy(0, W.z0 + 1), W.z0 + 0.9); sc.add(g); const studs = L(0x9a8a5a);
+      for (const sx of [-1, 1]) { const d = box(W.gate - 0.15, W.h - 0.6, 0.5, L(0x5a2e1c), sx * (W.gate / 2), (W.h - 0.6) / 2, 0, g); for (let r2 = 0; r2 < 5; r2++) for (let c = 0; c < 3; c++) box(0.16, 0.16, 0.08, studs, sx * (0.9 + c * 1.2), 0.9 + r2 * 1.05, -0.3, g); }
+      box(2 * W.gate + 1, 0.8, dep + 0.2, brick, 0, W.h + 0.1, (dep / 2) - 0.9, g); this.sgDoors = g; }
+    // the ditch: an iced bottom, rows of sharpened stakes on the far bank, the causeway at the gate, fascines where it is filled
+    { const ice = new THREE.Mesh(new THREE.PlaneGeometry(300, Dt.w * 1.3), new THREE.MeshLambertMaterial({ color: sim.bdef.biome === 'winter' ? 0xa8b8c4 : 0x4a5a5a })); ice.rotation.x = -Math.PI / 2; ice.position.set(0, gy(40, Dt.zc) + 0.12, Dt.zc); ice.receiveShadow = true; sc.add(ice);
+      const st = []; for (let x = -148; x <= 148; x += 1.3) { if (Math.abs(x) < Dt.bridge + 1) continue; st.push([x, Dt.zc + Dt.w + 0.6 + (Math.floor(x / 1.3) % 2) * 0.5]); }
+      const m = new THREE.InstancedMesh(new THREE.ConeGeometry(0.09, 1.5, 4), woodL, st.length); st.forEach(([x, z], i) => { T.m.compose(T.v.set(x, gy(x, z) + 0.45, z), T.q.setFromEuler(T.e.set(-0.7, 0, (i % 3 - 1) * 0.15)), T.v2.set(1, 1, 1)); m.setMatrixAt(i, T.m); }); sc.add(m);
+      const deck = box(2 * Dt.bridge, 0.3, Dt.w * 2 + 1.5, woodL, 0, gy(0, Dt.zc) + 0.05, Dt.zc); deck.receiveShadow = true;
+      this.sgFills = Dt.fills.map(f => { const n = Math.round(f.hw * 2 / 0.9) * 3; const mm = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.35, 2.2, 6), L(0x8a7a50), n); for (let i = 0; i < n; i++) mm.setMatrixAt(i, T.zero); sc.add(mm); return { f, m: mm, n, shown: -1 }; }); }
+    // engines
+    this.sgEng = sg.engines.map(e => { const g = new THREE.Group(); sc.add(g);
+      if (e.kind === 'ram') { box(2.8, 0.25, 6, wood, 0, 0.7, 0, g); for (const sx of [-1, 1]) { box(0.18, 2.8, 0.18, wood, sx * 1.3, 2.1, -2.6, g); box(0.18, 2.8, 0.18, wood, sx * 1.3, 2.1, 2.6, g); const r1 = box(1.8, 0.12, 6.4, hide, sx * 0.75, 3.5, 0, g); r1.rotation.z = sx * 0.55; }
+        const log = new THREE.Group(); log.position.set(0, 1.9, 0); const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 6.6, 10), wood); lg.rotation.x = HPI; log.add(lg); const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.3, 0.7, 10), iron); tip.rotation.x = HPI; tip.position.z = 3.5; log.add(tip); g.add(log); g.userData.log = log; }
+      else if (e.kind === 'tower') { box(4.8, 0.4, 4.8, wood, 0, 0.6, 0, g); for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(0.32, 9.6, 0.32, wood, sx * 2.2, 5.2, sz * 2.2, g); for (const y of [3.4, 6.6, 9.6]) box(4.8, 0.25, 4.8, wood, 0, y, 0, g);
+        box(4.7, 9, 0.2, hide, 0, 5.1, 2.35, g); for (const sx of [-1, 1]) box(0.2, 9, 4.6, hide, sx * 2.35, 5.1, 0, g); box(4.9, 0.9, 4.9, hide, 0, 10.4, 0, g);
+        const br = new THREE.Group(); br.position.set(0, 6.6, 2.4); box(2.6, 0.18, 3.2, woodL, 0, 0, 1.6, br); g.add(br); g.userData.bridge = br; }
+      else { box(3.4, 0.3, 1.6, wood, 0, 0.6, 0, g); const sh = box(3.4, 2.5, 0.22, hide, 0, 1.9, 0.85, g); sh.rotation.x = -0.18; box(3.5, 0.12, 0.12, iron, 0, 3.05, 1.05, g); }
+      const nW = e.kind === 'tower' ? 4 : 4; for (let k = 0; k < nW; k++) { const sx = k % 2 ? 1 : -1, sz = k < 2 ? -1 : 1; const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.22, 10), wood); wh.rotation.z = HPI; const S = e.kind === 'tower' ? [2.5, 2] : e.kind === 'ram' ? [1.5, 2.2] : [1.8, 0.5]; wh.position.set(sx * S[0], 0.55, sz * S[1]); g.add(wh); }
+      return g; });
+    // emplacements: bed crossbows (床弩) and guns
+    this.sgEmp = sg.emp.map(e => { const g = new THREE.Group(); g.position.set(e.x, e.y, e.z); sc.add(g); const aim = new THREE.Group(); aim.position.y = 1.2; g.add(aim);
+      if (e.kind === 'bow') { box(0.5, 1.0, 0.5, wood, 0, 0.5, 0, g); box(0.25, 0.22, 3.2, wood, 0, 0, 0.3, aim); for (const sx of [-1, 1]) { const arm = box(1.9, 0.12, 0.14, wood, sx * 0.9, 0, 1.4, aim); arm.rotation.y = -sx * 0.32; } box(0.08, 0.08, 2.6, L(0xb08a50), 0, 0.14, 0.6, aim); box(0.02, 0.02, 2.4, L(0xd8d4c8), 0, 0.05, 0.6, aim); }
+      else { box(1.2, 0.5, 1.8, wood, 0, 0.45, 0, g); for (const sx of [-1, 1]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.16, 10), wood); wh.rotation.z = HPI; wh.position.set(sx * 0.7, 0.5, 0); g.add(wh); } const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2.9, 10), iron); tube.rotation.x = HPI; tube.position.z = 0.5; aim.add(tube); }
+      g.userData.aim = aim; return g; });
+    // sapped holes in the wall face
+    this.sgHoles = sg.holes.map(L => { const o = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.8, 0.4), L0x(0x16120e)); o.position.set(L.x, gy(L.x, W.z0 - 1) + 1.4, W.z0 - 0.45); o.scale.set(0.01, 0.01, 1); sc.add(o); return o; });
+    function L0x(c) { return new THREE.MeshBasicMaterial({ color: c }); }
+    this.sgv = true;
+  }
+  updateSiege(dt) {
+    const sim = this.sim, sg = sim.sg, W = SIM.TERR.swall, T = this.tmp;
+    sg.engines.forEach((e, i) => { const g = this.sgEng[i]; if (!g) return; g.visible = e.hp > 0; if (e.hp <= 0) return; const y = SIM.terrainH(e.x, e.z); g.position.set(e.x, y, e.z);
+      if (e.kind === 'ram') { const sw = e.atGate && sg.gateHp > 0 ? Math.sin(this.time * 4.2) : 0; g.userData.log.position.z = sw * 0.9; }
+      if (e.kind === 'tower') { const br = g.userData.bridge; const k = e.docked ? 1 : 0; br.rotation.x += ((k ? 0 : -1.4) - br.rotation.x) * Math.min(1, dt * 3); }
+      if (e.burn > 0 && Math.random() < dt * 16) { const S = { ram: [1.4, 3, 3.6], tower: [2.4, 2.4, 10], cart: [1.6, 0.8, 2.6] }[e.kind]; this.sparks.spawn(e.x + rnd(-S[0], S[0]), y + rnd(0.5, S[2]), e.z + rnd(-S[1], S[1]), rnd(-0.4, 0.4), rnd(1.5, 3.5), rnd(-0.4, 0.4), rnd(0.5, 1.1), rnd(0.5, 1.1), 0.1, 1, 0.55, 0.15, 1, 0.8, -2, 0.9, 0.25, 0.05); if (Math.random() < 0.4) this.smoke.spawn(e.x, y + S[2], e.z, rnd(-0.3, 0.3), 1.5, rnd(-0.3, 0.3), 4, 0.8, 3.5, 0.18, 0.16, 0.15, 0.5, 0.8, 0); } });
+    sg.lads.forEach((Ld, i) => { const g = this.sgLad[i]; const k = Ld.up ? 1 : Math.min(1, Ld.prog / 210); g.visible = Ld.up || Ld.prog > 0; g.rotation.x = -(HPI - (HPI - 0.44) * k); });
+    sg.emp.forEach((e, i) => { const g = this.sgEmp[i]; if (!g) return; g.rotation.y = e.yaw; g.userData.aim.rotation.x = -(e.pitch || 0); });
+    sg.holes.forEach((L, i) => { const o = this.sgHoles[i]; const k = L.up ? 1 : Math.min(0.85, L.prog / 320); o.scale.set(Math.max(0.01, k), Math.max(0.01, k), 1); });
+    if (this.sgDoors) this.sgDoors.visible = sg.gateHp > 0;
+    for (const F of this.sgFills) { const z = sim.missionZone(F.f.key); const k = F.f.done ? 1 : z ? Math.max(0, sg.A === 1 ? -z.ctrl / 100 : z.ctrl / 100) : 0; const show = Math.round(F.n * k); if (show === F.shown) continue; F.shown = show;
+      const Dt = SIM.TERR.sditch, per = Math.round(F.f.hw * 2 / 0.9); for (let i = 0; i < F.n; i++) { if (i >= show) { F.m.setMatrixAt(i, T.zero); continue; } const col = i % per, lay = Math.floor(i / per); const x = F.f.x - F.f.hw + 0.45 + col * 0.9; T.m.compose(T.v.set(x, SIM.terrainH(x, Dt.zc) + 0.35 + lay * 0.6, Dt.zc + ((col * 7) % 3 - 1) * 0.6), T.q.setFromEuler(T.e.set(HPI, 0, 0)), T.v2.set(1, Dt.w * 1.1, 1)); F.m.setMatrixAt(i, T.m); }
+      F.m.instanceMatrix.needsUpdate = true; }
   }
   updateCamp(dt) {
     for (const f of this.campFires) { f.t += dt; const k = 0.82 + 0.18 * Math.sin(f.t * 11) * Math.sin(f.t * 7.3 + 1) + 0.08 * Math.sin(f.t * 23); f.lt.intensity = 2.3 * k;
@@ -5336,6 +5641,19 @@ class Renderer {
         case 'ladderup': { const gy = terrainH(ev.x, ev.z); AUDIO.play('thud', ev.x, gy + 3, ev.z, 1.5); AUDIO.play('shout', ev.x, gy, ev.z, 1.4); this.dust(ev.x, gy + 0.3, ev.z - 2, 8, 0, 1, 0, 1.5, 1, 0.4, 1.4); break; }
         case 'ladderdown': { const gy = terrainH(ev.x, ev.z); AUDIO.play('scream', ev.x, gy + 3, ev.z, 1.2); AUDIO.play('thud', ev.x, gy, ev.z, 1.6); for (let i = 0; i < 6; i++) this.spawnDebris('b', ev.x + rnd(-0.5, 0.5), gy + 2 + i * 0.6, ev.z - 2, rnd(-1, 1), rnd(1, 3), rnd(-4, -1), 0.9, 0.08, 0.08, 0x6a4a2c, 0.6); this.dust(ev.x, gy + 0.3, ev.z - 3, 14, 0, 1.4, 0, 2.5, 1.2, 0.5, 2); break; }
         case 'oil': { const gy = terrainH(ev.x, ev.z); for (let i = 0; i < 30; i++) this.sparks.spawn(ev.x + rnd(-0.6, 0.6), gy + 4 + rnd(0, 1), ev.z + rnd(-0.6, 0.6), rnd(-2.5, 2.5), rnd(-3, 0), rnd(-2.5, 2.5), rnd(0.6, 1.4), rnd(0.8, 1.6), 0.2, 1, 0.6, 0.15, 1, 0.6, 1, 0.9, 0.2, 0.05); this.puffSmoke(ev.x, gy + 1, ev.z, 20, 0, 2.5, 0, 2, 5, 1, 4.5, 0.2, 0.7); this.flash(ev.x, gy + 1, ev.z, 5, 0.25); AUDIO.play('fire', ev.x, gy, ev.z, 2); AUDIO.play('scream', ev.x, gy + 1, ev.z, 1); break; }
+        case 'sgoil': { const gy = SIM.terrainH(ev.x, ev.z); for (let i = 0; i < 40; i++) this.sparks.spawn(ev.x + rnd(-0.8, 0.8), gy + ev.y - 1 + rnd(0, 1), ev.z + 1.5 + rnd(-0.4, 0.4), rnd(-2, 2), rnd(-6, -1), rnd(-2.5, 0), rnd(0.6, 1.4), rnd(0.8, 1.8), 0.2, 1, 0.6, 0.15, 1, 0.6, 1, 0.9, 0.2, 0.05); this.puffSmoke(ev.x, gy + 1, ev.z, 26, 0, 2.5, 0, 2.5, 6, 1, 5, 0.2, 0.75); this.flash(ev.x, gy + 1, ev.z, 6, 0.3); AUDIO.play('fire', ev.x, gy, ev.z, 2.2); AUDIO.play('scream', ev.x, gy + 1, ev.z, 1); break; }
+        case 'sgstone': { const gy = SIM.terrainH(ev.x, ev.z); for (let i = 0; i < 9; i++) this.spawnDebris('b', ev.x + rnd(-1.2, 1.2), gy + ev.y + rnd(0, 1.5), ev.z + 1.2, rnd(-1.5, 1.5), rnd(-4, 0), rnd(-2.5, -0.5), rnd(0.3, 0.7), rnd(0.3, 0.6), rnd(0.3, 0.7), 0x77726a, 1); this.dust(ev.x, gy + 0.3, ev.z, 18, 0, 1.4, 0, 2.6, 1.3, 0.5, 2.2); AUDIO.play('thud', ev.x, gy, ev.z, 2); AUDIO.play('scream', ev.x, gy + 1, ev.z, 0.8); break; }
+        case 'sgladder': { const gy = SIM.terrainH(ev.x, ev.z - 2); if (ev.up) { AUDIO.play('thud', ev.x, gy + 3, ev.z, 1.5); this.dust(ev.x, gy + 0.3, ev.z - 2.5, 8, 0, 1, 0, 1.5, 1, 0.4, 1.4); } else { AUDIO.play('scream', ev.x, gy + 3, ev.z, 1.2); AUDIO.play('thud', ev.x, gy, ev.z, 1.6); for (let i = 0; i < 6; i++) this.spawnDebris('b', ev.x + rnd(-0.5, 0.5), gy + 2 + i * 0.6, ev.z - 2, rnd(-1, 1), rnd(1, 3), rnd(-4, -1), 0.9, 0.08, 0.08, 0x6a4a2c, 0.6); this.dust(ev.x, gy + 0.3, ev.z - 3, 14, 0, 1.4, 0, 2.5, 1.2, 0.5, 2); } break; }
+        case 'sgbreach': { const gy = SIM.terrainH(ev.x, ev.z - 4); for (let i = 0; i < 16; i++) this.spawnDebris('b', ev.x + rnd(-3, 3), gy + rnd(0.5, 4), ev.z + rnd(-1, 1), rnd(-4, 4), rnd(3, 8), rnd(2, 9), rnd(0.15, 0.4), rnd(0.8, 2.4), 0.2, 0x5a2a1a, 1); this.puffSmoke(ev.x, gy + 2, ev.z, 60, 0, 3, 2, 6, 10, 2, 9, 0.6, 0.7); AUDIO.play('collapse', ev.x, gy + 2, ev.z, 1.6); this.shake = Math.max(this.shake, 1); break; }
+        case 'sghole': { const gy = SIM.terrainH(ev.x, ev.z - 2); for (let i = 0; i < 12; i++) this.spawnDebris('b', ev.x + rnd(-1, 1), gy + rnd(0.5, 3), ev.z - 0.5, rnd(-2, 2), rnd(1, 4), rnd(-4, -1), rnd(0.2, 0.5), rnd(0.2, 0.5), rnd(0.2, 0.5), 0x6f6a62, 1); this.puffSmoke(ev.x, gy + 1.5, ev.z - 1, 30, 0, 1.5, -1, 3, 6, 1.5, 6, 0.6, 0.7); AUDIO.play('collapse', ev.x, gy + 2, ev.z, 1.2); break; }
+        case 'sgdock': { const gy = SIM.terrainH(ev.x, ev.z); AUDIO.play('thud', ev.x, gy + 6, ev.z, 2); this.dust(ev.x, gy + 6.6, ev.z + 4, 14, 0, 0.5, 0, 2, 1.2, 0.5, 2); break; }
+        case 'sgengine': { const gy = SIM.terrainH(ev.x, ev.z); for (let i = 0; i < 22; i++) this.spawnDebris('b', ev.x + rnd(-2, 2), gy + rnd(1, ev.kind === 'tower' ? 9 : 3), ev.z + rnd(-2, 2), rnd(-5, 5), rnd(2, 8), rnd(-5, 5), rnd(0.15, 0.45), rnd(0.8, 3), rnd(0.15, 0.4), 0x5a3a20, 1); this.puffSmoke(ev.x, gy + 2, ev.z, 40, 0, 2.5, 0, 4, 8, 1.5, 6, 0.25, 0.7); AUDIO.play('collapse', ev.x, gy + 2, ev.z, 1.3); break; }
+        case 'sghit': { this.burstSparks(ev.x, ev.y, ev.z, ev.kind === 'arrow' ? 3 : 14, 5, 0.8, 0.6, 0.35, 0.35, 0.08); if (ev.kind !== 'arrow') { for (let i = 0; i < 5; i++) this.spawnDebris('b', ev.x, ev.y, ev.z, rnd(-3, 3), rnd(1, 4), rnd(-3, 3), 0.5, 0.06, 0.06, 0x6a4a2c, 1); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.4); } break; }
+        case 'sgshot': { this.flash(ev.x, ev.y, ev.z, ev.gun ? 5 : 1.5, ev.gun ? 0.2 : 0.08); if (ev.gun) { this.puffSmoke(ev.x + ev.dx * 1.5, ev.y, ev.z + ev.dz * 1.5, 30, ev.dx * 3, 0.6, ev.dz * 3, 1.5, 5, 1, 4.5, 0.85, 0.7); AUDIO.play('cannon', ev.x, ev.y, ev.z, 1.6); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 40) this.shake = Math.max(this.shake, 0.6 * (1 - dc / 40)); } else AUDIO.play('thud', ev.x, ev.y, ev.z, 1.2); break; }
+        case 'sgsaltpeter': AUDIO.play('fire', this.camera.position.x, 0, ev.z, 1.6); break;
+        case 'sgram': { const gy = SIM.terrainH(ev.x, ev.z - 2); this.dust(ev.x, gy + 1.5, ev.z - 1, 10, 0, 1, -1, 2, 1, 0.4, 1.6); this.burstSparks(ev.x, gy + 1.8, ev.z - 0.5, 8, 4, 0.9, 0.7, 0.4, 0.3, 0.08); AUDIO.play('ram', ev.x, gy + 1.5, ev.z, 2); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 25) this.shake = Math.max(this.shake, 0.35 * (1 - dc / 25)); break; }
+        case 'sgfill': AUDIO.play('thud', ev.x, 0, ev.z, 1.2); break;
+        case 'sgpush': AUDIO.play('thud', ev.x, 6, ev.z, 1.2); break;
         case 'execute': { this.blood(ev.x, ev.y + 0.6, ev.z, 20, 0, 1.5, 0); AUDIO.play('flesh', ev.x, ev.y, ev.z, 1.8); if (ev.id === heroId) { this.hitstop = Math.max(this.hitstop, 0.09); this.shake = Math.max(this.shake, 0.5); } break; }
         case 'streak': { const u = units[ev.id]; if (u) { this.burstSparks(u.x, u.y + 2.2, u.z, 50, 7, 1, 0.8, 0.3, 1, 0.15); AUDIO.play('kiai', u.x, u.y + 1.5, u.z, 1.5); } break; }
         case 'quake': { const fx = Math.sin(ev.yaw), fz = Math.cos(ev.yaw); for (let i = 0; i < 40; i++) { const a = ev.yaw + rnd(-1.1, 1.1), d = rnd(0.5, 6.5); const x = ev.x + Math.sin(a) * d, z = ev.z + Math.cos(a) * d; this.dust(x, terrainH(x, z) + 0.2, z, 1, Math.sin(a) * 6, 2.5, Math.cos(a) * 6, 0.4, 1.4, 0.6, 2.2); } for (let i = 0; i < 6; i++) this.decal(ev.x + fx * i, ev.y, ev.z + fz * i, 1.2, 0x2a2218); AUDIO.play('explosion', ev.x, ev.y, ev.z, 0.6); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 25) this.shake = Math.max(this.shake, 1 * (1 - dc / 25)); break; }
@@ -5592,7 +5910,7 @@ class Renderer {
     else { toRoot(a.lh, tmpA, 0); ik(0, 6, tmpA[0], tmpA[1], tmpA[2], 1); }
     if (fkR && w !== 'bow' && w !== '') { J[18] = J[15]; J[19] = J[16]; J[20] = J[17]; const fx = J[15] - J[12], fy = J[16] - J[13], fz = J[17] - J[14]; const l = Math.hypot(fx, fy, fz) || 1; const cdir = routing ? [fx / l * 0.3 - C[6], fy / l * 0.3 - C[7] - 0.4, fz / l * 0.3 - C[8]] : [C[6], C[7] + 0.3, C[8]]; const cl2 = Math.hypot(cdir[0], cdir[1], cdir[2]) || 1; J[21] = cdir[0] / cl2; J[22] = cdir[1] / cl2; J[23] = cdir[2] / cl2; }
     // ---------- to world ----------
-    const dp = down ? -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4)) : 0, cP = Math.cos(dp), sP = Math.sin(dp);
+    const dp = down ? (u.downed ? -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1) : -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4))) : 0, cP = Math.cos(dp), sP = Math.sin(dp); // a downed man is propped on an elbow or half-sitting, and rises as he is hauled up
     const oy = down ? 0.15 : 0;
     const vsc = u.look && u.look.h ? u.look.h : (u.type === 'byakkotai' ? 0.9 : 1) * (u.champ ? S.HCLASS[u.hclass | 0].scale : u.type === 'hero' ? 1.04 : 0.88 + uhash(u.id, 7) * 0.24); // men come in all sizes: about 12% either way
     const Wp = (lx, ly, lz, out, o) => { lx *= vsc; ly *= vsc; lz *= vsc; const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = x + lx * cy + z2 * sy; out[o + 1] = y + oy + y2; out[o + 2] = z - lx * sy + z2 * cy; };
@@ -5970,7 +6288,7 @@ class Renderer {
   render(alpha, dt, view) {
     this.alpha = alpha; // overlays (speech captions) read positions interpolated the same way the bodies are
     if (this.hitstop > 0 && !this.studio) { this.hitstop -= dt; this.present(this.camera); return; }
-    this.time += dt; const sim = this.sim, units = sim.units, T = this.tmp; if (this.campFires && this.campFires.length) this.updateCamp(dt);
+    this.time += dt; const sim = this.sim, units = sim.units, T = this.tmp; if (this.campFires && this.campFires.length) this.updateCamp(dt); if (this.sgv) this.updateSiege(dt);
     this.fdt = Math.min(0.05, Math.max(0.001, dt)); this.speedLines = 0;
     const local = sim.players[this.localIdx]; const hero = local ? units[local.heroId] : null;
     const fp = view.mode === 'fp' && hero && !hero.dead; this.lastMode = fp ? 'fp' : 'cmd';
@@ -6109,6 +6427,7 @@ class Renderer {
     let si = 0, ai = 0;
     for (let i = 0; i < sim.projectiles.length; i++) {
       const p = sim.projectiles[i];
+      if (p.bolt) { if (ai >= 128) continue; T.v.set(p.vx, p.vy, p.vz).normalize(); T.q.setFromUnitVectors(T.v2.set(0, 0, 1), T.v); T.m.compose(T.v3.set(p.x, p.y, p.z), T.q, T.v4.set(2.4, 2.4, 2.6)); this.arrows.setMatrixAt(ai++, T.m); continue; }
       if (p.kind === 'arrow') { if (ai >= 128) continue; T.v.set(p.vx, p.vy, p.vz).normalize(); T.q.setFromUnitVectors(T.v2.set(0, 0, 1), T.v); T.m.compose(T.v3.set(p.x, p.y, p.z), T.q, T.v4.set(1, 1, 1)); this.arrows.setMatrixAt(ai++, T.m); }
       else { if (si >= 64) continue; const sc = p.kind === 'solid' ? 1.6 : 1; T.m.compose(T.v.set(p.x, p.y, p.z), T.q.identity(), T.v2.set(sc, sc, sc)); this.shells.setMatrixAt(si++, T.m); if (p.kind === 'shell' && Math.random() < 0.6) this.smoke.spawn(p.x, p.y, p.z, rnd(-0.3, 0.3), rnd(0, 0.4), rnd(-0.3, 0.3), 0.8, 0.3, 1.2, 0.6, 0.6, 0.6, 0.4, 0.9, -0.05); }
     }
@@ -6833,7 +7152,7 @@ function renderBattles() {
   }
 }
 function renderMenu() {
-  renderBattles(); renderStory(); renderScen(); const story = state.mode === 'story', heroes = state.mode === 'heroes', soldier = state.mode === 'soldier', mis = state.mode === 'campaign' || state.mode === 'assault'; $('missionPanel').hidden = !mis; if (mis && typeof renderMissions === 'function') renderMissions(); $('storyPanel').hidden = !story; $('heroPanel').hidden = !heroes; $('soldierPanel').hidden = !soldier; $('armsRow').hidden = heroes; $('fieldPanel').hidden = story || heroes || soldier || mis; if (soldier && typeof renderRoles === 'function') renderRoles(); $('modeNote').textContent = state.mode === 'officers' ? 'Officers: you lead a single squad in person (the first one in your army) beside AI generals. Host a room so friends can each lead a squad too.' : state.mode === 'grand' ? 'Grand battle: AI generals fill out both sides. Command your allies from the command view.' : state.mode === 'chaos' ? 'Chaos: no orders and no fear, and the gods take a hand.' : story ? 'Story: seven battles of the Ming–Jin war. Your faction choice sets which side you fight for.' : heroes ? 'Heroes: you are a lone champion; AI armies fight a phased siege. Faction sets your side. Host a room so each friend plays a champion.' : '';
+  renderBattles(); renderStory(); renderScen(); const story = state.mode === 'story', heroes = state.mode === 'heroes', soldier = state.mode === 'soldier', mis = state.mode === 'campaign' || state.mode === 'assault' || state.mode === 'siege'; $('missionPanel').hidden = !mis; if (mis && typeof renderMissions === 'function') renderMissions(); $('storyPanel').hidden = !story; $('heroPanel').hidden = !heroes; $('soldierPanel').hidden = !soldier; $('armsRow').hidden = heroes; $('fieldPanel').hidden = story || heroes || soldier || mis; if (soldier && typeof renderRoles === 'function') renderRoles(); $('modeNote').textContent = state.mode === 'officers' ? 'Officers: you lead a single squad in person (the first one in your army) beside AI generals. Host a room so friends can each lead a squad too.' : state.mode === 'grand' ? 'Grand battle: AI generals fill out both sides. Command your allies from the command view.' : state.mode === 'chaos' ? 'Chaos: no orders and no fear, and the gods take a hand.' : story ? 'Story: seven battles of the Ming–Jin war. Your faction choice sets which side you fight for.' : heroes ? 'Heroes: you are a lone champion; AI armies fight a phased siege. Faction sets your side. Host a room so each friend plays a champion.' : '';
   $('modeSeg').querySelectorAll('button').forEach(bt => bt.classList.toggle('on', bt.dataset.m === state.mode));
   const ros = S.ROSTER[state.faction]; const cost = armyCost(state.army), left = S.BUDGET - cost;
   const b = $('budget'); b.textContent = `${left} / ${S.BUDGET} taels`; b.classList.toggle('over', left < 0);
@@ -7336,6 +7655,7 @@ function cmdCamUpdate(dt) {
 }
 // ---------- game ----------
 function startGame(msg, me, net, delay) {
+  if (msg.mode === 'siege') msg = Object.assign({}, msg, { mode: 'assault', op: S.OPS[msg.op] && S.OPS[msg.op].siege ? msg.op : 'ningyuan_siege' }); // the Siege menu mode is an assault operation fought over a walled town
   const cfg = { seed: msg.seed, battle: msg.battle || 'field', mode: msg.mode || 'standard', chapter: msg.chapter | 0, scen: msg.scen || 'ningyuan', players: msg.players.map(p => ({ name: p.name, team: p.team, army: p.army, mounted: p.mounted, hclass: p.hclass | 0, veterans: p.veterans, recruits: p.recruits, role: p.role, kit: p.kit, command: p.command | 0, arms: p.arms || null })) };
   if (msg.soldier) cfg.soldier = msg.soldier; if (msg.mission) cfg.mission = msg.mission; if (msg.op) cfg.op = msg.op; if (msg.camp) cfg.camp = msg.camp;
   msg.players.forEach((p, i) => { if (p.yyRole) cfg.players[i].yyRole = p.yyRole; });
@@ -7384,6 +7704,7 @@ function handleEvents(events) {
       state.hitBy = { text: `${what} ${a.type === 'hero' ? 'an enemy general' : 'a ' + a.def.name.replace(/s$/, '').replace(/men$/, 'man')}${ev.cause === 'melee' ? '' : ` · ${Math.round(d)} m`}${ev.killed ? ' — fatal' : ''}`, t: ev.killed ? 6 : 2.6 }; } }
   if (sim.real && typeof soldierEvent === 'function') for (const ev of events) soldierEvent(ev);
   if (sim.mission && typeof missionEvent === 'function') for (const ev of events) missionEvent(ev);
+  if (sim.sg) for (const ev of events) siegeEvent(ev);
   if (typeof SPEECH !== 'undefined') for (const ev of events) SPEECH.event(ev);
   if (typeof zheEvent === 'function') for (const ev of events) zheEvent(ev);
   for (const ev of events) {
@@ -7509,6 +7830,15 @@ function moraleCls(sq) { if (!sq.alive) return ''; if (sq.routing) return 'm-rou
 function moraleWord(sq) { if (sq.routing) return 'routing'; if (sq.def.fearless) return 'fearless'; const m = sq.morale / sq.moraleMax; return m < 0.35 ? 'wavering' : m < 0.6 ? 'shaken' : 'steady'; }
 // ---------- screen markers: objectives (lettered circles) and your companies (numbered), pinned to the screen edge when out of view ----------
 const MARKS = { el: null, pool: [], v: null };
+function helpPrompt(h, u) { // 'E · help him up' beside a downed man, and the progress while you haul him up
+  let el = document.getElementById('helpprompt'); if (!el) { el = document.createElement('div'); el.id = 'helpprompt'; document.body.appendChild(el); }
+  const sim = state.sim; if (!h || h.dead || !sim) { el.hidden = true; return; }
+  const busy = sim.teamAlive[h.team].find(v => v.downed && v.reviveBy === h.id);
+  if (busy) { el.hidden = false; el.innerHTML = `<b>扶起</b> getting him up… <i style="--p:${Math.min(100, Math.round(busy.reviveT / 45 * 100))}%"></i>`; return; }
+  if (!u) { el.hidden = true; return; }
+  const nm = typeof SPEECH !== 'undefined' ? SPEECH.nameOf(u.id) : null; el.hidden = false;
+  el.innerHTML = `<kbd>E</kbd> ${u.downed ? 'help him up' : 'get his arm over your shoulder'}${nm ? ` · <span>${typeof nm === 'string' ? nm : nm.zh + ' ' + nm.en}</span>` : ''}`;
+}
 function hudMarks() {
   const sim = state.sim, r = state.renderer; if (!MARKS.el) { MARKS.el = document.createElement('div'); MARKS.el.id = 'hudmarks'; document.body.appendChild(MARKS.el); MARKS.v = new THREE.Vector3(); }
   const show = sim && r && state.screen === 'game' && !state.ended && r.lastMode === 'fp' && !(sim.mission && sim.mission.camp) && !(typeof DEP !== 'undefined' && DEP.open);
@@ -7521,6 +7851,12 @@ function hudMarks() {
     { const fq = me.soldierSq !== undefined && !(me.squads || []).includes(me.soldierSq) ? sim.squads[me.soldierSq] : null, h = localHero(); // your file, and your own place in it, before you command it
       if (fq && fq.alive && h && !h.dead) { if (Math.hypot(fq.cx - h.x, fq.cz - h.z) > 7) items.push({ x: fq.cx, z: fq.cz, y: 2.4, txt: '伍', cls: 'sq file', always: false });
         if (h.squad === fq.id && h.slotX !== undefined && Math.hypot(h.slotX - h.x, h.slotZ - h.z) > 3) items.push({ x: h.slotX, z: h.slotZ, y: 0.4, txt: '◇', cls: 'place', name: 'your place', always: true }); } }
+    { const h = localHero(); let near = null, nd = 2.6; // downed and wounded comrades: a pulsing cross with the bleed-out ring, pinned to the edge when out of view
+      if (h) for (const u of sim.teamAlive[me.team]) { if (!u.wounded || u === h) continue; const d = Math.hypot(u.x - h.x, u.z - h.z); if (d > 70) continue;
+        const helped = u.helpedBy >= 0; if (u.downed || !helped) items.push({ x: u.x, z: u.z, y: 1.3, txt: '✚', cls: 'down' + (u.zfile ? ' file' : '') + (u.reviveBy >= 0 ? ' busy' : ''), always: true, bl: u.downed ? Math.max(0, Math.min(1, u.bleed / (30 * (u.zfile ? 45 : 30)))) : undefined });
+        else if (u.helpedBy === h.id) items.push({ x: u.x, z: u.z, y: 2.1, txt: '扶', cls: 'down carry', always: false });
+        if (!h.dead && d < nd && (u.downed || !helped)) { nd = d; near = u; } }
+      helpPrompt(h, near); }
     (me.squads || []).forEach((id, k) => { const q = sim.squads[id]; if (!q || !q.alive || q.inactive) return; const h = localHero(); if (h && Math.hypot(q.cx - h.x, q.cz - h.z) < 6) return; items.push({ x: q.cx, z: q.cz, y: 2.2, txt: String(k + 1), cls: 'sq' + (sel.includes(id) ? ' on' : ''), always: false }); });
   }
   const cam = r ? r.camera : null, W = window.innerWidth, H = window.innerHeight, h = localHero(); const used = { l: [], r: [] };
@@ -7532,12 +7868,58 @@ function hudMarks() {
     let sx, sy, edge = '';
     if (on) { sx = (v.x * 0.5 + 0.5) * W; sy = (-v.y * 0.5 + 0.5) * H; }
     else { const right = cv.x > 0; edge = right ? ' edge r' : ' edge l'; sx = right ? W - 34 : 34; const yy = behind ? 0 : Math.max(-0.7, Math.min(0.7, v.y)); sy = (-yy * 0.5 + 0.5) * H; const U = used[right ? 'r' : 'l']; for (let k = 0; k < 8 && U.some(y0 => Math.abs(y0 - sy) < 40); k++) sy += 42; U.push(sy); }
-    el.className = 'hm ' + it.cls + edge; el.firstChild.textContent = it.txt;
+    el.className = 'hm ' + it.cls + edge; el.firstChild.textContent = it.txt; if (it.bl !== undefined) el.style.setProperty('--bl', (it.bl * 360).toFixed(0) + 'deg'); else el.style.removeProperty('--bl');
     const d = h ? Math.round(Math.hypot(it.x - h.x, it.z - h.z)) : 0; el.lastChild.textContent = d > 4 ? d + ' m' : '';
     if (el._k === it.txt + edge && el._x !== undefined && Math.abs(el._x - sx) < 200 && Math.abs(el._y - sy) < 200) { sx = el._x + (sx - el._x) * 0.35; sy = el._y + (sy - el._y) * 0.35; } el._k = it.txt + edge; el._x = sx; el._y = sy; // smooth: company centres move in 30 Hz steps
     el.style.transform = `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px)`; el.style.display = '';
   }
   for (let i = n; i < MARKS.pool.length; i++) MARKS.pool[i].style.display = 'none';
+}
+// ---------- 攻守城 siege: shouted orders on siege events, interaction prompts and the siege status panel ----------
+const SGUI = { el: null, pr: null, t: 0 };
+const SG_LINES = {
+  ladderUp: [['梯子立住了，上！', "The ladder's up — climb!"], ['梯子上來了！推下去！', 'Ladder on the wall — throw it down!']],
+  ladderDown: [['梯子倒了！', "The ladder's down!"], ['推倒了！', 'Down it goes!']],
+  oil: [['火油！散開！', 'Burning oil — spread out!'], ['倒油！點火！', 'Pour the oil — fire!']],
+  stone: [['頭上！石頭！', 'Above you — stones!'], ['放石頭！', 'Drop the stones!']],
+  dock: [['雲車靠城了！上城！', 'The tower is at the wall — over!'], ['敵樓靠上來了！', 'Their tower is against the wall!']],
+  breach: [['城門破了！殺進去！', 'The gate is broken — in!'], ['城門破了！守住街口！', 'The gate is down — hold the street!']],
+  hole: [['牆鑿穿了！', "We're through the wall!"], ['他們把牆鑿穿了！', "They've holed the wall!"]],
+  saltpeter: [['城下起火了！', 'Fire at the foot of the wall!'], ['點硝！', 'Light the saltpeter!']],
+  fill: [['壕溝填平了！', 'The ditch is filled!'], ['他們填了壕溝！', "They've filled the ditch!"]],
+  engine: [['車毀了！', "We've lost an engine!"], ['砸爛了！', 'Smashed it!']],
+  slip: [['冰上滑！抓緊！', 'The ice — hold on!'], null],
+};
+function sgShout(key, att) { if (typeof SPEECH === 'undefined') return; const L = SG_LINES[key]; const line = L && L[att ? 0 : 1]; if (!line) return; const sim = state.sim, me = sim.players[state.localIdx], h = localHero(); if (!h) return;
+  let best = -1, bd = 30; for (const u of sim.teamAlive[me.team]) { if (u.id === h.id || u.type === 'horse' || u.def.ai === 'cannon') continue; const d = Math.hypot(u.x - h.x, u.z - h.z); if (d < bd) { bd = d; best = u.id; } }
+  if (best >= 0) SPEECH.say(best, line[0], line[1], { prio: 2, loud: true, shout: true, cool: 3 }); }
+function siegeEvent(ev) {
+  const sim = state.sim, sg = sim.sg; if (!sg) return; const me = sim.players[state.localIdx]; const att = me.team === sg.A;
+  if (ev.t === 'sgladder') { sgShout(ev.up ? 'ladderUp' : 'ladderDown', att); if (ev.up && !att) toast('A ladder is up! Get to the top of it and press E to throw it down'); }
+  else if (ev.t === 'sgoil') sgShout('oil', att); else if (ev.t === 'sgstone') sgShout('stone', att); else if (ev.t === 'sgdock') { sgShout('dock', att); toast(att ? 'The siege tower is against the wall — its bridge is down' : 'A siege tower has reached the wall!'); }
+  else if (ev.t === 'sgbreach') { sgShout('breach', att); toast(att ? 'THE GATE IS BROKEN!' : 'The gate has fallen!'); MUSIC.accent('breach'); }
+  else if (ev.t === 'sghole') { sgShout('hole', att); toast(att ? 'The sappers are through the wall!' : 'They have chiselled through the wall!'); }
+  else if (ev.t === 'sgsaltpeter') sgShout('saltpeter', att); else if (ev.t === 'sgfill') sgShout('fill', att); else if (ev.t === 'sgengine') { sgShout('engine', att); feed(`${{ ram: 'The covered ram', tower: 'A siege tower', cart: 'A shield cart' }[ev.kind] || 'An engine'} is destroyed`, !att); }
+  else if (ev.t === 'sgslip') sgShout('slip', att);
+  else if (ev.t === 'sgman') { const h = localHero(); if (h && ev.id === h.id) toast(ev.on ? `Manning the ${ev.kind === 'gun' ? 'gun' : 'bed crossbow'}: aim with the mouse, left click to fire, E to leave it` : 'You leave the emplacement'); }
+}
+function siegeHUD(dt) {
+  const sim = state.sim, sg = sim && sim.sg; if (!SGUI.el) { SGUI.el = document.createElement('div'); SGUI.el.id = 'sgbar'; document.body.appendChild(SGUI.el); SGUI.pr = document.createElement('div'); SGUI.pr.id = 'sgprompt'; document.body.appendChild(SGUI.pr); }
+  if (!sg || state.ended || state.screen !== 'game') { SGUI.el.hidden = true; SGUI.pr.hidden = true; return; }
+  SGUI.t -= dt; if (SGUI.t > 0) return; SGUI.t = 0.2;
+  const W = S.TERR.swall, me = sim.players[state.localIdx], att = me.team === sg.A, h = localHero();
+  const bar = (v) => `<i style="width:${Math.max(0, Math.min(100, v * 100)).toFixed(0)}%"></i>`;
+  let s = `<b>${['一 · The ditch', '二 · The walls', '三 · The gatehouse', '四 · The streets'][Math.min(3, sim.sector)]}</b>`;
+  s += `<div class="r"><span>Gate</span><em>${bar(sg.gateHp / sg.gateMax)}</em></div>`;
+  for (const e of sg.engines) { if (e.kind === 'cart' && e.cover) continue; s += `<div class="r${e.hp <= 0 ? ' x' : ''}"><span>${{ ram: '衝車 Ram', tower: '雲車 Tower', cart: '洞車 Sap cart' }[e.kind]}${e.docked ? ' · at the wall' : e.atGate ? ' · at the gate' : e.burn > 0 ? ' · burning' : ''}</span><em>${bar(e.hp / e.max)}</em></div>`; }
+  s += `<div class="r"><span>Ladders up</span><strong>${sg.lads.filter(L => L.up).length} / ${sg.lads.length}</strong></div>`;
+  if (sg.holes.some(L => L.prog > 0 || L.up)) s += `<div class="r"><span>Sapping</span><strong>${sg.holes.map(L => L.up ? 'through' : Math.round(L.prog / 3.2) + '%').join(' · ')}</strong></div>`;
+  SGUI.el.innerHTML = s; SGUI.el.hidden = false;
+  // what E would do here
+  let p = ''; if (h && !h.dead) { if (h.manE >= 0) p = 'E · leave the emplacement · LMB fire';
+    else { for (const e of sg.emp) if (e.team === me.team && e.man < 0 && Math.hypot(e.x - h.x, e.z - h.z) < 2.6) { p = `E · man the ${e.kind === 'gun' ? 'gun' : 'bed crossbow (床弩)'}`; break; }
+      if (!p) for (const L of sg.lads) { if (Math.abs(L.x - h.x) > 2.4) continue; if (!att && L.up && h.z > W.z0 && h.z < W.z0 + 3.5) { p = 'E · throw the ladder down'; break; } if (att && !L.up && h.z < W.z0 - 0.5 && h.z > W.z0 - 5 && sim.sector >= 1) { p = 'E · help raise the ladder'; break; } } } }
+  SGUI.pr.textContent = p; SGUI.pr.hidden = !p;
 }
 function updateHUD(dt) {
   const sim = state.sim, r = state.renderer; const hero = localHero(); const me = sim.players[state.localIdx];
@@ -7551,7 +7933,7 @@ function updateHUD(dt) {
     const hb = state.hitBy; if (hb && hb.t > 0) { hb.t -= dt; $('hitby').textContent = hb.text; $('hitby').style.opacity = Math.min(1, hb.t); } else $('hitby').style.opacity = 0; }
   if (sim.real && typeof soldierHUD === 'function') soldierHUD(dt); else { $('fallen').hidden = true; }
   if (sim.mission && typeof missionHUD === 'function') missionHUD(dt); else $('mobj').hidden = true;
-  depHUD(dt); hudMarks();
+  depHUD(dt); hudMarks(); siegeHUD(dt);
   if (sim.real && !state.replayMode) { const plain = !me.squads.length; $('cmdpanel').hidden = plain; $('fury').hidden = true; }
   { const bl = $('bombs') && $('bombs').parentNode; if (bl) bl.hidden = true; } // grenades removed
   { const hq = $('hitq'); if (r.hitQ) { hq.textContent = r.hitQ.text; hq.style.color = r.hitQ.c; hq.style.opacity = Math.min(1, r.hitQ.t * 2.5); } else hq.style.opacity = 0;
@@ -7997,9 +8379,11 @@ CAREER.init(); renderMenu();
 
 // ===== Co-op campaign & Assault: menus and HUD =====
 function renderMissions() {
-  const as = state.mode === 'assault'; const L = as ? S.OPS : S.MISSIONS; const cur = as ? state.op : state.mission;
+  const sgm = state.mode === 'siege', as = state.mode === 'assault' || sgm; const L = as ? S.OPS : S.MISSIONS;
+  if (as && (!L[state.op] || !!L[state.op].siege !== sgm)) state.op = Object.keys(L).find(k => !L[k].hidden && !!L[k].siege === sgm);
+  const cur = as ? state.op : state.mission;
   $('missionHead').textContent = as ? 'Operation' : 'Mission';
-  $('missionList').innerHTML = Object.keys(L).filter(k => !L[k].hidden).map(k => { const M = L[k]; return `<button type="button" class="chap${k === cur ? ' on' : ''}" data-k="${k}"><b>${M.title}</b><small>${M.year} · ${M.brief}</small></button>`; }).join('');
+  $('missionList').innerHTML = Object.keys(L).filter(k => !L[k].hidden && (!as || !!L[k].siege === sgm)).map(k => { const M = L[k]; return `<button type="button" class="chap${k === cur ? ' on' : ''}" data-k="${k}"><b>${M.title}</b><small>${M.year} · ${M.brief}</small></button>`; }).join('');
   $('missionList').querySelectorAll('button').forEach(b => b.onclick = () => { if (as) state.op = b.dataset.k; else state.mission = b.dataset.k; AUDIO.init(); AUDIO.play('ui'); renderMissions(); });
   const side = as ? state.faction : 0; const list = side === 1 ? ROLE_INFO_JIN : ROLE_INFO; if (!list.some(r => r[0] === state.role)) state.role = list[0][0];
   $('mroleList').innerHTML = list.map(r => `<button type="button" class="chap${r[0] === state.role ? ' on' : ''}" data-r="${r[0]}"><b>${r[1]} · ${r[2]}</b><small>${r[3]}</small></button>`).join('');
@@ -8171,9 +8555,28 @@ const SPEECH = (() => {
   function el() { let e = pool.pop(); if (!e) { e = document.createElement('div'); e.className = 'spk'; document.body.appendChild(e); } e.style.opacity = 0; e.hidden = false; return e; }
   function listener() { const r = state.renderer; return r ? r.camera.position : null; }
   // say(unitId, zh, en, opts): opts.prio (0 bark … 3 story), opts.loud (scripted: heard farther), opts.radio (fall back to the radio panel), opts.who (name override), opts.shout
+  // ---- the face of whoever is speaking: rendered once per man in the studio above the field, then cached ----
+  const faces = {};
+  function face(u) {
+    const r = state.renderer; if (!r || !u) return null; const key = u.id + ':' + ((u.look && u.look.id) || '');
+    if (faces[key] !== undefined) return faces[key];
+    const c = Object.assign({}, u, { st: S.ST_IDLE, stT: 0, blocking: false, aiming: false, speedNow: 0, walk: 0, mounted: false, mount: -1, downT: 0, flinchT: 0, dead: false, wounded: false, ctrl: -1, posT: 0, entT: 0 });
+    const Y = 420, prevC = r.cine, prevS = r.studio; r.studio = { id: u.id, u: c, x: 0, y: Y, z: 0, yaw: 0 };
+    const hh = 1.62 * ((u.look && u.look.h) || 1); r.cine = { pos: [0.25, Y + hh + 0.05, 1.35], look: [0, Y + hh - 0.02, 0], fov: 28 };
+    let url = null; try { r.render(1, 0, { mode: 'cmd', yaw: 0, pitch: 0, selected: [] }); const cv = document.getElementById('c'); const t = document.createElement('canvas'); t.width = t.height = 112; const g = t.getContext('2d'); const W = cv.width, H = cv.height, s = Math.min(W, H) * 0.62; g.drawImage(cv, (W - s) / 2, (H - s) / 2, s, s, 0, 0, 112, 112); url = t.toDataURL('image/jpeg', 0.85); } catch (e) { }
+    r.studio = prevS; r.cine = prevC; faces[key] = url; return url;
+  }
+  let cardEl = null, cardT = 0;
+  function card(u, who, zh, en, dur) { // the dialogue card: face on the left, the words on the right
+    if (!cardEl) { cardEl = document.createElement('div'); cardEl.id = 'dlgcard'; cardEl.innerHTML = '<div class="f"></div><div class="t"><b></b><span class="z"></span><span class="e"></span></div>'; document.body.appendChild(cardEl); }
+    const f = cardEl.firstChild, url = u ? face(u) : null; f.style.backgroundImage = url ? `url(${url})` : ''; f.classList.toggle('none', !url);
+    const t = cardEl.lastChild; t.children[0].textContent = who || ''; t.children[1].textContent = zh || ''; t.children[2].textContent = en || '';
+    cardEl.classList.add('on'); cardT = dur || 5;
+  }
   function say(id, zh, en, o) {
     o = o || {}; const u = unit(id); const L = listener(); const now = performance.now() / 1000; const prio = o.prio || 0;
     const range = o.loud ? 48 : 26;
+    if (prio >= 3 && u && !u.dead) { const n0 = o.who || nameOf(id); card(u, typeof n0 === 'string' ? n0 : n0 ? n0.zh + ' ' + n0.en : '', zh, en, o.dur || Math.min(8, 3 + (en || '').length / 20)); if (!L || Math.hypot(u.x - L.x, u.z - L.z) > range) return true; }
     if (!u || u.dead || !L || Math.hypot(u.x - L.x, u.z - L.z) > range) { if (o.radio && typeof radio === 'function' && typeof MIS !== 'undefined' && MIS) radio(o.who || 'Voice', `${zh ? zh + '  ' : ''}${en}`); return false; }
     if (prio < 2 && (cool[id] || 0) > now) return false; cool[id] = now + (o.cool || 6);
     for (let i = live.length - 1; i >= 0; i--) if (live[i].id === id) { kill(i); }
@@ -8189,13 +8592,22 @@ const SPEECH = (() => {
   function frame(dt) {
     const r = state.renderer; if (!r || !state.sim) { while (live.length) kill(0); return; }
     const cam = r.camera, W = canvas.clientWidth, H = canvas.clientHeight;
+    if (cardEl && cardT > 0) { cardT -= dt; if (cardT <= 0) cardEl.classList.remove('on'); }
+    const edgeUsed = { l: [], r: [] };
     for (let i = live.length - 1; i >= 0; i--) { const l = live[i]; l.t += dt; const u = unit(l.id);
       if (l.t > l.dur || !u || (u.dead && l.t > 0.8)) { kill(i); continue; }
       // the caption rides the drawn body, not the 30 Hz sim position
       const al = r.alpha === undefined ? 1 : Math.max(0, Math.min(1, r.alpha)); v3.set(u.px + (u.x - u.px) * al, u.py + (u.y - u.py) * al + (u.mounted ? 2.9 : 2.15), u.pz + (u.z - u.pz) * al); const d = cam.position.distanceTo(v3); v3.project(cam);
       { const me = state.sim.players[state.localIdx]; if (me && l.id === me.heroId && r.lastMode === 'fp') { // your own voice: a subtitle at the bottom of the screen, not a caption over your own head
         l.e.style.transform = `translate(${(W / 2).toFixed(1)}px, ${(H * 0.8).toFixed(1)}px) translate(-50%, -100%)`; l.e.style.opacity = Math.min(1, l.t * 5, (l.dur - l.t) * 2).toFixed(2); continue; } }
-      if (v3.z > 1 || Math.abs(v3.x) > 1.15 || Math.abs(v3.y) > 1.2) { l.e.style.opacity = 0; continue; }
+      if (v3.z > 1 || Math.abs(v3.x) > 1.15 || Math.abs(v3.y) > 1.2) {
+        if (l.prio >= 2) { // a shout you need to hear (help, man down) stays on screen, pinned to the edge toward the speaker
+          const cv2 = v3.set(u.x, u.y + 1.8, u.z).applyMatrix4(cam.matrixWorldInverse); const right = cv2.x > 0; const U = edgeUsed[right ? 'r' : 'l'];
+          let sy = H * 0.42; while (U.some(y0 => Math.abs(y0 - sy) < 54)) sy += 56; U.push(sy);
+          l.e.classList.add('edge', right ? 'r' : 'l'); l.e.classList.remove(right ? 'l' : 'r');
+          l.e.style.transform = `translate(${right ? W - 16 : 16}px, ${sy.toFixed(0)}px) translate(${right ? '-100%' : '0'}, -50%)`; l.e.style.opacity = Math.min(1, l.t * 5, (l.dur - l.t) * 2).toFixed(2); continue; }
+        l.e.style.opacity = 0; continue; }
+      l.e.classList.remove('edge', 'l', 'r');
       const sx = (v3.x + 1) / 2 * W, sy = (1 - v3.y) / 2 * H; const k = Math.max(0.62, Math.min(1.15, 9 / Math.max(3, d)));
       l.e.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -100%) scale(${k.toFixed(3)})`;
       const fade = Math.min(1, l.t * 5, (l.dur - l.t) * 2) * Math.max(0.35, 1 - d / 40); l.e.style.opacity = fade.toFixed(2); }
@@ -8230,6 +8642,12 @@ const SPEECH = (() => {
       if (q.team === team) { const c = unit(q.unitIds.find(id => !unit(id).dead)); if (c) say(c.id, '撤！快撤！', 'Fall back! Fall back!', { prio: 1, shout: 0.25 }); }
       else { const w = near(h.x, h.z, 18, team, h.id)[0]; if (w) say(w.id, pick(['他們跑了！', '韃子退了！']), pick(['They\'re running!', 'They\'re breaking!']), { prio: 1, shout: 0.3 }); } }
     else if (ev.t === 'zhelp') { const u = unit(ev.id); if (u) say(u.id, '我還能走……別丟下我。', 'I can still walk… don\'t let go of me.', { prio: 2, dur: 3.5 }); }
+    else if (ev.t === 'zdown') { const u = unit(ev.id); if (!u || u.team !== team || Math.hypot(u.x - h.x, u.z - h.z) > 26) return; const n = nameOf(u.id);
+      say(u.id, pick(['啊——！', '我中了……', '腿……我的腿……']), pick(['Aagh—!', 'I\'m hit…', 'My leg… my leg…']), { prio: 2, cool: 3, dur: 2.5 });
+      const w = near(u.x, u.z, 12, team, h.id).filter(v => v.id !== u.id)[0]; if (w) setTimeout(() => say(w.id, n ? `${n.zh}倒了！快扶他！` : '有人倒了！快扶起來！', n ? `${n.en} is down! Get him up!` : 'Man down! Get him up!', { prio: 2, cool: 3 }), 700); }
+    else if (ev.t === 'zrevive0') { const r = unit(ev.by); if (r && r.id !== h.id) say(r.id, pick(['我來扶你！', '撐住，我來了！']), pick(['I\'ve got you!', 'Hold on — I\'m here!']), { prio: 1, cool: 4 }); else if (r) say(r.id, '來，抓住我的手！', 'Here — take my hand!', { prio: 2, cool: 1, who: typeof ZS !== 'undefined' && ZS ? ZS.name.zh + ' · you' : 'You' }); }
+    else if (ev.t === 'zrevive') { const u = unit(ev.id), r = unit(ev.by); if (r) say(r.id, ev.limp ? '靠著我，走！' : '起來！還能打！', ev.limp ? 'Lean on me — walk!' : 'Up! You can still fight!', { prio: 2, cool: 1, who: r.id === h.id && typeof ZS !== 'undefined' && ZS ? ZS.name.zh + ' · you' : undefined });
+      if (u) setTimeout(() => say(u.id, pick(['謝了……', '我欠你一條命。', '好……好，我還站得住。']), pick(['Thanks…', 'I owe you my life.', 'Right… I can still stand.']), { prio: 1, cool: 2 }), 900); }
   }
   // an order travels: you shout it, the chief repeats it down the file, the men answer
   const OL = {};
@@ -8336,7 +8754,8 @@ const INTRO = [
 // ---------- dialogue: who says what, the night before and the night after ----------
 // each topic: q (what you say), a: lines [zh, en], bond, flag
 function zTalk(k, night) {
-  const S0 = ZS, dead = (x) => !S0.alive[x], lost = ZR.filter(r => r.k !== 'me' && r.k !== k && !S0.alive[r.k]).map(r => r.zh);
+  if (night >= 2) return zTalk2(k, night);
+  const S0 = ZS, dead = (x) => !S0.alive[x], lost = ZR.filter(r => !r.ch && r.k !== 'me' && r.k !== k && !S0.alive[r.k]).map(r => r.zh);
   if (night === 0) return ({
     wu: { g: ['睡不著？天一亮就拔營。', 'Can\'t sleep? We break camp at first light.'], t: [
       { q: 'How do we fight tomorrow?', a: [['戚爺爺教的：藤牌在前擋箭，狼筅撩住他，長槍刺，鏜鈀補。十二個人，一條命。', 'The way Marshal Qi taught it. Shields in front to take the arrows, the wolf-brushes tangle the man, the long spears kill him, the tridents finish what\'s left. Twelve men, one life.'], ['你是藤牌手。你一倒，後面的人全露出來。舉盾，別離隊。', 'You\'re a shield. If you go down, everyone behind you is naked. Shield up (right mouse), and never leave the file.']] },
@@ -8403,7 +8822,7 @@ const ZCAMP = { fires: [[0, 0], [8, -5]], tents: [[-10, 4, 1.7, 2.5, 2.1], [-4.5
   spots: { wu: [-2.6, -5.6, 'stand'], lou: [-2.5, -0.9, 'squat'], liu6: [-0.9, 2.4, 'squat'], luo: [1.0, 2.4, 'squat'], jin: [2.6, -0.6, 'squat'], ye: [-1.9, 1.6, 'squat'], wang: [7.0, -3.4, 'stand'], fang: [2.1, 1.7, 'squat'], he: [-6.8, -2.6, 'stand'], du: [3.1, -2.4, 'stand'], zhu: [8.9, -3.7, 'stand'] } };
 function zCampCfg(night) {
   const npcs = [], beds = [], map = {};
-  ZR.forEach((r, i) => { const a = -0.5 + (i / ZR.length) * Math.PI * 1.55 + Math.PI * 0.55; const bx = Math.sin(a) * 6.3, bz = Math.cos(a) * 6.3; const alive = ZS.alive[r.k];
+  ZR.forEach((r, i) => { if (r.ch) return; const a = -0.5 + (i / 12) * Math.PI * 1.55 + Math.PI * 0.55; const bx = Math.sin(a) * 6.3, bz = Math.cos(a) * 6.3; const alive = ZS.alive[r.k];
     beds.push([+bx.toFixed(2), +bz.toFixed(2), +(a + Math.PI).toFixed(3), !alive]);
     if (r.k === 'me' || r.k === ZS.me || !alive) return; const sp = ZCAMP.spots[r.k]; const [x, z] = sp; const tx = r.k === 'zhu' || r.k === 'wang' ? 8 : 0, tz = r.k === 'zhu' || r.k === 'wang' ? -5 : 0;
     npcs.push({ role: r.role, x, z, yaw: +Math.atan2(tx - x, tz - z).toFixed(3), ci: i, pose: night === 1 && r.k !== 'zhu' ? 'squat' : sp[2] }); });
@@ -8411,6 +8830,7 @@ function zCampCfg(night) {
   return { fires: ZCAMP.fires, tents: ZCAMP.tents, props: ZCAMP.props, bedrolls: beds, npcs, me: { x: 0.4, z: -3.4, yaw: 0, role: 'shield' } };
 }
 function zStart(scene) {
+  if (/^(ch2|camp2|battle2|camp3)$/.test(scene)) return zStart2(scene);
   ZS = zLoad(); if (!ZS) { ZS = zFresh(); }
   $('menu').hidden = true; state.lowfx = $('lowfxIn').checked; state.fog = false;
   const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: ZS.name.zh || 'You', team: 0, yyRole: 'shield', connected: true }];
@@ -8424,7 +8844,7 @@ function zStart(scene) {
     startGame({ seed, battle: 'abudali', mode: 'campaign', mission: 'abudali', players: pl }, 0, null, 1);
     const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq]; ZB = { map: {}, sq: q.id, first: me.heroId, cur: 'me', fell: false };
     const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = 2;
-    ZR.forEach((r, i) => { if (r.k === 'me') return; const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role === r.role); if (id !== undefined) { used[id] = 1; ZB.map[id] = i; } });
+    ZR.forEach((r, i) => { if (r.k === 'me' || r.ch) return; const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role === r.role); if (id !== undefined) { used[id] = 1; ZB.map[id] = i; } });
     for (const uid in ZB.map) zDress(sim.units[uid], ZB.map[uid]);
     setTimeout(() => storyCard('Dawn, April 1619. The column breaks camp and climbs into the valleys toward Hetu Ala. Stay with your duck team: the chief calls the drill. Shield up with the right mouse button.', '阿布達里岡 · Abudali Pass'), 700);
   }
@@ -8445,8 +8865,9 @@ function zheKeyE() {
   zDialog(t.k, t.u); return true;
 }
 function zSleep() {
+  if (ZC.night >= 2) return zSleep2();
   if (ZC.night === 0) { ZS.stage = 'battle1'; zSave(); zCards([{ title: '黎明 · Dawn', year: 'April 1619', p: ['Drums before light. The column breaks camp and climbs on into the valleys. Ahead, somewhere, is Hetu Ala; behind, the guns and the grain carts are already falling back along the track.', 'Chief Wu walks down the file, tugging straps and checking match-cord. "Twelve men," he says. "One life."'], btn: 'March →' }], () => zGo('battle1')); }
-  else { ZS.stage = 'end1'; zSave(); zCards([{ title: '第一章終 · End of Chapter One', year: 'Abudali Pass, April 1619', p: [`${ZR.filter(r => r.k !== 'me' && ZS.alive[r.k]).length} of your file sleep around the embers. In the morning you will walk south out of the mountains with the remnants of Liu Ting's army.`, 'Two years later, in the spring of 1621, what is left of the Zhejiang men will stand with the Sichuan White Poles on the south bank of the Hun River, outside Shenyang.'], zh: '第二章 · 渾河 · Hun River, 1621 — 待續 · to be continued', btn: 'Back to the menu' }], () => { location.reload(); }); }
+  else { ZS.stage = 'end1'; zSave(); zCards([{ title: '第一章終 · End of Chapter One', year: 'Abudali Pass, April 1619', p: [`${ZR.filter(r => r.k !== 'me' && ZS.alive[r.k]).length} of your file sleep around the embers. In the morning you will walk south out of the mountains with the remnants of Liu Ting's army.`, 'Two years later, in the spring of 1621, what is left of the Zhejiang men will stand with the Sichuan White Poles on the south bank of the Hun River, outside Shenyang.'], zh: '第二章 · 渾河 · The Hun River, 1621', btn: 'Chapter Two →' }], () => { zGo('ch2'); }); }
 }
 function zDialog(k, u) {
   const sim = state.sim, D = zTalk(k, ZC.night); if (!D) return; const r = zRow(k); state.zheDlg = { k };
@@ -8477,9 +8898,10 @@ document.addEventListener('keydown', (e) => { // the dialogue panel takes the ke
 // ---------- in battle ----------
 function zheSay(ev) { // scripted lines come out of a man's mouth when you are near enough to hear him; otherwise by runner
   const sim = state.sim, h = localHero(); if (!ZB) return false;
-  const W = { liu: ['劉綎', 'General Liu Ting'], chief: ['吳老栓', 'Chief Wu'], fang: ['方秀才', 'Fang the Scholar'], lookout: ['', 'Lookout'], soldier: ['', 'A soldier'], rider: ['', 'A rider in Ming colours'] }[ev.who] || ['', ev.who];
+  const W = { liu: ['劉綎', 'General Liu Ting'], chief: ['吳老栓', 'Chief Wu'], fang: ['方秀才', 'Fang the Scholar'], lookout: ['', 'Lookout'], soldier: ['', 'A soldier'], rider: ['', 'A rider in Ming colours'], qi: ['戚金', 'General Qi Jin'], chen: ['陳策', 'General Chen Ce'], sichuan: ['周敦吉', 'Zhou Dunji of the White Poles'] }[ev.who] || ['', ev.who];
   let id = -1;
   if (ev.who === 'liu') { const g = sim.mg.liu; id = g ? sim.players[g.p].heroId : -1; }
+  else if (sim.mg[ev.who]) { const g = sim.mg[ev.who]; id = sim.players[g.p].heroId; }
   else if (ev.who === 'chief' || ev.who === 'fang') { const want = ev.who === 'chief' ? 0 : 8; for (const uid in ZB.map) if (ZB.map[uid] === want) id = +uid; }
   if (id >= 0 && sim.units[id] && sim.units[id].dead) id = -1;
   if (id < 0 && h) { const q = sim.squads[ZB.sq]; const cand = sim.teamAlive[h.team].filter(u => u.id !== h.id && !u.wounded && u.type !== 'horse' && Math.hypot(u.x - h.x, u.z - h.z) < 22 && (ev.who !== 'rider' || !q.unitIds.includes(u.id))); if (cand.length) id = cand[Math.floor(Math.random() * cand.length)].id; }
@@ -8489,12 +8911,13 @@ function zheSay(ev) { // scripted lines come out of a man's mouth when you are n
 }
 function zheEvent(ev) {
   const sim = state.sim; if (!ZB || !sim || !sim.mission || !sim.mission.soldier) return; const me = sim.players[state.localIdx];
-  if (ev.t === 'zpromote' && ev.p === state.localIdx) { state.fpSel = null; const q = sim.squads[ev.sq]; const w = q.unitIds.map(id => sim.units[id]).find(u => !u.dead && u.ctrl < 0 && !u.wounded);
+  if (ev.t === 'zpromote' && ev.p === state.localIdx && ZB.ch2) { state.fpSel = null; banner('你領隊 · Your file', 'You lead the file: F follow me / H halt / C charge / Z form up where you look', 6); }
+  else if (ev.t === 'zpromote' && ev.p === state.localIdx) { state.fpSel = null; const q = sim.squads[ev.sq]; const w = q.unitIds.map(id => sim.units[id]).find(u => !u.dead && u.ctrl < 0 && !u.wounded);
     if (w) setTimeout(() => SPEECH.say(w.id, `隊長沒了！${ZS.name.zh}，你說怎麼走？`, `The chief is dead! ${ZS.name.en}, you're senior now — what do we do?`, { prio: 3, dur: 5 }), 1600);
     banner('你領隊 · The file is yours', 'Chief Wu is dead. F follow me / H halt / C charge / Z form up where you look', 6); }
   else if (ev.t === 'zwound' && ev.p === state.localIdx) { ZB.wounded = ev.id; const u = sim.units[ev.id]; const n = SPEECH.nameOf(ev.id);
     SPEECH.say(ev.id, '我的腿……走不了了！', 'My leg... I can\'t walk!', { prio: 3, dur: 4 }); toast(`${n ? n.zh + ' ' + n.en : 'A man of your file'} is hit and can't walk. Get to him and press E to get him up`); }
-  else if (ev.t === 'zhelp' && ev.id === ZB.wounded) { ZS.flags.helped6 = true; feed(`You get ${(SPEECH.nameOf(ev.id) || { en: 'him' }).en}'s arm over your shoulder`, true); }
+  else if (ev.t === 'zhelp' && ev.id === ZB.wounded) { ZS.flags[ZB.ch2 ? 'helped2' : 'helped6'] = true; feed(`You get ${(SPEECH.nameOf(ev.id) || { en: 'him' }).en}'s arm over your shoulder`, true); }
   else if (ev.t === 'zcarry' && ev.p === state.localIdx) { const k = ZB.map[ev.id]; ZB.fell = true; const prev = ZB.cur; if (prev && ZS.alive[prev] !== false) { ZB.deadMe = ZB.deadMe || []; ZB.deadMe.push(prev); }
     ZB.cur = k !== undefined ? ZR[k].k : 'stranger'; const n = SPEECH.nameOf(ev.id); const h = sim.units[ev.id]; if (h) { Input.yaw = h.yaw; Input.pitch = 0; }
     toast(n ? `You fall. The fight goes on — you are ${n.zh} ${n.en} now` : 'You fall. The fight goes on — you are another man of the column now'); }
@@ -8504,10 +8927,11 @@ function zheObjLines() {
   for (const uid in ZB.map) { const u = sim.units[uid]; if (+uid === (h && h.id)) continue; all++; if (!u.dead && h && Math.hypot(u.x - h.x, u.z - h.z) < 24) n++; }
   let s = `<div class="ob"><i>伍</i><span>Your file with you: ${n} of ${all}</span></div>`;
   { let row = ''; for (const uid in ZB.map) { const u = sim.units[uid], rr = ZR[ZB.map[uid]]; if (!rr || +uid === (h && h.id)) continue; const cls = u.dead ? 'x' : u.wounded ? (u.helpedBy >= 0 ? 'w' : 'd') : u.hp < u.def.hp * 0.5 ? 'w' : 'a'; row += `<b class="zr ${cls}" title="${rr.en} · ${rr.t}">${u.dead ? '✕' : u.wounded ? (u.helpedBy >= 0 ? '✚' : '▼') : '●'} ${rr.zh}</b>`; } s += `<div class="zroster">${row}</div>`; } // every man of the file by name: ● fighting, ✚ wounded, ▼ down, ✕ dead
-  if (ZB.wounded !== undefined) { const u = sim.units[ZB.wounded]; s += `<div class="ob${u.helpedBy >= 0 ? ' done' : ''}"><i>!</i><span>${u.dead ? 'Chen Xiaoliu is dead' : u.helpedBy >= 0 ? 'Chen Xiaoliu is on his feet' : 'Get Chen Xiaoliu up (E beside him)'}</span></div>`; }
+  if (ZB.wounded !== undefined) { const u = sim.units[ZB.wounded]; s += `<div class="ob${u.helpedBy >= 0 ? ' done' : ''}"><i>!</i><span>${(() => { const wn = (SPEECH.nameOf(ZB.wounded) || { en: 'The wounded man' }).en; return u.dead ? wn + ' is dead' : u.helpedBy >= 0 ? wn + ' is on his feet' : 'Get ' + wn + ' up (E beside him)'; })()}</span></div>`; }
   return s;
 }
 function zheFinish(winner) {
+  if (ZB && state.sim.mission && state.sim.mission.ch === 2) return zheFinish2(winner);
   const sim = state.sim, h = localHero(); if (!ZB) return; const M = sim.mission, z = sim.missionZone('mouth'); const won = winner === M.side;
   const fate = {}; const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
   for (const uid in ZB.map) { const k = ZR[ZB.map[uid]].k; const u = sim.units[uid]; if (u.dead) { fate[k] = 'dead'; continue; }
@@ -8516,11 +8940,11 @@ function zheFinish(winner) {
   if (fate.me === undefined) fate.me = h && !h.dead ? 'out' : 'dead';
   // you go on as whoever you became
   if (ZB.cur && ZB.cur !== 'me' && ZB.cur !== 'stranger' && fate.me === 'dead') { const nk = ZB.cur; ZS.me = nk; ZS.oldName = ZS.name; ZS.name = { zh: zRow(nk).zh, en: zRow(nk).en }; }
-  for (const r of ZR) { const f = fate[r.k] || 'lost'; ZS.fate[r.k] = f; ZS.alive[r.k] = f === 'out'; }
+  for (const r of ZR) { if (r.ch) continue; const f = fate[r.k] || 'lost'; ZS.fate[r.k] = f; ZS.alive[r.k] = f === 'out'; }
   if (ZB.cur && ZB.cur !== 'me' && ZB.cur !== 'stranger') ZS.alive[ZB.cur] = !!(h && !h.dead);
   ZS.alive.me = fate.me === 'out' || (ZB.cur && ZB.cur !== 'me'); // you live on in whoever carried on
   ZS.flags.saved6 = ZS.alive.liu6 && !!ZS.flags.helped6; ZS.stage = 'camp1'; zSave();
-  const li = ZR.map(r => { const f = ZS.fate[r.k] || 'lost'; const nm = r.k === 'me' ? `${ZS.name.zh} ${ZS.name.en} (you)` : `${r.zh} ${r.en}`; return `<li class="${f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${nm} — ${f === 'out' ? 'came out of the pass' : f === 'dead' ? 'killed' : 'missing in the valley'}</li>`; }).join('');
+  const li = ZR.filter(r => !r.ch).map(r => { const f = ZS.fate[r.k] || 'lost'; const nm = r.k === 'me' ? `${ZS.name.zh} ${ZS.name.en} (you)` : `${r.zh} ${r.en}`; return `<li class="${f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${nm} — ${f === 'out' ? 'came out of the pass' : f === 'dead' ? 'killed' : 'missing in the valley'}</li>`; }).join('');
   const outN = ZR.filter(r => ZS.fate[r.k] === 'out').length;
   $('resultTitle').textContent = won ? '出 · Out of the pass' : '陷 · Cut off'; $('resultTitle').className = won ? 'win' : 'lose';
   $('resultText').innerHTML = `${won ? 'You reached the south gorge.' : 'The valley closed behind you, but a few of you crawled out after dark.'} ${outN} of twelve came out.`;
@@ -8543,17 +8967,165 @@ function zheHUD(dt) {
   ZC.chatT -= dt; if (ZC.chatT <= 0) { ZC.chatT = 7 + Math.random() * 6; const h = localHero(); if (!h) return; const near = sim.units.filter(u => u.camp && Math.hypot(u.x - h.x, u.z - h.z) < 14); if (!near.length) return; const u = near[Math.floor(Math.random() * near.length)];
     const P0 = [['這鬼地方，四月還下雪。', 'Snow in April. What a place.'], ['明天走多少里？', 'How many li tomorrow?'], ['聽說赫圖阿拉的城是木頭的。', 'They say the walls of Hetu Ala are made of logs.'], ['腳上的凍瘡又裂了。', 'My chilblains have split open again.'], ['誰還有菸葉？', 'Anyone got tobacco?'], ['義烏這時候該插秧了。', 'Back in Yiwu they\'ll be planting the rice now.']];
     const P1 = [['……', '...'], ['火別讓它滅了。', 'Don\'t let the fire go out.'], ['明天往南走。', 'Tomorrow we go south.'], ['我閉上眼睛就看見西嶺上的旗。', 'When I close my eyes I see the banners on the west ridge.']];
-    const L = (ZC.night ? P1 : P0)[Math.floor(Math.random() * (ZC.night ? P1 : P0).length)]; SPEECH.say(u.id, L[0], L[1], { prio: 0, cool: 10 }); }
+    const PL = ZC.night === 2 ? ZP2 : ZC.night === 3 ? ZP3 : ZC.night ? P1 : P0; const L = PL[Math.floor(Math.random() * PL.length)]; SPEECH.say(u.id, L[0], L[1], { prio: 0, cool: 10 }); }
 }
 function zMenu() {
   const s = zLoad(); const b = $('btnZhe'), nb = $('btnZheNew'); if (!b) return;
-  const cont = s && s.stage && s.stage !== 'end1'; b.textContent = cont ? 'Continue' : s ? 'Play again' : 'Begin'; nb.hidden = !cont;
+  const cont = s && s.stage && s.stage !== 'end2'; b.textContent = cont ? 'Continue' : s ? 'Play again' : 'Begin'; nb.hidden = !cont;
   const begin = () => { AUDIO.init(); AUDIO.play('ui'); ZS = zFresh(); zSave(); zCards(INTRO, () => { ZS.stage = 'camp0'; zSave(); zStart('camp0'); }); };
-  b.onclick = () => { if (cont) { AUDIO.init(); AUDIO.play('ui'); zStart(s.stage === 'after1' ? 'camp1' : s.stage); } else begin(); };
+  b.onclick = () => { if (cont) { AUDIO.init(); AUDIO.play('ui'); zStart(s.stage === 'after1' ? 'camp1' : s.stage === 'end1' ? 'ch2' : s.stage); } else begin(); };
   nb.onclick = begin;
 }
 zMenu();
 { let go = null; try { go = localStorage.getItem('mingZheGo'); localStorage.removeItem('mingZheGo'); } catch (e) { } if (go) setTimeout(() => zStart(go), 60); }
+
+// ===================== 第二章 · Chapter Two: the Hun River, spring 1621 =====================
+// Two years after Abudali. The survivors of the file and new drafts from Zhejiang stand in Qi Jin's wagon camp south of the
+// Hun River bridge while the Sichuan White Poles fight on the far bank. You lead the file now.
+ZR.push(
+  { k: 'xiaoman', zh: '樓小滿', en: 'Lou Xiaoman', role: 'shield', t: 'rattan shield · new draft', ch: 2 },
+  { k: 'bao', zh: '鮑二', en: 'Bao Er', role: 'spear', t: 'long spear · new draft · a Ningbo boatman', ch: 2 },
+  { k: 'shao', zh: '邵阿福', en: 'Shao Afu', role: 'brush', t: 'wolf-brush · new draft · 17', ch: 2 },
+  { k: 'ran', zh: '冉家虎', en: 'Ran Jiahu', role: 'spear', t: 'White Pole of Shizhu · 白杆兵', ch: 2, guest: true });
+Object.assign(ZLOOK, {
+  xiaoman: { hat: 'rattan', brows: 'thick', young: true, skin: 0xd6a880 },
+  bao: { hat: 'wrap', wrap: 0x3a3a3a, brows: 'thin', beard: 'stubble', skin: 0xb48a62 },
+  shao: { hat: 'band', brows: 'high', young: true, rosy: true, skin: 0xe2bc96 },
+  ran: { hat: 'wrap', wrap: 0xe8e2d0, brows: 'thick', beard: 'mous', skin: 0xb8865e },
+});
+const ZP2 = [['北邊的冰還沒化。', 'The ice up north hasn\'t melted yet.'], ['聽說瀋陽的城牆矮。', 'They say Shenyang\'s walls are low.'], ['川兵吃辣子，冬天也不怕冷。', 'The Sichuan men eat chillies. Cold doesn\'t touch them.'], ['火藥多領一包，總沒錯。', 'Draw an extra bag of powder. Never hurts.'], ['又是三月，又在打仗。', 'March again, and war again.']];
+const ZP3 = [['……', '...'], ['遼陽那邊有消息沒？', 'Any word from Liaoyang?'], ['別往北看了。', 'Stop looking north.'], ['火小一點，別讓他們看見。', 'Keep the fire low. Don\'t let them see it.']];
+// who stands in the file in 1621: the men who came out of Abudali, and the new drafts
+function zFile2() { return ZR.filter(r => !r.guest && (r.ch === 2 || (r.k !== 'wu' && r.k !== 'me' && r.k !== ZS.me && ZS.alive[r.k]))); }
+const INTRO2 = [
+  { title: '兩年 · Two years', year: '1619 – 1621', p: ['After Sarhu the frontier crumbled. That summer Kaiyuan and Tieling fell to the Jin. Xiong Tingbi was sent to hold Liaodong; for a year and a half he rebuilt the defences around Liaoyang and Shenyang and drilled what was left of the army.',
+    'Then the old emperor died, and in the new court Xiong\'s enemies talked him out of office. In his place came Yuan Yingtai, a civil official: generous, brave, and no soldier.'], zh: '天啟元年，熊廷弼去職，袁應泰經略遼東。' },
+  { title: '浙兵北上 · New men from the south', year: 'Winter 1620', p: ['More Zhejiang men came north, over three thousand under Qi Jin, a kinsman of Qi Jiguang, and Zhang Mingshi. The file was filled out with new drafts: boys from Yiwu, a boatman from Ningbo.',
+    'You came out of Abudali Pass. The men call you 隊長 now — section chief. The file is yours to lead.'] },
+  { title: '瀋陽 · Shenyang', year: 'The third month of 1621', p: ['In the spring Nurhaci struck at Shenyang. Its generals, He Shixian and You Shigong, were killed and the city fell in a day.',
+    'A relief army marching up from Liaoyang under Chen Ce and Tong Zhongkui came too late: native troops from Sichuan and Huguang — among them the White Poles of Shizhu under Qin Bangping — and the Zhejiang men. Tonight it camps on the Hun River, south of the bridge.'] },
+];
+// ---------- the camp, night before and night after ----------
+const ZSPOT2 = { lou: [-2.5, -0.9, 'squat'], liu6: [-0.9, 2.4, 'squat'], luo: [1.0, 2.4, 'squat'], jin: [2.6, -0.6, 'squat'], ye: [-1.9, 1.6, 'squat'], wang: [7.0, -3.4, 'stand'], fang: [2.1, 1.7, 'squat'], he: [-6.8, -2.6, 'stand'], du: [3.1, -2.4, 'stand'], zhu: [8.9, -3.7, 'stand'],
+  xiaoman: [-2.9, 0.6, 'squat'], bao: [5.2, -6.6, 'stand'], shao: [0.1, 2.8, 'squat'], ran: [-1.6, -2.8, 'stand'] };
+function zCampCfg2(night) {
+  const npcs = [], beds = [], file = zFile2(), rows = [{ k: 'me' }].concat(file), n = rows.length;
+  rows.forEach((r, i) => { const a = -0.5 + (i / Math.max(8, n)) * Math.PI * 1.55 + Math.PI * 0.55; const bx = Math.sin(a) * 6.3, bz = Math.cos(a) * 6.3; const alive = r.k === 'me' || ZS.alive[r.k];
+    beds.push([+bx.toFixed(2), +bz.toFixed(2), +(a + Math.PI).toFixed(3), !alive]); });
+  for (const r of file.concat(night === 2 ? [zRow('ran')] : [])) { if (!ZS.alive[r.k] && !r.guest) continue; const sp = ZSPOT2[r.k] || [4, 4, 'stand']; const [x, z] = sp; const tx = r.k === 'zhu' || r.k === 'wang' || r.k === 'bao' ? 8 : 0, tz = r.k === 'zhu' || r.k === 'wang' || r.k === 'bao' ? -5 : 0;
+    npcs.push({ role: r.role, x, z, yaw: +Math.atan2(tx - x, tz - z).toFixed(3), ci: ZR.indexOf(r), pose: night === 3 && r.k !== 'zhu' ? 'squat' : sp[2] }); }
+  const mb = beds[0]; ZC = { bed: [mb[0], mb[1]] };
+  return { fires: ZCAMP.fires, tents: ZCAMP.tents, props: ZCAMP.props, bedrolls: beds, npcs, me: { x: 0.4, z: -3.4, yaw: 0, role: 'lead' } };
+}
+function zStart2(scene) {
+  ZS = zLoad(); if (!ZS) { ZS = zFresh(); }
+  $('menu').hidden = true; state.lowfx = $('lowfxIn').checked; state.fog = false;
+  if (scene === 'ch2') { // a new chapter: the drafts join, the dead stay in Abudali
+    if (!ZS.ch2init) { for (const r of ZR) if (r.ch === 2) { ZS.alive[r.k] = true; ZS.bond[r.k] = 0; delete ZS.fate[r.k]; } ZS.fate1 = Object.assign({}, ZS.fate); ZS.ch2init = true; ZS.stage = 'ch2'; zSave(); }
+    zCards(INTRO2, () => { ZS.stage = 'camp2'; zSave(); zStart2('camp2'); }); return;
+  }
+  const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: ZS.name.zh || 'You', team: 0, yyRole: 'lead', connected: true }];
+  if (scene === 'camp2' || scene === 'camp3') {
+    const night = scene === 'camp2' ? 2 : 3; const camp = zCampCfg2(night);
+    startGame({ seed, battle: 'zcamp', mode: 'campaign', mission: 'zcamp', camp, players: pl }, 0, null, 1);
+    ZC.night = night; ZC.map = {}; for (const u of state.sim.units) if (u.camp) { ZC.map[u.id] = u.ci; zDress(u, u.ci); } { const me = state.sim.units[state.sim.players[0].heroId]; zDress(me, ZR.findIndex(r => r.k === (ZS.me || 'me'))); } ZC.chatT = 6;
+    MUSIC.play('menu'); MUSIC.setIntensity(0.15); AUDIO.setFire(0.6); $('army').hidden = true;
+    setTimeout(() => storyCard(night === 3 ? 'The survivors make camp in a burnt farmstead off the Liaoyang road. Walk among them (E to talk), and when you are ready, lie down on your bedroll.' : 'The night before. The camp lies five li south of the Hun River bridge. Walk among your file and talk with them (E). When you are ready, lie down on your bedroll.', night === 3 ? '夜 · The night after' : '營 · The Hun River, spring 1621'), 900);
+  } else if (scene === 'battle2') {
+    startGame({ seed, battle: 'toba', mode: 'campaign', mission: 'hunz', players: pl }, 0, null, 1);
+    const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq]; const meIdx = ZR.findIndex(r => r.k === (ZS.me || 'me'));
+    ZB = { map: {}, sq: q.id, first: me.heroId, cur: ZS.me || 'me', fell: false, ch2: true };
+    const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = meIdx;
+    for (const r of zFile2()) { const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role === r.role); if (id !== undefined) { used[id] = 1; ZB.map[id] = ZR.indexOf(r); } }
+    for (const uid in ZB.map) zDress(sim.units[uid], ZB.map[uid]);
+    setTimeout(() => storyCard('Spring 1621. You lead your file in Qi Jin\'s wagon camp south of the Hun River. F follow me · H halt · C charge · Z form up where you look. The flag on your back is the file\'s.', '渾河 · The Hun River'), 700);
+  }
+}
+function zSleep2() {
+  if (ZC.night === 2) { ZS.stage = 'battle2'; zSave(); zCards([{ title: '黎明 · Dawn', year: 'Spring 1621', p: ['Before light, word runs through the camp: Shenyang fell yesterday. The officers argue at the bridge. Then the Sichuan men start across it.', 'You walk down your file, tugging straps the way Chief Wu used to. "Twelve men," you hear yourself say. "One life."'], btn: 'Stand to →' }], () => zGo('battle2')); }
+  else { ZS.stage = 'end2'; zSave(); const n = zFile2().filter(r => ZS.alive[r.k]).length; zCards([{ title: '第二章終 · End of Chapter Two', year: 'The Hun River, spring 1621', p: [`${n} of your file sleep in the ashes of the farmstead. In the morning you will walk south. Days later Liaoyang will fall, and everything east of the Liao River with it.`, 'Five years from now, at a small fort called Ningyuan on the Bohai coast, a civil official named Yuan Chonghuan will refuse to run.'], zh: '第三章 · 寧遠 · Ningyuan, 1626 — 待續 · to be continued', btn: 'Back to the menu' }], () => { location.reload(); }); }
+}
+// ---------- dialogue ----------
+function zTalk2(k, night) {
+  const S0 = ZS, F1 = S0.fate1 || {}, d1 = (x) => F1[x] && F1[x] !== 'out', lou1 = !d1('lou'), nm = S0.name;
+  const deadAt1 = ZR.filter(r => !r.ch && r.k !== 'me' && r.k !== 'wu' && d1(r.k)).map(r => r.zh);
+  if (night === 2) return ({
+    lou: { g: ['兩年了。我還是沒把那封信寄出去。', 'Two years. I still haven\'t sent that letter.'], t: [
+      { q: 'Your brother is here.', a: [['小滿？……那個傻小子，自己跑來當兵了。', 'Xiaoman? ...The fool came and enlisted himself.'], ['明天讓他站我後面。我替他擋。', 'Tomorrow he stands behind me. I take what comes for him.']] },
+      { q: 'Why not send it?', bond: 1, a: [['寄了，家裡就以為我還好。', 'If I send it, they\'ll think I\'m still well.'], ['等打完這一仗，我自己帶回去。', 'When this one\'s done, I\'ll carry it home myself.']] }] },
+    xiaoman: { g: lou1 ? ['我哥說你是隊長。他說你在山裡沒丟下人。', 'My brother says you\'re chief. He says you didn\'t leave anyone in those mountains.'] : ['你是我哥的隊長？樓阿根。他在哪？', 'You were my brother\'s chief? Lou Agen. Where is he?'], t: lou1 ? [
+      { q: 'Stay behind your brother tomorrow.', bond: 1, a: [['我不要躲。我是藤牌手，跟他一樣。', 'I won\'t hide. I\'m a shield man, same as him.'], ['……好吧。我站他旁邊。', '...All right. I\'ll stand beside him.']] }] : [
+      { q: 'Tell him the truth.', bond: 1, a: [['（你告訴他阿布達里岡的事。他很久沒說話。）', '(You tell him about Abudali Pass. He says nothing for a long time.)'], ['……娘一直在等他的信。', '...Mother has been waiting all this time for his letter.']] },
+      { q: S0.flags.letter ? 'I wrote a letter for him. I remember it.' : 'He spoke of home often.', bond: 1, a: S0.flags.letter ? [['他說：跟娘說北邊冷，可我有棉襖。跟媳婦說，我很好。', 'He said: tell my mother it\'s cold up north, but I have a padded coat. Tell my wife I\'m well.'], ['（樓小滿低下頭，用袖子擦了擦臉。）', '(Lou Xiaoman bows his head and wipes his face with his sleeve.)']] : [['義烏，山裡，礦坑邊上。他說戚爺爺就是看上他們那股狠勁。', 'Yiwu, up by the mines. He said that was what Marshal Qi liked about them: they never back down.']] }] },
+    liu6: S0.flags.saved6 ? { g: [`${nm.zh}哥。腿好了，你看。`, `Brother ${nm.en}. The leg healed — look.`], t: [
+      { q: 'Look after Shao Afu tomorrow.', bond: 1, a: [['他跟我那時候一樣大。……我會的。', 'He\'s the age I was. ...I will.']] }] } : { g: ['我還記得那個山谷。', 'I still remember that valley.'], t: [{ q: 'So do I.', a: [['這回別讓人掉隊。', 'This time, nobody gets left.']] }] },
+    shao: { g: ['隊長，狼筅這麼重，我拿得穩嗎？', 'Chief, the wolf-brush is so heavy — can I hold it steady?'], t: [
+      { q: 'Plant it, don\'t swing it.', bond: 1, a: [['插在地上，讓馬自己撞上來……對吧？', 'Plant it in the ground and let the horses run onto it... right?'], ['陳小六也這麼教我。', 'Chen Xiaoliu told me the same.']] },
+      { q: 'How old are you?', a: [['十七。這回是真的。', 'Seventeen. Really, this time.']] }] },
+    bao: { g: ['在寧波我撐船，現在撐槍。都是一根長桿子。', 'In Ningbo I poled a boat. Now I pole a spear. It\'s all a long stick.'], t: [
+      { q: 'Can you swim?', a: [['能。可渾河三月的水，冰的。掉下去就上不來。', 'I can. But the Hun River in the third month is ice water. Fall in and you don\'t come out.']] },
+      { q: 'Why did you join?', bond: 1, a: [['欠了船主的錢。當兵有餉。……說是有餉。', 'I owed the boat owner. Soldiers get paid. ...They say soldiers get paid.']] }] },
+    ran: { g: ['浙江來的？我們石柱的人，跟你們一起守過關。', 'From Zhejiang? We Shizhu men have held a pass beside your people before.'], t: [
+      { q: 'Who leads you?', a: [['秦邦屏將軍。他妹妹秦良玉，在家裡管著石柱的兵。', 'General Qin Bangping. His sister, Qin Liangyu, commands the Shizhu troops back home.'], ['我們的槍杆是白的，所以叫白杆兵。槍頭有鉤，可以把馬上的人拉下來。', 'Our spear shafts are white, so they call us the White Poles. The heads have hooks — we pull riders out of the saddle.']] },
+      { q: 'Will you cross the river tomorrow?', bond: 1, a: [['城都丟了，還過河幹什麼？……可周將軍說，不能救瀋陽，在這三年幹什麼。', 'The city\'s gone, why cross? ...But General Zhou says: if we can\'t save Shenyang, what have we been doing here three years?'], ['他過，我們就過。', 'If he crosses, we cross.']] }] },
+    fang: { g: ['熊經略在，遼東還能守。熊經略一走……', 'With Xiong Tingbi in charge, Liaodong could be held. With him gone...'], t: [
+      { q: 'What happened to Xiong Tingbi?', a: [['新皇登基，朝裡有人參他，說他畏敵、說他跋扈。他就辭了。', 'A new emperor, and men at court accused him of cowardice, of arrogance. He resigned.'], ['換了袁經略。袁公是好人，可不懂兵。他還收了好些逃來的蒙古饑民進城，說是仁政。', 'Now we have Commissioner Yuan. A good man, but no soldier. He even took starving Mongol refugees into the cities — calls it benevolence.']] },
+      { q: 'What do you make of tomorrow?', bond: 1, a: [['川兵在北，我們在南，中間一條河、一座橋。', 'The Sichuan men to the north, us to the south, and between us a river and one bridge.'], ['兵分兩處，又隔著水。……我在阿布達里岡見過這種事。', 'An army split in two with water between. ...I saw this at Abudali.']] }] },
+    he: { g: ['兩年前我說劉總兵是條好漢。戚將軍也是。', 'Two years ago I said General Liu was a hero. So is General Qi.'], t: [
+      { q: 'You taught me the shield. Teach Xiaoman.', bond: 1, a: [['我教了。他學得快，跟他哥一樣倔。', 'I have. He learns fast. Stubborn, like his brother.']] }] },
+    luo: { g: ['骰子還是那對。運氣用光了沒有，誰知道。', 'Same pair of dice. Who knows if the luck\'s used up.'], t: [{ q: 'Roll for tomorrow.', bond: 1, a: [['（骰子停下：兩個六。駱鐵頭不笑，把骰子塞給你。）', '(The dice stop: two sixes. Luo Tietou doesn\'t laugh. He presses them into your hand.)'], ['你拿著。隊長的運氣，大家都用得著。', 'You keep them. The whole file can use a chief\'s luck.']] }] },
+    jin: { g: ['這條河晚上有聲音。冰在裂。', 'The river makes noises at night. The ice is cracking.'], t: [{ q: 'You still have the charm?', a: [['在。兩年，一直在。', 'Here. Two years, never left me.']] }] },
+    ye: { g: ['我女兒七歲了。我還沒見過七歲的她。', 'My daughter is seven. I\'ve never seen her at seven.'], t: [{ q: 'You\'ll see her at eight.', bond: 1, a: [['……你答應我？', '...You promise?']] }] },
+    wang: { g: ['我現在一頓吃三個餅。長力氣。', 'I eat three cakes a meal now. Building strength.'], t: [{ q: 'Stay by me tomorrow.', bond: 1, a: [['你在前頭，我就在你左邊。誰都別想過去。', 'You\'re at the front, I\'m at your left. Nobody gets through.']] }] },
+    du: { g: ['五十兩一顆首級。兩年了，我一顆也沒拿到。', 'Fifty taels a head. Two years, and I haven\'t taken one.'], t: [{ q: 'Chunhua?', bond: 1, a: [['她嫁人了。去年。……不提了。', 'She married. Last year. ...Let\'s not talk about it.']] }] },
+    zhu: { g: ['今天有鹽。川兵分給我們的。', 'Salt today. The Sichuan men shared theirs.'], t: [{ q: 'Any news?', a: [['陳總兵要回遼陽，底下的將爺不肯，說來都來了。', 'General Chen wants to march back to Liaoyang. His officers won\'t have it — we\'ve come this far, they say.'], ['朱萬良、姜弼的馬兵在白塔鋪，說是接應。……接應誰，誰知道。', 'Zhu Wanliang and Jiang Bi have cavalry at Baitapu, to support us, they say. ...Support whom, who knows.']] }] },
+  })[k];
+  // the night after
+  const F2 = S0.fate2 || {}, d2 = (x) => F2[x] && F2[x] !== 'out';
+  return ({
+    lou: { g: ['我說過我替他擋。', 'I said I\'d take what came for him.'], t: [{ q: d2('xiaoman') ? 'Xiaoman...' : 'He\'s alive.', bond: 1, a: d2('xiaoman') ? [['（樓阿根把那封兩年前的信拿出來，看了很久，又收回懷裡。）', '(Lou Agen takes out the letter from two years ago, looks at it for a long time, and puts it back against his chest.)']] : [['是。……是。', 'Yes. ...Yes.']] }] },
+    xiaoman: { g: lou1 && !d2('lou') ? ['哥還在。我們都還在。', 'My brother\'s alive. We\'re both alive.'] : ['……', '...'], t: [{ q: 'Rest.', a: [['我閉上眼就聽見砲聲。', 'When I close my eyes I hear the guns.']] }] },
+    liu6: { g: ['這回沒人掉隊吧？……有沒有？', 'Nobody got left this time? ...Did they?'], t: [{ q: 'Some did.', a: [['（他點點頭，把狼筅抱在懷裡。）', '(He nods, and holds the wolf-brush close.)']] }] },
+    shao: { g: ['我插住了一匹馬。牠自己撞上來的，跟你說的一樣。', 'I stopped a horse. It ran right onto the brush, like you said.'], t: [{ q: 'You did well.', bond: 1, a: [['可是旁邊的人……', 'But the man beside me...']] }] },
+    bao: { g: ['我們往南走，對吧？離河越遠越好。', 'We go south, right? The farther from that river the better.'], t: [{ q: 'South.', a: [['遼陽還守得住嗎？', 'Can Liaoyang hold?']] }] },
+    fang: { g: ['戚將軍、張參將、陳總兵、童總兵……都沒了。', 'General Qi, Zhang Mingshi, Chen Ce, Tong Zhongkui... all gone.'], t: [
+      { q: 'What happens now?', a: [['金人下一步就是遼陽。袁經略守不住的。', 'Next the Jin go for Liaoyang. Commissioner Yuan can\'t hold it.'], ['我們這些人，加上川兵剩下的，都是寫不進捷報的人。', 'Men like us, and what\'s left of the Sichuan troops — nobody writes us into the victory reports.']] }] },
+    he: { g: ['戚將軍跟童總兵說，大丈夫報國，就在今日。', 'General Qi told General Tong: a man repays his country today, of all days.'], t: [{ q: 'You heard him?', a: [['我聽見了。然後他回頭叫你帶人走。', 'I heard. Then he turned and told you to take your men out.']] }] },
+    luo: { g: ['骰子呢？還在你那吧。', 'The dice? You still have them?'], t: [{ q: 'Here.', a: [['留著。還沒用完。', 'Keep them. They\'re not used up yet.']] }] },
+    jin: { g: ['冰裂了，好多人掉下去。', 'The ice broke. So many went through.'], t: [{ q: 'We\'re out.', a: [['嗯。我們出來了。', 'Mm. We\'re out.']] }] },
+    ye: { g: ['八歲。你答應過我。', 'Eight. You promised.'], t: [{ q: 'I remember.', bond: 1, a: [['那就再活一年。', 'Then we live one more year.']] }] },
+    wang: { g: ['左邊沒人過去。我說到做到。', 'Nobody got past on the left. I said so.'], t: [{ q: 'Eat something.', a: [['……給我一個餅。', '...Give me a cake.']] }] },
+    du: { g: ['我拿到一顆首級。可是沒人收了。', 'I took a head. But there\'s nobody left to pay for it.'], t: [{ q: 'Leave it.', a: [['（他把那包東西扔進了雪溝。）', '(He throws the bundle into a snowy ditch.)']] }] },
+    zhu: { g: ['鍋還在。人少了，粥就稠了。', 'The pot made it. Fewer men, thicker gruel.'], t: [{ q: 'Sit with us.', bond: 1, a: [['（他給每個人都多舀了一勺，也給空著的位子舀了一碗。）', '(He gives every man an extra scoop, and fills a bowl for each empty place too.)']] }] },
+  })[k];
+}
+// ---------- after the battle ----------
+function zheFinish2(winner) {
+  const sim = state.sim, h = localHero(); const M = sim.mission, z = sim.missionZone('road'); const won = winner === M.side;
+  const fate = {}; const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
+  for (const uid in ZB.map) { const r = ZR[ZB.map[uid]]; if (!r) continue; const k = r.k; const u = sim.units[uid]; if (u.dead) { fate[k] = 'dead'; continue; }
+    const out = (near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4)); fate[k] = out ? 'out' : 'lost'; }
+  for (const k of ZB.deadMe || []) fate[k] = 'dead';
+  const meK = ZS.me || 'me'; if (fate[meK] === undefined) fate[meK] = h && !h.dead ? 'out' : 'dead';
+  if (ZB.cur && ZB.cur !== meK && ZB.cur !== 'stranger' && fate[meK] === 'dead') { const nk = ZB.cur; ZS.me = nk; ZS.oldName = ZS.name; ZS.name = { zh: zRow(nk).zh, en: zRow(nk).en }; }
+  const file = zFile2(); ZS.fate2 = {}; for (const r of file) { const f = fate[r.k] || 'lost'; ZS.fate2[r.k] = f; ZS.alive[r.k] = f === 'out'; }
+  if (ZB.cur && ZB.cur !== 'me' && ZB.cur !== 'stranger') ZS.alive[ZB.cur] = !!(h && !h.dead);
+  ZS.stage = 'camp3'; zSave();
+  const all = [{ k: meK, zh: ZS.name.zh, en: ZS.name.en, me: true }].concat(file.filter(r => r.k !== meK));
+  const li = all.map(r => { const f = r.me ? (fate[meK] === 'dead' && ZB.cur === meK ? 'dead' : 'out') : ZS.fate2[r.k] || 'lost'; return `<li class="${f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${r.zh} ${r.en}${r.me ? ' (you)' : ''} — ${f === 'out' ? 'came out by the Liaoyang road' : f === 'dead' ? 'killed' : 'missing on the river'}</li>`; }).join('');
+  const outN = file.filter(r => ZS.fate2[r.k] === 'out').length + 1;
+  $('resultTitle').textContent = won ? '出 · Out by the Liaoyang road' : '陷 · The camp is overrun'; $('resultTitle').className = won ? 'win' : 'lose';
+  $('resultText').innerHTML = `${won ? 'You got out of the camp before the ring closed.' : 'The ring closed, but a few of you crawled out through the dark.'} ${outN} of your file came out.`;
+  $('btnNext').hidden = false; $('btnNext').textContent = 'What happened →';
+  $('btnNext').onclick = () => { $('result').hidden = true; zCards([
+    { title: '渾河 · What happened', year: 'The third month of 1621', p: ['Shenyang had fallen the day before. Chen Ce wanted to turn back; his officers would not. Zhou Dunji is recorded as saying: "If we cannot save Shenyang, what have we been doing here these three years?"',
+      'The Sichuan troops under Qin Bangping and Zhou Dunji crossed and made camp north of the bridge. They threw back the first Jin charges and killed many, but were worn down and overwhelmed; Qin Bangping and Zhou Dunji were killed, and a few survivors broke through to the Zhejiang camp. One Ming report says the turncoat Li Yongfang set captured Ming gunners to fire Shenyang\'s cannon into them; some historians doubt it.',
+      'Five li south of the bridge, about three thousand Zhejiang men under Qi Jin and Zhang Mingshi had dug in behind wagons, guns, a ditch and a palisade of sorghum stalks plastered with mud. Surrounded, they fired until their powder ran out, then fought hand to hand into the night. Chen Ce, Tong Zhongkui, Qi Jin and Zhang Mingshi all died. Qi Jin is said to have stopped Tong from withdrawing with the words: "A man repays his country today."',
+      'The cavalry of Zhu Wanliang and Jiang Bi, waiting at Baitapu, held back and were beaten when at last they moved. Days later the Jin took Liaoyang, and Yuan Yingtai killed himself in the burning city. Everything east of the Liao River was lost.'], zh: '大丈夫報國在今日。— attributed to Qi Jin' },
+    { title: '伍 · Your file', year: `${outN} came out`, html: `<ul>${li}</ul>`, btn: 'Night falls →' },
+  ], () => zGo('camp3')); };
+}
+
 
 })();
 </script>
