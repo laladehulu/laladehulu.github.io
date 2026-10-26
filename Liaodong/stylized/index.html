@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v56</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v57</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6487,10 +6487,10 @@ class Renderer {
     const sg = this.sim.sg, e = sg && hero.manE >= 0 ? sg.emp[hero.manE] : null, on = !!(e && e.man === hero.id) && hero.downT <= 0;
     const want = on && !this.empZoom ? 1 : 0; this.empK = (this.empK || 0) + (want - (this.empK || 0)) * (1 - Math.exp(-dt * 6)); const k0 = this.empK; if (k0 < 0.01 || !e) return;
     const k = k0 * k0 * (3 - 2 * k0), cam = this.camera, fx = Math.sin(yaw), fz = Math.cos(yaw), kick = (this.empKick || 0) * (this.empKick || 0);
-    const bow = e.kind === 'bow', back = (bow ? 3.0 : 3.6) + kick * 0.6, up = (bow ? 2.2 : 2.7) + kick * 0.15, side = bow ? 0.7 : 0.9, gy = e.y + 1.2;
+    const bow = e.kind === 'bow', back = (bow ? 2.6 : 3.2) + kick * 0.6, up = (bow ? 2.9 : 3.3) + kick * 0.15, side = bow ? 1.3 : 1.5, gy = e.y + 1.2;
     const px = e.x - fx * back - fz * side, py = gy + up, pz = e.z - fz * back + fx * side;
     cam.position.set(lerp(cam.position.x, px, k), lerp(cam.position.y, py, k), lerp(cam.position.z, pz, k));
-    const lp = pitch - 0.16, cp = Math.cos(lp); look.set(lerp(look.x, cam.position.x + fx * cp * 10, k), lerp(look.y, cam.position.y + Math.sin(lp) * 10, k), lerp(look.z, cam.position.z + fz * cp * 10, k));
+    const lp = pitch - 0.2, cp = Math.cos(lp); look.set(lerp(look.x, cam.position.x + fx * cp * 10, k), lerp(look.y, cam.position.y + Math.sin(lp) * 10, k), lerp(look.z, cam.position.z + fz * cp * 10, k));
   }
   // manning a bed crossbow or a gun: your own weapon is slung, your hands are on the piece (tiller and trigger bar, or the
   // two handspikes), and the ground shows where a shot at the present lay would first strike (Sim.sgPredict: the sim's own steps)
@@ -7362,6 +7362,7 @@ class Renderer {
     const stT = u.st === ST_IDLE ? 0 : u.stT + alpha * DT;
     const mounted = u.mounted || u.mount >= 0, wnd = !!(u.wounded && !u.dead) && !mounted;
     // a wounded man going down (and being got up again) is animated, not snapped: a.dw runs 0 (on his feet) to 1 (on the ground)
+    if (a.dw === undefined) a.dw = 0;
     if (wnd || a.dw > 0) { const want = wnd && u.downed ? 1 : 0;
       if (!wnd) a.dw = 0;
       else if (want > a.dw) { if (!(a.dw > 0)) { a.dw = 0; a.dV = uhash(u.id, 23) < 0.5 ? 1 : -1; } a.dUp = false; a.dw = Math.min(1, a.dw + dt / 1.05); }
@@ -8122,7 +8123,7 @@ class Renderer {
       const yaw = lerpA(u.pyaw, u.yaw, alpha);
       if (u.mounted) { const hs = this.horseSlot.get(u.id); this.drawHorse(hs, u, x, y, z, lerpA(u.phyaw, u.hyaw, alpha), u.speedNow, u.walk, false, 0); }
       const sy = u.champ && u.spinT > 0 ? yaw + (1 - clamp(u.spinT / 0.55, 0, 1)) * PI * 2 : yaw;
-      this.drawFigure(i, u, x, y, z, sy, alpha, far || (fp && i === heroId && (this.tp || 0) < 0.3 && (this.empK || 0) < 0.35));
+      this.drawFigure(i, u, x, y, z, sy, alpha, far || (fp && i === heroId && (this.tp || 0) < 0.3));
     }
     this.ownMarkEnd(om, capt, view);
     // dead horses
@@ -9557,7 +9558,8 @@ document.addEventListener('keydown', (e) => {
   if (c === 'KeyG') { if (e.repeat) return; if (Input.orderMode) closeOrders(); else { openOrders(); state.gDownT = performance.now(); } return; }
   if (Input.orderMode) { orderKey(c, e); return; }
   // quick orders straight from first person, no menu needed
-  if (/^Digit\d$/.test(c) && (e.shiftKey || fpSquads().length)) { quickSelect(+c.slice(5)); return; }
+  { const kh = localHero(); const kit = kh && kh.kit && kh.kit.length > 1; // carrying several weapons: 1-4 pick a weapon, Shift+number picks squads
+    if (/^Digit\d$/.test(c) && (e.shiftKey || (fpSquads().length && !(kit && /^Digit[1-4]$/.test(c))))) { quickSelect(+c.slice(5)); return; } }
   if (!e.repeat) switch (c) {
     case 'KeyZ': if (fpReady()) { state.zHeld = true; } return;
     case 'KeyC': if (fpReady()) fpCharge(); return;
@@ -9576,6 +9578,7 @@ document.addEventListener('keydown', (e) => {
     case 'Digit1': Input.wsel = 1; Input.ads = false; break;
     case 'Digit2': Input.wsel = 2; Input.ads = false; break;
     case 'Digit3': Input.wsel = 3; Input.ads = false; break;
+    case 'Digit4': Input.wsel = 4; Input.ads = false; break;
     case 'KeyV': Input.pressed |= S.A_RALLY; break;
     case 'Enter': Input.pressed |= S.A_READY; break;
     case 'KeyY': if (!storyLock()) toggleAuto(); break;
