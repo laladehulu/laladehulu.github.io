@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v7</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v8</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -230,6 +230,22 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 #tposture{position:fixed;left:50%;top:40%;transform:translateX(-50%);width:120px;height:5px;background:#0008;border:1px solid #fff4;pointer-events:none;z-index:20}
 #tposture span{position:absolute;top:-15px;left:0;right:0;text-align:center;font:600 10px sans-serif;color:#ddd;text-transform:uppercase;letter-spacing:1px}
 #tposture.open i{background:#ffd36a;box-shadow:0 0 8px #ffd36a}
+#zheCta { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 14px 16px; margin: 4px 0 16px; border: 1px solid #8a6a3c; background: linear-gradient(100deg, rgba(150,30,24,.16), rgba(40,30,20,.06)); flex-wrap: wrap; }
+#zheCta b { font-size: 19px; letter-spacing: .04em; } #zheCta small { display: block; color: var(--ink2); max-width: 64ch; margin-top: 3px; } #zheCta .btns { display: flex; gap: 8px; }
+#zheCard { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(22,16,12,.94), rgba(6,4,3,.985)); color: #efe6d0; font-family: 'Noto Serif CJK TC', Georgia, serif; }
+#zheCard .in { max-width: 680px; padding: 34px 40px; } #zheCard h2 { font-size: 30px; margin: 0 0 4px; letter-spacing: .08em; } #zheCard .yr { opacity: .6; font: 13px sans-serif; letter-spacing: .12em; margin-bottom: 18px; }
+#zheCard p { font-size: 16.5px; line-height: 1.62; margin: 0 0 12px; } #zheCard p.zh { font-size: 15px; opacity: .72; } #zheCard .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; font: 12px sans-serif; opacity: .9 }
+#zheCard button { all: unset; cursor: pointer; padding: 10px 22px; border-radius: 4px; background: #b8322a; color: #fff3e4; font: 700 15px sans-serif; letter-spacing: .05em; } #zheCard button:hover { background: #cf3b31 }
+#zheCard ul { margin: 6px 0 12px; padding-left: 18px; font-size: 15.5px; line-height: 1.6 } #zheCard li.dead { opacity: .55; text-decoration: line-through } #zheCard li.out b { color: #e8c27a }
+#zhePrompt { position: fixed; left: 50%; top: 58%; transform: translateX(-50%); font: 600 14px sans-serif; color: #f3e8cc; text-shadow: 0 1px 4px #000; pointer-events: none; z-index: 21; text-align: center; }
+#zhePrompt kbd { background: #f3e8cc; color: #1a1410; border-radius: 3px; padding: 1px 6px; margin-right: 6px; }
+#zheDlg { position: fixed; left: 50%; bottom: 7%; transform: translateX(-50%); width: min(760px, 92vw); z-index: 40; background: linear-gradient(180deg, rgba(20,15,11,.93), rgba(12,9,7,.96)); border: 1px solid #6a5232; border-radius: 6px; padding: 16px 20px 14px; color: #efe6d0; font-family: 'Noto Serif CJK TC', Georgia, serif; box-shadow: 0 8px 30px rgba(0,0,0,.6) }
+#zheDlg .who { font: 700 15px sans-serif; color: #e0b46a; letter-spacing: .04em } #zheDlg .who small { font-weight: 400; color: #b8a888; margin-left: 8px }
+#zheDlg .zh { font-size: 19px; margin: 8px 0 2px; } #zheDlg .en { font-size: 15px; opacity: .82; line-height: 1.5; margin-bottom: 10px; }
+#zheDlg .ch { display: flex; flex-direction: column; gap: 5px; } #zheDlg .ch button { all: unset; cursor: pointer; padding: 7px 10px; border-radius: 4px; background: #241b14; border: 1px solid #4a3a28; font: 14px sans-serif; } #zheDlg .ch button:hover { border-color: #b08a4a; background: #2e2218 }
+#zheDlg .ch button kbd { color: #e0b46a; margin-right: 8px; font: 700 12px sans-serif }
+.spk { position: fixed; left: 0; top: 0; z-index: 19; pointer-events: none; text-align: center; transform: translate(-50%, -100%); color: #fbf3df; text-shadow: 0 1px 3px #000, 0 0 8px rgba(0,0,0,.7); white-space: nowrap; transition: opacity .25s; }
+.spk .n { font: 600 10px sans-serif; color: #e8c27a; letter-spacing: .05em; display: block; } .spk .z { font: 700 17px 'Noto Serif CJK TC', serif; display: block; } .spk .e { font: 12px sans-serif; opacity: .85; display: block; max-width: 340px; white-space: normal; }
 #soldierPanel .career-cta { display: flex; gap: 14px; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1px solid var(--line-paper, #cbbf9f); background: rgba(194,58,68,.06); margin-bottom: 12px; flex-wrap: wrap; }
 #soldierPanel .career-cta small { display: block; color: var(--ink2); max-width: 60ch; margin-top: 2px; }
 .roles button.on { outline: 2px solid var(--imp); }
@@ -316,6 +332,7 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
         <label class="lbl" for="armRanged">Missile</label><select id="armRanged"><option value="">Standard issue</option><option value="niaochong">鳥銃 Niaochong musket</option><option value="sanyan">三眼銃 Three-eyed gun · 3 quick shots</option><option value="xbow">弩 Crossbow · flat heavy bolt</option><option value="bow">弓 Horn bow · fast, arcing</option><option value="none">None · hands free</option></select>
         <label class="lbl" style="min-width:0"><input type="checkbox" id="armShield"> rattan shield</label>
       </div>
+      <div id="zheCta"><div><b>浙兵 · The Zhejiang Company</b><small>A story campaign. Spring 1619: a mandarin duck team of Yiwu miners marches into the mountains of Liaodong with Liu Ting's column. Live with your file in camp, fight the battles as they really happened, and bring home whoever you can.</small></div><div class="btns"><button class="btn primary" id="btnZhe" type="button">Begin</button><button class="btn" id="btnZheNew" type="button" hidden>New</button></div></div>
       <h3 class="sect">Mode</h3>
       <div class="seg modes" id="modeSeg"><button type="button" data-m="standard" class="on"><b>Field battle</b><small>Your army against theirs</small></button><button type="button" data-m="grand"><b>Grand battle</b><small>A council of AI commanders on each side. Command your allies.</small></button><button type="button" data-m="chaos"><b>Chaos</b><small>No orders, no fear, no deployment. Earthquakes, fleets and fire.</small></button><button type="button" data-m="officers"><b>Officers · co-op</b><small>Every player leads one squad in person beside AI generals. Peer-to-peer.</small></button><button type="button" data-m="heroes"><b>Heroes</b><small>Be a champion in a phased historical siege. No orders, only your blade and abilities. Co-op or versus.</small></button><button type="button" data-m="soldier"><b>小兵之路 · Path of a Soldier</b><small>One man in the ranks. Lethal muskets, long reloads, drums and gongs. A career from recruit to general, or co-op with friends.</small></button><button type="button" data-m="campaign"><b>Co-op campaign</b><small>Historical missions in phases: ambushes, relief, sieges and break-outs. Each player leads a squad they choose, beside AI generals.</small></button><button type="button" data-m="assault"><b>Assault</b><small>Attackers with limited manpower storm fortified lines point by point; defenders fall back to the next. You fight as a soldier.</small></button><button type="button" data-m="story"><b>Story</b><small>Seven battles from Sarhu to Yangzhou, as the Ming or the Jin.</small></button></div>
       <p class="note" id="modeNote" style="margin:-6px 0 12px"></p>
@@ -695,6 +712,8 @@ const BATTLES = {
   nagaoka:  { name: 'Yangzhou', jp: '揚州', when: 'May 1645', biome: 'summer', weather: 'storm', fog: 0.3, terrain: 0.3, features: ['paddies', 'flankriver'], desc: 'Jiangnan rice paddies under a spring thunderstorm. Rain fouls matchlocks, lightning seeks the banners, and one bridge guards the western flank.' },
   aizu:     { name: 'Liaoyang', jp: '遼陽', when: 'April 1621', biome: 'autumn', fog: 0.15, terrain: 0.6, features: ['castle', 'streets'], desc: 'The Liaodong capital: a gate tower on its stone base, ringed by a moat. Fight through the city streets to reach the gate.' },
   hakodate: { name: 'Ningyuan', jp: '寧遠', when: 'February 1626', biome: 'winter', fog: 0.05, terrain: 0.4, features: ['starfort', 'sea'], desc: 'Yuan Chonghuan\'s fortress by the Bohai Sea, its walls bristling with Portuguese-pattern cannon. The sea lies to the east.' },
+  abudali:  { name: 'Abudali Pass', jp: '阿布達里岡', when: 'April 1619', biome: 'winter', fog: 0.3, terrain: 0.45, features: ['pass'], hidden: true, desc: 'A narrow valley in the mountains east of Hetu Ala, its slopes thick with pine and late snow.' },
+  zcamp:    { name: 'Camp', jp: '營', when: '1619', biome: 'night', fog: 0.2, terrain: 0.25, features: [], hidden: true, desc: 'A night camp in the hills.' },
   bonari:   { name: 'Shanhai Pass', jp: '山海關', when: 'May 1644', biome: 'spring', fog: 0.25, terrain: 0.5, features: ['pass'], desc: 'The First Pass Under Heaven: a narrow gap between steep ridges, blocked by two lines of earthworks. Flanking over the slopes is slow and costly.' },
 };
 // terrain features (deterministic: only + - * / sqrt and DM trig)
@@ -806,7 +825,7 @@ class Sim {
     if (this.mode === 'officers') for (const p of this.players) if (!p.ai) for (const id of p.squads) this.squads[id].order = ORD_FOLLOW;
     this.wagons = [];
     if (!this.heroMode && !this.chaos) for (let t = 0; t < 2; t++) { const zz = t === 0 ? -128 : 128; for (const xx of [-26, 26]) { let x = xx, z = zz; for (let k = 0; k < 8 && (waterAt(x, z) !== 0); k++) z += t === 0 ? 4 : -4; this.wagons.push({ id: this.wagons.length, team: t, x, z, burnt: false, raid: 0 }); } }
-    { const wr = new RNG(this.seed ^ 0x77a1); this.wx = { at: 30 * (110 + wr.int(130)), kind: this.rain ? 'clear' : wr.next() < 0.5 ? 'fog' : 'rain', done: false, lift: 0 }; }
+    { const wr = new RNG(this.seed ^ 0x77a1); this.wx = { at: 30 * (110 + wr.int(130)), kind: this.rain ? 'clear' : wr.next() < 0.5 ? 'fog' : 'rain', done: !!(this.mission && (this.mission.camp || this.mission.soldier)), lift: 0 }; }
     if (this.vets && this.vets.length && this.players[0]) { // veterans of earlier chapters: their losses and their stars march with them
       const used = {}; this.vets.forEach((v) => { const sid = this.players[0].squads.find(id => !used[id] && this.squads[id].type === v.type); if (sid === undefined) return; used[sid] = 1; const sq = this.squads[sid]; const xp = clamp(v.xp | 0, 0, 200); sq.xp = xp; sq.stars = xp >= 30 ? 3 : xp >= 15 ? 2 : xp >= 6 ? 1 : 0; sq.moraleMax = (sq.def.morale || 100) + sq.stars * 10; sq.morale = sq.moraleMax; sq.veteran = true;
         const keep = clamp(v.n | 0, 1, sq.count); for (let k = keep; k < sq.unitIds.length; k++) { const u = this.units[sq.unitIds[k]]; u.dead = true; u.hp = 0; this.total[u.team]--; } sq.aliveCount = keep; }); }
@@ -839,6 +858,8 @@ class Sim {
     if (b === 'aizu') { L.plateaus.push({ x: 0, z: 96, r0: 21, r1: 27, h: 8 }); L.moat = { x: 0, z: 96, R: 33, w: 5, depth: 2.8, gates: [[0, 63]] }; L.hills.push({ x: -150, z: 40, r: 60, h: 14 }); L.hills.push({ x: 160, z: -20, r: 55, h: 12 }); }
     if (b === 'hakodate') { L.plateaus.push({ x: 0, z: 74, r0: 34, r1: 38, h: 1.6 }); L.moat = { x: 0, z: 74, R: 44, w: 5, depth: 2.6, gates: [[0, 30], [0, 118]] }; L.sea = { x0: 128, depth: 7 }; }
     if (b === 'bonari') L.pass = { r0: 24, r1: 56, h: 30 };
+    if (b === 'abudali') { L.pass = { r0: 15, r1: 46, h: 24 }; L.hills.push({ x: -34, z: 6, r: 30, h: 6 }); L.hills.push({ x: 30, z: -48, r: 26, h: 5 }); }
+    if (b === 'zcamp') { L.hills.push({ x: -90, z: 60, r: 70, h: 14 }); L.hills.push({ x: 100, z: -40, r: 80, h: 16 }); L.hills.push({ x: 0, z: 130, r: 70, h: 12 }); }
     // objectives worth holding
     const O = [];
     if (b === 'field') O.push({ x: 0, z: 4, r: 12, name: 'Jiefan crest' });
@@ -942,12 +963,12 @@ class Sim {
     // cover: wooden mantlets (pavises) around objectives and across the middle of the field
     const mant = (x, z) => { if (waterAt(x, z) !== 0) return; for (const q of this.boxes) if (Math.abs(q.x - x) < q.hw + 2 && Math.abs(q.z - z) < q.hd + 1.5) return; this.boxes.push({ x, z, hw: 1.15, hd: 0.2, h: 1.35, kind: 'mantlet' }); keep.push({ x, z, r: 2 }); };
     if (this.scen) { for (const c of this.scen.cover) mant(c[0], c[1]); }
-    else { for (const o of this.layout.objectives || []) for (const sd of [-1, 1]) for (const dx of [-5, 0, 5]) mant(o.x + dx + r.range(-1, 1), o.z + sd * (o.r + 2)); for (let i = 0; i < 14; i++) { const x = r.range(-90, 90), z = r.range(-45, 45); if (clear(x, z, 3)) { mant(x, z); mant(x + 2.6, z + r.range(-0.4, 0.4)); } } }
+    else if (B !== 'abudali' && B !== 'zcamp') { for (const o of this.layout.objectives || []) for (const sd of [-1, 1]) for (const dx of [-5, 0, 5]) mant(o.x + dx + r.range(-1, 1), o.z + sd * (o.r + 2)); for (let i = 0; i < 14; i++) { const x = r.range(-90, 90), z = r.range(-45, 45); if (clear(x, z, 3)) { mant(x, z); mant(x + 2.6, z + r.range(-0.4, 0.4)); } } }
     if (this.scen) for (const L of this.scen.ladders) this.ladders.push({ x: L[0], z: L[1], hd: L[2], up: false, prog: 0, hp: 0 });
-    const treeN = B === 'bonari' ? 30 : B === 'nagaoka' ? 70 : this.bdef.biome === 'winter' ? 110 : 150;
+    const treeN = B === 'bonari' ? 30 : B === 'abudali' ? 190 : B === 'zcamp' ? 120 : B === 'nagaoka' ? 70 : this.bdef.biome === 'winter' ? 110 : 150;
     for (let i = 0; i < treeN; i++) {
       const x = r.range(-HALF + 8, HALF - 8), z = r.range(-98, 98);
-      if (!clear(x, z, 3)) continue; if (this.roadX !== undefined && Math.abs(x - this.roadX) < 6) continue; if (B === 'bonari' && Math.abs(x) < 26) continue; if (Math.abs(z) > 112 && Math.abs(x) < 70) continue;
+      if (!clear(x, z, 3)) continue; if (this.roadX !== undefined && Math.abs(x - this.roadX) < 6) continue; if (B === 'bonari' && Math.abs(x) < 26) continue; if (B === 'abudali' && Math.abs(x) < 19) continue; if (B === 'zcamp' && len(x, z) < 38) continue; if (B !== 'abudali' && Math.abs(z) > 112 && Math.abs(x) < 70) continue;
       this.obstacles.push({ x, z, r: 0.45, kind: 0, variant: r.next() < 0.45 ? 1 : 0, scale: r.range(0.8, 1.5), rot: r.range(0, TAU) });
     }
     for (let i = 0; i < 38; i++) {
@@ -1064,7 +1085,7 @@ class Sim {
   }
   // take control of a man in the ranks (a new body each life, like a reinforcement wave)
   possess(p, sq, role) {
-    const ok = (u) => !u.dead && u.ctrl < 0 && !u.inactive && u.type !== 'hero' && u.type !== 'horse' && (!role || u.role === role);
+    const ok = (u) => !u.dead && u.ctrl < 0 && !u.inactive && !u.wounded && !u.camp && u.type !== 'hero' && u.type !== 'horse' && (!role || u.role === role);
     const pick = (q) => { if (!q || !q.alive || q.routing) return null; for (let i = 1; i < q.unitIds.length; i++) { const u = this.units[q.unitIds[i]]; if (ok(u)) return u; } const u0 = this.units[q.unitIds[0]]; return ok(u0) ? u0 : null; };
     let u = pick(sq);
     if (!u && sq) for (const q of this.squads) if (q.team === p.team && q.type === sq.type) { u = pick(q); if (u) { p.soldierSq = q.id; break; } }
@@ -1361,7 +1382,7 @@ class Sim {
     } else u.aiming = false;
     if (this.phase === 1) {
       this.meleeControl(u, a, inp[4] | 0, inp[5] | 0);
-      if ((a & A_KICK) && u.st === ST_IDLE && u.mount < 0 && !u.mounted) { u.st = ST_KICK; u.stT = 0; u.kickHit = false; u.blocking = false; this.events.push({ t: 'kick', id: u.id }); }
+      if ((a & A_KICK) && u.st === ST_IDLE && u.mount < 0 && !u.mounted && !this.helpWounded(u)) { u.st = ST_KICK; u.stT = 0; u.kickHit = false; u.blocking = false; this.events.push({ t: 'kick', id: u.id }); }
     } else { u.atkHeld = !!(a & A_ATK); u.blockHeld = !!(a & A_BLOCK); u.blocking = false; }
   }
   startReload(u, dur, fill) { u.st = ST_RELOAD; u.stT = 0; u.reloadT = dur; u.reloadFill = fill; u.blocking = false; this.events.push({ t: 'reload', id: u.id, dur }); }
@@ -1589,10 +1610,18 @@ class Sim {
     const base = 78 / sq.count; // men hold longer: losses shake a squad, they don't break it at once sq.morale -= base * (cause === 'explosion' || cause === 'trample' || cause === 'solid' ? 1.6 : cause === 'gatling' ? 1.3 : 1);
     if (sq.morale < 0) sq.morale = 0;
   }
+  marchTo(squadIds, D, pl) { // no enemy in sight: the companies march in column, one behind another, to the post they were given
+    let cx = 0, cz = 0, n = 0; const live = []; for (const id of squadIds) { const q = this.squads[id]; if (!q.alive || q.inactive) continue; cx += q.cx; cz += q.cz; n++; live.push(q); } if (!n) return; cx /= n; cz /= n;
+    const far = len(D.x - cx, D.z - cz) > 4; const ang = far ? atan2(D.x - cx, D.z - cz) : live[0].facing; const fx = sin(ang), fz = cos(ang);
+    live.sort((a, b) => ((b.cx - cx) * fx + (b.cz - cz) * fz) - ((a.cx - cx) * fx + (a.cz - cz) * fz));
+    live.forEach((q, k) => { const tx = clamp(D.x - fx * k * 16, -HALF + 5, HALF - 5), tz = clamp(D.z - fz * k * 16, -HALF + 5, HALF - 5);
+      if (len(q.cx - tx, q.cz - tz) > 3) { q.order = ORD_MOVE; q.tx = tx; q.tz = tz; q.facing = ang; } else { if (q.order !== ORD_HOLD) { q.tx = q.cx; q.tz = q.cz; } q.order = ORD_HOLD; q.facing = ang; } });
+    const h = pl && pl.ai ? this.units[pl.heroId] : null; if (h && !h.dead) { h.slotX = clamp(D.x - fx * 8, -HALF + 5, HALF - 5); h.slotZ = clamp(D.z - fz * 8, -HALF + 5, HALF - 5); }
+  }
   generalThink(team, squadIds, pl) {
     const enemies = []; for (let i = 0; i < this.squads.length; i++) { const s = this.squads[i]; if (s.alive && s.team !== team && !s.routing && !s.inactive) enemies.push(s); }
     if (!enemies.length) { for (let i = 0; i < this.squads.length; i++) { const s = this.squads[i]; if (s.alive && s.team !== team && !s.inactive) enemies.push(s); } }
-    if (!enemies.length) return;
+    if (!enemies.length) { if (pl && pl.directive && pl.directive.kind === DIR_HOLD) this.marchTo(squadIds, pl.directive, pl); return; }
     const bt = this.tick - this.battleTick;
     if (pl && pl.ai) { const h = this.units[pl.heroId]; if (h && !h.dead) { let sx = 0, sz = 0, n = 0; for (const id of squadIds) { const q = this.squads[id]; if (q.alive && !q.routing) { sx += q.cx; sz += q.cz; n++; } } if (n) { const back = team === 0 ? -1 : 1; h.slotX = sx / n; h.slotZ = sz / n + back * 12; } } if (false && !pl.navalUsed && pl.idx % 2 === 0 && this.tick - this.battleTick > 30 * 100) { const e = enemies[this.rng.int(enemies.length)]; pl.navalUsed = true; this.navals.push({ x: e.cx, z: e.cz, t: this.tick + 120, n: 6, team }); this.events.push({ t: 'navalcall', x: e.cx, z: e.cz, team, p: pl.idx }); } }
     if (!this.aiNaval) this.aiNaval = [false, false];
@@ -1840,6 +1869,8 @@ class Sim {
   unitAI(u) {
     const def = u.def, sq = u.squad >= 0 ? this.squads[u.squad] : null;
     u.atkHeld = false; u.blockHeld = false;
+    if (u.camp) { u.mx = 0; u.mz = 0; u.target = -1; return; } // a man at the fire
+    if (u.wounded) { this.woundedAI(u); return; }
     if (u.type === 'horse') { this.horseIdle(u); return; }
     if (def.ai === 'cannon') { this.cannonAI(u, sq); return; }
     if (u.downT > 0 || u.airborne) { if (!u.mounted) { u.mx = 0; u.mz = 0; } return; }
@@ -2996,9 +3027,57 @@ const MISSIONS = {
     ],
     win: 'You broke out. Qin Bangping and the White Poles died to the last man on the Hun River; the Jin themselves called it the hardest fight of the war.',
   },
+
+  // ===== 浙兵 · The Zhejiang Company (story campaign): chapter battles you fight as one man in a mandarin duck team =====
+  abudali: {
+    title: '阿布達里岡 · Abudali Pass', year: 'April 1619', battle: 'abudali', side: 0, soldier: { group: 'liu' }, hidden: true,
+    brief: 'Liu Ting\'s eastern column has marched for weeks through the mountains toward Hetu Ala, burning Jin stockades as it goes. Your mandarin duck team marches near the head of the column.',
+    start: [0, -100, 0],
+    zones: [{ key: 'mouth', x: 0, z: -134, r: 15, name: 'The south gorge' }],
+    groups: {
+      liu: { team: 0, name: 'Liu Ting', zh: '劉綎', army: ['yuanyang', 'yuanyang', 'rifle_imp', 'yuanyang', 'rifle_imp'], at: [0, -100, 0], dir: ['hold', 0, -64] },
+      tusi: { team: 0, name: 'Sichuan and Miao levies', zh: '川黔土兵', army: ['ashigaru', 'ashigaru', 'samurai'], at: [0, -72, 0], dir: ['hold', 0, -40] },
+      kang: { team: 0, name: 'Kang Yingqian\'s rearguard', zh: '康應乾', army: ['rifle_imp', 'armstrong', 'ashigaru'], at: [0, -128, 0], dir: ['hold', 0, -112] },
+      daisan: { team: 1, name: 'Daišan', zh: '代善', army: ['cavalry', 'samurai', 'samurai', 'archer', 'archer', 'cavalry'], at: [0, 138, PI], reserve: true },
+      hong: { team: 1, name: 'Hong Taiji', zh: '皇太極', army: ['cavalry', 'cavalry', 'samurai', 'byakkotai', 'archer'], at: [-104, 0, PI / 2], reserve: true },
+      ridge: { team: 1, name: 'Archers on the east ridge', army: ['archer', 'archer'], at: [72, -20, -PI / 2], reserve: true, stay: true, dir: ['hold', 34, -24] },
+      chase: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'cavalry', 'byakkotai'], at: [-92, -104, PI / 2], reserve: true },
+      chase2: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'samurai'], at: [92, -118, -PI / 2], reserve: true },
+    },
+    phases: [
+      { title: '一 · 入谷 · Into the valley', text: 'March with the column up the valley toward Hetu Ala. Keep up with your file.',
+        obj: { survive: 58 },
+        at: [[18, ['dir', 'liu', 'hold', 0, -36]], [34, ['dir', 'liu', 'hold', 0, -8]], [34, ['dir', 'tusi', 'hold', 0, -24]]],
+        say: [[2, 'liu', 'Three Jin stockades burned in three days and their villages empty. The slave chief is afraid of us!', '三日連破三寨，奴酋怯矣！'],
+          [10, 'chief', 'Keep the file closed up. Mountains like these have eyes.', '跟緊，莫掉隊。這山裏有眼睛。'],
+          [24, 'rider', 'From Commander Du Song! He is already before Hetu Ala — he bids you make haste or miss the kill!', '杜總兵已薄赫圖阿拉，請速進兵！'],
+          [31, 'liu', 'Du Song takes the Khan\'s head while we crawl through these hills? Double pace! The guns can follow!', '杜松欲獨得首功耶？倍道而進！'],
+          [40, 'fang', 'A rider from Du Song, come this way through Jin country? Who let him through the passes?', '杜總兵的人，怎麼從金人地界過來的？'],
+          [50, 'chief', 'Double pace, and the guns half a li behind. This is how a column gets cut in pieces.', '倍道而進，砲落後半里……這是找死。']] },
+      { title: '二 · 代善 · The first charge', text: 'Banners in the pass ahead. The duck teams must hold the head of the column.', start: [['release', 'daisan'], ['dir', 'liu', 'hold', 0, -14], ['dir', 'tusi', 'hold', 0, -26]],
+        obj: { survive: 80 },
+        say: [[1, 'lookout', 'Banners in the pass ahead — red, and red bordered in white! Those are no Ming riders!', '前面有旗！紅旗，鑲紅！不是我們的人！'],
+          [4, 'liu', 'Duck teams to the front! Let them break on us!', '鴛鴦陣向前！'],
+          [7, 'chief', 'Shields down! Brushes up! Spears behind me — as Marshal Qi taught us!', '藤牌在前，狼筅次之，長槍隨後！'],
+          [52, 'chief', 'They give way! Hold the line — nobody chases!', '他們退了！穩住，不許追！']] },
+      { title: '三 · 皇太極 · The ridge', text: 'A second Jin host comes down the west ridge into the side of the column.', start: [['release', 'hong'], ['release', 'ridge'], ['dir', 'hong', 'attack']],
+        obj: { survive: 48 },
+        at: [[13, ['kill', 'liu']], [17, ['promote']], [23, ['wound', 3]]],
+        say: [[1, 'fang', 'The west ridge — more banners! The rider lied. Du Song is not coming!', '西嶺上還有！那人是假的，杜總兵不會來了！'],
+          [6, 'lookout', 'Arrows from the east slope!', '東坡有弓手！'],
+          [14, 'soldier', 'General Liu has fallen! Liu Ting is dead!', '劉總兵陣亡了！']] },
+      { title: '四 · 突圍 · Break out', text: 'The column is broken. Get your file back down the valley to the south gorge, where the Koreans are camped. Leave no one who can still walk.', show: ['mouth'],
+        obj: { extract: 'mouth' }, limit: 420, fail: 'The valley closed behind you.',
+        waves: [[3, 'chase', ['attack']], [30, 'chase2', ['attack']]],
+        say: [[2, 'fang', 'The way we came — the gorge to the south! The Korean camp is beyond it!', '回頭，往南邊的峽口！朝鮮兵在那邊扎營！'],
+          [6, 'lookout', 'Horsemen on the west slope — they are cutting the road!', '西坡有馬兵，要斷我們的路！'],
+          [32, 'lookout', 'More from the east!', '東邊又來了！']] },
+    ],
+    win: 'You came out of the pass.',
+  },
+  zcamp: { title: '營 · Camp', year: '', battle: 'zcamp', side: 0, camp: true, hidden: true, brief: '', start: [0, 0, 0], zones: [], groups: {}, phases: [{ title: '營 · Camp', text: '', obj: { never: true } }], win: '' },
 };
-// Assault: attackers with limited manpower take sectors of fortified points one by one; defenders fall back
-const OPS = {
+const OPS = { // Assault: attackers with limited manpower take sectors of fortified points one by one; defenders fall back
   liaoyang: {
     title: '遼陽之戰 · Assault on Liaoyang', year: 'April 1621', battle: 'aizu', attacker: 1, tickets: 520,
     brief: 'The Jin storm Liaoyang, capital of Liaodong. Three lines stand between the banners and the keep: the outer trenches, the market quarter and the city gate.',
@@ -3035,6 +3114,7 @@ Sim.prototype.setupMission = function (teams, aiPl) {
   this.objectives = (M.zones || []).map((z, i) => ({ id: i, key: z.key, x: z.x, z: z.zr !== undefined ? rz(z.x) + z.zr : z.z, r: z.r, name: z.name, ctrl: z.owner === 1 ? -100 : z.owner === 0 ? 100 : 0, owner: z.owner === undefined ? -1 : z.owner, hidden: true, rate: z.rate || 1 }));
   for (const e of teams[0].concat(teams[1])) { e.army = []; e.player.army = []; }
   const humans = this.players.filter(p => !p.ai);
+  if (M.camp) return this.setupCamp(humans);
   const mk = (gid, G) => { aiPl(G.team, G.name, G.army.slice()); const pl = this.players[this.players.length - 1]; pl.gid = gid; this.mg[gid] = { p: pl.idx, G, released: !G.reserve, broken: false }; return pl; };
   if (ass) { // assault: defender garrisons per point, attacker corps that arrive as manpower allows
     const A = M.attacker, D = 1 - A;
@@ -3052,7 +3132,11 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     for (const u of this.units) { if (u.type === 'horse' || u.officer || u.def.ai === 'cannon') continue; const foe = u.team !== M.side; u.def = foe ? tune(u.def, 0.82, 0.82) : tune(u.def, 1.12, 1.05); u.hp = u.def.hp; } }
   if (ass) { let n = 0; for (const u of this.units) if (u.team === M.attacker && u.type !== 'horse' && u.type !== 'hero') n++; this.tickets = Math.round(n * 0.8); for (const o of this.objectives) o.rate *= 0.6; this.sector = 0; M.sectors[0].forEach(k => this.missionZone(k).hidden = false); this.assaultDirs(); this.mv.ph = 0; }
   // humans: in the campaign each leads a squad of the troops they chose (two when alone) and rides with it
-  if (!ass) {
+  if (M.soldier) { // a story chapter: you are one man in a mandarin duck team of the named group
+    const g = this.mg[M.soldier.group], gp = g ? this.players[g.p] : null;
+    humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; p.team = M.side; p.auto = false; p.ready = true; p.heroId = -1; p.commanderId = -1; p.squads = [];
+      const sq = gp ? gp.squads.map(id => this.squads[id]).filter(q => q.def.yuanyang)[i] || this.squads[gp.squads[0]] : null; p.soldierSq = sq ? sq.id : 0; this.possess(p, sq, c.yyRole || 'shield'); });
+  } else if (!ass) {
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; const t = roleType(c.role, M.side); p.team = M.side; p.army = humans.length === 1 ? [t, M.soloExtra || 'ashigaru'] : [t];
       const s = M.start; const px = s[0] + (i - (humans.length - 1) / 2) * 26; this.placeArmy({ player: p, army: p.army }, M.side, px, s[1], s[2]); p.auto = false; p.ready = true;
       for (const id of p.squads) this.squads[id].order = ORD_FOLLOW;
@@ -3100,6 +3184,45 @@ Sim.prototype.mAct = function (a) {
   else if (a[0] === 'say') this.events.push({ t: 'msay', who: a[1], text: a[2] });
   else if (a[0] === 'show') { const z = this.missionZone(a[1]); if (z) z.hidden = false; }
   else if (a[0] === 'hide') { const z = this.missionZone(a[1]); if (z) z.hidden = true; }
+  else if (a[0] === 'kill') { const g = this.mg[a[1]]; if (g) { const h = this.units[this.players[g.p].heroId]; if (h && !h.dead) { h.officer = false; this.applyDamage(h, 1e6, -1, 0, 0, 0, 'arrow'); } this.events.push({ t: 'mkill', gid: a[1], name: g.G.name, zh: g.G.zh || '' }); } }
+  else if (a[0] === 'promote') this.zPromote();
+  else if (a[0] === 'wound') this.zWound(a[1] | 0);
+};
+// the section chief falls and the file is yours: his squad passes to the man who is left
+Sim.prototype.zPromote = function () {
+  for (const p of this.players) { if (p.ai) continue; const q = this.squads[p.soldierSq]; if (!q) continue; const chief = this.units[q.unitIds[0]];
+    if (chief && !chief.dead && chief.ctrl < 0) this.applyDamage(chief, 1e6, -1, 0, 0, 0, 'arrow');
+    if (q.owner >= 0 && q.owner !== p.idx) { const o = this.players[q.owner]; o.squads = o.squads.filter(id => id !== q.id); }
+    q.owner = p.idx; for (const id of q.unitIds) this.units[id].owner = p.idx; if (!p.squads.includes(q.id)) p.squads.push(q.id); q.order = ORD_FOLLOW; p.commanderId = p.heroId;
+    this.events.push({ t: 'zpromote', p: p.idx, sq: q.id, chief: chief ? chief.id : -1 }); }
+};
+// a man of your file is hit and cannot walk: someone has to get him up
+Sim.prototype.zWound = function (k) {
+  for (const p of this.players) { if (p.ai) continue; const q = this.squads[p.soldierSq]; if (!q) continue; let u = this.units[q.unitIds[k]];
+    if (!u || u.dead || u.ctrl >= 0) u = q.unitIds.map(id => this.units[id]).find(v => !v.dead && v.ctrl < 0 && !v.wounded) || null; if (!u) continue;
+    u.wounded = true; u.helpedBy = -1; u.hp = Math.max(u.hp, u.def.hp * 0.35); u.st = ST_IDLE; u.stT = 0; u.blocking = false; u.downT = Math.max(u.downT, 1);
+    this.events.push({ t: 'zwound', p: p.idx, id: u.id, x: u.x, z: u.z }); }
+};
+Sim.prototype.helpWounded = function (u) { // E beside a wounded comrade: get his arm over your shoulder
+  if (u.dead || u.mounted) return false; let best = null, bd = 2.6;
+  for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.helpedBy >= 0 || v === u) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
+  if (!best) return false; best.helpedBy = u.id; this.events.push({ t: 'zhelp', id: best.id, by: u.id }); return true;
+};
+Sim.prototype.woundedAI = function (u) {
+  u.target = -1; u.blocking = false; if (u.st !== ST_IDLE && u.st !== ST_STUN) { u.st = ST_IDLE; u.stT = 0; }
+  const h = u.helpedBy >= 0 ? this.units[u.helpedBy] : null; if (h && h.dead) u.helpedBy = -1;
+  if (u.helpedBy < 0 || !h) { u.mx = 0; u.mz = 0; return; }
+  const bx = h.x - sin(h.yaw) * 1.3 + cos(h.yaw) * 0.5, bz = h.z - cos(h.yaw) * 1.3 - sin(h.yaw) * 0.5, d = len(bx - u.x, bz - u.z);
+  if (d > 0.5) { const y = this.steerFoot(u, bx, bz, u.def.speed * (d > 4 ? 0.8 : 0.62)); this.turnTo(u, y, 4 * DT); } else { u.mx = 0; u.mz = 0; this.turnTo(u, h.yaw, 3 * DT); }
+};
+// a night camp: you, your file around the fire, and the tents
+Sim.prototype.setupCamp = function (humans) {
+  const C = this.cfg.camp || { npcs: [], tents: [], me: { x: 0, z: 6, yaw: PI, role: 'shield' } };
+  for (const t of C.tents || []) this.boxes.push({ x: t[0], z: t[1], hw: t[2], hd: t[3], h: t[4], kind: 'tent' });
+  const mk = (role, x, z, yaw) => { const u = this.addUnit('yuanyang', 0, -1, -1, x, z, yaw); u.role = role; u.def = YYDEF[role] || YYDEF.spear; u.hp = u.def.hp; u.weapon = u.def.weapons[0]; return u; };
+  humans.forEach((p, i) => { p.team = 0; p.auto = false; p.ready = true; p.squads = []; const m = C.me; const u = mk(m.role || 'shield', m.x + i * 1.5, m.z, m.yaw); u.owner = p.idx; u.ctrl = p.idx; p.heroId = u.id; p.commanderId = -1; p.respawnAt = 0; });
+  for (const n of C.npcs || []) { const u = mk(n.role, n.x, n.z, n.yaw); u.camp = true; u.ci = n.ci; u.campPose = n.pose || 'stand'; }
+  this.mv.ph = 0;
 };
 Sim.prototype.humansIn = function (z) { for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead && len(h.x - z.x, h.z - z.z) < z.r + 2) return true; for (const id of p.squads) { const q = this.squads[id]; if (q.alive && len(q.cx - z.x, q.cz - z.z) < z.r + 3) return true; } } return false; };
 // evaluate one objective; returns 1 when met, -1 when failed, 0 otherwise
@@ -3113,6 +3236,8 @@ Sim.prototype.mObj = function (o, el) {
   if (o.officer) { const g = this.mg[o.officer]; if (!g || !g.released) return 0; const h = this.units[this.players[g.p].heroId]; const wound = g.G.wound; if (h && !h.dead && !(wound && h.hp < h.def.hp * wound)) return 0; if (!g.broken) { this.events.push({ t: 'mofficer', name: g.G.name, zh: g.G.zh || '', gid: o.officer, wounded: !!(h && !h.dead) }); this.mBreak(o.officer); } }
   if (o.arrive) { const z = this.missionZone(o.zone), p = this.players[this.mg[o.arrive].p]; let n = 0, a = 0; for (const id of p.squads) { const q = this.squads[id]; if (!q.alive) continue; a++; if (len(q.cx - z.x, q.cz - z.z) < z.r + 8) n++; } if (a === 0) return -1; if (n < a) return 0; }
   if (o.survive) { if (el < o.survive) return 0; }
+  if (o.never) return 0;
+  if (o.extract) { const z = this.missionZone(o.extract); let ok = false; for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead && len(h.x - z.x, h.z - z.z) < z.r + 1) ok = true; } if (!ok) return 0; }
   return 1;
 };
 Sim.prototype.missionThink = function () {
@@ -3122,14 +3247,19 @@ Sim.prototype.missionThink = function () {
   const P = M.phases[mv.ph], el = (this.tick - mv.t0) / 30;
   for (const [t, gid, dir] of P.waves || []) { const k = mv.ph + ':' + gid; if (!mv.waves[k] && el >= t) { mv.waves[k] = 1; this.mRelease(gid); if (dir) this.mDir(gid, dir); } }
   for (const [t, a] of P.at || []) { const k = mv.ph + ':at:' + t; if (!mv.ats[k] && el >= t) { mv.ats[k] = 1; this.mAct(a); } }
-  for (const [t, who, text] of P.say || []) { const k = mv.ph + ':' + t; if (!mv.said[k] && el >= t) { mv.said[k] = 1; this.events.push({ t: 'msay', who, text }); } }
+  for (const [t, who, text, zh] of P.say || []) { const k = mv.ph + ':' + t; if (!mv.said[k] && el >= t) { mv.said[k] = 1; this.events.push({ t: 'msay', who, text, zh: zh || '' }); } }
   if (this.tick % 60 === 0) this.mAggro();
   // broken groups melt away at the field's edge
   for (const gid in this.mg) { const g = this.mg[gid]; if (!g.broken) continue; const p = this.players[g.p];
     for (const uid of [p.heroId, p.horseId]) { const h = this.units[uid]; if (!h || h.dead || h.officer) continue; const D = p.directive; if (uid === p.heroId && D) { h.slotX = D.x; h.slotZ = D.z; } if (Math.abs(h.x) > HALF - 14 || Math.abs(h.z) > HALF - 14 || (uid === p.horseId && h.rider < 0)) this.flee(h); }
     for (const id of p.squads) { const q = this.squads[id]; for (const uid of q.unitIds) { const u = this.units[uid]; if (!u.dead && (Math.abs(u.x) > HALF - 12 || Math.abs(u.z) > HALF - 12)) this.flee(u); } } }
   // commanders who fall return to their men; a wiped-out company is replaced from the reserve (twice)
-  for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId];
+  if (M.soldier) { for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId];
+      if (!h || h.dead) { if (!p.respawnT) p.respawnT = this.tick + 30 * 4; else if (this.tick >= p.respawnT) { p.respawnT = 0; const q = this.squads[p.soldierSq]; const mine = q && q.owner === p.idx; p.heroId = -1;
+          const ok = this.possess(p, q && q.alive ? q : null) || this.possess(p, this.squads.find(s => s.team === p.team && s.alive && !s.inactive && s.def.ai !== 'cannon'));
+          if (!ok) { this.mOver(false, 'There is no one left to carry on.'); return; } if (mine) p.commanderId = p.heroId; this.events.push({ t: 'zcarry', p: p.idx, id: p.heroId }); } } }
+  }
+  else for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId];
     if (h && h.dead) { if (!p.respawnT) p.respawnT = this.tick + 30 * 10; else if (this.tick >= p.respawnT) { const q = p.squads.map(id => this.squads[id]).find(q => q.alive); const sx = q ? q.cx : M.start[0], sz = q ? q.cz - 6 : M.start[1];
         h.dead = false; h.hp = h.def.hp; h.x = sx; h.z = sz; h.y = terrainH(sx, sz); h.px = h.x; h.pz = h.z; h.py = h.y; h.vx = h.vz = h.vy = 0; h.st = ST_IDLE; h.stT = 0; h.mount = -1; h.mounted = false; h.deathTick = -1; p.respawnT = 0; this.events.push({ t: 'respawn', id: h.id, p: p.idx }); } }
     if (!p.squads.some(id => this.squads[id].alive) && p.spare > 0 && !p.spareT) p.spareT = this.tick + 30 * 8;
@@ -3758,7 +3888,9 @@ const GJ = { hipL: 0, kneeL: 3, footL: 6, hipR: 9, kneeR: 12, footR: 15, shL: 18
 const GEAR_K = { b: 40, c: 4, y: 5 };
 const uhash = (id, k) => (((id + 1) * 2654435761 + (k || 0) * 40503) >>> 0) % 1000 / 1000;
 const GEAR_CACHE = new Map();
+const GEAR_HOOK = { fn: null }; // an edition may supply its own uniforms (the realism edition does)
 function gearFor(u) {
+  if (GEAR_HOOK.fn) { const g = GEAR_HOOK.fn(u); if (g) return g; }
   const vr = u.type === 'byakkotai' ? (u.id % 2) * 4 : u.id % 6; const key = u.type + ':' + (u.role || '') + ':' + u.team + ':' + vr + ':' + (u.team === 1 ? ((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4 : 0); let g = GEAR_CACHE.get(key); if (g) return g;
   const imp = u.team === 0, team = imp ? 0xb3262f : 0x2f55b8, P = [];
   let HAT = false; const b = (f, o, s, k, r) => P.push({ m: 'b', f, o, s, k, r, hat: HAT && f === 'h' }), c = (f, o, s, k, r) => P.push({ m: 'c', f, o, s, k, r, hat: HAT && f === 'h' }), y = (f, o, s, k, r) => P.push({ m: 'y', f, o, s, k, r, hat: HAT && f === 'h' });
@@ -3808,6 +3940,19 @@ function gearFor(u) {
   const rattanHelm = () => hatOn(() => { y('h', [0, 0.12, 0], [0.34, 0.16, 0.34], 0xb8964e); y('h', [0, 0.06, 0], [0.37, 0.03, 0.37], 0x8a6a30); b('h', [0, 0.22, 0], [0.06, 0.05, 0.06], red); });
   const petalHelm = (col, plume) => hatOn(() => { y('h', [0, 0.12, 0], [0.31, 0.14, 0.31], col); for (let k = 0; k < 4; k++) b('h', [Math.sin(k * 0.785) * 0.155, 0.13, Math.cos(k * 0.785) * 0.155], [0.02, 0.15, 0.02], gold, [0, k * 0.785, 0]); y('h', [0, 0.05, 0], [0.37, 0.03, 0.37], col); c('h', [0, 0.27, 0], [0.04, 0.18, 0.04], gold); tassel(0.38); if (plume) b('h', [0, 0.47, -0.02], [0.05, 0.14, 0.05], plume); b('h', [0, -0.05, -0.15], [0.34, 0.14, 0.04], 0x3a2a24); });
   const phoenixHelm = () => hatOn(() => { y('h', [0, 0.13, 0], [0.32, 0.15, 0.32], 0xc9a03a); b('h', [0.2, 0.17, 0], [0.16, 0.05, 0.04], gold, [0, 0, 0.6]); b('h', [-0.2, 0.17, 0], [0.16, 0.05, 0.04], gold, [0, 0, -0.6]); c('h', [0, 0.3, 0], [0.04, 0.2, 0.04], gold); tassel(0.42); });
+  // 笠盔: the late-Ming gunner's helmet — a polished iron bowl on a wide, flat, slightly drooping iron brim, brass band and
+  // fittings, and a tall spray of red horsehair from a brass holder at the crown
+  const liKui = (iron2) => hatOn(() => { const st = iron2 || 0xb4b9bd;
+    y('h', [0, 0.065, 0], [0.74, 0.018, 0.74], st); y('h', [0, 0.05, 0], [0.8, 0.012, 0.8], 0x8e9397);
+    y('h', [0, 0.16, 0], [0.29, 0.16, 0.29], st); b('h', [0, 0.25, 0], [0.25, 0.08, 0.25], st); y('h', [0, 0.095, 0], [0.305, 0.03, 0.305], gold);
+    for (let k = 0; k < 4; k++) b('h', [Math.sin(k * HPI + 0.785) * 0.15, 0.16, Math.cos(k * HPI + 0.785) * 0.15], [0.045, 0.045, 0.03], gold, [0, k * HPI + 0.785, 0]);
+    c('h', [0, 0.31, 0], [0.055, 0.07, 0.055], gold);
+    for (let k = 0; k < 5; k++) { const a = k * 1.2566; b('h', [Math.sin(a) * 0.05, 0.43, Math.cos(a) * 0.05 - 0.02], [0.03, 0.24, 0.03], k % 2 ? 0xd0261c : 0xa8160f, [Math.cos(a) * 0.35 - 0.12, 0, -Math.sin(a) * 0.35]); } });
+  // 布面甲: cloth-faced brigandine, rows of brass rivet-heads, split armoured skirt
+  const buMian = (col, stud) => { b('c', [0, -0.04, 0], [0.5, 0.6, 0.31], col); for (const yy of [0.16, 0.06, -0.04, -0.14]) { b('c', [0, yy, 0.158], [0.42, 0.02, 0.01], stud); b('c', [0, yy, -0.158], [0.42, 0.02, 0.01], stud); }
+    b('c', [0, 0.19, 0.12], [0.2, 0.1, 0.05], col, [0.3, 0, 0]); b('sl', [0.06, -0.12, 0], [0.09, 0.22, 0.27], col); b('sr', [-0.06, -0.12, 0], [0.09, 0.22, 0.27], col); b('sl', [0.07, -0.16, 0], [0.092, 0.02, 0.272], stud); b('sr', [-0.07, -0.16, 0], [0.092, 0.02, 0.272], stud);
+    b('p', [0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [-0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [0, -0.22, 0.17], [0.38, 0.02, 0.01], stud); b('p', [0, -0.36, 0.17], [0.38, 0.02, 0.01], stud); };
+  const flask = () => y('p', [0.22, -0.06, 0.1], [0.08, 0.15, 0.08], 0x5a3a20);
   const bc = imp ? red : (u.type === 'shinsengumi' ? 0xd8b03c : BANNER[((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4]);
   if (imp) switch (u.type) {
     case 'hero': phoenixHelm(); dingjia(0x8a1a1e, gold); mirror(); b('c', [0, -0.02, -0.17], [0.56, 0.78, 0.03], 0xb02a24); b('sl', [0.06, 0.0, 0], [0.12, 0.05, 0.16], gold); b('sr', [-0.06, 0.0, 0], [0.12, 0.05, 0.16], gold); break;
@@ -3815,9 +3960,9 @@ function gearFor(u) {
     case 'yuanyang': rattanHelm(); coat(verm, 0xe8e2d0); kyahan(0xe8e2d0); if (u.role === 'lead') backflag(0xe8c25a); break;
     case 'cavalry': petalHelm(iron, red); dingjia(0x9a2222, gold); mirror(); backflag(verm); break;
     case 'ashigaru': hatOn(() => { c('h', [0, 0.13, 0], [0.62, 0.2, 0.62], 0xc8a868); b('h', [0, 0.26, 0], [0.06, 0.05, 0.06], red); }); coat(verm, 0x2a2622); kyahan(0xe8e2d0); break;
-    case 'rifle_imp': bigHat(); coat(verm, 0x2a2622); belts(0x6a4a30); kyahan(0xe8e2d0); break;
-    case 'rifle_spencer': petalHelm(0x3a3330); coat(0xa83a24, 0x2a2622); belts(0x6a4a30); kyahan(0xe8e2d0); break;
-    case 'jinshotai': bigHat(); coat(0x2a3a5a, verm); kyahan(0xe8e2d0); break;
+    case 'rifle_imp': liKui(); buMian(0xa8261e, gold); flask(); kyahan(0xe8e2d0); break;
+    case 'rifle_spencer': liKui(0x8a8f94); buMian(0x7a2a22, 0xc9c0a8); kyahan(0xe8e2d0); break;
+    case 'jinshotai': liKui(); buMian(0x24304a, gold); flask(); kyahan(0xe8e2d0); break;
     case 'jigen': petalHelm(iron, 0x1a1a1a); dingjia(0x5a2226, 0x9a9ea6); mirror(); break;
     case 'horokutai': mingHair(); hachimaki(red); robe(0x7a3422, 0x2a2a34); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); b('p', [0.24, 0.07, 0.06], [0.03, 0.06, 0.03], 0xe8e2cc); break;
     case 'ronin': if (vr % 2 === 0) hatOn(() => c('h', [0, 0.16, 0], [0.8, 0.18, 0.8], 0x9a8058)); else mingHair(); robe(torsoColor(u), 0x5a4a3a); break;
@@ -4090,6 +4235,7 @@ const BIOMES = {
   autumn: { sky: [0x2a4466, 0xd4d6d2, 0xcacdca], fog: 0xc9cdcc, fogNear: 70, fogFar: 360, sunCol: 0xf2dcb0, mist: 0xdcdedb, mtn: [0x8c96a8, 0x5d6b78], weather: 'leaves', grass: [[0.4, 0.46, 0.28], [0.52, 0.5, 0.34]], dry: [0.52, 0.46, 0.34], hemi: [0xc4ccd8, 0x4c4636], sun: [0xfff0dc, 1.0], pine: 0x2f5a35, maple: true, snow: false },
   summer: { sky: [0x2a5280, 0xd8dcd8, 0xcfd4d2], fog: 0xcfd4d2, fogNear: 80, fogFar: 380, sunCol: 0xf2dcb0, mist: 0xe2e4df, mtn: [0x8aa0a8, 0x56707a], weather: 'pollen', grass: [[0.32, 0.44, 0.25], [0.42, 0.5, 0.3]], dry: [0.48, 0.48, 0.32], hemi: [0xd0dbe6, 0x485a30], sun: [0xfff2e0, 1.05], pine: 0x2b5f2f, maple: false, snow: false },
   spring: { sky: [0x2c5486, 0xdedcd8, 0xd6d6d2], fog: 0xd6d6d2, fogNear: 80, fogFar: 380, sunCol: 0xf2dcb0, mist: 0xe4e2dc, mtn: [0x98a2b4, 0x627486], weather: 'petals', grass: [[0.38, 0.5, 0.3], [0.48, 0.54, 0.34]], dry: [0.54, 0.52, 0.4], hemi: [0xd6dcea, 0x4a5a30], sun: [0xfff0e2, 1.04], pine: 0x2e5a36, maple: false, blossom: true, snow: false },
+  night:  { sky: [0x060a14, 0x141c2c, 0x182030], fog: 0x0e1420, fogNear: 22, fogFar: 150, sunCol: 0x8ea6d8, mist: 0x1c2434, mtn: [0x18202c, 0x0e131c], weather: 'snow', grass: [[0.15, 0.17, 0.15], [0.19, 0.2, 0.17]], dry: [0.19, 0.19, 0.17], hemi: [0x34445e, 0x0c0c0c], sun: [0x8ea6d8, 0.32], pine: 0x142218, maple: false, snow: false, night: true },
   winter: { sky: [0x46546a, 0xd6d4cd, 0xcfcdc6], fog: 0xcfcdc5, fogNear: 45, fogFar: 270, sunCol: 0xf2dcb0, mist: 0xe9e6de, mtn: [0xa7acb4, 0x7d8590], weather: 'snow', grass: [[0.82, 0.84, 0.86], [0.9, 0.9, 0.92]], dry: [0.7, 0.69, 0.66], hemi: [0xd4d9de, 0x6a6a6a], sun: [0xf0e6dc, 0.7], pine: 0x2c4a33, maple: false, snow: true },
 };
 // ---------- 水墨 shadows: cast shade is laid on like an ink wash, not a hard digital edge ----------
@@ -4149,7 +4295,7 @@ class Renderer {
     this.deadHorses = []; this.cannonRecoil = new Map(); this.heroStates = new Map();
     this.msgs = [];
     this.localTeam = sim.cfg.players[localIdx] ? (sim.cfg.players[localIdx].team ? 1 : 0) : 0;
-    this.buildLights(); this.buildSky(); this.buildTerrain(); this.buildDeco(); this.buildStructures(); this.buildFigures(); this.buildHorses(); this.buildCannons(); this.buildMarkers(); this.buildFX(); this.buildViewmodel();
+    this.buildLights(); this.buildSky(); this.buildTerrain(); this.buildDeco(); this.buildStructures(); this.campFires = []; if (sim.cfg.camp) this.buildCamp(sim.cfg.camp); this.buildFigures(); this.buildHorses(); this.buildCannons(); this.buildMarkers(); this.buildFX(); this.buildViewmodel();
     this.ragdolls = []; for (let i = 0; i < MAXRAG; i++) this.ragdolls.push(new Ragdoll());
     this.ragNext = 0;
     this.buildEnvironment(); this.buildWater();
@@ -4217,6 +4363,43 @@ class Renderer {
     geo.setAttribute('color', new THREE.BufferAttribute(cols, 3)); geo.computeVertexNormals();
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const mesh = new THREE.Mesh(geo, mat); mesh.receiveShadow = true; this.scene.add(mesh); this.terrain = mesh;
+  }
+  // ---------- a night camp: tents, the fire, bedrolls (the empty ones too), the cook's pot, the company banner ----------
+  buildCamp(C) {
+    const sc = this.scene, L = (c) => new THREE.MeshLambertMaterial({ color: c });
+    const tents = this.sim.boxes.filter(b => b.kind === 'tent');
+    if (tents.length) { const g = new THREE.CylinderGeometry(1, 1, 1, 3, 1); g.rotateX(-Math.PI / 2); g.translate(0, 0.5, 0); const m = new THREE.InstancedMesh(g, L(0xb9ab8a), tents.length); const T = this.tmp;
+      tents.forEach((b, i) => { const y = terrainH(b.x, b.z); T.m.compose(T.v.set(b.x, y, b.z), T.q.identity(), T.v2.set(b.hw * 2 / 1.732, b.h / 1.5, b.hd * 2)); m.setMatrixAt(i, T.m); }); m.castShadow = true; m.receiveShadow = true; sc.add(m);
+      for (const b of tents) { const y = terrainH(b.x, b.z); const flap = new THREE.Mesh(new THREE.PlaneGeometry(b.hw * 0.9, b.h * 0.7), L(0x2a2620)); flap.position.set(b.x, y + b.h * 0.32, b.z + b.hd + 0.02); sc.add(flap);
+        for (const sz of [-1, 1]) { const pole = new THREE.Mesh(new THREE.BoxGeometry(0.06, b.h + 0.25, 0.06), L(0x5a4630)); pole.position.set(b.x, y + (b.h + 0.25) / 2, b.z + sz * (b.hd + 0.05)); sc.add(pole); } } }
+    this.campFires = [];
+    for (const f of C.fires || []) { const [x, z] = f, y = terrainH(x, z); const grp = new THREE.Group(); grp.position.set(x, y, z); sc.add(grp);
+      for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2; const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.16 + (k % 3) * 0.03), L(0x4a4a48)); st.position.set(Math.sin(a) * 0.62, 0.08, Math.cos(a) * 0.62); grp.add(st); }
+      for (let k = 0; k < 3; k++) { const lg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 1.0), L(0x2c2118)); lg.rotation.y = k * 1.05; lg.rotation.x = 0.12; lg.position.y = 0.12; grp.add(lg); }
+      const emb = new THREE.Mesh(new THREE.CircleGeometry(0.42, 12), new THREE.MeshBasicMaterial({ color: 0xff5a1a })); emb.rotation.x = -Math.PI / 2; emb.position.y = 0.05; grp.add(emb);
+      const fl = []; for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.22 - k * 0.04, 0.9 - k * 0.15, 7), new THREE.MeshBasicMaterial({ color: [0xff7a22, 0xffa040, 0xffd27a][k], transparent: true, opacity: 0.85 - k * 0.1, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); m.position.set((k - 1) * 0.1, 0.45, (k % 2) * 0.08 - 0.04); grp.add(m); fl.push(m); }
+      const lt = new THREE.PointLight(0xff9a4a, 2.4, 30, 1.6); lt.position.set(x, y + 1.3, z); sc.add(lt);
+      this.campFires.push({ x, y, z, fl, lt, t: Math.random() * 10 }); }
+    for (const b of C.bedrolls || []) { const [x, z, yaw, empty] = b, y = terrainH(x, z); const grp = new THREE.Group(); grp.position.set(x, y, z); grp.rotation.y = yaw; sc.add(grp);
+      const mat = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.09, 1.85), L(empty ? 0x343a44 : 0x46505e)); mat.position.y = 0.05; grp.add(mat);
+      const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.66, 8), L(0x6a5a44)); roll.rotation.z = Math.PI / 2; roll.position.set(0, 0.13, -0.8); grp.add(roll);
+      if (empty) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 2.1), L(0x6b5232)); sp.position.set(0.48, 0.04, 0.1); sp.rotation.y = 0.05; grp.add(sp); const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.07, 8), L(0x7a6a50)); cup.position.set(-0.2, 0.13, -0.45); grp.add(cup);
+        const hat = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.12, 10), L(0x2c2a26)); hat.position.set(0.12, 0.15, -0.3); grp.add(hat); } }
+    for (const p of C.props || []) { const [kind, x, z, yaw] = p, y = terrainH(x, z); const grp = new THREE.Group(); grp.position.set(x, y, z); grp.rotation.y = yaw || 0; sc.add(grp);
+      if (kind === 'pot') { const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.26, 0.38, 12), L(0x2a2a2c)); pot.position.y = 0.62; grp.add(pot); for (let k = 0; k < 3; k++) { const a = k * 2.094; const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.3, 0.05), L(0x4a3a28)); leg.position.set(Math.sin(a) * 0.45, 0.6, Math.cos(a) * 0.45); leg.rotation.set(Math.cos(a) * 0.32, 0, -Math.sin(a) * 0.32); grp.add(leg); } }
+      else if (kind === 'banner') { const pole = new THREE.Mesh(new THREE.BoxGeometry(0.08, 6, 0.08), L(0x4a3826)); pole.position.y = 3; grp.add(pole); const cv = document.createElement('canvas'); cv.width = 128; cv.height = 192; const g = cv.getContext('2d'); g.fillStyle = '#9a2420'; g.fillRect(0, 0, 128, 192); g.strokeStyle = '#e0c070'; g.lineWidth = 8; g.strokeRect(6, 6, 116, 180); g.fillStyle = '#f2e6c8'; g.font = 'bold 96px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p[4] || '浙', 64, 96);
+        const fl = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.65), new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(cv), side: THREE.DoubleSide })); fl.position.set(0.6, 5, 0); grp.add(fl); this.campFlag = fl; }
+      else if (kind === 'rack') { for (let k = 0; k < 5; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.04, 3.2, 0.04), L(0x6b5232)); sp.position.set((k - 2) * 0.22, 1.5, 0); sp.rotation.x = -0.18; grp.add(sp); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.2, 4), L(0x9aa0a6)); tip.position.set((k - 2) * 0.22, 3.1, -0.28); grp.add(tip); } const bar = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.06, 0.06), L(0x4a3826)); bar.position.set(0, 1.9, -0.18); grp.add(bar); }
+      else if (kind === 'wagon') { const bed = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 3), L(0x5a4430)); bed.position.y = 0.9; grp.add(bed); for (const sx of [-0.8, 0.8]) for (const sz of [-0.9, 0.9]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.1, 12), L(0x3a2c1e)); w.rotation.z = Math.PI / 2; w.position.set(sx, 0.42, sz); grp.add(w); } const load = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.6, 2.2), L(0x8a7a5a)); load.position.y = 1.45; grp.add(load); }
+      else if (kind === 'shields') { for (let k = 0; k < 3; k++) { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.05, 16), L(0xa8844a)); d.rotation.x = Math.PI / 2 - 0.25; d.position.set((k - 1) * 0.5, 0.42, 0); grp.add(d); } }
+      else if (kind === 'log') { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 2.2, 8), L(0x4a3a2a)); lg.rotation.z = Math.PI / 2; lg.position.y = 0.2; grp.add(lg); } }
+  }
+  updateCamp(dt) {
+    for (const f of this.campFires) { f.t += dt; const k = 0.82 + 0.18 * Math.sin(f.t * 11) * Math.sin(f.t * 7.3 + 1) + 0.08 * Math.sin(f.t * 23); f.lt.intensity = 2.3 * k;
+      f.fl.forEach((m, i) => { const s = 0.85 + 0.25 * Math.sin(f.t * (9 + i * 3) + i); m.scale.set(1, s, 1); m.rotation.y = f.t * (0.6 + i * 0.3); });
+      if (Math.random() < dt * 9) this.sparks.spawn(f.x + rnd(-0.2, 0.2), f.y + 0.6, f.z + rnd(-0.2, 0.2), rnd(-0.3, 0.3), rnd(1.5, 3.2), rnd(-0.3, 0.3), rnd(0.8, 1.6), 0.05, 0.015, 1, 0.65, 0.25, 1, 0.4, 0.1, 0.9, -0.3, 0.2);
+      if (Math.random() < dt * 2.5) this.smoke.spawn(f.x, f.y + 1.2, f.z, rnd(-0.1, 0.1), 0.8, rnd(-0.1, 0.1), 4, 0.5, 2.2, 0.16, 0.15, 0.14, 0.3, 0.7, 0); }
+    if (this.campFlag) this.campFlag.rotation.y = Math.sin(this.time * 1.3) * 0.25;
   }
   buildDeco() {
     const obs = this.sim.obstacles; const trees = obs.filter(o => o.kind === 0), rocks = obs.filter(o => o.kind === 1);
@@ -5096,6 +5279,9 @@ class Renderer {
       if (u.guardT > 0) { crouch += 0.08; stance = Math.max(stance, 0.7); }
     }
     if (mounted) { lean += 0.06 + 0.22 * clamp(((u.mounted ? u.speedNow : this.sim.units[u.mount].speedNow) - 4) / 5, 0, 1); stance = 0; twist += clamp(wrapA(yaw - ryaw), -1.1, 1.1); }
+    if (u.camp && u.campPose === 'squat') { crouch = 0.5; lean = 0.3; stance = 0.35; twist = 0.05 * Math.sin(this.time * 0.4 + u.id); rateB = 6; } // hunkered down by the fire
+    else if (u.camp) { lean = 0.04 + 0.03 * Math.sin(this.time * 0.6 + u.id); twist = 0.12 * Math.sin(this.time * 0.25 + u.id * 1.7); }
+    if (u.wounded && !u.dead) { if (u.helpedBy >= 0) { lean = 0.28; crouch = Math.max(crouch, 0.16); roll = 0.12 * Math.sin(ph); } else { crouch = 0.62; lean = 0.62; roll = 0.1; stance = 0.4; } rateB = 8; } // doubled over / limping on a friend's shoulder
     // ---------- smoothing ----------
     a.recoil = Math.max(0, a.recoil - dt * 3.2);
     if (!a.init) { set3(a.wp, tg.wp); set3(a.wd, tg.wd); set3(a.rh, tg.rh); set3(a.lh, tg.lh); a.lean = lean; a.twist = twist; a.init = true; }
@@ -5558,7 +5744,7 @@ class Renderer {
   }
   render(alpha, dt, view) {
     if (this.hitstop > 0 && !this.studio) { this.hitstop -= dt; this.present(this.camera); return; }
-    this.time += dt; const sim = this.sim, units = sim.units, T = this.tmp;
+    this.time += dt; const sim = this.sim, units = sim.units, T = this.tmp; if (this.campFires && this.campFires.length) this.updateCamp(dt);
     this.fdt = Math.min(0.05, Math.max(0.001, dt)); this.speedLines = 0;
     const local = sim.players[this.localIdx]; const hero = local ? units[local.heroId] : null;
     const fp = view.mode === 'fp' && hero && !hero.dead; this.lastMode = fp ? 'fp' : 'cmd';
@@ -5828,7 +6014,7 @@ class Renderer {
       fragmentShader: 'uniform vec3 col; varying vec2 vUv; void main(){ float band = smoothstep(0.0,0.25,vUv.y) * (1.0 - smoothstep(0.6,1.0,vUv.y)); float wav = 0.5 + 0.5*sin(vUv.x*60.0); float a = band * mix(0.75, 0.95, wav); gl_FragColor = vec4(col, a); }' });
     for (const [R, y, h] of [[470, 4, 26], [395, 10, 14]]) { const m = new THREE.Mesh(new THREE.CylinderGeometry(R, R, h, 64, 1, true), mistMat); m.position.y = y; m.renderOrder = -7; group.add(m); }
     // weather: leaves, snow or pollen drifting through a box around the camera
-    const isRain = B.weather === 'rain'; const N = isRain ? (this.lowfx ? 700 : 1800) : this.lowfx ? 200 : 500, pos = new Float32Array(N * 3), rnd2 = new Float32Array(N * 2);
+    const isRain = B.weather === 'rain'; const N = isRain ? (this.lowfx ? 700 : 1800) : B.night ? 40 : this.lowfx ? 200 : 500, pos = new Float32Array(N * 3), rnd2 = new Float32Array(N * 2);
     for (let i = 0; i < N; i++) { pos[i * 3] = rr() * 80 - 40; pos[i * 3 + 1] = rr() * 30; pos[i * 3 + 2] = rr() * 80 - 40; rnd2[i * 2] = rr(); rnd2[i * 2 + 1] = rr(); }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('rnd', new THREE.BufferAttribute(rnd2, 2));
     const kind = isRain ? 4 : B.weather === 'snow' ? 0 : B.weather === 'leaves' ? 1 : B.weather === 'petals' ? 3 : 2;
@@ -5859,10 +6045,10 @@ class Renderer {
     { const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const x = cv.getContext('2d'); x.strokeStyle = 'rgba(255,250,235,0.95)'; x.fillStyle = 'rgba(255,250,235,0.85)'; x.lineWidth = 9; x.lineCap = 'round';
       const curl = (cx, cy, r) => { x.beginPath(); for (let t = 0; t < 9.5; t += 0.1) { const rr2 = r * (1 - t / 11); x.lineTo(cx + Math.cos(t) * rr2, cy + Math.sin(t) * rr2 * 0.8); } x.stroke(); };
       x.beginPath(); x.ellipse(128, 86, 110, 22, 0, 0, Math.PI * 2); x.fill(); curl(70, 66, 34); curl(128, 54, 40); curl(186, 66, 34);
-      const tex = new THREE.CanvasTexture(cv); const sm = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, opacity: 0.85 });
+      const tex = new THREE.CanvasTexture(cv); const sm = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, opacity: 0.85 }); if (this.biome.night) { sm.color.set(0x2c3442); sm.opacity = 0.4; }
       for (let i = 0; i < 14; i++) { const a = rr() * Math.PI * 2, R = 300 + rr() * 120; const sp = new THREE.Sprite(sm); sp.position.set(Math.sin(a) * R, 70 + rr() * 70, Math.cos(a) * R); const sc = 50 + rr() * 50; sp.scale.set(sc * 2, sc, 1); sp.renderOrder = -6; group.add(sp); } }
     // the golden dragon: a long serpentine body winding through the clouds
-    { const N = 46, gold = new THREE.MeshBasicMaterial({ color: 0xe6b43c, fog: false }), dark = new THREE.MeshBasicMaterial({ color: 0xa8741e, fog: false }), red = new THREE.MeshBasicMaterial({ color: 0xc8281e, fog: false }), pale = new THREE.MeshBasicMaterial({ color: 0xf6e6b0, fog: false });
+    if (!this.biome.night) { const N = 46, gold = new THREE.MeshBasicMaterial({ color: 0xe6b43c, fog: false }), dark = new THREE.MeshBasicMaterial({ color: 0xa8741e, fog: false }), red = new THREE.MeshBasicMaterial({ color: 0xc8281e, fog: false }), pale = new THREE.MeshBasicMaterial({ color: 0xf6e6b0, fog: false });
       const body = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), gold, N); const fins = new THREE.InstancedMesh(new THREE.ConeGeometry(0.5, 1, 4), red, N); const belly = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), pale, N);
       for (const m of [body, fins, belly]) { m.frustumCulled = false; m.renderOrder = -5; group.add(m); }
       const head = new THREE.Group(); head.renderOrder = -5;
@@ -5884,7 +6070,7 @@ class Renderer {
     return { x: clamp(px, -HALF, HALF), z: clamp(pz, -HALF, HALF) };
   }
 }
-return { Renderer, TEAM_COL };
+return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor };
 })();
 </script>
 <script>
@@ -5908,7 +6094,8 @@ return { Renderer, TEAM_COL };
   };
   const WINTER = { haze: 0xb7b8b6, hazeFar: 0xc9c9c6, skyTop: 0x6c737b, skyMid: 0xb7b8b6, skyLow: 0xc6c6c2, sun: 0xfff0dc, hemiSky: 0xc2c8ce, hemiGround: 0x6a6a68, sunI: 1.3, hemiI: 1.05, exposure: 0.9 };
   const STORMY = { haze: 0x6f7378, hazeFar: 0x80848a, skyTop: 0x3c4148, skyMid: 0x6c7076, skyLow: 0x7a7e84, sun: 0xd8dde4, hemiSky: 0x9aa2ac, hemiGround: 0x3c3a34, sunI: 0.9, hemiI: 1.0, exposure: 1.15 };
-  const look = (r) => r.sim.rain ? STORMY : r.biome.snow ? WINTER : LOOK;
+  const NIGHT = { haze: 0x161c28, hazeFar: 0x0c1018, skyTop: 0x04060b, skyMid: 0x0e1420, skyLow: 0x182030, sun: 0x9db2e0, hemiSky: 0x2a3550, hemiGround: 0x0a0a0a, sunI: 0.3, hemiI: 0.4, exposure: 1.05 };
+  const look = (r) => r.biome.night ? NIGHT : r.sim.rain ? STORMY : r.biome.snow ? WINTER : LOOK;
 
   const NOISE = `
     float rH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -6157,6 +6344,135 @@ return { Renderer, TEAM_COL };
 })();
 </script>
 <script>
+// ===== Realism edition uniforms =====
+// The realism edition dresses its soldiers from period sources (平番得勝圖, 出警入蹕圖, 武備志, surviving armour) with more
+// detail per figure; the regular editions keep their own look. Same part budget: b<=40, c<=4, y<=5 per man.
+(() => {
+if (!window.MING_REAL) return;
+const R = RENDER, HPI = Math.PI / 2, BANNER = R.BANNER, torsoColor = R.torsoColor;
+const RG_CACHE = new Map();
+function realGear(u) {
+  const vr = u.type === 'byakkotai' ? (u.id % 2) * 4 : u.id % 6; const key = u.type + ':' + (u.role || '') + ':' + u.team + ':' + vr + ':' + (u.team === 1 ? ((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4 : 0); let g = RG_CACHE.get(key); if (g) return g;
+  const imp = u.team === 0, team = imp ? 0xb3262f : 0x2f55b8, P = [];
+  let HAT = false; const b = (f, o, s, k, r) => P.push({ m: 'b', f, o, s, k, r, hat: HAT && f === 'h' }), c = (f, o, s, k, r) => P.push({ m: 'c', f, o, s, k, r, hat: HAT && f === 'h' }), y = (f, o, s, k, r) => P.push({ m: 'y', f, o, s, k, r, hat: HAT && f === 'h' });
+  const hatOn = (fn) => { HAT = true; fn(); HAT = false; };
+  const seg = (a, z, t0, t1, w, d, k) => P.push({ m: 'b', f: 'seg', a, z, t0, t1, w, d, k });
+  const kingire = () => { if (imp) { seg('shL', 'elL', 0.25, 0.55, 0.15, 0.15, 0xc8312a); seg('shL', 'elL', 0.33, 0.46, 0.155, 0.155, 0xd9b24a); } else seg('shL', 'elL', 0.25, 0.5, 0.15, 0.15, 0xe9e4d6); };
+  const eri = (col) => b('c', [0, 0.2, 0.13], [0.2, 0.1, 0.02], col || 0xeee8da, [0.25, 0, 0]);
+  const hakama = (col) => { b('p', [0, -0.2, 0], [0.44, 0.32, 0.3], col); seg('hipL', 'kneeL', 0, 1, 0.24, 0.26, col); seg('hipR', 'kneeR', 0, 1, 0.24, 0.26, col); seg('kneeL', 'footL', 0, 0.55, 0.22, 0.24, col); seg('kneeR', 'footR', 0, 0.55, 0.22, 0.24, col); };
+  const kyahan = (col) => { seg('kneeL', 'footL', 0.35, 0.95, 0.16, 0.17, col); seg('kneeR', 'footR', 0.35, 0.95, 0.16, 0.17, col); };
+  const belts = (col) => { b('c', [0, 0.02, 0.135], [0.06, 0.62, 0.012], col, [0, 0, 0.62]); b('c', [0, 0.02, 0.135], [0.06, 0.62, 0.012], col, [0, 0, -0.62]); b('c', [0, 0.02, -0.135], [0.06, 0.62, 0.012], col, [0, 0, 0.62]); b('c', [0, 0.02, -0.135], [0.06, 0.62, 0.012], col, [0, 0, -0.62]); b('p', [-0.17, 0.02, -0.11], [0.13, 0.11, 0.07], 0x1a1714); };
+  const tasuki = () => { b('c', [0, 0.03, -0.136], [0.05, 0.66, 0.012], 0xf2efe6, [0, 0, 0.6]); b('c', [0, 0.03, -0.136], [0.05, 0.66, 0.012], 0xf2efe6, [0, 0, -0.6]); };
+  const hachimaki = (col) => { b('h', [0, 0.04, 0], [0.285, 0.05, 0.285], col); b('h', [0.03, 0.0, -0.17], [0.035, 0.035, 0.14], col, [0.6, 0, 0]); };
+  const topknot = () => { b('h', [0, 0.13, -0.01], [0.27, 0.05, 0.27], 0x1a1614); b('h', [0, 0.17, -0.02], [0.05, 0.045, 0.16], 0x1a1614); };
+  const shaguma = (col) => { b('h', [0, 0.12, -0.04], [0.31, 0.12, 0.3], col); b('c', [0, 0.16, -0.17], [0.28, 0.5, 0.09], col, [-0.12, 0, 0]); b('c', [0, -0.08, -0.19], [0.22, 0.3, 0.07], col, [-0.2, 0, 0]); };
+  const armour = (lacq, lace) => {
+    b('c', [0, 0.0, 0], [0.5, 0.5, 0.31], lacq); b('c', [0, 0.1, 0], [0.505, 0.035, 0.315], lace); b('c', [0, -0.08, 0], [0.505, 0.035, 0.315], lace);
+    b('sl', [0.07, -0.1, 0], [0.07, 0.22, 0.26], lacq); b('sr', [-0.07, -0.1, 0], [0.07, 0.22, 0.26], lacq);
+    b('sl', [0.075, -0.12, 0], [0.072, 0.03, 0.265], lace); b('sr', [-0.075, -0.12, 0], [0.072, 0.03, 0.265], lace);
+    b('p', [0, -0.18, 0.12], [0.42, 0.26, 0.05], lacq); b('p', [0, -0.18, -0.12], [0.42, 0.26, 0.05], lacq); b('p', [0.21, -0.18, 0], [0.05, 0.26, 0.22], lacq); b('p', [-0.21, -0.18, 0], [0.05, 0.26, 0.22], lacq);
+  };
+  const kabuto = (col, crest) => hatOn(() => kabuto0(col, crest));
+  const kabuto0 = (col, crest) => { b('h', [0, 0.13, -0.01], [0.32, 0.14, 0.32], col); b('h', [0, 0.03, -0.09], [0.4, 0.09, 0.24], col, [0.25, 0, 0]); b('h', [0.18, 0.09, 0.08], [0.04, 0.09, 0.09], col); b('h', [-0.18, 0.09, 0.08], [0.04, 0.09, 0.09], col);
+    if (crest) { b('h', [0.07, 0.27, 0.15], [0.03, 0.22, 0.02], crest, [0, 0, -0.35]); b('h', [-0.07, 0.27, 0.15], [0.03, 0.22, 0.02], crest, [0, 0, 0.35]); } };
+  const sashimono = (col) => { b('c', [0, 0.5, -0.17], [0.025, 1.15, 0.025], 0x3a2a1a); b('c', [0.13, 0.75, -0.17], [0.25, 0.55, 0.014], col); };
+  // ---- Ming & Jin kit, realism edition ----
+  // Recognition keys (what must read at 35 m), from the 平番得勝圖 / 出警入蹕圖 scrolls, the 武備志 and 紀效新書 plates and
+  // surviving armour:
+  //  Ming gunners: wide-brim 笠盔 + red horsehair plume, red studded 布面甲.  Ming heavy foot/horse: 明盔 bowl with tall spike,
+  //  red tassel and the drooping 頓項 neck-and-ear guard.  Qi Jiguang's men: low rattan helmets, red coats, white puttees,
+  //  round rattan shields.  Jin bannermen: two-plate cone helmet with a tall finial, three-peaked visor and flaps in banner
+  //  colour; studded 棉甲 in banner colour; hip quiver and bow case (撒袋); horse-hoof cuffs; the shaved head and queue.
+  const red = 0xc8281e, gold = 0xd8b04a, iron = 0x3a3d44, brass = 0xc49a3a;
+  const mingHair = () => { b('h', [0, 0.12, -0.01], [0.27, 0.06, 0.27], 0x1a1614); b('h', [0, 0.17, -0.01], [0.09, 0.07, 0.09], 0x1a1614); };
+  const queue = () => { b('h', [0, 0.07, -0.09], [0.27, 0.11, 0.1], 0x1a1614); b('c', [0, 0.12, -0.165], [0.035, 0.52, 0.03], 0x141210); b('c', [0, -0.15, -0.165], [0.05, 0.05, 0.04], 0x8a2a20); };
+  // Jin/Qing helmet: cone bowl, brass spool, tall iron finial with a tuft, three-peaked visor, flaps in banner colour
+  const jinHelm = (col, flap, plume, tall) => hatOn(() => { const t = tall || 1;
+    y('h', [0, 0.11, 0], [0.31, 0.12, 0.31], col); c('h', [0, 0.22, 0], [0.31, 0.13, 0.31], col); y('h', [0, 0.29, 0], [0.075, 0.05, 0.075], brass);
+    c('h', [0, 0.29 + 0.16 * t, 0], [0.04, 0.3 * t, 0.04], 0xa8acb2); b('h', [0, 0.33 + 0.3 * t, 0], [0.055, 0.12, 0.055], plume || red);
+    b('h', [0, 0.065, 0.165], [0.3, 0.045, 0.07], col); b('h', [0, 0.05, 0.2], [0.09, 0.05, 0.03], brass);
+    b('h', [0.168, -0.07, 0.0], [0.03, 0.26, 0.25], flap, [0, 0, -0.1]); b('h', [-0.168, -0.07, 0.0], [0.03, 0.26, 0.25], flap, [0, 0, 0.1]); b('h', [0, -0.07, -0.168], [0.33, 0.26, 0.03], flap, [0.1, 0, 0]);
+    b('h', [0, -0.19, -0.18], [0.34, 0.03, 0.035], brass, [0.1, 0, 0]); });
+  // Ming 明盔 with 頓項: iron bowl, brass band, tall gilt spike over a red tassel, drooping studded neck-and-ear guard
+  const mingKui = (col, flap, stud) => hatOn(() => {
+    y('h', [0, 0.12, 0], [0.31, 0.15, 0.31], col); c('h', [0, 0.23, 0], [0.31, 0.1, 0.31], col); y('h', [0, 0.06, 0], [0.33, 0.035, 0.33], brass);
+    c('h', [0, 0.41, 0], [0.045, 0.26, 0.045], gold); b('h', [0, 0.31, 0], [0.17, 0.09, 0.17], red); b('h', [0, 0.27, 0], [0.21, 0.05, 0.21], 0xa01a14);
+    b('h', [0.175, -0.1, 0.02], [0.035, 0.27, 0.26], flap, [0, 0, -0.16]); b('h', [-0.175, -0.1, 0.02], [0.035, 0.27, 0.26], flap, [0, 0, 0.16]); b('h', [0, -0.1, -0.172], [0.34, 0.27, 0.035], flap, [0.14, 0, 0]);
+    b('h', [0, -0.12, -0.192], [0.3, 0.02, 0.01], stud, [0.14, 0, 0]); b('h', [0.196, -0.12, 0.02], [0.01, 0.02, 0.22], stud, [0, 0, -0.16]); b('h', [-0.196, -0.12, 0.02], [0.01, 0.02, 0.22], stud, [0, 0, 0.16]); });
+  const liangmao = (fr) => hatOn(() => { c('h', [0, 0.15, 0], [0.5, 0.16, 0.5], 0x2a2420); c('h', [0, 0.19, 0], [0.32, 0.1, 0.32], fr || red); y('h', [0, 0.25, 0], [0.05, 0.05, 0.05], gold); });
+  const furHat = (col) => hatOn(() => { y('h', [0, 0.11, 0], [0.37, 0.12, 0.37], 0x6a4426); y('h', [0, 0.06, 0], [0.4, 0.05, 0.4], 0x4a2e1a); c('h', [0, 0.22, 0], [0.26, 0.14, 0.26], col); b('h', [0, 0.31, 0], [0.05, 0.06, 0.05], red); });
+  // studded padded armour (棉甲 / 布面甲): coat, rows of brass rivet-heads front and back, studded shoulders, split skirt
+  const dingjia = (col, stud, rows) => { b('c', [0, -0.04, 0], [0.5, 0.6, 0.31], col); for (const yy of rows || [0.15, 0.03, -0.09]) { b('c', [0, yy, 0.158], [0.4, 0.02, 0.01], stud || gold); b('c', [0, yy, -0.158], [0.4, 0.02, 0.01], stud || gold); }
+    b('sl', [0.07, -0.12, 0], [0.1, 0.23, 0.28], col); b('sr', [-0.07, -0.12, 0], [0.1, 0.23, 0.28], col); b('sl', [0.08, -0.17, 0], [0.102, 0.02, 0.282], stud || gold); b('sr', [-0.08, -0.17, 0], [0.102, 0.02, 0.282], stud || gold);
+    b('p', [0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [-0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [0, -0.22, 0.172], [0.4, 0.02, 0.01], stud || gold); b('p', [0, -0.36, 0.172], [0.4, 0.02, 0.01], stud || gold); };
+  const hoof = (col) => { seg('elL', 'haL', 0.78, 1.0, 0.13, 0.15, col); seg('elR', 'haR', 0.78, 1.0, 0.13, 0.15, col); }; // 馬蹄袖
+  const robe = (col, sash) => { b('p', [0, -0.25, 0.01], [0.44, 0.4, 0.3], col); if (sash) b('p', [0, -0.07, 0], [0.47, 0.07, 0.32], sash); };
+  const backflag = (col, edge) => { b('c', [0, 0.5, -0.17], [0.03, 1.15, 0.03], 0x3a2a1a); b('c', [0.15, 0.82, -0.17], [0.28, 0.5, 0.016], col); if (edge) b('c', [0.15, 0.82, -0.172], [0.32, 0.54, 0.012], edge); };
+  const quiver = () => { y('c', [0.14, 0.05, -0.17], [0.13, 0.6, 0.13], 0x4a2e18, [0, 0, -0.35]); b('c', [0.25, 0.36, -0.17], [0.16, 0.12, 0.08], 0xe8e0cc, [0, 0, -0.35]); };
+  const sadai = () => { b('p', [0.27, -0.16, 0.02], [0.06, 0.48, 0.24], 0x5a3a22, [0, 0, 0.22]); b('p', [0.29, -0.06, 0.02], [0.065, 0.12, 0.25], brass, [0, 0, 0.22]); // bow case (left hip)
+    b('p', [-0.26, -0.08, -0.03], [0.08, 0.34, 0.17], 0x4a2e18, [0, 0, -0.18]); b('p', [-0.29, 0.13, -0.03], [0.06, 0.12, 0.16], 0xe8e0cc, [0, 0, -0.18]); }; // quiver with white fletching
+  const verm = 0xc4381e, mirror = () => { y('c', [0, 0.06, 0.162], [0.17, 0.02, 0.17], 0xd6dadc, [HPI, 0, 0]); y('c', [0, 0.06, 0.165], [0.1, 0.015, 0.1], 0x9aa2a6, [HPI, 0, 0]); };
+  const coat = (col, sash, collar) => { b('p', [0, -0.3, 0.01], [0.47, 0.52, 0.32], col); b('p', [0, -0.07, 0], [0.48, 0.07, 0.33], sash || 0x2a2622); b('c', [0, 0.2, 0.06], [0.3, 0.06, 0.24], collar || 0xe8e2d0); };
+  const tassel = (yy) => { b('h', [0, yy, 0], [0.12, 0.07, 0.12], red); b('h', [0, yy - 0.06, 0], [0.16, 0.05, 0.16], red); };
+  // Qi Jiguang's men: a low rattan helmet woven in bands, red knob, cloth neck guard
+  const rattanHelm = () => hatOn(() => { c('h', [0, 0.17, 0], [0.4, 0.2, 0.4], 0xb8964e); y('h', [0, 0.07, 0], [0.4, 0.045, 0.4], 0x8a6a30); y('h', [0, 0.14, 0], [0.33, 0.02, 0.33], 0x8a6a30); b('h', [0, 0.28, 0], [0.07, 0.06, 0.07], red); b('h', [0, -0.08, -0.15], [0.3, 0.16, 0.03], verm, [0.15, 0, 0]); });
+  const phoenixHelm = () => hatOn(() => { y('h', [0, 0.13, 0], [0.33, 0.16, 0.33], 0xc9a03a); c('h', [0, 0.24, 0], [0.33, 0.1, 0.33], 0xc9a03a); b('h', [0.21, 0.2, 0], [0.22, 0.06, 0.05], gold, [0, 0, 0.7]); b('h', [-0.21, 0.2, 0], [0.22, 0.06, 0.05], gold, [0, 0, -0.7]); c('h', [0, 0.42, 0], [0.045, 0.26, 0.045], gold); b('h', [0, 0.34, 0], [0.17, 0.08, 0.17], red); b('h', [0, 0.6, -0.04], [0.06, 0.16, 0.06], red, [-0.3, 0, 0]);
+    b('h', [0.175, -0.1, 0.02], [0.035, 0.27, 0.26], 0x9a1a1e, [0, 0, -0.16]); b('h', [-0.175, -0.1, 0.02], [0.035, 0.27, 0.26], 0x9a1a1e, [0, 0, 0.16]); b('h', [0, -0.1, -0.172], [0.34, 0.27, 0.035], 0x9a1a1e, [0.14, 0, 0]); });
+  // 笠盔: wide flat drooping iron brim, brass band and fittings, tall red horsehair plume
+  const liKui = (iron2) => hatOn(() => { const st = iron2 || 0xb4b9bd;
+    y('h', [0, 0.065, 0], [0.74, 0.018, 0.74], st); y('h', [0, 0.05, 0], [0.8, 0.012, 0.8], 0x8e9397);
+    y('h', [0, 0.16, 0], [0.29, 0.16, 0.29], st); b('h', [0, 0.25, 0], [0.25, 0.08, 0.25], st); y('h', [0, 0.095, 0], [0.305, 0.03, 0.305], gold);
+    for (let k = 0; k < 4; k++) b('h', [Math.sin(k * HPI + 0.785) * 0.15, 0.16, Math.cos(k * HPI + 0.785) * 0.15], [0.045, 0.045, 0.03], gold, [0, k * HPI + 0.785, 0]);
+    c('h', [0, 0.31, 0], [0.055, 0.07, 0.055], gold);
+    for (let k = 0; k < 5; k++) { const a = k * 1.2566; b('h', [Math.sin(a) * 0.05, 0.43, Math.cos(a) * 0.05 - 0.02], [0.03, 0.24, 0.03], k % 2 ? 0xd0261c : 0xa8160f, [Math.cos(a) * 0.35 - 0.12, 0, -Math.sin(a) * 0.35]); } });
+  const buMian = (col, stud) => { b('c', [0, -0.04, 0], [0.5, 0.6, 0.31], col); for (const yy of [0.16, 0.06, -0.04, -0.14]) { b('c', [0, yy, 0.158], [0.42, 0.02, 0.01], stud); b('c', [0, yy, -0.158], [0.42, 0.02, 0.01], stud); }
+    b('c', [0, 0.19, 0.12], [0.2, 0.1, 0.05], col, [0.3, 0, 0]); b('sl', [0.06, -0.12, 0], [0.09, 0.22, 0.27], col); b('sr', [-0.06, -0.12, 0], [0.09, 0.22, 0.27], col); b('sl', [0.07, -0.16, 0], [0.092, 0.02, 0.272], stud); b('sr', [-0.07, -0.16, 0], [0.092, 0.02, 0.272], stud);
+    b('p', [0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [-0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [0, -0.22, 0.17], [0.38, 0.02, 0.01], stud); b('p', [0, -0.36, 0.17], [0.38, 0.02, 0.01], stud); };
+  const flask = () => y('p', [0.22, -0.06, 0.1], [0.08, 0.15, 0.08], 0x5a3a20);
+  const kyahanW = () => kyahan(0xe8e2d0);
+  const bc = imp ? red : (u.type === 'shinsengumi' ? 0xd8b03c : BANNER[((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4]);
+  const trim = imp ? gold : (bc === 0xe8e4da ? 0xb0262a : bc === 0x2f4fa8 ? 0xe8e4da : 0xb0262a); // bordered banners: a contrasting edge
+  if (imp) switch (u.type) {
+    case 'hero': phoenixHelm(); dingjia(0x8a1a1e, gold); mirror(); b('c', [0, -0.08, -0.18], [0.62, 0.95, 0.03], 0xb02a24, [-0.06, 0, 0]); b('c', [0, 0.18, -0.17], [0.5, 0.06, 0.05], gold); break;
+    case 'samurai': rattanHelm(); coat(verm, 0xe8e2d0, 0x2a2622); kyahanW(); b('p', [-0.24, -0.1, 0.05], [0.06, 0.4, 0.07], 0x2a1e14, [0.3, 0, -0.1]); break;
+    case 'yuanyang': rattanHelm(); coat(verm, 0xe8e2d0, 0x2a2622); kyahanW(); if (u.role === 'lead') backflag(0xe8c25a, red); break;
+    case 'cavalry': mingKui(iron, 0x9a2222, gold); dingjia(0x9a2222, gold); mirror(); backflag(verm, gold); hoof(0x9a2222); break;
+    case 'ashigaru': hatOn(() => { c('h', [0, 0.13, 0], [0.66, 0.2, 0.66], 0xc8a868); y('h', [0, 0.07, 0], [0.5, 0.02, 0.5], 0x9a7a40); b('h', [0, 0.26, 0], [0.07, 0.06, 0.07], red); }); coat(verm, 0x2a2622); kyahanW(); break;
+    case 'rifle_imp': liKui(); buMian(0xa8261e, gold); flask(); kyahanW(); break;
+    case 'rifle_spencer': liKui(0x8a8f94); buMian(0x7a2a22, 0xc9c0a8); kyahanW(); break;
+    case 'jinshotai': liKui(); buMian(0x24304a, gold); flask(); kyahanW(); break;
+    case 'jigen': mingKui(0x2a2c30, 0x3a3a40, 0x9a9ea6); dingjia(0x4a2024, 0x9a9ea6, [0.15, 0.06, -0.03, -0.12]); mirror(); break;
+    case 'horokutai': mingHair(); hachimaki(red); robe(0x7a3422, 0x2a2a34); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); b('p', [0.24, 0.07, 0.06], [0.03, 0.06, 0.03], 0xe8e2cc); y('c', [0.12, -0.02, -0.17], [0.2, 0.2, 0.2], 0x2a2a2e); break;
+    case 'ronin': if (vr % 2 === 0) hatOn(() => c('h', [0, 0.16, 0], [0.8, 0.18, 0.8], 0x9a8058)); else mingHair(); robe(torsoColor(u), 0x5a4a3a); break;
+  } else switch (u.type) {
+    case 'hero': jinHelm(0xc9a03a, 0xc9a03a, red, 1.35); queue(); dingjia(0xc9a03a, 0x8a5a20, [0.15, 0.06, -0.03, -0.12]); hoof(0xc9a03a); b('c', [0, -0.08, -0.18], [0.6, 0.95, 0.03], 0xd8b03c, [-0.06, 0, 0]); break;
+    case 'samurai': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8); hoof(bc); break;
+    case 'cavalry': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8); hoof(bc); sadai(); backflag(bc, trim); break;
+    case 'shinsengumi': jinHelm(0x8a6a2a, 0xd8b03c, 0xe8e4da, 1.2); queue(); dingjia(0xd8b03c, 0x8a2a1a, [0.15, 0.06, -0.03, -0.12]); hoof(0xd8b03c); backflag(0xd8b03c, red); break;
+    case 'ashigaru': liangmao(); queue(); robe(bc, 0x26262c); hoof(bc); break;
+    case 'rifle_sho': liangmao(); queue(); robe(bc, 0x26262c); hoof(bc); belts(0x6a4a30); flask(); break;
+    case 'archer': liangmao(); queue(); robe(0x2c3f6a, bc); hoof(0x2c3f6a); sadai(); break;
+    case 'horokutai': liangmao(); queue(); robe(bc, 0x26262c); hoof(bc); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); break;
+    case 'byakkotai': case 'ronin': furHat(vr % 2 ? red : 0x2a4a8a); queue(); robe(torsoColor(u), [0xc8281e, 0x2a4a8a, 0xd8b03c][vr % 3]); b('c', [0.08, 0.04, 0.158], [0.08, 0.5, 0.012], 0xd8b03c, [0, 0, -0.5]); b('c', [0, 0.2, 0.06], [0.32, 0.06, 0.26], 0x6a4426); break; // the deel's slanting lapel and fur collar
+  }
+  // faces: eyes, brows, mouth, and a moustache or beard on some of the older men
+  if (u.type !== 'horse' && !u.def.cannon && !u.def.gun) {
+    const ink = 0x1a1410, hair = 0x201a16, fz = 0.146;
+    b('h', [0.058, 0.0, fz], [0.045, 0.02, 0.012], ink); b('h', [-0.058, 0.0, fz], [0.045, 0.02, 0.012], ink);
+    const bt = vr === 5 ? 0.12 : 0; b('h', [0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, -0.12 - bt]); b('h', [-0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, 0.12 + bt]);
+    b('h', [0, -0.045, fz + 0.006], [0.03, 0.05, 0.02], 0xd2aa84); // nose
+    b('h', [0, -0.085, fz], [0.06, 0.012, 0.012], 0x6a3a30);
+    if (vr === 1 || vr === 2) b('h', [0, -0.066, fz + 0.004], [0.11, 0.022, 0.014], hair);
+    if (vr === 2) b('h', [0, -0.125, fz - 0.005], [0.05, 0.05, 0.02], hair);
+    if (vr === 3) { b('h', [0, -0.12, fz - 0.01], [0.24, 0.06, 0.03], hair); b('h', [0.12, -0.07, 0.06], [0.03, 0.1, 0.12], hair); b('h', [-0.12, -0.07, 0.06], [0.03, 0.1, 0.12], hair); }
+  }
+  const hp = P.find(q => q.hat);
+  g = { parts: P, hat: hp ? { m: hp.m, s: hp.s, k: hp.k } : null }; RG_CACHE.set(key, g); return g;
+}
+R.GEAR_HOOK.fn = realGear;
+})();
+</script>
+<script>
 // ===== Game shell: menus, lobby, input, lockstep loop, HUD, command UI =====
 (() => {
 'use strict';
@@ -6251,7 +6567,7 @@ function armyCost(a) { return a.reduce((s, k) => s + S.DEFS[k].cost, 0); }
 function renderBattles() {
   const box = $('battles'); box.innerHTML = '';
   for (const key in S.BATTLES) {
-    const b = S.BATTLES[key]; const el = document.createElement('button'); el.type = 'button'; el.className = 'battle' + (state.battle === key ? ' on' : ''); el.dataset.b = key;
+    const b = S.BATTLES[key]; if (b.hidden) continue; const el = document.createElement('button'); el.type = 'button'; el.className = 'battle' + (state.battle === key ? ' on' : ''); el.dataset.b = key;
     el.innerHTML = `<span class="bn">${b.name}<span class="jp">${b.jp}</span></span><span class="bw">${b.when} · ${b.biome}${b.fog ? ' · fog' : ''}</span><span class="bd">${b.desc}</span>`;
     el.onclick = () => { state.battle = key; AUDIO.init(); AUDIO.play('ui'); renderBattles(); };
     box.appendChild(el);
@@ -6437,7 +6753,7 @@ document.addEventListener('keydown', (e) => {
   }
   switch (c) {
     case 'Space': Input.pressed |= S.A_JUMP; e.preventDefault(); break;
-    case 'KeyE': { const h = localHero(); const sim = state.sim; const nearHorse = h && (h.mount >= 0 || sim.units.some(v => v.type === 'horse' && !v.dead && v.rider < 0 && Math.abs(v.x - h.x) + Math.abs(v.z - h.z) < 4)); Input.pressed |= nearHorse ? S.A_MOUNT : S.A_KICK; break; }
+    case 'KeyE': { if (typeof zheKeyE === 'function' && zheKeyE()) break; const h = localHero(); const sim = state.sim; const nearHorse = h && (h.mount >= 0 || sim.units.some(v => v.type === 'horse' && !v.dead && v.rider < 0 && Math.abs(v.x - h.x) + Math.abs(v.z - h.z) < 4)); Input.pressed |= nearHorse ? S.A_MOUNT : S.A_KICK; break; }
     case 'KeyR': if (!tapAttack(S.DIR_DOWN)) Input.pressed |= S.A_RELOAD; break;
     case 'KeyQ': case 'KeyX': Input.pressed |= S.A_SWAP; Input.ads = false; break;
     case 'Digit1': Input.wsel = 1; Input.ads = false; break;
@@ -6509,11 +6825,11 @@ function renderAllies() {
 $('allies').addEventListener('click', (e) => { const bt = e.target.closest('button'); if (!bt) return; directive(+bt.dataset.p, +bt.dataset.k); });
 function shout(text) { feed(text, true); AUDIO.play('ui'); }
 function names() { const sim = state.sim; const own = fpSquads(); return state.fpSel.length === own.length ? 'Everyone' : state.fpSel.map(id => sim.squads[id].def.name).join(', '); }
-function fpMove() { const lay = fpLayout(); if (!lay) { toast('Look at the ground to give a position'); return; } for (const o of lay.out) { if (!o.sq.def.skirmish && o.sq.formation !== S.FORM_LINE) Input.cmds.push([o.sq.id, S.ORD_FORM, 0, 0, 0, S.FORM_LINE]); } for (const o of lay.out) Input.cmds.push([o.sq.id, S.ORD_MOVE, +o.cx.toFixed(2), +o.cz.toFixed(2), Math.round(lay.facing * 1000), o.cols]); shout(`${names()}: form up there!`); }
+function fpMove() { const lay = fpLayout(); if (!lay) { toast('Look at the ground to give a position'); return; } for (const o of lay.out) { if (!o.sq.def.skirmish && o.sq.formation !== S.FORM_LINE) Input.cmds.push([o.sq.id, S.ORD_FORM, 0, 0, 0, S.FORM_LINE]); } for (const o of lay.out) Input.cmds.push([o.sq.id, S.ORD_MOVE, +o.cx.toFixed(2), +o.cz.toFixed(2), Math.round(lay.facing * 1000), o.cols]); shout(`${names()}: form up there!`); if (typeof SPEECH !== 'undefined') SPEECH.orderChain(S.ORD_FORM, state.fpSel.slice()); }
 function fpCharge() {
   const sim = state.sim; const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2; const enemy = pickSquad(cx, cy, false); const g = fpAimPoint();
   for (const id of state.fpSel) { const sq = sim.squads[id]; if (!sq || !sq.alive) continue; let tx, tz; if (enemy) { tx = enemy.cx; tz = enemy.cz; } else if (g) { tx = g.x; tz = g.z; } else { const e = nearestEnemySquad(sq); if (!e) continue; tx = e.cx; tz = e.cz; } Input.cmds.push([id, S.ORD_CHARGE, +tx.toFixed(2), +tz.toFixed(2), Math.round(Math.atan2(tx - sq.cx, tz - sq.cz) * 1000), 0]); }
-  shout(`${names()}: charge${enemy ? ' the ' + enemy.def.name : ''}!`);
+  shout(`${names()}: charge${enemy ? ' the ' + enemy.def.name : ''}!`); if (typeof SPEECH !== 'undefined') SPEECH.orderChain(S.ORD_CHARGE, state.fpSel.slice());
 }
 function orderKey(c, e) {
   const own = fpSquads();
@@ -6632,7 +6948,7 @@ canvas.addEventListener('wheel', (e) => {
 function requestLock() { try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
 document.addEventListener('pointerlockchange', () => {
   Input.locked = document.pointerLockElement === canvas;
-  if (state.screen === 'game' && !Input.cmdMode) $('pause').hidden = Input.locked || DEP.open;
+  if (state.screen === 'game' && !Input.cmdMode) $('pause').hidden = Input.locked || DEP.open || !!state.zheDlg;
   if (!Input.locked) { Input.lmb = false; Input.rmb = false; Input.keys = 0; }
 });
 $('pause').addEventListener('click', () => { if (state.screen === 'game') requestLock(); });
@@ -6652,7 +6968,7 @@ function order(type, x, z, facing, param) {
   const sim = state.sim; if (!sim) return;
   if (!state.selected.length) { toast('Select a squad first'); return; }
   for (const sid of state.selected) { const sq = sim.squads[sid]; if (!sq || !sq.alive) continue; let f = facing; if (f === undefined || f === null) f = sq.facing; Input.cmds.push([sid, type, +(x || 0).toFixed(2), +(z || 0).toFixed(2), Math.round(f * 1000), param | 0]); }
-  AUDIO.play('ui');
+  AUDIO.play('ui'); if (typeof SPEECH !== 'undefined') SPEECH.orderChain(type, state.selected.slice(), param);
 }
 // the way a line placed at (x, z) should face: toward the enemy, weighted to the nearest companies (fallback when the field is empty)
 function enemyFacing(x, z, team, fallback) { const sim = state.sim; let sx = 0, sz = 0, n = 0; for (const e of sim.squads) { if (!e.alive || e.team === team || e.routing || e.inactive) continue; const dx = e.cx - x, dz = e.cz - z, d2 = dx * dx + dz * dz + 25, w = e.aliveCount / (d2 * Math.sqrt(d2)); sx += dx * w; sz += dz * w; n++; } return n && (sx || sz) ? Math.atan2(sx, sz) : fallback; }
@@ -6663,7 +6979,7 @@ function orderCharge() {
   for (const sid of state.selected) { const sq = sim.squads[sid]; if (!sq || !sq.alive) continue; const e = nearestEnemySquad(sq); if (!e) continue; Input.cmds.push([sid, S.ORD_CHARGE, +e.cx.toFixed(2), +e.cz.toFixed(2), Math.round(Math.atan2(e.cx - sq.cx, e.cz - sq.cz) * 1000), 0]); }
   AUDIO.play('ui');
 }
-function toggleFire() { const sim = state.sim; for (const sid of state.selected) { const sq = sim.squads[sid]; if (sq && sq.alive) Input.cmds.push([sid, S.ORD_FIRE, 0, 0, 0, sq.fire ? 0 : 1]); } }
+function toggleFire() { const sim = state.sim; let on = 0; for (const sid of state.selected) { const sq = sim.squads[sid]; if (sq && sq.alive) { on = sq.fire ? 0 : 1; Input.cmds.push([sid, S.ORD_FIRE, 0, 0, 0, on]); } } if (typeof SPEECH !== 'undefined') SPEECH.orderChain(S.ORD_FIRE, state.selected.slice(), on); }
 function toggleAuto() { const sim = state.sim; const p = sim.players[state.localIdx]; if (!p) return; Input.cmds.push([0, S.ORD_AUTO, 0, 0, 0, p.auto ? 0 : 1]); toast(p.auto ? 'You command your army' : 'AI general commands your army'); }
 function takeControl() {
   const sim = state.sim; if (!state.selected.length) { toast('Select a squad to take control of'); return; }
@@ -6760,7 +7076,8 @@ function cmdCamUpdate(dt) {
 // ---------- game ----------
 function startGame(msg, me, net, delay) {
   const cfg = { seed: msg.seed, battle: msg.battle || 'field', mode: msg.mode || 'standard', chapter: msg.chapter | 0, scen: msg.scen || 'ningyuan', players: msg.players.map(p => ({ name: p.name, team: p.team, army: p.army, mounted: p.mounted, hclass: p.hclass | 0, veterans: p.veterans, recruits: p.recruits, role: p.role, kit: p.kit, command: p.command | 0, arms: p.arms || null })) };
-  if (msg.soldier) cfg.soldier = msg.soldier; if (msg.mission) cfg.mission = msg.mission; if (msg.op) cfg.op = msg.op;
+  if (msg.soldier) cfg.soldier = msg.soldier; if (msg.mission) cfg.mission = msg.mission; if (msg.op) cfg.op = msg.op; if (msg.camp) cfg.camp = msg.camp;
+  msg.players.forEach((p, i) => { if (p.yyRole) cfg.players[i].yyRole = p.yyRole; });
   state.localIdx = me; state.delay = delay; state.peerNames = msg.players.map(p => p.name);
   state.replay = { cfg, inputs: [] }; state.replayMode = false;
   state.sim = new S.Sim(cfg);
@@ -6806,6 +7123,8 @@ function handleEvents(events) {
       state.hitBy = { text: `${what} ${a.type === 'hero' ? 'an enemy general' : 'a ' + a.def.name.replace(/s$/, '').replace(/men$/, 'man')}${ev.cause === 'melee' ? '' : ` · ${Math.round(d)} m`}${ev.killed ? ' — fatal' : ''}`, t: ev.killed ? 6 : 2.6 }; } }
   if (sim.real && typeof soldierEvent === 'function') for (const ev of events) soldierEvent(ev);
   if (sim.mission && typeof missionEvent === 'function') for (const ev of events) missionEvent(ev);
+  if (typeof SPEECH !== 'undefined') for (const ev of events) SPEECH.event(ev);
+  if (typeof zheEvent === 'function') for (const ev of events) zheEvent(ev);
   for (const ev of events) {
     if (ev.t === 'control' && ev.p === state.localIdx) { const u = sim.units[ev.id]; toast(u.type === 'hero' ? 'Back in the saddle, Commander' : `You take command of a ${u.def.name.replace(/men$/, 'man').replace(/Infantry/, 'infantryman')}`); state.lastHeroId = u.id; Input.ads = false; toggleCmd(false); Input.yaw = u.yaw; }
     else if (ev.t === 'death') {
@@ -6960,7 +7279,7 @@ function updateHUD(dt) {
   } else { $('crosshair').style.opacity = 0; }
   // vitals
   if (hero) {
-    $('hpFill').style.width = Math.max(0, hero.hp / hero.def.hp * 100).toFixed(1) + '%'; $('hpText').textContent = `${Math.max(0, Math.round(hero.hp))} / ${hero.def.hp}`;
+    $('hpFill').style.width = Math.max(0, hero.hp / hero.def.hp * 100).toFixed(1) + '%'; $('hpText').textContent = `${Math.max(0, Math.round(hero.hp))} / ${Math.round(hero.def.hp)}`;
     const nm = state.peerNames[state.localIdx] || 'Commander'; const label = hero.type === 'hero' ? nm : `${nm} · ${hero.def.name.replace(/men$/, 'man').replace(/Infantry/, 'infantryman')}`; if ($('heroName').textContent !== label) $('heroName').textContent = label;
     { const ws = hero.def.weapons || []; const key = hero.dead ? 'x' : ws.join() + hero.weapon + (hero.def.arm || ''); if (state.wpnKey !== key) { state.wpnKey = key; $('wpns').innerHTML = hero.dead ? '' : ws.map(x => `<span class="${x === hero.weapon ? 'on' : ''}">${wpnName(hero, x)}</span>`).join('') + (ws.length > 1 ? '<kbd>Q</kbd>' : ''); } }
     { let sb = document.getElementById('stam'); if (!sb) { sb = document.createElement('div'); sb.id = 'stam'; sb.innerHTML = '<i></i>'; sb.style.cssText = 'position:fixed;left:50%;bottom:86px;width:180px;height:5px;margin-left:-90px;background:rgba(0,0,0,.45);border:1px solid rgba(240,230,210,.25);border-radius:3px;overflow:hidden;pointer-events:none;transition:opacity .4s;z-index:5'; sb.firstChild.style.cssText = 'display:block;height:100%;background:#d9cfb6'; document.body.appendChild(sb); }
@@ -7006,7 +7325,7 @@ function updateHUD(dt) {
     for (const sq of mySq) rows.push(`<div class="sqrow${sq.alive ? '' : ' dead'}${state.selected.includes(sq.id) ? ' sel' : ''}${sq.routing ? ' rout' : ''}"><span>${sq.def.name}${sq.stars ? ' <b class="vet">' + '★'.repeat(sq.stars) + '</b>' : ''}${sq.pendAt > sim.tick ? ' <small class="m-mid">⏳' + Math.ceil((sq.pendAt - sim.tick) / 30) + 's</small>' : ''}</span><span>${sq.aliveCount}/${sq.count}</span><span class="ord ${moraleCls(sq)}">${sq.alive ? (sq.routing ? 'ROUTING' : ORDN[sq.order] + (sq.def.ai === 'ranged' && !sq.fire ? ' ·hold fire' : '') + (sq.fat > 85 ? ' ·exhausted' : sq.fat > 60 ? ' ·winded' : '') + ((sq.def.ai === 'ranged' || sq.def.ai === 'cannon') ? (sq.dry ? ' ·no shot' : ' ·' + Math.round(sq.shots) + (sq.supplied ? '+' : '')) : '')) : ''}</span><span class="ab${sq.abOn > 0 ? ' on' : sq.abT > 0 ? '' : ' ready'}">${sq.alive ? (sq.abOn > 0 ? S.ABILITY[sq.ability].name : sq.abT > 0 ? Math.ceil(sq.abT / 30) + 's' : 'Q') : ''}</span></div>`);
     if (sim.waves && sim.waves.length) { const w = sim.waves.find(q => q.team === me.team); rows.push(`<div class="sqrow naval"><span>Reserve corps</span><span></span><span class="ord">${w.released ? 'committed' : `${Math.round(sim.rp[me.team])}/360 · L at 180`}</span><span></span></div>`); }
     rows.push(`<div class="sqrow naval"><span>War junk</span><span></span><span class="ord">${me.navalUsed ? 'spent' : 'K · broadside'}</span><span></span></div>`);
-    $('army').innerHTML = rows.join(''); $('army').hidden = sim.heroMode || (sim.real && !me.squads.length); renderAllies();
+    $('army').innerHTML = rows.join(''); $('army').hidden = sim.heroMode || (sim.real && !me.squads.length) || !!(sim.mission && (sim.mission.camp || (sim.mission.soldier && !me.squads.length))); renderAllies();
     const ls = state.ls; const parts = [`tick ${ls.tick}`];
     if (state.net) { parts.push(`${ls.n} players · ${state.delay * Math.round(DT * 1000)} ms input delay`); if (state.stalled && state.stallT > 0.5) parts.push(`<span class="warn">waiting for ${ls.waitingOn(ls.tick).map(i => state.peerNames[i]).join(', ')}</span>`); if (ls.desync) parts.push(`<span class="bad">DESYNC at tick ${ls.desyncTick}</span>`); } else parts.push('solo · lockstep');
     $('netbox').innerHTML = parts.join(' · ');
@@ -7046,7 +7365,7 @@ function frame(now) {
   cmdCamUpdate(dt);
   state.renderer.render(state.acc / DT, dt, { mode: Input.cmdMode || !hero || hero.dead ? 'cmd' : 'fp', yaw: Input.yaw, pitch: Input.pitch, selected: (Input.orderMode || state.zHeld) ? state.fpSel : state.selected, fpSel: state.fpSel, ghost: Drag.active ? Drag.ghost : state.fpGhost, ghostLine: Drag.active ? Drag.line : null });
   if (Input.orderMode || state.zHeld) { state.ordT = (state.ordT || 0) - dt; if (state.ordT <= 0) { state.ordT = 0.08; const lay = fpLayout(); state.fpGhost = lay ? lay.ghost : null; if (Input.orderMode) renderOrderMenu(); } }
-  updateHUD(dt); storyTick(); heroHUD();
+  updateHUD(dt); storyTick(); heroHUD(); if (typeof SPEECH !== 'undefined') SPEECH.frame(dt); if (typeof zheHUD === 'function') zheHUD(dt);
 }
 window.addEventListener('resize', () => { if (state.renderer) state.renderer.resize(); });
 window.__boshin = { startGame, state, Input, Drag, boxSelect, layoutLine, handleEvents, finish, stepN: (n) => { for (let i = 0; i < n; i++) if (!stepOnce()) break; } };
@@ -7387,7 +7706,7 @@ CAREER.init(); renderMenu();
 function renderMissions() {
   const as = state.mode === 'assault'; const L = as ? S.OPS : S.MISSIONS; const cur = as ? state.op : state.mission;
   $('missionHead').textContent = as ? 'Operation' : 'Mission';
-  $('missionList').innerHTML = Object.keys(L).map(k => { const M = L[k]; return `<button type="button" class="chap${k === cur ? ' on' : ''}" data-k="${k}"><b>${M.title}</b><small>${M.year} · ${M.brief}</small></button>`; }).join('');
+  $('missionList').innerHTML = Object.keys(L).filter(k => !L[k].hidden).map(k => { const M = L[k]; return `<button type="button" class="chap${k === cur ? ' on' : ''}" data-k="${k}"><b>${M.title}</b><small>${M.year} · ${M.brief}</small></button>`; }).join('');
   $('missionList').querySelectorAll('button').forEach(b => b.onclick = () => { if (as) state.op = b.dataset.k; else state.mission = b.dataset.k; AUDIO.init(); AUDIO.play('ui'); renderMissions(); });
   const side = as ? state.faction : 0; const list = side === 1 ? ROLE_INFO_JIN : ROLE_INFO; if (!list.some(r => r[0] === state.role)) state.role = list[0][0];
   $('mroleList').innerHTML = list.map(r => `<button type="button" class="chap${r[0] === state.role ? ' on' : ''}" data-r="${r[0]}"><b>${r[1]} · ${r[2]}</b><small>${r[3]}</small></button>`).join('');
@@ -7404,6 +7723,9 @@ function radio(who, text) { const r = $('radio'); r.firstChild.textContent = who
 function banner(big, small, t) { const b = $('banner'); b.innerHTML = `${big}${small ? `<small>${small}</small>` : ''}`; b.hidden = false; MIS.bannerT = t || 3.5; }
 function missionEvent(ev) {
   if (!MIS) return; const sim = state.sim, M = sim.mission, me = sim.players[state.localIdx];
+  if (ev.t === 'mphase' && M.camp) return;
+  if (ev.t === 'mphase' && M.soldier) { banner(ev.title.split(' · ').slice(1).join(' · ') || ev.title, ev.text, 5); if (ev.ph) MUSIC.accent('phase'); return; }
+  if (ev.t === 'msay' && M.soldier && typeof zheSay === 'function' && zheSay(ev)) return;
   if (ev.t === 'mphase') { const first = ev.ph === 0; storyCard(first ? `${M.brief}<br><br><b>${ev.title}.</b> ${ev.text}` : ev.text, first ? `${M.title} · ${M.year}` : ev.title); if (!first) { banner(ev.title.split(' · ')[1] || ev.title, 'New orders', 3); MUSIC.accent('phase'); } }
   else if (ev.t === 'msay') radio(ev.who, ev.text);
   else if (ev.t === 'mwave') { if (ev.team !== me.team) feed(`Enemy reinforcements: ${ev.name}`); else feed(`${ev.name} joins the battle`, true); }
@@ -7415,7 +7737,7 @@ function missionEvent(ev) {
   else if (ev.t === 'mend') MIS.endText = ev.text;
 }
 function missionHUD(dt) {
-  if (!MIS) return; const sim = state.sim, M = sim.mission, me = sim.players[state.localIdx];
+  if (!MIS) return; const sim = state.sim, M = sim.mission, me = sim.players[state.localIdx]; if (M.camp) { $('mobj').hidden = true; return; }
   if (MIS.radioT > 0) { MIS.radioT -= dt; if (MIS.radioT <= 0) $('radio').hidden = true; }
   if (MIS.bannerT > 0) { MIS.bannerT -= dt; if (MIS.bannerT <= 0) $('banner').hidden = true; }
   MIS.hudT = (MIS.hudT || 0) - dt; if (MIS.hudT > 0) return; MIS.hudT = 0.25;
@@ -7437,16 +7759,18 @@ function missionHUD(dt) {
       if (o.defeat) for (const g of o.defeat) { const G = sim.mg[g]; const f = G && G.released ? sim.mGroupFrac(g) : 1; s += `<div class="ob${G && G.broken ? ' done' : ''}"><i>◆</i><span>Break the ${G ? sim.players[G.p].name : g}${G && !G.released ? ' (not yet seen)' : ''}</span></div>${G && G.released && !G.broken ? pct(f) : ''}`; }
       if (o.officer) { const G = sim.mg[o.officer], hu = G && sim.units[sim.players[G.p].heroId]; s += `<div class="ob${G && G.broken ? ' done' : ''}"><i>將</i><span>${G.G.wound ? 'Wound' : 'Slay'} ${G.G.name}${G.G.zh ? ' ' + G.G.zh : ''}${G.released ? '' : ' (not yet on the field)'}</span></div>${hu && G.released && !G.broken ? pct(hu.hp / hu.def.hp) : ''}`; }
       if (o.arrive) { const G = sim.mg[o.arrive]; s += `<div class="ob"><i>◆</i><span>Bring the ${sim.players[G.p].name.toLowerCase()} safely to ${Z(o.zone).name}</span></div>`; }
-      if (o.survive) { s += `<div class="ob${el >= o.survive ? ' done' : ''}"><i>◆</i><span>Hold out · ${Math.max(0, Math.ceil(o.survive - el))} s</span></div>${pct(el / o.survive)}`; }
+      if (o.survive) { s += M.soldier ? `<div class="ob"><i>◆</i><span>${P.text}</span></div>` : `<div class="ob${el >= o.survive ? ' done' : ''}"><i>◆</i><span>Hold out · ${Math.max(0, Math.ceil(o.survive - el))} s</span></div>${pct(el / o.survive)}`; }
+      if (o.extract) { const z = Z(o.extract), h0 = sim.units[me.heroId]; s += `<div class="ob"><i>◆</i><span>Reach ${z.name}${h0 && !h0.dead ? ` · ${Math.round(Math.hypot(h0.x - z.x, h0.z - z.z))} m` : ''}</span></div>`; }
       if (o.keep) s += `<div class="ob"><i>!</i><span>Do not lose ${Z(o.keep).name}</span></div>`;
       return s; };
-    h += line(P.obj);
+    h += line(P.obj); if (M.soldier && typeof zheObjLines === 'function') h += zheObjLines();
     if (P.limit) h += `<div class="ob"><i>⏳</i><span>${Math.max(0, Math.ceil(P.limit - el))} s left</span></div>`;
     h += `<div class="ob" style="opacity:.7"><i>·</i><span>Phase ${sim.mv.ph + 1} of ${M.phases.length}${me.spare !== undefined ? ` · reserve companies: ${me.spare}` : ''}</span></div>`;
   }
   $('mobj').innerHTML = h; $('mobj').hidden = false;
 }
 function missionFinish(winner) {
+  if (state.sim.mission.soldier && typeof zheFinish === 'function') { $('mobj').hidden = true; $('radio').hidden = true; return zheFinish(winner); }
   const sim = state.sim, me = sim.players[state.localIdx]; const won = winner === me.team; $('mobj').hidden = true; $('radio').hidden = true;
   if (MIS && MIS.endText) $('resultText').textContent = sim.mode === 'assault' ? `${MIS.endText} ${won ? 'Your side carries the day.' : 'Your side is beaten.'} You killed ${me.kills}.` : `${MIS.endText} You killed ${me.kills}.`;
   $('resultTitle').textContent = won ? '勝 · Mission accomplished' : '敗 · Mission failed';
@@ -7533,10 +7857,367 @@ function depKey(c, e) {
   return true;
 }
 function depHUD(dt) {
-  const sim = state.sim; if (!sim || (sim.mode !== 'assault' && sim.mode !== 'campaign') || state.ended || sim.mwin !== undefined) { if (DEP.open) depOpen(false); return; }
+  const sim = state.sim; if (!sim || (sim.mode !== 'assault' && sim.mode !== 'campaign') || (sim.mission && (sim.mission.soldier || sim.mission.camp)) || state.ended || sim.mwin !== undefined) { if (DEP.open) depOpen(false); return; }
   const h = localHero(); if (h && !h.dead) DEP.dismissed = false; else if (!DEP.open && !DEP.dismissed && sim.phase === 1) depOpen(true);
   if (DEP.open) { $('fallen').hidden = true; DEP.t -= dt; if (DEP.t <= 0) { DEP.t = 0.4; depRender(); } }
 }
+
+// ===== 話 · Speech: men talk where they stand =====
+// Lines appear as bilingual captions over the speaker's head, only within earshot. A small director keeps it readable:
+// at most two lines at once, a cooldown per speaker, and the more important line wins.
+const SPEECH = (() => {
+  const MAX = 2, live = [], cool = {}, pool = []; let pollT = 0, globalT = 0, lastHp = 1, cavT = 0, bleedT = 0, sqOrd = {}, lastSt = {}, wndT = 0;
+  const v3 = new THREE.Vector3();
+  const unit = (id) => state.sim && id >= 0 ? state.sim.units[id] : null;
+  function nameOf(id) {
+    if (typeof ZB !== 'undefined' && ZB && ZB.map[id] !== undefined) { const r = ZR[ZB.map[id]]; return r ? { zh: r.zh, en: r.en } : null; }
+    if (typeof ZC !== 'undefined' && ZC && ZC.map[id] !== undefined) { const r = ZR[ZC.map[id]]; return r ? { zh: r.zh, en: r.en } : null; }
+    if (typeof SOLD !== 'undefined' && SOLD && SOLD.map && SOLD.map[id]) return SOLD.map[id].name;
+    return null;
+  }
+  function el() { let e = pool.pop(); if (!e) { e = document.createElement('div'); e.className = 'spk'; document.body.appendChild(e); } e.style.opacity = 0; e.hidden = false; return e; }
+  function listener() { const r = state.renderer; return r ? r.camera.position : null; }
+  // say(unitId, zh, en, opts): opts.prio (0 bark … 3 story), opts.loud (scripted: heard farther), opts.radio (fall back to the radio panel), opts.who (name override), opts.shout
+  function say(id, zh, en, o) {
+    o = o || {}; const u = unit(id); const L = listener(); const now = performance.now() / 1000; const prio = o.prio || 0;
+    const range = o.loud ? 48 : 26;
+    if (!u || u.dead || !L || Math.hypot(u.x - L.x, u.z - L.z) > range) { if (o.radio && typeof radio === 'function' && typeof MIS !== 'undefined' && MIS) radio(o.who || 'Voice', `${zh ? zh + '  ' : ''}${en}`); return false; }
+    if (prio < 2 && (cool[id] || 0) > now) return false; cool[id] = now + (o.cool || 6);
+    for (let i = live.length - 1; i >= 0; i--) if (live[i].id === id) { kill(i); }
+    if (live.length >= MAX) { let w = -1, wp = 99; live.forEach((l, i) => { if (l.prio < wp || (l.prio === wp && w >= 0 && l.t0 < live[w].t0)) { wp = l.prio; w = i; } }); if (wp > prio) return false; kill(w); }
+    const n = o.who || nameOf(id); const e = el();
+    e.innerHTML = `${n ? `<span class="n">${typeof n === 'string' ? n : n.zh + ' ' + n.en}</span>` : ''}${zh ? `<span class="z">${zh}</span>` : ''}${en ? `<span class="e">${en}</span>` : ''}`;
+    const dur = o.dur || Math.min(7, 2.2 + (en || '').length / 22);
+    live.push({ id, e, t: 0, dur, prio, t0: now });
+    if (o.shout) AUDIO.play('kiai', u.x, u.y + 1.6, u.z, o.shout === true ? 0.35 : o.shout);
+    return true;
+  }
+  function kill(i) { const l = live[i]; l.e.hidden = true; pool.push(l.e); live.splice(i, 1); }
+  function frame(dt) {
+    const r = state.renderer; if (!r || !state.sim) { while (live.length) kill(0); return; }
+    const cam = r.camera, W = canvas.clientWidth, H = canvas.clientHeight;
+    for (let i = live.length - 1; i >= 0; i--) { const l = live[i]; l.t += dt; const u = unit(l.id);
+      if (l.t > l.dur || !u || (u.dead && l.t > 0.8)) { kill(i); continue; }
+      v3.set(u.x, u.y + (u.mounted ? 2.9 : 2.15), u.z); const d = cam.position.distanceTo(v3); v3.project(cam);
+      if (v3.z > 1 || Math.abs(v3.x) > 1.15 || Math.abs(v3.y) > 1.2) { l.e.style.opacity = 0; continue; }
+      const sx = (v3.x + 1) / 2 * W, sy = (1 - v3.y) / 2 * H; const k = Math.max(0.62, Math.min(1.15, 9 / Math.max(3, d)));
+      l.e.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -100%) scale(${k.toFixed(3)})`;
+      const fade = Math.min(1, l.t * 5, (l.dur - l.t) * 2) * Math.max(0.35, 1 - d / 40); l.e.style.opacity = fade.toFixed(2); }
+    if (state.sim.phase === 1 && !state.ended) { pollT -= dt; if (pollT <= 0) { pollT = 0.35; poll(); } }
+  }
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  // friendly men near the player (not the player), nearest first
+  function near(x, z, r, team, not) { const sim = state.sim, out = []; for (const u of sim.teamAlive[team]) { if (u.id === not || u.type === 'horse' || u.camp || u.wounded) continue; const d = Math.hypot(u.x - x, u.z - z); if (d < r) out.push([d, u]); } out.sort((a, b) => a[0] - b[0]); return out.map(q => q[1]); }
+  function poll() {
+    const sim = state.sim, me = sim.players[state.localIdx]; const h = localHero(); if (!h || h.dead || Input.cmdMode || (sim.mission && sim.mission.camp)) return;
+    const now = performance.now() / 1000, team = h.team; const fr = near(h.x, h.z, 24, team, h.id);
+    // reloading men call for cover; a man starting to load
+    for (const u of fr) { const was = lastSt[u.id]; lastSt[u.id] = u.st; if (u.st === S.ST_RELOAD && was !== S.ST_RELOAD && Math.random() < 0.12 && now > globalT) { globalT = now + 1.4; const L = pick([['裝藥！', 'Loading!'], ['掩護我，裝藥！', 'Cover me — I\'m loading!'], ['藥！快！', 'Powder — quick!']]); say(u.id, L[0], L[1], { cool: 9 }); break; } }
+    // cavalry bearing down
+    cavT -= 0.35; if (cavT <= 0) { for (const e of sim.teamAlive[1 - team]) { if (!e.mounted || Math.abs(e.hspeed || 0) < 5) continue; const d = Math.hypot(e.x - h.x, e.z - h.z); if (d > 34 || d < 4) continue; const toward = ((h.x - e.x) * Math.sin(e.yaw) + (h.z - e.z) * Math.cos(e.yaw)) / d; if (toward < 0.6) continue;
+        const s = fr[0]; if (s) { const spear = s.weapon === 'yari'; say(s.id, spear ? '騎兵！列槍！' : '騎兵！騎兵來了！', spear ? 'Cavalry! Spears up!' : 'Cavalry — horsemen coming!', { prio: 1, shout: true, cool: 5 }); cavT = 12; } break; } }
+    // you are bleeding
+    const hp = h.hp / h.def.hp; bleedT -= 0.35; if (hp < 0.35 && lastHp >= 0.35 && bleedT <= 0 && fr[0]) { const nm = typeof ZS !== 'undefined' && ZS ? ZS.name.zh : ''; say(fr[0].id, `${nm ? nm + '，' : ''}你流血了！退後！`, 'You\'re bleeding — fall back behind us!', { prio: 1, cool: 20 }); bleedT = 40; } lastHp = hp;
+    // a company near you goes forward: its chief calls the men on
+    for (const q of sim.squads) { if (!q.alive || q.team !== team) continue; const o = q.order, was = sqOrd[q.id]; sqOrd[q.id] = o; if (was === undefined || was === o || q.owner === state.localIdx) continue; const c = unit(q.unitIds[0]); if (!c || c.dead || Math.hypot(c.x - h.x, c.z - h.z) > 30) continue;
+      if (o === S.ORD_CHARGE) say(c.id, '殺！跟我衝！', 'Kill! Follow me in!', { prio: 1, shout: true }); else if (o === S.ORD_MOVE && Math.random() < 0.5) say(c.id, '跟我來！', 'Follow me!', { prio: 0 }); }
+    // the wounded call out until someone helps them
+    wndT -= 0.35; if (wndT <= 0) { for (const u of sim.teamAlive[team]) { if (!u.wounded || u.helpedBy >= 0) continue; const d = Math.hypot(u.x - h.x, u.z - h.z); if (d > 32) continue; const nm = typeof ZS !== 'undefined' && ZS ? ZS.name.zh : '';
+        say(u.id, pick([`${nm ? nm + '哥' : '哥'}，救我……`, '救我……我走不了……', '別丟下我……']), pick(['Help me… I can\'t walk…', 'Don\'t leave me here…', 'Please — help me up…']), { prio: 2, cool: 4, dur: 3.5 }); wndT = 5.5; break; } }
+  }
+  function event(ev) {
+    const sim = state.sim; if (!sim || sim.phase !== 1) return; const h = localHero(); if (!h) return; const team = h.team;
+    if (ev.t === 'death') { const u = unit(ev.id); if (!u || u.type === 'horse' || u.team !== team || u.id === h.id || Math.hypot(u.x - h.x, u.z - h.z) > 20) return;
+      const w = near(u.x, u.z, 10, team, h.id).filter(v => v.id !== u.id)[0]; if (!w) return; const n = nameOf(u.id);
+      say(w.id, n ? `${n.zh}倒了！` : pick(['有人倒了！', '他中了！']), n ? `${n.en} is down!` : pick(['Man down!', 'He\'s hit!']), { prio: n ? 2 : 1, cool: 4 }); }
+    else if (ev.t === 'rout') { const q = sim.squads[ev.sq]; if (!q) return; const d = Math.hypot(q.cx - h.x, q.cz - h.z); if (d > 40) return;
+      if (q.team === team) { const c = unit(q.unitIds.find(id => !unit(id).dead)); if (c) say(c.id, '撤！快撤！', 'Fall back! Fall back!', { prio: 1, shout: 0.25 }); }
+      else { const w = near(h.x, h.z, 18, team, h.id)[0]; if (w) say(w.id, pick(['他們跑了！', '韃子退了！']), pick(['They\'re running!', 'They\'re breaking!']), { prio: 1, shout: 0.3 }); } }
+    else if (ev.t === 'zhelp') { const u = unit(ev.id); if (u) say(u.id, '我還能走……別丟下我。', 'I can still walk… don\'t let go of me.', { prio: 2, dur: 3.5 }); }
+  }
+  // an order travels: you shout it, the chief repeats it down the file, the men answer
+  const OL = {};
+  function orderChain(type, sqIds, param) {
+    const sim = state.sim; if (!sim) return; const h = localHero();
+    const T = type === S.ORD_CHARGE ? [['殺！隨我衝！', 'Kill! Charge with me!'], ['聽令——衝！', 'Orders — charge!'], [['殺！', 'Kill!'], ['殺——！', 'Kill!']]]
+      : type === S.ORD_HOLD ? [['止！列陣！', 'Halt! Dress the line!'], ['止步——列陣！', 'Halt — form the line!'], [['得令！', 'Yes, sir!'], ['是！', 'Sir!']]]
+      : type === S.ORD_FOLLOW ? [['跟我來！', 'Follow me!'], ['跟上！都跟上！', 'Keep up! Everyone keep up!'], [['得令！', 'Yes, sir!'], ['走！', 'Moving!']]]
+      : type === S.ORD_FIRE ? (param ? [['自由放銃！', 'Fire at will!'], ['放——！', 'Fire!'], [['得令！', 'Yes, sir!']]] : [['收銃！聽號再放！', 'Hold your fire! Wait for the call!'], ['收銃——！', 'Hold fire!'], [['是！', 'Sir!']]])
+      : [['到那裡列陣！', 'Form up over there!'], ['聽令——列陣！', 'Orders — form the line!'], [['得令！', 'Yes, sir!'], ['是！', 'Sir!']]];
+    const now = performance.now(); if (OL.t && now - OL.t < 900 && OL.type === type) return; OL.t = now; OL.type = type;
+    if (h && !h.dead && !Input.cmdMode) say(h.id, T[0][0], T[0][1], { prio: 2, shout: type === S.ORD_CHARGE ? 0.45 : false, cool: 0.5, who: typeof ZS !== 'undefined' && ZS ? ZS.name.zh + ' · you' : 'You' });
+    let heard = false; (sqIds || []).slice(0, 2).forEach((sid, i) => { const q = sim.squads[sid]; if (!q || !q.alive) return;
+      const chief = q.unitIds.map(unit).find(u => u && !u.dead && u.ctrl < 0 && !u.wounded); if (!chief) return;
+      const L = listener(); if (L && Math.hypot(chief.x - L.x, chief.z - L.z) < 26) heard = true;
+      setTimeout(() => say(chief.id, T[1][0], T[1][1], { prio: 2, cool: 0.5 }), 600 + i * 350);
+      const men = q.unitIds.map(unit).filter(u => u && !u.dead && u.ctrl < 0 && u !== chief && !u.wounded); for (let k = 0; k < Math.min(2, men.length); k++) { const m = men[Math.floor(Math.random() * men.length)], A = pick(T[2]); setTimeout(() => say(m.id, A[0], A[1], { prio: 1, cool: 0.5, dur: 1.6 }), 1150 + k * 260 + i * 350); } });
+    if (!heard && sqIds && sqIds.length) AUDIO.play(type === S.ORD_HOLD ? 'gong' : 'drum', undefined, 0, 0, 0.5);
+  }
+  return { say, frame, event, orderChain, nameOf };
+})();
+
+// ===== 浙兵 · The Zhejiang Company: a story campaign =====
+// One mandarin duck team of Yiwu miners, marched north in 1619. Camp at night among named men, then the battles as
+// they happened. You cannot change the history; you can only change who comes home.
+const ZR = [ // the file, in the order of the duck team's places (YY_ROLE)
+  { k: 'wu', zh: '吳老栓', en: 'Wu Laoshuan', role: 'lead', t: 'section chief · 隊長' },
+  { k: 'lou', zh: '樓阿根', en: 'Lou Agen', role: 'shield', t: 'rattan shield' },
+  { k: 'me', zh: '', en: '', role: 'shield', t: 'rattan shield' },
+  { k: 'liu6', zh: '陳小六', en: 'Chen Xiaoliu', role: 'brush', t: 'wolf-brush · 16' },
+  { k: 'luo', zh: '駱鐵頭', en: 'Luo Tietou', role: 'brush', t: 'wolf-brush' },
+  { k: 'jin', zh: '金阿土', en: 'Jin Atu', role: 'spear', t: 'long spear' },
+  { k: 'ye', zh: '葉三', en: 'Ye San', role: 'spear', t: 'long spear' },
+  { k: 'wang', zh: '王大牛', en: 'Wang Daniu', role: 'spear', t: 'long spear' },
+  { k: 'fang', zh: '方秀才', en: 'Fang the Scholar', role: 'spear', t: 'long spear · the scholar' },
+  { k: 'he', zh: '何老虎', en: 'He Laohu', role: 'trident', t: 'trident · veteran of Bozhou' },
+  { k: 'du', zh: '杜阿九', en: 'Du Ajiu', role: 'trident', t: 'trident' },
+  { k: 'zhu', zh: '朱胖子', en: 'Fatty Zhu', role: 'cook', t: 'cook · 伙夫' },
+];
+const ZKEY = 'mingZhe';
+let ZS = null, ZB = null, ZC = null; // save, battle mapping, camp mapping
+function zLoad() { try { return JSON.parse(localStorage.getItem(ZKEY) || 'null'); } catch (e) { return null; } }
+function zSave() { try { localStorage.setItem(ZKEY, JSON.stringify(ZS)); } catch (e) { } }
+function zFresh(name) { const s = { v: 1, stage: 'camp0', name: name || { zh: '阿明', en: 'Aming' }, alive: {}, fate: {}, bond: {}, talked: {}, flags: {}, me: 'me' }; for (const r of ZR) { s.alive[r.k] = true; s.bond[r.k] = 0; } return s; }
+const zRow = (k) => ZR.find(r => r.k === k);
+const zName = (k) => k === 'me' ? ZS.name : zRow(k);
+
+// ---------- cards: exposition between scenes ----------
+function zCards(cards, done) {
+  let i = 0; let box = $('zheCard'); if (!box) { box = document.createElement('div'); box.id = 'zheCard'; document.body.appendChild(box); }
+  const show = () => { const c = cards[i]; box.hidden = false; if (document.pointerLockElement) document.exitPointerLock();
+    box.innerHTML = `<div class="in"><h2>${c.title}</h2>${c.year ? `<div class="yr">${c.year}</div>` : ''}${c.html || ''}${(c.p || []).map(p => `<p>${p}</p>`).join('')}${c.zh ? `<p class="zh">${c.zh}</p>` : ''}<div class="nav"><span>${i + 1} / ${cards.length}</span><button type="button" id="zheNext">${c.btn || (i + 1 < cards.length ? 'Next →' : 'Continue →')}</button></div></div>`;
+    $('zheNext').onclick = () => { AUDIO.play('ui'); if (c.onNext) c.onNext(); i++; if (i < cards.length) show(); else { box.hidden = true; if (done) done(); } }; };
+  show();
+}
+const INTRO = [
+  { title: '撫順 · Fushun', year: 'Spring 1618 · 萬曆四十六年', p: ['In the fourth month of 1618, the Jurchen chieftain Nurhaci proclaimed his Seven Grievances against the Ming before Heaven, and rode on the border town of Fushun. Its commander, Li Yongfang, opened the gates and went over to him.',
+    'For two hundred years the Ming had played the Jurchen tribes against one another. Now one man had united them, called his state the Later Jin, and taken a Ming city.'], zh: '天命三年，努爾哈赤以「七大恨」告天，襲陷撫順。' },
+  { title: '四路 · Four columns', year: 'Winter 1618–1619', p: ['The court in Beijing answered with new taxes and an army gathered from every province — 470,000 men, the proclamations said, though perhaps a hundred thousand marched. Commissioner Yang Hao divided it into four columns to converge on Nurhaci\'s capital, Hetu Ala, in the mountains.',
+    'Du Song from Fushun in the west. Ma Lin from Kaiyuan in the north. Li Rubai from Qinghe in the south. And from Kuandian in the east, through the roughest mountains, the old general Liu Ting — with ten thousand Koreans under Gang Hong-rip marching beside him.'] },
+  { title: '浙兵 · The Zhejiang men', year: 'March 1619', p: ['Liu Ting\'s column has a core of southern soldiers: Zhejiang men, many of them from Yiwu, where sixty years ago Qi Jiguang recruited miners and drilled them into the twelve-man <b>mandarin duck team</b> that destroyed the pirates on the coast.',
+    'You are one of them: a rattan-shield man in a duck team, three thousand li from home. For weeks the column has marched through snow and empty Jin villages. Tonight it camps in the hills, a few days from Hetu Ala.'],
+    html: '<p><label style="font:14px sans-serif">Your name <input id="zName" value="阿明" maxlength="6" style="width:6em;font-size:15px"> <input id="zNameEn" value="Aming" maxlength="14" style="width:8em;font-size:15px"></label></p>',
+    onNext: () => { const zh = ($('zName').value || '阿明').trim().slice(0, 6), en = ($('zNameEn').value || 'Aming').trim().slice(0, 14); ZS.name = { zh, en }; zSave(); } },
+];
+
+// ---------- dialogue: who says what, the night before and the night after ----------
+// each topic: q (what you say), a: lines [zh, en], bond, flag
+function zTalk(k, night) {
+  const S0 = ZS, dead = (x) => !S0.alive[x], lost = ZR.filter(r => r.k !== 'me' && r.k !== k && !S0.alive[r.k]).map(r => r.zh);
+  if (night === 0) return ({
+    wu: { g: ['睡不著？天一亮就拔營。', 'Can\'t sleep? We break camp at first light.'], t: [
+      { q: 'How do we fight tomorrow?', a: [['戚爺爺教的：藤牌在前擋箭，狼筅撩住他，長槍刺，鏜鈀補。十二個人，一條命。', 'The way Marshal Qi taught it. Shields in front to take the arrows, the wolf-brushes tangle the man, the long spears kill him, the tridents finish what\'s left. Twelve men, one life.'], ['你是藤牌手。你一倒，後面的人全露出來。舉盾，別離隊。', 'You\'re a shield. If you go down, everyone behind you is naked. Shield up (right mouse), and never leave the file.']] },
+      { q: 'What do you make of General Liu?', a: [['劉總兵打過緬甸、打過朝鮮、打過播州，是條好漢。', 'General Liu has fought in Burma, in Korea, at Bozhou. A real fighter.'], ['可這回給我們的砲少、馬少，路又最難走。聽說他跟楊經略不對付。', 'But this time we got the fewest guns, the fewest horses and the worst road. They say he and Commissioner Yang don\'t get along.']] },
+      { q: 'Where did you learn to fight?', bond: 1, a: [['萬曆二十一年，平壤。吳惟忠將軍帶著我們浙兵頭一個登城。', 'Pyongyang, in the twenty-first year of Wanli. General Wu Weizhong\'s Zhejiang men were first onto the walls.'], ['那時候我跟小六一樣大。……照顧好他。', 'I was Xiaoliu\'s age then. ...Look after him.']] }] },
+    lou: { g: ['你識字吧？……能不能幫我寫封信回家？', 'You can read, can\'t you? ...Could you write a letter home for me?'], t: [
+      { q: 'Write it just the way he says it.', bond: 1, flag: 'letter', a: [['跟我娘說，北邊冷，可我有棉襖。跟我媳婦說……說我很好。', 'Tell my mother it\'s cold up north, but I have a padded coat. Tell my wife... tell her I\'m well.'], ['（他看著你寫完，把信折好，貼身收進懷裡。）', '(He watches you finish, folds the letter, and tucks it inside his coat against his chest.)']] },
+      { q: 'Where is home?', a: [['義烏，山裡。我們是挖礦的，打架從小打到大。', 'Yiwu, up in the hills. We were miners — we grew up fighting over the mines.'], ['戚爺爺當年就是看上我們這股狠勁。', 'That\'s what Marshal Qi liked about us. We don\'t back down.']] }] },
+    liu6: { g: ['……我沒怕。我就是冷。', '...I\'m not scared. I\'m just cold.'], t: [
+      { q: 'How old are you really?', a: [['十六。徵兵的說要十八，我就說我十八。', 'Sixteen. The recruiter said eighteen, so I said eighteen.'], ['我哥死在播州。家裡要這份餉。', 'My brother died at Bozhou. My family needs the pay.']] },
+      { q: 'Stay close to me tomorrow.', bond: 1, flag: 'promise', a: [['真的？……好。我用狼筅撩住他們，你就砍。', 'Really? ...All right. I tangle them with the brush, you cut.'], ['（他今晚第一次笑了。）', '(For the first time tonight, he smiles.)']] },
+      { q: 'Isn\'t the brush too heavy for you?', a: [['一丈五尺的毛竹，枝杈都留著。重是重，可金人的刀砍不進來。', 'Fifteen feet of bamboo with the branches left on. It\'s heavy, but no Jin blade gets through it.']] }] },
+    luo: { g: ['來來來，押一個錢。贏了，明天你替我站前頭。', 'Come on, one coin. Win, and tomorrow you stand in front for me.'], t: [
+      { q: 'Roll the dice with him.', bond: 1, a: [['（骰子在火光裡滾。你贏了三個錢，他拍腿大笑。）', '(The dice tumble in the firelight. You win three coins and he slaps his knee laughing.)'], ['好手氣！留著明天用。', 'Lucky hands! Save some of that luck for tomorrow.']] },
+      { q: 'Why do they call you Iron Head?', a: [['小時候從礦洞頂上摔下來，頭先著地——石頭碎了。', 'Fell down a mine shaft as a boy, head first. The rock broke.']] }] },
+    jin: { g: ['你聽見沒？山裡有東西在叫。', 'Did you hear that? Something is calling in the hills.'], t: [
+      { q: 'Wolves, probably.', a: [['狼不怕。我怕的是不叫的東西。', 'Wolves I don\'t mind. It\'s the things that don\'t call.'], ['這一路的寨子都是空的。人都到哪去了？', 'Every village on this road was empty. Where did all the people go?']] },
+      { q: 'Here — take my charm.', bond: 1, a: [['……你自己留著吧。——好，好，我收下。多謝。', '...Keep it for yourself. — All right, all right, I\'ll take it. Thank you.']] }] },
+    ye: { g: ['我女兒今年該五歲了。', 'My daughter will be five this year.'], t: [
+      { q: 'Tell me about her.', bond: 1, a: [['我走的時候，她抱著我的腿不放。我說，等過年我就回來。', 'When I left she held on to my leg and wouldn\'t let go. I told her I\'d be back by New Year.'], ['……那是兩個年以前的事了。', '...That was two New Years ago.']] },
+      { q: 'We\'ll be home soon.', a: [['打完這一仗，聽說就能回南了。', 'After this campaign, they say, we go back south.']] }] },
+    wang: { g: ['胖子的粥又稀了。這哪有力氣打仗。', 'Fatty\'s gruel is thin again. How\'s a man meant to fight on this?'], t: [
+      { q: 'Give him half your millet cake.', bond: 1, a: [['你……你自己吃啊。——好兄弟！明天誰敢碰你，我先捅了他。', 'You... eat it yourself. — Brother! Tomorrow, anyone touches you, I spear him first.']] },
+      { q: 'Why is the food so short?', a: [['糧車在後頭，跟砲一起。總兵要快，糧就跟不上。', 'The grain carts are at the back with the guns. The general wants speed, so the grain can\'t keep up.']] }] },
+    fang: { g: ['我考了三回才中秀才，中了還是來當兵。', 'Three tries to pass the county examination. Passed, and here I am anyway.'], t: [
+      { q: 'Why are we here?', a: [['去年四月，努爾哈赤以「七大恨」告天，陷了撫順。守將李永芳開門降了。', 'Last spring Nurhaci swore his Seven Grievances before Heaven and took Fushun. Its commander, Li Yongfang, opened the gate and surrendered.'], ['朝廷加派遼餉，號稱四十七萬大軍，來討建州。其實能有十萬就不錯了。', 'The court raised a new Liaodong tax and proclaimed an army of four hundred and seventy thousand. If there are a hundred thousand of us, that\'s a lot.']] },
+      { q: 'What is the plan?', a: [['楊經略分四路：杜松出撫順，馬林出開原，李如柏出清河，我們劉總兵出寬甸，從東邊進山。', 'Commissioner Yang split us four ways: Du Song from Fushun, Ma Lin from Kaiyuan, Li Rubai from Qinghe, and us, under General Liu, from Kuandian, through the mountains in the east.'], ['四路合擊赫圖阿拉。朝鮮的姜弘立帶一萬多人跟著我們。', 'Four columns closing on Hetu Ala together. Gang Hong-rip\'s ten thousand Koreans march with us.']] },
+      { q: 'Do you think we will win?', bond: 1, a: [['四路兵，相隔幾百里，山路難行，消息不通。努爾哈赤若是把兵合在一處，一路一路地打……', 'Four columns, hundreds of li apart, on mountain tracks, with no way to send word to each other. If Nurhaci gathers his whole strength and takes us one column at a time...'], ['……罷了，書生之見。睡吧。', '...Never mind. A bookworm\'s fears. Go to sleep.']] }] },
+    he: { g: ['我跟劉總兵打過播州。那時他還不老。', 'I fought at Bozhou with General Liu. He wasn\'t old then.'], t: [
+      { q: 'Tell me about Bozhou.', a: [['萬曆二十八年，楊應龍造反，劉總兵帶我們打上海龍囤。人稱「劉大刀」——那口刀，聽說一百二十斤。', 'Twenty-eighth year of Wanli. Yang Yinglong rebelled and General Liu took us up Hailongtun. They call him "Liu Big Sword" — that blade of his, they say, weighs a hundred and twenty jin.'], ['好漢。可好漢最怕人激他。', 'A hero. But a hero is easy to goad.']] },
+      { q: 'Teach me something for tomorrow.', bond: 1, a: [['藤牌斜著拿，讓箭滑走，別硬頂。人來了，低頭，用牌撞他，再出刀。', 'Hold the rattan at a slant and let the arrows slide off — don\'t meet them square. When a man comes, keep your head down, bash him with the shield, then cut.']] }] },
+    du: { g: ['一顆金人首級，賞銀五十兩。五十兩！', 'One Jin head, fifty taels of silver. Fifty!'], t: [
+      { q: 'Heads won\'t help you if you leave the file.', a: [['隊長也這麼說。可不搶，功就是別人的。', 'The chief says that too. But if you don\'t grab, the merit goes to someone else.']] },
+      { q: 'What would you do with fifty taels?', bond: 1, a: [['買兩畝水田，娶隔壁的春花。……不許笑。', 'Buy two mu of paddy and marry Chunhua next door. ...Don\'t laugh.']] }] },
+    zhu: { g: ['粥有，鹽沒有。趁熱吃。', 'There\'s gruel. No salt. Eat it while it\'s hot.'], t: [
+      { q: 'Any news?', a: [['聽說杜總兵那路搶頭功，冒著雪過了渾河。', 'Word is Du Song\'s column is racing for first honours — crossed the Hun River in the snow.'], ['還聽說餉銀又欠了三個月，說打完仗再發。——打完仗，誰還在？', 'And the pay\'s three months behind again. "After the campaign," they say. — And who\'ll be left after the campaign?']] },
+      { q: 'Thank you for the gruel.', bond: 1, a: [['（他往你碗裡多舀一勺，又趁沒人看見，塞了塊鹹肉。）', '(He ladles you an extra scoop, and when no one is looking slips in a piece of salt pork.)']] }] },
+  })[k];
+  // the night after Abudali
+  const saved6 = S0.flags.saved6, nm = S0.name.zh;
+  const many = lost.length;
+  const T = {
+    lou: { g: S0.flags.letter ? ['信還在我懷裡。……我自己帶回去。', 'The letter is still against my chest. ...I\'ll carry it home myself.'] : ['我手還在抖。你看。', 'My hands are still shaking. Look.'], t: [{ q: 'We came through.', bond: 1, a: [['我們這些人，進山的時候十二個。', 'There were twelve of us when we went into those hills.'], [`現在${12 - many - 1 > 0 ? '剩' + (12 - many) + '個' : '……'}。`, `Now there are ${12 - many}.`]] }] },
+    liu6: { g: saved6 ? ['你沒丟下我。', 'You didn\'t leave me.'] : ['……', '...'], t: [{ q: 'How is the leg?', bond: 1, a: saved6 ? [['骨頭沒斷。何老虎說，養一個月就好。', 'The bone isn\'t broken. He Laohu says a month and it\'ll mend.'], [`${nm}哥……以後我還跟著你。`, `Brother ${S0.name.en}... I\'m staying with you from now on.`]] : [['疼。', 'It hurts.']] }] },
+    luo: { g: dead('liu6') || !S0.alive.liu6 ? ['小六那個傻子……還欠我兩個錢。', 'That fool Xiaoliu... he still owes me two coins.'] : ['今天骰子不靈了。', 'The dice weren\'t with us today.'], t: [{ q: 'Play a round?', a: [['（他把骰子攥在手裡，沒有擲。）', '(He closes his fist around the dice, and doesn\'t throw them.)']] }] },
+    jin: { g: ['我就說山裡有東西。', 'I told you there was something in those hills.'], t: [{ q: 'You were right.', a: [['西嶺上全是旗。他們等了我們好幾天。', 'The whole west ridge was banners. They\'d been waiting for us for days.']] }] },
+    ye: { g: ['我還能回去。我還能回去看她。', 'I can still go back. I can still go back and see her.'], t: [{ q: 'You will.', bond: 1, a: [['你也要回去。我們一起回去。', 'You too. We\'ll go back together.']] }] },
+    wang: { g: ['今天我捅了四個。……我不想再數了。', 'Four, today. ...I don\'t want to count any more.'], t: [{ q: 'Eat something.', a: [['吃不下。頭一回吃不下。', 'Can\'t. First time in my life I can\'t.']] }] },
+    fang: { g: ['那個信使，是金人假扮的。杜總兵好幾天前就死了。', 'That messenger was a Jin agent in our colours. Du Song had been dead for days.'], t: [
+      { q: 'What happened to the other columns?', a: [['杜松在薩爾滸全軍覆沒。馬林在北邊也敗了。只有李如柏被召回，逃了出來。', 'Du Song\'s column was destroyed at Sarhu. Ma Lin was beaten in the north. Only Li Rubai, called back in time, got out.'], ['努爾哈赤說：「憑爾幾路來，我只一路去。」——他一路一路地吃掉了我們。', 'They say Nurhaci put it this way: "However many roads you come by, I go by one." He ate us one column at a time.']] },
+      { q: 'And the Koreans?', a: [['姜弘立被圍在富察，凍餓交加，正在跟金人議和。', 'Gang Hong-rip is surrounded, freezing and starving. He is talking terms with the Jin.'], ['明天，我們只能自己走出這片山。', 'Tomorrow we walk out of these mountains on our own.']] }] },
+    he: { g: ['劉總兵是往陣裡衝死的。到最後還是條好漢。', 'General Liu died charging into them. A hero to the last.'], t: [{ q: 'And Chief Wu?', a: [['吳老栓……他把隊交給你了。', 'Wu Laoshuan... he handed the file to you.'], ['往後，我們聽你的。', 'From now on, we follow you.']] }] },
+    du: { g: ['一顆首級都沒拿到。', 'Not one head.'], t: [{ q: 'You are alive.', bond: 1, a: [['……是。活著就好。春花還等著。', '...Yes. Alive is enough. Chunhua is waiting.']] }] },
+    zhu: { g: ['我給吳隊長留了一碗……忘了。', 'I kept a bowl back for Chief Wu... I forgot.'], t: [{ q: 'Sit with us.', bond: 1, a: [['（他放下勺子，在火邊坐下，很久沒說話。）', '(He puts down the ladle and sits by the fire, and says nothing for a long while.)']] }] },
+  }[k];
+  if (T && !saved6 && k === 'liu6') T.g = ['……', '...'];
+  return T;
+}
+
+// ---------- camp ----------
+const ZCAMP = { fires: [[0, 0], [8, -5]], tents: [[-10, 4, 1.7, 2.5, 2.1], [-4.5, 10.5, 1.7, 2.5, 2.1], [4.5, 10.5, 1.7, 2.5, 2.1], [10, 4, 1.7, 2.5, 2.1]],
+  props: [['pot', 8, -5, 0], ['banner', -3, -7.5, 0.3, '浙'], ['rack', -7.5, -3.5, 0.9], ['wagon', 13, -11, 0.5], ['shields', 3.5, -7.2, 0.2], ['log', 0, 2.9, 0], ['log', -2.6, -1.4, 1.1], ['log', 2.7, -1.2, -1.1]],
+  // where each man of the file sits or stands: [x, z, pose] (looking at the fire unless noted)
+  spots: { wu: [-2.6, -5.6, 'stand'], lou: [-2.5, -0.9, 'squat'], liu6: [-0.9, 2.4, 'squat'], luo: [1.0, 2.4, 'squat'], jin: [2.6, -0.6, 'squat'], ye: [-1.9, 1.6, 'squat'], wang: [7.0, -3.4, 'stand'], fang: [2.1, 1.7, 'squat'], he: [-6.8, -2.6, 'stand'], du: [3.1, -2.4, 'stand'], zhu: [8.9, -3.7, 'stand'] } };
+function zCampCfg(night) {
+  const npcs = [], beds = [], map = {};
+  ZR.forEach((r, i) => { const a = -0.5 + (i / ZR.length) * Math.PI * 1.55 + Math.PI * 0.55; const bx = Math.sin(a) * 6.3, bz = Math.cos(a) * 6.3; const alive = ZS.alive[r.k];
+    beds.push([+bx.toFixed(2), +bz.toFixed(2), +(a + Math.PI).toFixed(3), !alive]);
+    if (r.k === 'me' || r.k === ZS.me || !alive) return; const sp = ZCAMP.spots[r.k]; const [x, z] = sp; const tx = r.k === 'zhu' || r.k === 'wang' ? 8 : 0, tz = r.k === 'zhu' || r.k === 'wang' ? -5 : 0;
+    npcs.push({ role: r.role, x, z, yaw: +Math.atan2(tx - x, tz - z).toFixed(3), ci: i, pose: night === 1 && r.k !== 'zhu' ? 'squat' : sp[2] }); });
+  const mb = beds[2]; ZC = { bed: [mb[0], mb[1]] };
+  return { fires: ZCAMP.fires, tents: ZCAMP.tents, props: ZCAMP.props, bedrolls: beds, npcs, me: { x: 0.4, z: -3.4, yaw: 0, role: 'shield' } };
+}
+function zStart(scene) {
+  ZS = zLoad(); if (!ZS) { ZS = zFresh(); }
+  $('menu').hidden = true; state.lowfx = $('lowfxIn').checked; state.fog = false;
+  const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: ZS.name.zh || 'You', team: 0, yyRole: 'shield', connected: true }];
+  if (scene === 'camp0' || scene === 'camp1') {
+    const night = scene === 'camp1' ? 1 : 0; const camp = zCampCfg(night);
+    startGame({ seed, battle: 'zcamp', mode: 'campaign', mission: 'zcamp', camp, players: pl }, 0, null, 1);
+    ZC.night = night; ZC.map = {}; for (const u of state.sim.units) if (u.camp) ZC.map[u.id] = u.ci; ZC.chatT = 6;
+    MUSIC.play('menu'); MUSIC.setIntensity(0.15); AUDIO.setFire(0.6); $('army').hidden = true;
+    setTimeout(() => storyCard(night ? 'The survivors make camp in a ravine south of the pass. Nobody sings. Walk among them (E to talk), and when you are ready, lie down on your bedroll.' : 'The night before. Walk among your file and talk with them (look at a man and press E). When you are ready, lie down on your bedroll (E) to sleep until the march.', night ? '夜 · The night after' : '營 · Camp, April 1619'), 900);
+  } else if (scene === 'battle1') {
+    startGame({ seed, battle: 'abudali', mode: 'campaign', mission: 'abudali', players: pl }, 0, null, 1);
+    const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq]; ZB = { map: {}, sq: q.id, first: me.heroId, cur: 'me', fell: false };
+    const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = 2;
+    ZR.forEach((r, i) => { if (r.k === 'me') return; const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role === r.role); if (id !== undefined) { used[id] = 1; ZB.map[id] = i; } });
+    setTimeout(() => storyCard('Dawn, April 1619. The column breaks camp and climbs into the valleys toward Hetu Ala. Stay with your duck team: the chief calls the drill. Shield up with the right mouse button.', '阿布達里岡 · Abudali Pass'), 700);
+  }
+}
+function zGo(scene) { try { localStorage.setItem('mingZheGo', scene); } catch (e) { } location.reload(); }
+// what you are looking at in camp
+function zLook() {
+  const sim = state.sim, h = localHero(); if (!h || h.dead || !ZC) return null;
+  if (Math.hypot(h.x - ZC.bed[0], h.z - ZC.bed[1]) < 1.9) return { bed: true };
+  let best = null, bd = 0.5; const fx = Math.sin(Input.yaw), fz = Math.cos(Input.yaw);
+  for (const u of sim.units) { if (!u.camp) continue; const dx = u.x - h.x, dz = u.z - h.z, d = Math.hypot(dx, dz); if (d > 3.4 || d < 0.3) continue; const off = 1 - (dx * fx + dz * fz) / d; if (off < bd) { bd = off; best = u; } }
+  return best ? { u: best, k: ZR[best.ci].k } : null;
+}
+function zheKeyE() {
+  if (!ZC || !state.sim || !state.sim.mission || !state.sim.mission.camp) return false;
+  if (state.zheDlg) return true; const t = zLook(); if (!t) return true;
+  if (t.bed) { zSleep(); return true; }
+  zDialog(t.k, t.u); return true;
+}
+function zSleep() {
+  if (ZC.night === 0) { ZS.stage = 'battle1'; zSave(); zCards([{ title: '黎明 · Dawn', year: 'April 1619', p: ['Drums before light. The column breaks camp and climbs on into the valleys. Ahead, somewhere, is Hetu Ala; behind, the guns and the grain carts are already falling back along the track.', 'Chief Wu walks down the file, tugging straps and checking match-cord. "Twelve men," he says. "One life."'], btn: 'March →' }], () => zGo('battle1')); }
+  else { ZS.stage = 'end1'; zSave(); zCards([{ title: '第一章終 · End of Chapter One', year: 'Abudali Pass, April 1619', p: [`${ZR.filter(r => r.k !== 'me' && ZS.alive[r.k]).length} of your file sleep around the embers. In the morning you will walk south out of the mountains with the remnants of Liu Ting's army.`, 'Two years later, in the spring of 1621, what is left of the Zhejiang men will stand with the Sichuan White Poles on the south bank of the Hun River, outside Shenyang.'], zh: '第二章 · 渾河 · Hun River, 1621 — 待續 · to be continued', btn: 'Back to the menu' }], () => { location.reload(); }); }
+}
+function zDialog(k, u) {
+  const sim = state.sim, D = zTalk(k, ZC.night); if (!D) return; const r = zRow(k); state.zheDlg = { k };
+  if (document.pointerLockElement) document.exitPointerLock(); Input.keys = 0; $('pause').hidden = true;
+  let box = $('zheDlg'); if (!box) { box = document.createElement('div'); box.id = 'zheDlg'; document.body.appendChild(box); box.addEventListener('mousedown', (e) => e.stopPropagation()); }
+  const h = localHero(); if (h && u) { Input.yaw = Math.atan2(u.x - h.x, u.z - h.z); }
+  const render = (lines, topics) => {
+    box.hidden = false; const L = lines[lines.length - 1];
+    box.innerHTML = `<div class="who">${r.zh} ${r.en}<small>${r.t}${ZS.bond[k] > 0 ? ' · ' + '♥'.repeat(Math.min(3, ZS.bond[k])) : ''}</small></div>${lines.map(l => `<div class="zh">${l[0]}</div><div class="en">${l[1]}</div>`).join('')}<div class="ch">${topics.map((t, i) => `<button type="button" data-i="${i}"><kbd>${i + 1}</kbd>${t.q}</button>`).join('')}<button type="button" data-i="-1"><kbd>Esc</kbd>Leave</button></div>`;
+    box.querySelectorAll('button').forEach(b => b.onclick = () => choose(+b.dataset.i));
+    state.zheDlg.topics = topics; };
+  const key = (t) => `${ZC.night}:${k}:${t.q}`;
+  const open = () => D.t.filter(t => !ZS.talked[key(t)]);
+  const choose = (i) => { AUDIO.play('ui');
+    if (i < 0) { close(); return; } const t = state.zheDlg.topics[i]; if (!t) return; ZS.talked[key(t)] = 1; if (t.bond) ZS.bond[k] = (ZS.bond[k] || 0) + t.bond; if (t.flag) ZS.flags[t.flag] = true; zSave();
+    render([[`「${t.q}」`, ''], ...t.a].filter(x => x[0]), open()); };
+  const close = () => { box.hidden = true; state.zheDlg = null; requestLock(); };
+  state.zheDlg.choose = choose; state.zheDlg.close = close;
+  const rest = open(); render([D.g], rest.length ? rest : []);
+}
+document.addEventListener('keydown', (e) => { // the dialogue panel takes the keys while it is open
+  const d = state.zheDlg; if (!d || state.screen !== 'game') return;
+  if (e.code === 'Escape' || e.code === 'KeyE') { d.close(); e.stopImmediatePropagation(); e.preventDefault(); return; }
+  const m = /^Digit([1-9])$/.exec(e.code); if (m) { d.choose(+m[1] - 1); e.stopImmediatePropagation(); e.preventDefault(); return; }
+  if (/^Key[WASD]$/.test(e.code)) { e.stopImmediatePropagation(); }
+}, true);
+
+// ---------- in battle ----------
+function zheSay(ev) { // scripted lines come out of a man's mouth when you are near enough to hear him; otherwise by runner
+  const sim = state.sim, h = localHero(); if (!ZB) return false;
+  const W = { liu: ['劉綎', 'General Liu Ting'], chief: ['吳老栓', 'Chief Wu'], fang: ['方秀才', 'Fang the Scholar'], lookout: ['', 'Lookout'], soldier: ['', 'A soldier'], rider: ['', 'A rider in Ming colours'] }[ev.who] || ['', ev.who];
+  let id = -1;
+  if (ev.who === 'liu') { const g = sim.mg.liu; id = g ? sim.players[g.p].heroId : -1; }
+  else if (ev.who === 'chief' || ev.who === 'fang') { const want = ev.who === 'chief' ? 0 : 8; for (const uid in ZB.map) if (ZB.map[uid] === want) id = +uid; }
+  if (id >= 0 && sim.units[id] && sim.units[id].dead) id = -1;
+  if (id < 0 && h) { const q = sim.squads[ZB.sq]; const cand = sim.teamAlive[h.team].filter(u => u.id !== h.id && !u.wounded && u.type !== 'horse' && Math.hypot(u.x - h.x, u.z - h.z) < 22 && (ev.who !== 'rider' || !q.unitIds.includes(u.id))); if (cand.length) id = cand[Math.floor(Math.random() * cand.length)].id; }
+  const ok = id >= 0 && SPEECH.say(id, ev.zh, ev.text, { prio: 3, loud: true, radio: true, who: W[0] ? `${W[0]} ${W[1]}` : W[1], dur: Math.min(8, 3 + ev.text.length / 20), shout: ev.who === 'liu' || ev.who === 'lookout' ? 0.3 : false });
+  if (!ok && typeof radio === 'function') radio(W[0] ? `${W[0]} ${W[1]}` : W[1], `${ev.zh ? ev.zh + '  ' : ''}${ev.text}`);
+  return true;
+}
+function zheEvent(ev) {
+  const sim = state.sim; if (!ZB || !sim || !sim.mission || !sim.mission.soldier) return; const me = sim.players[state.localIdx];
+  if (ev.t === 'zpromote' && ev.p === state.localIdx) { state.fpSel = null; const q = sim.squads[ev.sq]; const w = q.unitIds.map(id => sim.units[id]).find(u => !u.dead && u.ctrl < 0 && !u.wounded);
+    if (w) setTimeout(() => SPEECH.say(w.id, `隊長沒了！${ZS.name.zh}，你說怎麼走？`, `The chief is dead! ${ZS.name.en}, you're senior now — what do we do?`, { prio: 3, dur: 5 }), 1600);
+    banner('你領隊 · The file is yours', 'Chief Wu is dead. F follow me / H halt / C charge / Z form up where you look', 6); }
+  else if (ev.t === 'zwound' && ev.p === state.localIdx) { ZB.wounded = ev.id; const u = sim.units[ev.id]; const n = SPEECH.nameOf(ev.id);
+    SPEECH.say(ev.id, '我的腿……走不了了！', 'My leg... I can\'t walk!', { prio: 3, dur: 4 }); toast(`${n ? n.zh + ' ' + n.en : 'A man of your file'} is hit and can't walk. Get to him and press E to get him up`); }
+  else if (ev.t === 'zhelp' && ev.id === ZB.wounded) { ZS.flags.helped6 = true; feed(`You get ${(SPEECH.nameOf(ev.id) || { en: 'him' }).en}'s arm over your shoulder`, true); }
+  else if (ev.t === 'zcarry' && ev.p === state.localIdx) { const k = ZB.map[ev.id]; ZB.fell = true; const prev = ZB.cur; if (prev && ZS.alive[prev] !== false) { ZB.deadMe = ZB.deadMe || []; ZB.deadMe.push(prev); }
+    ZB.cur = k !== undefined ? ZR[k].k : 'stranger'; const n = SPEECH.nameOf(ev.id); const h = sim.units[ev.id]; if (h) { Input.yaw = h.yaw; Input.pitch = 0; }
+    toast(n ? `You fall. The fight goes on — you are ${n.zh} ${n.en} now` : 'You fall. The fight goes on — you are another man of the column now'); }
+}
+function zheObjLines() {
+  const sim = state.sim; if (!ZB) return ''; const h = localHero(); let n = 0, all = 0;
+  for (const uid in ZB.map) { const u = sim.units[uid]; if (+uid === (h && h.id)) continue; all++; if (!u.dead && h && Math.hypot(u.x - h.x, u.z - h.z) < 24) n++; }
+  let s = `<div class="ob"><i>伍</i><span>Your file with you: ${n} of ${all}</span></div>`;
+  if (ZB.wounded !== undefined) { const u = sim.units[ZB.wounded]; s += `<div class="ob${u.helpedBy >= 0 ? ' done' : ''}"><i>!</i><span>${u.dead ? 'Chen Xiaoliu is dead' : u.helpedBy >= 0 ? 'Chen Xiaoliu is on his feet' : 'Get Chen Xiaoliu up (E beside him)'}</span></div>`; }
+  return s;
+}
+function zheFinish(winner) {
+  const sim = state.sim, h = localHero(); if (!ZB) return; const M = sim.mission, z = sim.missionZone('mouth'); const won = winner === M.side;
+  const fate = {}; const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
+  for (const uid in ZB.map) { const k = ZR[ZB.map[uid]].k; const u = sim.units[uid]; if (u.dead) { fate[k] = 'dead'; continue; }
+    const out = (near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4)); fate[k] = out ? 'out' : 'lost'; }
+  for (const k of ZB.deadMe || []) fate[k] = 'dead';
+  if (fate.me === undefined) fate.me = h && !h.dead ? 'out' : 'dead';
+  // you go on as whoever you became
+  if (ZB.cur && ZB.cur !== 'me' && ZB.cur !== 'stranger' && fate.me === 'dead') { const nk = ZB.cur; ZS.me = nk; ZS.oldName = ZS.name; ZS.name = { zh: zRow(nk).zh, en: zRow(nk).en }; }
+  for (const r of ZR) { const f = fate[r.k] || 'lost'; ZS.fate[r.k] = f; ZS.alive[r.k] = f === 'out'; }
+  if (ZB.cur && ZB.cur !== 'me' && ZB.cur !== 'stranger') ZS.alive[ZB.cur] = !!(h && !h.dead);
+  ZS.alive.me = fate.me === 'out' || (ZB.cur && ZB.cur !== 'me'); // you live on in whoever carried on
+  ZS.flags.saved6 = ZS.alive.liu6 && !!ZS.flags.helped6; ZS.stage = 'camp1'; zSave();
+  const li = ZR.map(r => { const f = ZS.fate[r.k] || 'lost'; const nm = r.k === 'me' ? `${ZS.name.zh} ${ZS.name.en} (you)` : `${r.zh} ${r.en}`; return `<li class="${f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${nm} — ${f === 'out' ? 'came out of the pass' : f === 'dead' ? 'killed' : 'missing in the valley'}</li>`; }).join('');
+  const outN = ZR.filter(r => ZS.fate[r.k] === 'out').length;
+  $('resultTitle').textContent = won ? '出 · Out of the pass' : '陷 · Cut off'; $('resultTitle').className = won ? 'win' : 'lose';
+  $('resultText').innerHTML = `${won ? 'You reached the south gorge.' : 'The valley closed behind you, but a few of you crawled out after dark.'} ${outN} of twelve came out.`;
+  $('btnNext').hidden = false; $('btnNext').textContent = 'What happened →';
+  $('btnNext').onclick = () => { $('result').hidden = true; zCards([
+    { title: '阿布達里岡 · What happened', year: 'April 1619', p: ['Liu Ting\'s column had been lured. Jin agents dressed as Ming soldiers came to him with word from Du Song urging him to hurry. Du Song was already dead: his column had been destroyed at Sarhu days before. Hurrying, the column strung out along the valleys.',
+      'At Abudali Pass, less than sixty li from Hetu Ala, Daišan\'s banners struck the head of the column, and the Ming held. Then Hong Taiji\'s banners came down from the heights into its side, and the column broke. Liu Ting died fighting.',
+      'About three thousand Zhejiang soldiers were killed. A few days later the Korean army under Gang Hong-rip, cut off and starving, surrendered to the Jin. Of Yang Hao\'s four columns only Li Rubai\'s, recalled in time, came home. Nurhaci had destroyed the others one at a time.'], zh: '憑爾幾路來，我只一路去。— attributed to Nurhaci' },
+    { title: '伍 · Your file', year: `${outN} of twelve`, html: `<ul>${li}</ul>`, p: [ZS.flags.saved6 ? 'You did not leave Chen Xiaoliu in the valley.' : ZS.alive.liu6 ? '' : 'Chen Xiaoliu did not come out of the valley.'].filter(Boolean), btn: 'Night falls →' },
+  ], () => zGo('camp1')); };
+}
+function zheHUD(dt) {
+  const sim = state.sim; let pr = $('zhePrompt');
+  if (sim && sim.mission && sim.mission.camp) $('status').style.visibility = 'hidden';
+  if (!sim || !sim.mission || !sim.mission.camp || !ZC || state.zheDlg) { if (pr) pr.hidden = true; return; }
+  if (!pr) { pr = document.createElement('div'); pr.id = 'zhePrompt'; document.body.appendChild(pr); }
+  const t = zLook(); pr.hidden = !t; if (t) pr.innerHTML = t.bed ? '<kbd>E</kbd>Lie down on your bedroll' + (ZC.night ? '' : ' — march at dawn') : `<kbd>E</kbd>Talk to ${ZR[t.u.ci].zh} ${ZR[t.u.ci].en}`;
+  // the camp murmurs: men talk to each other when you pass
+  ZC.chatT -= dt; if (ZC.chatT <= 0) { ZC.chatT = 7 + Math.random() * 6; const h = localHero(); if (!h) return; const near = sim.units.filter(u => u.camp && Math.hypot(u.x - h.x, u.z - h.z) < 14); if (!near.length) return; const u = near[Math.floor(Math.random() * near.length)];
+    const P0 = [['這鬼地方，四月還下雪。', 'Snow in April. What a place.'], ['明天走多少里？', 'How many li tomorrow?'], ['聽說赫圖阿拉的城是木頭的。', 'They say the walls of Hetu Ala are made of logs.'], ['腳上的凍瘡又裂了。', 'My chilblains have split open again.'], ['誰還有菸葉？', 'Anyone got tobacco?'], ['義烏這時候該插秧了。', 'Back in Yiwu they\'ll be planting the rice now.']];
+    const P1 = [['……', '...'], ['火別讓它滅了。', 'Don\'t let the fire go out.'], ['明天往南走。', 'Tomorrow we go south.'], ['我閉上眼睛就看見西嶺上的旗。', 'When I close my eyes I see the banners on the west ridge.']];
+    const L = (ZC.night ? P1 : P0)[Math.floor(Math.random() * (ZC.night ? P1 : P0).length)]; SPEECH.say(u.id, L[0], L[1], { prio: 0, cool: 10 }); }
+}
+function zMenu() {
+  const s = zLoad(); const b = $('btnZhe'), nb = $('btnZheNew'); if (!b) return;
+  const cont = s && s.stage && s.stage !== 'end1'; b.textContent = cont ? 'Continue' : s ? 'Play again' : 'Begin'; nb.hidden = !cont;
+  const begin = () => { AUDIO.init(); AUDIO.play('ui'); ZS = zFresh(); zSave(); zCards(INTRO, () => { ZS.stage = 'camp0'; zSave(); zStart('camp0'); }); };
+  b.onclick = () => { if (cont) { AUDIO.init(); AUDIO.play('ui'); zStart(s.stage === 'after1' ? 'camp1' : s.stage); } else begin(); };
+  nb.onclick = begin;
+}
+zMenu();
+{ let go = null; try { go = localStorage.getItem('mingZheGo'); localStorage.removeItem('mingZheGo'); } catch (e) { } if (go) setTimeout(() => zStart(go), 60); }
 
 })();
 </script>
