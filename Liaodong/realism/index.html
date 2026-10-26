@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v18</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v19</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -3154,7 +3154,7 @@ const MISSIONS = {
     start: [56, -64, 0],
     zones: [{ key: 'sbridge', x: 74, zr: -15, r: 10, name: 'South end of the bridge' }, { key: 'camp', x: 58, z: -62, r: 20, name: 'The Zhejiang camp', owner: 0, rate: 0.5 },
       { key: 'road', x: -62, z: -134, r: 15, name: 'The Liaoyang road' }],
-    forts: [[44, -62, 0.5, 12, 1.6, 'palisade'], [72, -62, 0.5, 12, 1.6, 'palisade'], [58, -49, 12, 0.5, 1.6, 'palisade'], [49, -75, 5, 0.5, 1.5, 'palisade'], [67, -75, 5, 0.5, 1.5, 'palisade'],
+    forts: [[44, -62, 0.5, 12, 1.6, 'palisade'], [72, -62, 0.5, 12, 1.6, 'palisade'], [49.5, -49, 5.5, 0.5, 1.6, 'palisade'], [66.5, -49, 5.5, 0.5, 1.6, 'palisade'], [49, -75, 5, 0.5, 1.5, 'palisade'], [67, -75, 5, 0.5, 1.5, 'palisade'],
       [51, -53, 2, 1.1, 1.4, 'mantlet'], [58, -53, 2, 1.1, 1.4, 'mantlet'], [65, -53, 2, 1.1, 1.4, 'mantlet']],
     groups: {
       zhe: { team: 0, name: 'Qi Jin', zh: '戚金', army: ['yuanyang', 'rifle_imp', 'yuanyang', 'rifle_imp', 'samurai'], at: [58, -64, 0], dir: ['hold', 58, -60], stay: true },
@@ -3166,7 +3166,7 @@ const MISSIONS = {
       lw: { team: 1, name: 'The left wing', army: ['samurai', 'archer', 'cavalry'], at: [-30, 130, PI], reserve: true },
       east: { team: 1, name: 'Banners from the east', army: ['samurai', 'archer'], at: [140, -40, -PI / 2], reserve: true },
       night: { team: 1, name: 'Daišan\'s banners', zh: '代善', army: ['shinsengumi', 'samurai', 'samurai', 'cavalry'], at: [140, -110, -PI / 2], reserve: true },
-      cut: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'cavalry', 'byakkotai'], at: [-140, -96, PI / 2], reserve: true },
+      cut: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'byakkotai'], at: [-140, -96, PI / 2], reserve: true },
     },
     phases: [
       { title: '一 · 橋北 · North of the bridge', text: 'The White Poles have crossed to the north bank. Stand to in the Zhejiang camp with your file and watch the far bank.', show: ['camp'],
@@ -3194,11 +3194,11 @@ const MISSIONS = {
       { title: '四 · 夜 · The last stand', text: 'Night. The camp cannot hold. Qi Jin orders you out: take your file and your wounded down the Liaoyang road, so that someone lives to tell what happened here.', show: ['road'], hide: ['camp'],
         start: [['release', 'night'], ['dir', 'night', 'hold', 58, -60], ['kill', 'chen']],
         obj: { extract: 'road' }, limit: 420, fail: 'The ring closed around the camp.',
-        waves: [[40, 'cut', ['attack']]], at: [[55, ['kill', 'zhe']]],
+        waves: [[70, 'cut', ['attack']]], at: [[55, ['kill', 'zhe']]],
         say: [[2, 'soldier', 'General Chen Ce is dead!', '陳總兵陣亡了！'],
           [6, 'qi', 'A man repays his country today, of all days.', '大丈夫報國，就在今日。'],
           [12, 'qi', 'You — take your file and your wounded down the Liaoyang road. Someone must live to tell them what happened here.', '你——帶你的人和傷兵走遼陽大路。總得有人活著，把這裡的事說出去。'],
-          [42, 'lookout', 'Horsemen on the road ahead!', '前面路上有馬兵！'],
+          [72, 'lookout', 'Horsemen on the road ahead!', '前面路上有馬兵！'],
           [56, 'lookout', 'General Qi has fallen!', '戚副將陣亡了！']] },
     ],
     win: 'You got out by the Liaoyang road.',
@@ -4144,7 +4144,7 @@ function gearFor(u) {
     b('p', [0, -0.26, 0.02], [0.46, 0.4, 0.33], col); b('p', [0, -0.2, 0.168], [0.36, 0.018, 0.01], stud || gold); b('p', [0, -0.32, 0.168], [0.36, 0.018, 0.01], stud || gold); };
   const robe = (col, sash) => { b('p', [0, -0.25, 0.01], [0.44, 0.4, 0.3], col); if (sash) b('p', [0, -0.07, 0], [0.47, 0.07, 0.32], sash); };
   const shield = () => { y('sl', [0.12, -0.38, 0.22], [0.56, 0.05, 0.56], 0xa8884a, [HPI, 0, 0]); y('sl', [0.12, -0.38, 0.25], [0.18, 0.03, 0.18], red, [HPI, 0, 0]); };
-  const backflag = (col) => { b('c', [0, 0.45, -0.17], [0.025, 1.05, 0.025], 0x3a2a1a); b('c', [0.12, 0.72, -0.17], [0.22, 0.4, 0.014], col); };
+  const backflag = (col) => { b('c', [0.1, 0.45, -0.24], [0.025, 1.05, 0.025], 0x3a2a1a); b('c', [0.22, 0.72, -0.24], [0.22, 0.4, 0.014], col); }; // pole behind the shoulder, clear of the helmet
   const quiver = () => { y('c', [0.14, 0.05, -0.17], [0.13, 0.6, 0.13], 0x4a2e18, [0, 0, -0.35]); b('c', [0.25, 0.36, -0.17], [0.16, 0.12, 0.08], 0xe8e0cc, [0, 0, -0.35]); };
   // late-Ming kit: vermilion padded coats (胖襖), white puttees, the round 護心鏡 heart-mirror on brigandine,
   // eight-petal iron helmets with red tassels, rattan helmets for shield-men, broad black hats for gunners
@@ -5594,7 +5594,7 @@ class Renderer {
     // ---------- to world ----------
     const dp = down ? -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4)) : 0, cP = Math.cos(dp), sP = Math.sin(dp);
     const oy = down ? 0.15 : 0;
-    const vsc = (u.type === 'byakkotai' ? 0.88 : 1) * (u.champ ? S.HCLASS[u.hclass | 0].scale : u.type === 'hero' ? 1.03 : 0.95 + uhash(u.id, 7) * 0.09);
+    const vsc = u.look && u.look.h ? u.look.h : (u.type === 'byakkotai' ? 0.9 : 1) * (u.champ ? S.HCLASS[u.hclass | 0].scale : u.type === 'hero' ? 1.04 : 0.88 + uhash(u.id, 7) * 0.24); // men come in all sizes: about 12% either way
     const Wp = (lx, ly, lz, out, o) => { lx *= vsc; ly *= vsc; lz *= vsc; const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = x + lx * cy + z2 * sy; out[o + 1] = y + oy + y2; out[o + 2] = z - lx * sy + z2 * cy; };
     const Wd = (lx, ly, lz, out, o) => { const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = lx * cy + z2 * sy; out[o + 1] = y2; out[o + 2] = -lx * sy + z2 * cy; };
     const G = this._G || (this._G = new Float64Array(96));
@@ -5603,11 +5603,13 @@ class Renderer {
     const CB = this._CB || (this._CB = new Float64Array(9)); Wd(C[0], C[1], C[2], CB, 0); Wd(C[3], C[4], C[5], CB, 3); Wd(C[6], C[7], C[8], CB, 6);
     Wp(0, pel - 0.02, pz, G, 60);
     this._sx = CB[0]; this._sy = CB[1]; this._sz = CB[2];
+    if (vsc !== 1) for (let i = 0; i < 9; i++) CB[i] *= vsc;
     // ---------- draw body ----------
     this.boxB(f.torso, slot, G[18 + 24], G[18 + 25], G[18 + 26], CB, 0.5, 0.64, 0.3);
     this.boxB(f.hips, slot, G[60], G[61], G[62], CB, 0.4, 0.22, 0.27);
     // head stays nearer upright than the chest
     const HB = this._HB || (this._HB = new Float64Array(9)); { const hl = -a.lean * 0.5, ht = -a.twist * 0.35; const ch = Math.cos(hl), sh = Math.sin(hl), cth = Math.cos(ht), sth = Math.sin(ht); const ax = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; for (let i = 0; i < 3; i++) { const v = ax[i]; const y1 = v[1] * ch - v[2] * sh, z1 = v[1] * sh + v[2] * ch; const x2 = v[0] * cth + z1 * sth, z2 = -v[0] * sth + z1 * cth; const vx = CB[0] * x2 + CB[3] * y1 + CB[6] * z2, vy = CB[1] * x2 + CB[4] * y1 + CB[7] * z2, vz = CB[2] * x2 + CB[5] * y1 + CB[8] * z2; HB[i * 3] = vx; HB[i * 3 + 1] = vy; HB[i * 3 + 2] = vz; } }
+    if (vsc !== 1) for (let i = 0; i < 9; i++) HB[i] *= vsc;
     const hx = G[18 + 27], hy = G[18 + 28], hz = G[18 + 29];
     this.boxB(f.head, slot, hx, hy, hz, HB, 0.28, 0.3, 0.28);
     const hat = def.hat; const hatAt = (mesh, on, off, s1, s2, s3) => { if (!on) { mesh.setMatrixAt(slot, this.tmp.zero); return; } this.boxB(mesh, slot, hx + HB[3] * off, hy + HB[4] * off, hz + HB[5] * off, HB, s1, s2, s3); };
@@ -6634,7 +6636,7 @@ function realGear(u) {
     b('p', [0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [-0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [0, -0.22, 0.172], [0.4, 0.02, 0.01], stud || gold); b('p', [0, -0.36, 0.172], [0.4, 0.02, 0.01], stud || gold); };
   const hoof = (col) => { seg('elL', 'haL', 0.78, 1.0, 0.13, 0.15, col); seg('elR', 'haR', 0.78, 1.0, 0.13, 0.15, col); }; // 馬蹄袖
   const robe = (col, sash) => { b('p', [0, -0.25, 0.01], [0.44, 0.4, 0.3], col); if (sash) b('p', [0, -0.07, 0], [0.47, 0.07, 0.32], sash); };
-  const backflag = (col, edge) => { b('c', [0, 0.5, -0.17], [0.03, 1.15, 0.03], 0x3a2a1a); b('c', [0.15, 0.82, -0.17], [0.28, 0.5, 0.016], col); if (edge) b('c', [0.15, 0.82, -0.172], [0.32, 0.54, 0.012], edge); };
+  const backflag = (col, edge) => { b('c', [0.1, 0.5, -0.25], [0.03, 1.15, 0.03], 0x3a2a1a); b('c', [0.25, 0.82, -0.25], [0.28, 0.5, 0.016], col); if (edge) b('c', [0.25, 0.82, -0.252], [0.32, 0.54, 0.012], edge); }; // pole behind the shoulder, clear of the helmet
   const quiver = () => { y('c', [0.14, 0.05, -0.17], [0.13, 0.6, 0.13], 0x4a2e18, [0, 0, -0.35]); b('c', [0.25, 0.36, -0.17], [0.16, 0.12, 0.08], 0xe8e0cc, [0, 0, -0.35]); };
   const sadai = () => { b('p', [0.27, -0.16, 0.02], [0.06, 0.48, 0.24], 0x5a3a22, [0, 0, 0.22]); b('p', [0.29, -0.06, 0.02], [0.065, 0.12, 0.25], brass, [0, 0, 0.22]); // bow case (left hip)
     b('p', [-0.26, -0.08, -0.03], [0.08, 0.34, 0.17], 0x4a2e18, [0, 0, -0.18]); b('p', [-0.29, 0.13, -0.03], [0.06, 0.12, 0.16], 0xe8e0cc, [0, 0, -0.18]); }; // quiver with white fletching
@@ -8256,18 +8258,18 @@ const SPEECH = (() => {
 // they happened. You cannot change the history; you can only change who comes home.
 // each man of the file has his own face and headgear, the same at the fire and in the pass (render-only: u.look)
 const ZLOOK = {
-  wu: { hat: 'chief', brows: 'knit', beard: 'longmous', grey: true, scar: true, skin: 0xbf9670 },
-  lou: { hat: 'rattan', brows: 'thick', beard: 'stubble', bulk: true, skin: 0xcd9f78 },
-  me: { hat: 'rattan', brows: 'thin', band: 0xe8e2d0 },
-  liu6: { hat: 'band', brows: 'high', young: true, rosy: true, skin: 0xe8c6a2 },
-  luo: { hat: 'wrap', wrap: 0x2a3a5a, brows: 'high', beard: 'mous', grin: true },
-  jin: { hat: 'straw', brows: 'thick', beard: 'goatee', charm: true, skin: 0xc49a72 },
-  ye: { hat: 'rattan', band: 0xe8e2d0, brows: 'sad', beard: 'mous' },
-  wang: { hat: 'rattanTall', brows: 'thick', bulk: true, rosy: true, bigNose: true },
-  fang: { hat: 'scholar', brows: 'thin', beard: 'goatee', longBeard: true, brush: true, skin: 0xe2c4a0 },
-  he: { hat: 'felt', brows: 'thick', beard: 'full', patch: true, scar: true, skin: 0xb88c66 },
-  du: { hat: 'rattan', plume: 0xd02a1c, brows: 'knit', skin: 0xd8b088 },
-  zhu: { hat: 'cookcap', brows: 'thick', beard: 'full', grey: true, belly: true, apron: true, bigNose: true, skin: 0xd8a07a },
+  wu: { h: 1.03, hat: 'chief', brows: 'knit', beard: 'longmous', grey: true, scar: true, skin: 0xbf9670 },
+  lou: { h: 1.08, hat: 'rattan', brows: 'thick', beard: 'stubble', bulk: true, skin: 0xcd9f78 },
+  me: { h: 1.0, hat: 'rattan', brows: 'thin', band: 0xe8e2d0 },
+  liu6: { h: 0.86, hat: 'band', brows: 'high', young: true, rosy: true, skin: 0xe8c6a2 },
+  luo: { h: 0.95, hat: 'wrap', wrap: 0x2a3a5a, brows: 'high', beard: 'mous', grin: true },
+  jin: { h: 0.92, hat: 'straw', brows: 'thick', beard: 'goatee', charm: true, skin: 0xc49a72 },
+  ye: { h: 0.98, hat: 'rattan', band: 0xe8e2d0, brows: 'sad', beard: 'mous' },
+  wang: { h: 1.14, hat: 'rattanTall', brows: 'thick', bulk: true, rosy: true, bigNose: true },
+  fang: { h: 0.97, hat: 'scholar', brows: 'thin', beard: 'goatee', longBeard: true, brush: true, skin: 0xe2c4a0 },
+  he: { h: 1.01, hat: 'felt', brows: 'thick', beard: 'full', patch: true, scar: true, skin: 0xb88c66 },
+  du: { h: 1.06, hat: 'rattan', plume: 0xd02a1c, brows: 'knit', skin: 0xd8b088 },
+  zhu: { h: 1.0, hat: 'cookcap', brows: 'thick', beard: 'full', grey: true, belly: true, apron: true, bigNose: true, skin: 0xd8a07a },
 };
 function zDress(u, ci) { const r = ZR[ci]; if (!u || !r) return; u.look = Object.assign({ id: r.k }, ZLOOK[r.k] || {}); if (state.renderer) state.renderer.colorFigure(u.id, u); }
 // name tags: who a man is, over his head, when you look at him or he is close
@@ -8284,7 +8286,7 @@ function zTags() {
       if (d > 12 && !look) continue;
       let e = ZTAG.pool[n]; if (!e) { e = document.createElement('div'); e.className = 'ztag'; document.body.appendChild(e); ZTAG.pool[n] = e; } n++;
       const st = u.wounded ? (u.helpedBy >= 0 ? ' · <i class="w">wounded</i>' : ' · <i class="d">down</i>') : u.hp < u.def.hp * 0.5 ? ' · <i class="w">hurt</i>' : '';
-      const html = `${rr.zh} <span>${rr.en}</span><small>${rr.t}${st}</small>`; if (e._h !== html) { e.innerHTML = html; e._h = html; }
+      const html = `${rr.zh} <span>${rr.en}</span>${st ? `<small>${st.replace(/^ · /, '')}</small>` : ''}`; if (e._h !== html) { e.innerHTML = html; e._h = html; }
       const sx = (v.x + 1) / 2 * W, sy = (1 - v.y) / 2 * H, k = Math.max(0.7, Math.min(1, 8 / Math.max(4, d)));
       e.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -100%) scale(${k.toFixed(3)})`; e.style.opacity = (look ? 1 : Math.max(0.25, 1 - (d - 4) / 10)).toFixed(2); e.style.display = ''; }
   }
