@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v35</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v36</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -3659,7 +3659,7 @@ const MISSIONS = {
           [40, 'lier', 'The southerners call that one the ten-thousand-man enemy: a pot of powder that rolls along the ground.', '南邊人管那叫萬人敵，一罐火藥，在地上滾。'],
           [60, 'bahai', 'The cart\'s on fire! Get out from under it!', '車著火了！快從底下出來！']] },
       { title: '四 · 汗 · The Khan', goal: 'Get your file back to the camp, wounded too', text: 'Something has happened at the Khan\'s standard. The horns sound the withdrawal. Bring your file back across the plain to the camp, and leave no one who can still walk.', show: ['jcamp'],
-        start: [['sector', 2], ['break', 'van'], ['break', 'van2'], ['break', 'carts'], ['break', 'sap'], ['dir', 'niru', 'hold', -30, -110]], obj: { all: [{ extract: 'jcamp' }, { survive: 30 }] }, limit: 400, fail: 'The guns found you on the open plain.',
+        start: [['sector', 2], ['break', 'van'], ['break', 'van2'], ['break', 'carts'], ['break', 'sap'], ['dir', 'niru', 'hold', -30, -110]], obj: { extract: 'jcamp' }, limit: 400, fail: 'The guns found you on the open plain.',
         say: [[1, 'lookout', 'The Khan\'s standard is going back! They\'re carrying someone wrapped in red cloth!', '汗的大纛往後退了！他們用紅布裹著抬一個人！'],
           [6, 'niru', 'The horns! Back to the camp! Carry the wounded!', '號角響了！退回營去！把傷的抬上！'],
           [18, 'muktan', 'Twenty-five years of war, and the Khan has never once turned back from a wall.', '汗打了二十五年仗，從沒在一座城下退過。']] },
@@ -4475,6 +4475,8 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, H
   P.beaconBuy = function (p, item) {
     const B = this.bc; if (!B || !this.mission || !this.mission.beacon || this.mwin !== undefined || p.ai) return;
     const note = (ok, why) => { B.log.push([this.tick, p.idx, item, ok ? 1 : 0, why || '']); if (B.log.length > 12) B.log.shift(); };
+    // 'ready': once this lull's fire burns, anyone may call the next raid on now rather than wait
+    if (item === SHOP.length + 1) { if (B.stage !== 'lull' || (!B.lit && B.fires < NFIRE)) return note(false, 'fire'); const L = (B.n === 0 ? LULL0 : LULL) * 30; if (this.tick - B.t0 < L - 90) B.t0 = this.tick - L + 90; return note(true, 'ready'); }
     if (item === SHOP.length) { if (B.silver < MEND) return note(false, 'silver');
       B.silver -= MEND; for (const id of p.squads) { const q = this.squads[id]; if (!q || !q.alive) continue; for (const uid of q.unitIds) { const u = this.units[uid]; if (!u.dead) { u.hp = u.def.hp; u.fat = 0; } } } return note(true); }
     const it = SHOP[item]; if (!it) return; if (B.silver < it[1]) return note(false, 'silver');
@@ -9402,7 +9404,7 @@ function banner(big, small, t) { const b = $('banner'); b.innerHTML = `${big}${s
 function missionEvent(ev) {
   if (!MIS) return; const sim = state.sim, M = sim.mission, me = sim.players[state.localIdx];
   if (ev.t === 'mphase' && M.camp) return;
-  if (ev.t === 'mphase' && M.soldier) { banner(ev.title.split(' · ').slice(1).join(' · ') || ev.title, ev.text, 5); if (ev.ph) MUSIC.accent('phase'); return; }
+  if (ev.t === 'mphase' && M.soldier) { const P = M.phases[ev.ph] || {}; banner(ev.title.split(' · ').slice(1).join(' · ') || ev.title, P.goal || (ev.text || '').split(/(?<=[.!?])\s/)[0], 5); if (ev.ph) MUSIC.accent('phase'); return; }
   if (ev.t === 'msay' && M.soldier && typeof zheSay === 'function' && zheSay(ev)) return;
   if (ev.t === 'mphase') { const first = ev.ph === 0; storyCard(first ? `${M.brief}<br><br><b>${ev.title}.</b> ${ev.text}` : ev.text, first ? `${M.title} · ${M.year}` : ev.title); if (!first) { banner(ev.title.split(' · ')[1] || ev.title, 'New orders', 3); MUSIC.accent('phase'); } }
   else if (ev.t === 'msay') radio(ev.who, ev.text);
@@ -9445,7 +9447,8 @@ function missionHUD(dt) {
     if (P.limit) h += `<div class="ob"><i>⏳</i><span>${Math.max(0, Math.ceil(P.limit - el))} s left</span></div>`;
     h += `<div class="ob" style="opacity:.7"><i>·</i><span>Phase ${sim.mv.ph + 1} of ${M.phases.length}${me.spare !== undefined ? ` · reserve companies: ${me.spare}` : ''}</span></div>`;
   }
-  $('mobj').innerHTML = h; $('mobj').hidden = false;
+  // story: the golden line at the top is the objective; the panel would only repeat the phase text
+  $('mobj').innerHTML = h; $('mobj').hidden = !!M.soldier;
 }
 function missionFinish(winner) {
   if (state.sim.mission.soldier && typeof zheFinish === 'function') { $('mobj').hidden = true; $('radio').hidden = true; return zheFinish(winner); }
@@ -11224,6 +11227,9 @@ function sjRefill(ch) {
     const nr = pool[0]; if (!nr) continue; if (!ZS.lost.includes(k)) ZS.lost.push(k); ZS.team[i] = nr.k; ZS.alive[nr.k] = true; ZS.newMen.push(nr.k); }
   // you always stand in the second place; the senior living man is chief
   const mi = ZS.team.indexOf(ZS.me); if (mi > 1) { const t = ZS.team[1]; ZS.team[1] = ZS.me; ZS.team[mi] = t; } else if (mi === 0) { const t = ZS.team[1]; ZS.team[1] = ZS.me; ZS.team[0] = t; }
+  // a new draft is never made chief: the oldest hand left takes the first place (Old Gao, then Lin, then whoever)
+  if (sRow(ZS.team[0]).draft) { const pref = ['sj_gao', 'sj_lin', 'sj_ma', 'sj_zhao', 'sj_song', 'sj_qian', 'sj_wu', 'sj_tian']; const k = pref.find(x => ZS.team.includes(x) && ZS.alive[x] && x !== ZS.me) || ZS.team.slice(2).find(x => ZS.alive[x] && !sRow(x).draft);
+    if (k) { const i = ZS.team.indexOf(k); ZS.team[i] = ZS.team[0]; ZS.team[0] = k; ZS.flags.chief = k; } }
 }
 const sjLost = () => ZS.lost.filter(k => k !== ZS.me && !ZS.alive[k] && sRow(k));
 const sjFile = () => ZS.team.filter(k => k !== ZS.me && ZS.alive[k]);
@@ -11239,7 +11245,7 @@ const SJ_INTRO = [
     onNext: () => { const zh = ($('sjNm').value || '李順').trim().slice(0, 6), en = ($('sjNmEn').value || 'Li Shun').trim().slice(0, 14); ZS.name = { zh, en }; zSave(); }, btn: 'To the drill ground →' },
 ];
 function sjNewMenCard() { if (!ZS.newMen.length) return null;
-  return { title: '新兵 · New men', year: `${ZS.newMen.length} sent to fill the team`, p: ZS.newMen.map(k => { const r = sRow(k); return `<b>${r.zh} ${r.en}</b> — ${r.t.replace(/^new draft · /, '')}.`; }).concat(['Talk to them in camp. They take the places of the men who did not come back.']) }; }
+  return { title: '新兵 · New men', year: `${ZS.newMen.length} sent to fill the team`, p: ZS.newMen.map(k => { const r = sRow(k); return `<b>${r.zh} ${r.en}</b> — ${r.t.replace(/^new draft · /, '')}.`; }).concat(ZS.flags.chief && !ZS.alive.sj_hu ? [`Chief Hu is dead. <b>${sRow(ZS.flags.chief).en}</b> leads the team now.`] : []).concat(['Talk to them in camp. They take the places of the men who did not come back.']) }; }
 function sjTeamList(where) { return `<ul>${ZS.team.concat(ZS.lastDead || []).filter((k, i, a) => a.indexOf(k) === i).map(k => { const r = sRow(k); const f = k === ZS.me ? 'out' : ZS.fate[k] || 'out'; const nm = k === ZS.me ? `${ZS.name.zh} ${ZS.name.en} (you)` : `${r.zh} ${r.en}`; return `<li class="${f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${nm} — ${f === 'out' ? where : f === 'dead' ? 'killed' : 'missing'}</li>`; }).join('')}</ul>`; }
 
 // ---------- camp ----------
@@ -11348,7 +11354,10 @@ function sjTalk(k, night) {
       { q: 'Sir, aren\'t you a civil official?', bond: 1, a: [['六十歲的書生，穿著甲走路。好笑吧。', 'A sixty-year-old scholar walking about in armour. Funny, isn\'t it.'], ['可朝廷讓我來，我就來。祖大壽在等。', 'But the court sent me, so I came. Zu Dashou is waiting.']] },
       { q: 'Will we win?', a: [['吳襄的騎兵、宋偉的步兵、你們的銃。四萬人。', 'Wu Xiang\'s horse, Song Wei\'s foot, your guns. Forty thousand.'], ['……就看騎兵走不走。', '...It depends on whether the cavalry stays.']] }] },
   };
-  const T = [T0, T1, T2][night] || T0; return T[k] || (alive(k) ? { g: ['……', '...'], t: [] } : null);
+  const T = [T0, T1, T2][night] || T0; let R = T[k] || (alive(k) ? { g: ['……', '...'], t: [] } : null);
+  // when Chief Hu is gone, whoever leads the team now is the one who remembers the dead
+  if (R && night >= 1 && k === S.team[0] && k !== 'sj_hu') R = { g: R.g, t: R.t.concat(lost.slice(0, 2).map(r => ({ q: `About ${r.k === 'sj_hu' ? 'Chief Hu' : r.en}...`, bond: 1, a: [[`${r.zh}……`, `${r.en}...`], ['名字我記下了。回城我去他家。', 'I have written his name down. When we get back, I will go to his family.']] }))) };
+  return R;
 }
 function sjDraftTalk(k, night) {
   const r = sRow(k); if (!r || !r.draft) return null; const fresh = ZS.newMen.includes(k);
@@ -11552,6 +11561,8 @@ function beaconShopDraw() {
   const rows = K.SHOP.map((it, i) => { const d = S.defFor(it[0], 0), n = sim.beaconStock(i), ok = n > 0 && B.silver >= it[1];
     return `<div class="it${ok ? '' : ' no'}"><kbd>${i + 1}</kbd><span>${d.jp} ${d.name}<small>${d.count > 1 ? `${d.count} men` : 'one rocket cart'} · ${n ? `${n} on the road` : 'none left'}</small></span><b>${it[1]}</b></div>`; });
   rows.push(`<div class="it${B.silver >= K.MEND ? '' : ' no'}"><kbd>${K.SHOP.length + 1}</kbd><span>醫 Mend your men<small>Every man of yours back to full strength</small></span><b>${K.MEND}</b></div>`);
+  const rd = B.stage === 'lull' && (B.lit || B.fires >= K.NFIRE);
+  rows.push(`<div class="it${rd ? '' : ' no'}"><kbd>${K.SHOP.length + 2}</kbd><span>令 Ready<small>${rd ? 'Call the next raid on now' : 'Light this lull\'s fire first'}</small></span><b></b></div>`);
   el.innerHTML = `<h4>糧餉 · Quartermaster · 銀 ${B.silver}</h4>${rows.join('')}<div class="ft">Hired companies march up the south road to you. I or Esc to close.</div>`;
 }
 window.addEventListener('keydown', (e) => {
@@ -11559,7 +11570,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyI') { beaconShop(!BCN.open); e.preventDefault(); e.stopImmediatePropagation(); return; }
   if (!BCN.open) return;
   if (e.code === 'Escape') { beaconShop(false); e.preventDefault(); e.stopImmediatePropagation(); return; }
-  const m = /^Digit([1-7])$/.exec(e.code); if (!m) return;
+  const m = /^Digit([1-8])$/.exec(e.code); if (!m) return;
   Input.cmds.push([0, S.BEACON.ORD_BUY, +m[1] - 1, 0, 0, 0]); e.preventDefault(); e.stopImmediatePropagation();
 }, true);
 // ---- per frame: notices, the fire stoves and their smoke ----
@@ -11573,7 +11584,15 @@ function beaconVisuals(sim) {
     const fl = new THREE.Mesh(new THREE.ConeGeometry(0.38, 1.4, 7), new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); fl.position.set(x, y + 1.8, z); fl.visible = false; grp.add(fl);
     const sm = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 0.5, 34, 10, 1, true), new THREE.MeshLambertMaterial({ color: 0x3a3632, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide })); sm.position.set(x, y + 18.5, z); sm.visible = false; grp.add(sm);
     stoves.push({ fl, sm, y, seed: i * 1.7 }); }
-  return { grp, stoves };
+  // the tower itself (a solid rammed-earth 墩台): a crenellated parapet, a watch hut, the garrison's flag and the rope ladder
+  { const T = { x: -9, z: -12, hw: 3, h: 9 }, y0 = S.terrainH(T.x, T.z) + T.h, wall = new THREE.MeshLambertMaterial({ color: 0xa49a88 }), red = new THREE.MeshLambertMaterial({ color: 0x8a2a20 }), roof = new THREE.MeshLambertMaterial({ color: 0x3a3a3c }), wood = new THREE.MeshLambertMaterial({ color: 0x5a4028 });
+    const box = (m, x, y, z, sx, sy, sz) => { const o = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), m); o.position.set(x, y, z); o.castShadow = true; grp.add(o); return o; };
+    for (let k = -2; k <= 2; k++) for (const s of [-1, 1]) { box(wall, T.x + k * 1.3, y0 + 0.45, T.z + s * (T.hw - 0.15), 0.8, 0.9, 0.3); box(wall, T.x + s * (T.hw - 0.15), y0 + 0.45, T.z + k * 1.3, 0.3, 0.9, 0.8); }
+    box(red, T.x + 0.6, y0 + 1.1, T.z + 0.4, 2.4, 2.2, 2.2); const r = new THREE.Mesh(new THREE.ConeGeometry(2.1, 1.1, 4), roof); r.rotation.y = Math.PI / 4; r.position.set(T.x + 0.6, y0 + 2.75, T.z + 0.4); grp.add(r);
+    box(wood, T.x - 1.8, y0 + 3, T.z - 1.8, 0.12, 6, 0.12); const fl = box(new THREE.MeshLambertMaterial({ color: 0xc23a2a, side: THREE.DoubleSide }), T.x - 1.8 + 0.8, y0 + 5.2, T.z - 1.8, 1.5, 1.1, 0.04);
+    for (let k = 0; k < 2; k++) box(wood, T.x - 0.5 + k, S.terrainH(T.x, T.z - T.hw) + T.h / 2, T.z - T.hw - 0.12, 0.07, T.h, 0.07);
+    for (let k = 0; k < 12; k++) box(wood, T.x, S.terrainH(T.x, T.z - T.hw) + 0.5 + k * 0.72, T.z - T.hw - 0.12, 1.0, 0.06, 0.06);
+    return { grp, stoves, flag: fl }; }
 }
 function beaconFrame() {
   requestAnimationFrame(beaconFrame);
@@ -11582,6 +11601,7 @@ function beaconFrame() {
   const B = sim.bc; const m = $('mobj'); if (m) m.style.display = 'none';
   if (!BCN.vis && state.renderer && state.renderer.scene) BCN.vis = beaconVisuals(sim);
   if (BCN.vis) { const now = performance.now() / 1000; BCN.vis.stoves.forEach((s, i) => { const on = !!B && i < B.fires; s.fl.visible = on; s.sm.visible = on;
+      if (BCN.vis.flag) BCN.vis.flag.rotation.y = Math.sin(now * 1.3) * 0.25;
       if (on) { s.fl.scale.set(1 + Math.sin(now * 9 + s.seed) * 0.12, 1 + Math.sin(now * 13 + s.seed) * 0.2, 1); s.sm.rotation.y = now * 0.15 + s.seed; s.sm.material.opacity = 0.26 + Math.sin(now * 0.7 + s.seed) * 0.05; } }); }
   if (!B) return;
   if (BCN.fires >= 0 && B.fires > BCN.fires) { banner(['一炬', '二炬', '三炬', '四炬', '五炬'][B.fires - 1] + ' · The ' + bcOrd(B.fires) + ' fire', B.fires >= S.BEACON.NFIRE ? 'Five fires! Liaoyang will send its horse' : 'The next tower will see it. +10 silver', 3.5); AUDIO.play('ui'); }
@@ -11594,7 +11614,7 @@ function beaconFrame() {
   if (!B.relief) BCN.relief = false;
   BCN.stage = B.stage;
   if (B.log.length && B.log[B.log.length - 1][0] !== BCN.log) { const L = B.log[B.log.length - 1]; BCN.log = L[0];
-    if (L[1] === state.localIdx) { if (!L[3]) toast(L[4] === 'none' ? 'The road has no more of those to send' : 'Not enough silver'); else if (L[2] === S.BEACON.SHOP.length) toast('Your men are bound up and fed'); }
+    if (L[4] === 'ready') toast('Ready. The raid comes on in three seconds'); else if (L[1] === state.localIdx) { if (!L[3]) toast(L[4] === 'none' ? 'The road has no more of those to send' : L[4] === 'fire' ? 'Light the fire first' : 'Not enough silver'); else if (L[2] === S.BEACON.SHOP.length) toast('Your men are bound up and fed'); }
     beaconShopDraw(); }
   BCN.t -= 1 / 60; if (BCN.t <= 0) { BCN.t = 0.25; beaconShopDraw(); }
 }
