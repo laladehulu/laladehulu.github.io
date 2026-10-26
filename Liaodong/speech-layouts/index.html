@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v60</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v61</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6529,7 +6529,7 @@ class Renderer {
       const vr = Math.max(rr, dist * 0.03), bt = Math.max(1, dist * 0.06), bh = 1 + dist * 0.06; this.empMark.scale.set(vr, 1, vr); this.empMark.children[0].material.color.setHex(foes ? 0xff6a4a : 0xffd27a); { const bm = this.empMark.children.find(c => c.userData.beam); if (bm) { bm.scale.set(bt / vr, bh, bt / vr); bm.position.y = 3 * bh; bm.material.color.setHex(foes ? 0xff6a4a : 0xffe2a0); } }
       this.empHud = { kind: e.kind, cd: e.cd, cdMax: e.cdMax || (bow ? 150 : 270), elev: e.pitch || 0, want: this._viewPitch, dist, wall: !!P.box, out: !!P.out, foes }; }
     else if (this.empHud) { this.empHud.cd = e.cd; this.empHud.elev = e.pitch || 0; this.empHud.want = this._viewPitch; }
-    { const m = this.empArc.material, tk = this.empK || 0; m.size = 3.5 + tk * 2.5; m.opacity = (e.cd > 0 ? 0.25 : 0.9) * (0.6 + 0.4 * tk); }
+    { const m = this.empArc.material, tk = this.empK || 0; m.size = 3.5 + tk * 2.5; m.opacity = (e.cd > 0 ? 0.4 : 0.95) * (0.6 + 0.4 * tk); }
   }
   buildEmpVM(hero) {
     const g = new THREE.Group(); this.camera.add(g); this.vmEmp = g; const mk = (c) => new THREE.MeshLambertMaterial({ color: c, depthTest: false });
