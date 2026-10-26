@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v70</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v71</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -3958,10 +3958,10 @@ Sim.prototype.zWound = function (k) {
 };
 Sim.prototype.helpWounded = function (u) { // E beside a downed or wounded comrade: haul him up, or get his arm over your shoulder
   if (u.dead || u.mounted) return false; let best = null, bd = 2.6;
-  for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.aided || v.helpedBy >= 0 || v === u) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
+  for (const v of this.teamAlive[u.team]) { if (!v.downed || v.aided || v === u) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
   if (!best) return false;
   if (best.downed) { if (best.reviveBy !== u.id) { best.reviveBy = u.id; best.reviveT = 0; this.events.push({ t: 'zrevive0', id: best.id, by: u.id }); } return true; }
-  return false; // walking wounded make their own way after their file for now (no carrying)
+  return false; // one way to help only: a man down is helped up (E, or a medic); nobody is carried or walked
 };
 // story chapters: a man who would die is often only knocked down — bleeding, until someone gets him up or the blood runs out
 Sim.prototype.zDown = function (u, dmg, cause) {
@@ -4308,11 +4308,12 @@ Sim.prototype.zAid = function (u, by) { // handed to the orderlies: laid on a ma
 Sim.prototype.orderlyAI = function (u) {
   u.target = -1; u.blocking = false; u.aiming = false; if (u.st !== ST_IDLE) { u.st = ST_IDLE; u.stT = 0; } const A = this.aidPost(); if (!A) { u.mx = 0; u.mz = 0; return; }
   const go = (x, z, sp) => { const d = len(x - u.x, z - u.z); if (d > 0.6) { const y = this.steerFoot(u, x, z, sp); this.turnTo(u, y, 6 * DT); } else { u.mx = 0; u.mz = 0; } return d; };
-  if (u.fetch >= 0) { const v = this.units[u.fetch];
+  if (u.fetch >= 0) { const v0 = this.units[u.fetch]; if (v0 && v0.helpedBy === u.id) v0.helpedBy = -1; u.fetch = -1; } // orderlies stay at the tent: no fetching men
+  if (false && u.fetch >= 0) { const v = this.units[u.fetch];
     if (!v || v.dead || v.aided || !v.wounded || (v.helpedBy >= 0 && v.helpedBy !== u.id) || (v.reviveBy >= 0 && v.reviveBy !== u.id)) { if (v && v.helpedBy === u.id) v.helpedBy = -1; u.fetch = -1; }
     else if (v.helpedBy === u.id) { go(A.x, A.z, u.def.speed * 0.55); return; }
     else { if (go(v.x, v.z, u.def.speed * 0.9) < 1.6) { v.downed = false; v.reviveBy = -1; v.crawling = false; v.bleed = 0; v.downT = 0; v.helpedBy = u.id; this.events.push({ t: 'zcollect', id: v.id, by: u.id }); } return; } }
-  if ((this.tick + u.id) % 15 === 0) { let best = null, bd = A.r + 18; for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.aided || v.noncomb || v.helpedBy >= 0 || v.reviveBy >= 0 || v.ctrl >= 0) continue; if (this.units.some(o => o.orderly && o !== u && o.fetch === v.id)) continue; const d = len(v.x - A.x, v.z - A.z); if (d < bd) { bd = d; best = v; } }
+  if (false && (this.tick + u.id) % 15 === 0) { let best = null, bd = A.r + 18; for (const v of this.teamAlive[u.team]) { if (!v.wounded || v.aided || v.noncomb || v.helpedBy >= 0 || v.reviveBy >= 0 || v.ctrl >= 0) continue; if (this.units.some(o => o.orderly && o !== u && o.fetch === v.id)) continue; const d = len(v.x - A.x, v.z - A.z); if (d < bd) { bd = d; best = v; } }
     if (best) { let ed = 1e9; for (const e of this.teamAlive[1 - u.team]) { if (e.inactive) continue; const d = len(e.x - best.x, e.z - best.z); if (d < ed) ed = d; if (ed < 10) break; } if (ed >= 10) { u.fetch = best.id; return; } } }
   const k = u.slot | 0; go(A.x + (k - 1) * 2.2, A.z + 1.6, u.def.speed * 0.6); if (len(A.x + (k - 1) * 2.2 - u.x, A.z + 1.6 - u.z) < 0.8) this.turnTo(u, u.yaw + 0.01, DT);
 };
@@ -10367,7 +10368,7 @@ function helpPrompt(h, u) { // 'E · help him up' beside a downed man, and the p
   if (busy) { el.hidden = false; el.innerHTML = `<b>扶起</b> getting him up… <i style="--p:${Math.min(100, Math.round(busy.reviveT / 45 * 100))}%"></i>`; return; }
   if (!u || !u.downed) { el.hidden = true; return; }
   const nm = typeof SPEECH !== 'undefined' ? SPEECH.nameOf(u.id) : null; el.hidden = false;
-  el.innerHTML = `<kbd>E</kbd> ${u.downed ? 'help him up' : 'get his arm over your shoulder'}${nm ? ` · <span>${typeof nm === 'string' ? nm : nm.zh + ' ' + nm.en}</span>` : ''}`;
+  el.innerHTML = `<kbd>E</kbd> help him up${nm ? ` · <span>${typeof nm === 'string' ? nm : nm.zh + ' ' + nm.en}</span>` : ''}`;
 }
 function hudMarks() {
   const sim = state.sim, r = state.renderer; if (!MARKS.el) { MARKS.el = document.createElement('div'); MARKS.el.id = 'hudmarks'; document.body.appendChild(MARKS.el); MARKS.v = new THREE.Vector3(); }
@@ -10384,9 +10385,8 @@ function hudMarks() {
     { const h = localHero(); let near = null, nd = 2.6; // downed and wounded comrades: a pulsing cross with the bleed-out ring, pinned to the edge when out of view
       if (h) for (const u of sim.teamAlive[me.team]) { if (!u.wounded || u === h) continue; const d = Math.hypot(u.x - h.x, u.z - h.z); if (d > 70) continue;
         { const an = state.renderer && state.renderer.anims && state.renderer.anims[u.id]; if (u.downed && an && an.dw !== undefined && an.dw < 0.95 && !an.dUp) continue; } // the cross appears once he is down, not while he is still falling
-        const helped = u.helpedBy >= 0; if (u.downed || !helped) items.push({ x: u.x, z: u.z, y: 1.3, txt: '✚', cls: 'down' + (u.zfile ? ' file' : '') + (u.reviveBy >= 0 ? ' busy' : ''), always: true, bl: u.downed ? Math.max(0, Math.min(1, u.bleed / (30 * (u.zfile ? 45 : 30)))) : undefined });
-        else if (u.helpedBy === h.id) items.push({ x: u.x, z: u.z, y: 2.1, txt: '扶', cls: 'down carry', always: false });
-        if (!h.dead && d < nd && (u.downed || !helped)) { nd = d; near = u; } }
+        if (u.downed) items.push({ x: u.x, z: u.z, y: 1.3, txt: '✚', cls: 'down' + (u.zfile ? ' file' : '') + (u.reviveBy >= 0 ? ' busy' : ''), always: true, bl: u.downed ? Math.max(0, Math.min(1, u.bleed / (30 * (u.zfile ? 45 : 30)))) : undefined });
+        if (!h.dead && d < nd && u.downed) { nd = d; near = u; } }
       helpPrompt(h, near); }
     (me.squads || []).forEach((id, k) => { const q = sim.squads[id]; if (!q || !q.alive || q.inactive) return; const h = localHero(); if (h && Math.hypot(q.cx - h.x, q.cz - h.z) < 6) return; items.push({ x: q.cx, z: q.cz, y: 2.2, txt: String(k + 1), cls: 'sq' + (sel.includes(id) ? ' on' : ''), always: false }); });
   }
