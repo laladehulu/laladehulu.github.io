@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v37</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v38</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1084,6 +1084,9 @@ class Sim {
   buildGrid() {
     this.head.fill(-1);
     const us = this.units;
+    // units added after setup (reinforcements, spawned squads) need room in the cell chains, or the chain is cut and
+    // every man filed after them in that cell becomes invisible to blows, pushes and targeting
+    if (this.next.length < us.length) this.next = new Int32Array(us.length + 64);
     for (let i = 0; i < us.length; i++) { const u = us[i]; if (u.dead) continue; const c = this.cellOf(u.x, u.z); this.next[i] = this.head[c]; this.head[c] = i; }
   }
   gatherNear(x, z, rad) {
@@ -1502,7 +1505,10 @@ class Sim {
     } else if (!blk) u.blocking = false;
     u.atkHeld = atk; u.blockHeld = blk;
   }
-  startWindup(u, dir) { if (u.hrT > 0) return; u.wMul = 1; if (this.xc && u.ctrl < 0 && u.target >= 0) { const t = this.units[u.target]; if (t && t.ctrl >= 0 && !this.players[t.ctrl].ai) u.wMul = 1.3; } u.heavy = false; u.aiHeavy = u.ctrl < 0 && !u.ctrlActive && this.rng.next() < (u.def.overhead ? 0.4 : 0.18); u.st = ST_WINDUP; u.stT = 0; u.atkDir = dir; u.relQ = false; u.windupId++; u.swingHit = false; u.blocking = false; u.aiming = false; this.events.push({ t: 'windup', id: u.id, dir }); }
+  startWindup(u, dir) { if (u.hrT > 0) return; u.wMul = 1; if (this.xc && u.ctrl < 0 && u.target >= 0) { const t = this.units[u.target]; if (t && t.ctrl >= 0 && !this.players[t.ctrl].ai) u.wMul = 1.3; }
+    if (this.xc && u.ctrl >= 0 && !u.champ) { // mashing: each swing in quick succession costs arm; past three in a breath the windups slow and telegraph
+      u.spamR = Math.max(0, (u.spamR || 0) - (this.tick - (u.spamTk || 0)) / 45) + 1; u.spamTk = this.tick; u.wMul *= 1 + clamp(u.spamR - 3, 0, 4) * 0.12; }
+    u.heavy = false; u.aiHeavy = u.ctrl < 0 && !u.ctrlActive && this.rng.next() < (u.def.overhead ? 0.4 : 0.18); u.st = ST_WINDUP; u.stT = 0; u.atkDir = dir; u.relQ = false; u.windupId++; u.swingHit = false; u.blocking = false; u.aiming = false; this.events.push({ t: 'windup', id: u.id, dir }); }
   footControl(u, keys, a, disabled) {
     if (!u.champ && u.dodgeT > 0) { const k = u.dodgeT / 0.32, sp = (this.real ? 10.5 : 12.5) * (0.55 + 0.75 * k); u.mx = u.dodgeX * sp; u.mz = u.dodgeZ * sp; return; } // a low slide: fast off the mark, bleeding speed // mid-dash: the body is committed
     if (disabled || u.airborne) { u.mx = 0; u.mz = 0; return; }
@@ -1970,7 +1976,9 @@ class Sim {
     if (Math.abs(wrap(atan2(dx, dz) - a.yaw)) > 0.9) return;
     const key = a.id * 100000 + a.windupId; if (u.reactKey === key) return; u.reactKey = key;
     if (u.entT > 0) return;
-    if (this.rng.next() < u.def.block + (u.squad >= 0 ? (this.squads[u.squad].stars || 0) * 0.05 : 0)) {
+    // a man who is being hammered by a masher reads him: the more the swings come in a rush, the surer the guard
+    const mash = this.xc && a.ctrl >= 0 ? Math.min(0.35, Math.max(0, (a.spamR || 0) - (this.tick - (a.spamTk || 0)) / 45 - 1.5) * 0.1) : 0;
+    if (this.rng.next() < u.def.block + mash + (u.squad >= 0 ? (this.squads[u.squad].stars || 0) * 0.05 : 0)) {
       u.blockPend = 0.1 + this.rng.next() * 0.2;
       u.blockPendDir = this.rng.next() < 0.78 ? counterDir(a.atkDir) : this.rng.int(4);
     }
@@ -2302,7 +2310,7 @@ class Sim {
       if (heavy && !def_.def.shield) { // a heavy blow crushes an ordinary guard: half comes through and the defender reels
         this.posture(def_, dmg * 1.4, att); def_.blocking = false; def_.flinchT = 0.45; this.events.push({ t: 'guardcrush', x: hx, y: hy, z: hz, by: def_.id, att: att.id });
         this.applyDamage(def_, dmg * 0.5, att.id, nx * 2.5, 0, nz * 2.5, 'melee', hx, hy, hz); att.heavy = false; return; }
-      att.st = ST_STUN; att.stT = 0; att.stunDur = 0.35; this.posture(def_, dmg * (heavy ? 1.6 : 1) * (def_.def.shield ? 0.6 : 1) * (att.def.posture || 1), att); this.posture(att, 6, def_);
+      att.st = ST_STUN; att.stT = 0; att.stunDur = 0.35; if (this.xc && att.ctrl >= 0 && (att.spamR || 0) > 3) { att.stunDur = 0.6; def_.counterT = Math.max(def_.counterT || 0, 0.6); } this.posture(def_, dmg * (heavy ? 1.6 : 1) * (def_.def.shield ? 0.6 : 1) * (att.def.posture || 1), att); this.posture(att, 6, def_);
       if (att.def.crush) this.applyDamage(def_, dmg * att.def.crush * (def_.def.shield ? 0.6 : 1), att.id, nx * 1.2, 0, nz * 1.2, 'melee', hx, hy, hz);
       if (this.xc) this.hitReact(def_, att, 'block', heavy, true);
       this.events.push({ t: 'block', x: hx, y: hy, z: hz, perfect: false, by: def_.id, att: att.id, shield: !!def_.def.shield }); att.heavy = false; return;
@@ -5183,7 +5191,7 @@ function gearFor(u) {
     case 'cavalry': petalHelm(iron, red); dingjia(0x9a2222, gold); mirror(); backflag(verm); break;
     case 'ashigaru': hatOn(() => { c('h', [0, 0.13, 0], [0.62, 0.2, 0.62], 0xc8a868); b('h', [0, 0.26, 0], [0.06, 0.05, 0.06], red); }); coat(verm, 0x2a2622); kyahan(0xe8e2d0); break;
     case 'rifle_imp': liKui(); buMian(0xa8261e, gold); kyahan(0xe8e2d0); yaopai(); break;
-    case 'rifle_spencer': liKui(0x8a8f94); buMian(0x7a2a22, 0xc9c0a8); kyahan(0xe8e2d0); break;
+    case 'rifle_spencer': if (u.look && u.look.hat) lookGear(u.look, b, c, y, hatOn, 'head'); else liKui(0x8a8f94); buMian(0x7a2a22, 0xc9c0a8); kyahan(0xe8e2d0); break;
     case 'jinshotai': liKui(); buMian(0x24304a, gold); kyahan(0xe8e2d0); break;
     case 'jigen': petalHelm(iron, 0x1a1a1a); dingjia(0x5a2226, 0x9a9ea6); mirror(); break;
     case 'horokutai': mingHair(); hachimaki(red); robe(0x7a3422, 0x2a2a34); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); b('p', [0.24, 0.07, 0.06], [0.03, 0.06, 0.03], 0xe8e2cc); break;
@@ -8007,7 +8015,7 @@ function realGear(u) {
     case 'cavalry': mingKui(iron, 0x9a2222, gold); dingjia(0x9a2222, gold); mirror(); tallFlag(verm, gold); hoof(0x9a2222); break;
     case 'ashigaru': hatOn(() => { c('h', [0, 0.13, 0], [0.66, 0.2, 0.66], 0xc8a868); y('h', [0, 0.07, 0], [0.5, 0.02, 0.5], 0x9a7a40); b('h', [0, 0.26, 0], [0.07, 0.06, 0.07], red); }); coat(verm, 0x2a2622); kyahanW(); break;
     case 'rifle_imp': gunnerKui(0x5a6168, 0x7a1a16); gunnerArmour(0xa8261e, gold); kyahanW(); yaopai(); break;
-    case 'rifle_spencer': gunnerKui(0x4a5056, 0x3a2a24); gunnerArmour(0x7a2a22, 0xc9c0a8); kyahanW(); break;
+    case 'rifle_spencer': if (u.look && u.look.hat) R.lookGear(u.look, b, c, y, hatOn, 'head'); else gunnerKui(0x4a5056, 0x3a2a24); gunnerArmour(0x7a2a22, 0xc9c0a8); kyahanW(); break;
     case 'jinshotai': gunnerKui(0x5a6168, 0x1c2438); gunnerArmour(0x24304a, gold); kyahanW(); break;
     case 'jigen': mingKui(0x6e757c, 0x3a3a40, brass); dingjia(0x4a2024, 0x9a9ea6, [0.15, 0.06, -0.03, -0.12]); mirror(); break;
     case 'horokutai': mingHair(); b('h', [0, 0.115, 0], [0.285, 0.045, 0.285], red); robe(0x7a3422, 0x2a2a34); bombs(); y('c', [0.12, -0.02, -0.17], [0.2, 0.2, 0.2], 0x2a2a2e); break;
@@ -8276,6 +8284,8 @@ function wpnName(h, w) {
   return w;
 }
 function localHero() { const sim = state.sim; if (!sim) return null; const p = sim.players[state.localIdx]; return p ? sim.units[p.heroId] : null; }
+// a man whose only weapon is a gun (the three-eyed gun, a plain musket) turns it round with Q to fight with it as a club
+function gripToggle() { const h = localHero(); if (!h || h.dead || h.weapon !== 'rifle' || h.def.weapons.length > 1) return false; Input.bayonet = !Input.bayonet; Input.ads = false; Input.lmb = false; return true; }
 function gunMode() { const h = localHero(); return h && ((h.weapon === 'rifle' && !Input.bayonet) || h.weapon === 'revolver'); }
 document.addEventListener('keydown', (e) => {
   if (state.screen !== 'game') return;
@@ -8331,7 +8341,7 @@ document.addEventListener('keydown', (e) => {
     case 'Space': Input.pressed |= S.A_JUMP; e.preventDefault(); break;
     case 'KeyE': { if (typeof zheKeyE === 'function' && zheKeyE()) break; const h = localHero(); const sim = state.sim; const nearHorse = h && (h.mount >= 0 || sim.units.some(v => v.type === 'horse' && !v.dead && v.rider < 0 && Math.abs(v.x - h.x) + Math.abs(v.z - h.z) < 4)); Input.pressed |= nearHorse ? S.A_MOUNT : S.A_KICK; break; }
     case 'KeyR': if (!tapAttack(S.DIR_DOWN)) Input.pressed |= S.A_RELOAD; break;
-    case 'KeyQ': case 'KeyX': Input.pressed |= S.A_SWAP; Input.ads = false; break;
+    case 'KeyQ': case 'KeyX': if (gripToggle()) break; Input.pressed |= S.A_SWAP; Input.ads = false; break;
     case 'Digit1': Input.wsel = 1; Input.ads = false; break;
     case 'Digit2': Input.wsel = 2; Input.ads = false; break;
     case 'Digit3': Input.wsel = 3; Input.ads = false; break;
@@ -8519,7 +8529,7 @@ function lineOrder(a, b) {
 canvas.addEventListener('wheel', (e) => {
   if (state.screen !== 'game') return; e.preventDefault();
   if (Input.cmdMode) { const r = state.renderer; if (r) r.cmdCam.h = Math.max(22, Math.min(200, r.cmdCam.h * (e.deltaY > 0 ? 1.15 : 0.87))); }
-  else if (!tapAttack(e.deltaY < 0 ? S.DIR_UP : S.DIR_DOWN)) { Input.pressed |= S.A_SWAP; Input.ads = false; }
+  else if (!tapAttack(e.deltaY < 0 ? S.DIR_UP : S.DIR_DOWN)) { if (!gripToggle()) { Input.pressed |= S.A_SWAP; Input.ads = false; } }
 }, { passive: false });
 function requestLock() { try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
 document.addEventListener('pointerlockchange', () => {
@@ -8962,14 +8972,14 @@ function updateHUD(dt) {
     { let sb = document.getElementById('stam'); if (!sb) { sb = document.createElement('div'); sb.id = 'stam'; sb.innerHTML = '<i></i>'; sb.style.cssText = 'position:fixed;left:50%;bottom:86px;width:180px;height:5px;margin-left:-90px;background:rgba(0,0,0,.45);border:1px solid rgba(240,230,210,.25);border-radius:3px;overflow:hidden;pointer-events:none;transition:opacity .4s;z-index:5'; sb.firstChild.style.cssText = 'display:block;height:100%;background:#d9cfb6'; document.body.appendChild(sb); }
       const st = hero.champ ? Math.min(1, Math.max(0, (hero.sta || 0) / 100)) : 1 - Math.min(1, Math.max(0, (hero.fat || 0) / 100)); const show = !hero.dead && !Input.cmdMode && (st < 0.97 || hero.sprint);
       sb.style.opacity = show ? 1 : 0; sb.firstChild.style.width = (st * 100).toFixed(1) + '%'; sb.firstChild.style.background = hero.winded ? '#c0452e' : '#d9cfb6'; }
-    const w = hero.weapon; $('weapon').textContent = hero.dead ? 'Fallen' : w === 'rifle' ? (Input.bayonet ? 'Musket · spike' : (hero.def.key === 'hero' ? (me.team === 0 ? 'Niaochong musket' : 'Heavy musket') : hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun' : 'Musket')) : w === 'revolver' ? 'Three-eyed hand cannon' : w === 'bow' ? 'Horn bow' : w === 'yari' ? 'Qiang spear' : 'Dao';
+    const w = hero.weapon; $('weapon').textContent = hero.dead ? 'Fallen' : w === 'rifle' ? (Input.bayonet ? (hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun · club (Q: shoot)' : 'Musket · club (Q: shoot)') : (hero.def.key === 'hero' ? (me.team === 0 ? 'Niaochong musket' : 'Heavy musket') : hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun' : 'Musket')) : w === 'revolver' ? 'Three-eyed hand cannon' : w === 'bow' ? 'Horn bow' : w === 'yari' ? 'Qiang spear' : 'Dao';
     const mounted = hero.mount >= 0 || hero.mounted;
     $('mode').textContent = hero.dead ? 'Commanding from above' : Input.cmdMode ? 'Command view' : mounted ? 'Mounted' : hero.st === S.ST_STUN ? 'Staggered' : hero.counterT > 0 ? 'Counter!' : hero.downT > 0 ? 'Knocked down' : '';
     const g = S.gunOf(hero.def, w);
     if (g) {
       const mag = g.mag || 1; const have = w === 'revolver' ? hero.ammoR : hero.ammo;
       if (hero.st === S.ST_RELOAD && hero.reloadT > 0.6) { $('ammoFill').style.width = (hero.stT / hero.reloadT * 100).toFixed(1) + '%'; $('ammoText').textContent = mag > 1 ? `Reloading… ${have}/${mag}` : 'Reloading…'; }
-      else { $('ammoFill').style.width = (have / mag * 100).toFixed(0) + '%'; $('ammoText').textContent = mag > 1 ? `${'●'.repeat(have)}${'○'.repeat(mag - have)}${have === 0 ? ' · R to reload' : ''}` : (have > 0 ? 'Loaded' : 'Empty · R to reload'); }
+      else { $('ammoFill').style.width = (have / mag * 100).toFixed(0) + '%'; $('ammoText').textContent = mag > 1 ? `${'●'.repeat(have)}${'○'.repeat(mag - have)}${have === 0 ? ' · R reload · Q club' : ''}` : (have > 0 ? 'Loaded' : 'Empty · R reload' + (hero.def.weapons.length > 1 ? '' : ' · Q club')); }
     } else { $('ammoFill').style.width = (hero.st === S.ST_WINDUP ? Math.min(1, (hero.stT) / 0.28) * 100 : hero.blocking ? 100 : 0).toFixed(0) + '%'; $('ammoText').textContent = hero.st === S.ST_WINDUP ? `Winding up: ${DIRN[hero.atkDir]}` : hero.blocking ? `Blocking ${BLKN[hero.blockDir]}` : hero.st === S.ST_RECOVER ? 'Recovering' : ''; }
     $('dirText').textContent = (!hero.dead && !Input.cmdMode && !gunMode()) ? (hero.weapon === 'yari' ? 'LMB thrust · wheel↑ slam · RMB block · double-tap A/D slide' : 'LMB slash · hold heavy · wheel↑ overhead · R stab · RMB block · double-tap A/D slide') : (me.rallyT > 0 ? `rally in ${Math.ceil(me.rallyT / 30)}s` : 'V · rally');
     { const fu = $('fury'); const full = me.fury >= S.FURY_MAX; fu.style.setProperty('--f', (me.fury / S.FURY_MAX * 100).toFixed(0) + '%'); fu.classList.toggle('full', full); fu.classList.toggle('on', hero.frenzyT > 0); fu.querySelector('span').textContent = hero.frenzyT > 0 ? `VALOR ${Math.ceil(hero.frenzyT)}s` : full ? 'Valor ready · V' : 'Fury'; $('bombs').textContent = `雷 ${'●'.repeat(me.bombs)}${'○'.repeat(S.BOMBS - me.bombs)} · 4`; }
@@ -9993,6 +10003,7 @@ document.addEventListener('keydown', (e) => { // the dialogue panel takes the ke
 // ---------- in battle ----------
 function zheSay(ev) { // scripted lines come out of a man's mouth when you are near enough to hear him; otherwise by runner
   const sim = state.sim, h = localHero(); if (!ZB) return false;
+  if (ZHOOK.whoMap) { const w = ZHOOK.whoMap(ev.who); if (w !== ev.who) ev = Object.assign({}, ev, { who: w }); }
   const W = { liu: ['劉綎', 'General Liu Ting'], chief: ['吳老栓', 'Chief Wu'], fang: ['方秀才', 'Fang the Scholar'], lookout: ['', 'Lookout'], soldier: ['', 'A soldier'], rider: ['', 'A rider in Ming colours'], qi: ['戚金', 'General Qi Jin'], chen: ['陳策', 'General Chen Ce'], sichuan: ['周敦吉', 'Zhou Dunji of the White Poles'], col: ['', 'The column officer'], folk: ['', 'A woman from Kaiyuan'] }[ev.who] || (ZHOOK.who && ZHOOK.who[ev.who]) || ['', ev.who];
   let id = -1; const ZRR = zRos(), zi = ZRR.findIndex(r => r.k === ev.who && r.k !== 'me' && !r.guest);
   if (zi >= 0) { for (const uid in ZB.map) if (ZB.map[uid] === zi && sim.units[uid] && !sim.units[uid].dead && !sim.units[uid].wounded) id = +uid; if (id >= 0) { W[0] = ZRR[zi].zh; W[1] = ZRR[zi].en; } else { W[0] = ''; W[1] = 'A soldier'; } }
@@ -10510,7 +10521,7 @@ const JKEY = 'mingJin', JGO = 'mingJinGo';
 const JR = [ // the file. Index 0 is the man in the squad's first place (the bošokū while he lives)
   { k: 'ulgen', zh: '烏勒根', en: 'Ulgen', t: 'bošokū (sergeant) · 撥什庫 · a Hada man' },
   { k: 'me', zh: '', en: '', t: 'armoured man · 披甲' },
-  { k: 'dabsun', zh: '達布遜', en: 'Dabsun', t: 'armoured man · 16 · Alin\'s nephew' },
+  { k: 'dabsun', zh: '達布遜', en: 'Dabsun', t: 'armoured man · Alin\'s nephew' },
   { k: 'sose', zh: '索色', en: 'Sose', t: 'archer · sable hunter' },
   { k: 'ilan', zh: '伊蘭', en: 'Ilan', t: 'armoured man · the third son' },
   { k: 'bahai', zh: '巴海', en: 'Bahai', t: 'armoured man · pearl diver from the Sungari' },
@@ -10521,7 +10532,7 @@ const JR = [ // the file. Index 0 is the man in the squad's first place (the bo�
   { k: 'manggu', zh: '莽古', en: 'Manggu', t: 'armoured man · never satisfied' },
   { k: 'alin', zh: '阿林', en: 'Alin', t: 'armoured man · served since Tulun' },
   // men who join the file between chapters, in this order, as the dead leave places
-  { k: 'tuhe', zh: '圖赫', en: 'Tuhe', t: 'new man · Ula born, 17', draft: true },
+  { k: 'tuhe', zh: '圖赫', en: 'Tuhe', t: 'new man · Ula born', draft: true },
   { k: 'wangsi', zh: '王四', en: 'Wang Si', t: 'new man · a Liaoyang Han who shaved his head', draft: true },
   { k: 'dorji', zh: '多爾濟', en: 'Dorji', t: 'new man · Khalkha Mongol horse-breaker', draft: true },
   { k: 'jala', zh: '扎拉', en: 'Jala', t: 'new man · Erde\'s cousin', draft: true },
@@ -10716,6 +10727,7 @@ JCH[3] = {
   guests: ['tobohui'],
   chat: [['冷死了。', 'It\'s freezing.'], ['城上那些是什麼？大得跟牛一樣。', 'What are those things on the walls? Big as oxen.'], ['汗六十八了，還親自來。', 'The Khan is sixty-eight and still comes himself.'], ['明天把盾車推到壕邊。', 'Tomorrow we push the shield carts up to the ditch.'], ['聽說那砲是紅毛番造的，叫紅衣。', 'They say that gun was made by the red-haired barbarians.']],
   dawn: { title: '黎明 · Dawn', year: 'The twenty-fourth day of the first month', p: ['The niru forms up behind the shield carts: heavy wooden frames on wheels, faced with hides and packed with earth. Ahead is the wall of Ningyuan, and on it the long dark muzzles of the red cannon.'], btn: 'To the walls →' },
+  resultTitle: '退 · Back from the walls',
   battleCard: ['January 1626. Keep behind the carts. When the ditch is filled, raise a ladder at the foot of the wall (E).', '寧遠 · Ningyuan'],
   who: { niru: ['托博輝', 'Tobohui, captain of the niru'], lookout: ['', 'A lookout'], soldier: ['', 'A bannerman'] },
   fateText: { out: 'came back from the walls', dead: 'killed under the walls of Ningyuan', lost: 'left under the walls' },
@@ -10931,7 +10943,7 @@ function jFinish(winner) {
   JS.stage = 'e' + n; JS.lastWon = won; jSave();
   const ft = C.fateText, rows = list.map(k => { const r = jRow(k), f = fate[k]; const nm = k === JS.me ? `${JS.name.zh} ${JS.name.en} (you)` : k === meK && JS.me !== meK ? `${oldName.zh} ${oldName.en} (you, until you fell)` : `${r.zh} ${r.en}`; return `<li class="${f === 'out' || f === 'home' ? 'out' : f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : f === 'home' ? '·' : '?'} ${nm} — ${ft[f] || ft.out}</li>`; }).join('');
   const outN = list.filter(k => fate[k] === 'out').length;
-  $('resultTitle').textContent = won ? '勝 · The field is ours' : '退 · Pulled back'; $('resultTitle').className = won ? 'win' : 'lose';
+  $('resultTitle').textContent = won ? (C.resultTitle || '勝 · The field is ours') : '退 · Pulled back'; $('resultTitle').className = won ? 'win' : 'lose';
   const head = outN <= 1 ? (won ? 'The field is the banners\', but of your file almost no one is left to stand on it.' : 'You came back alone.') : won ? M.win : (M.loseText || 'The banners pulled back.');
   $('resultText').innerHTML = `${head} ${outN} of ${list.length} of your file came through.`;
   $('btnNext').hidden = false; $('btnNext').textContent = 'What happened →';
@@ -11188,22 +11200,22 @@ const SR = [
   { k: 'zhang', zh: '張春', en: 'Zhang Chun', t: 'intendant of the relief army · 監軍道 · sixty years old', guest: true },
 ];
 const SLOOK = {
-  sj_hu: { h: 1.04, brows: 'knit', beard: 'longmous', grey: true, scar: true, skin: 0xb88c66 },
+  sj_hu: { h: 1.04, hat: 'chief', brows: 'knit', beard: 'longmous', grey: true, scar: true, skin: 0xb88c66 },
   sjme: { h: 1.0, brows: 'thin', skin: 0xd8b08a },
-  sj_tian: { h: 0.88, brows: 'high', young: true, rosy: true, skin: 0xe8c6a2 },
-  sj_lin: { h: 0.95, brows: 'thin', beard: 'goatee', skin: 0xb07e58 },
-  sj_ma: { h: 1.13, brows: 'thick', beard: 'full', bulk: true, bigNose: true, skin: 0xc49a72 },
-  sj_zhao: { h: 0.97, brows: 'sad', beard: 'stubble', patch: true, scar: true, skin: 0xc8a07a },
-  sj_song: { h: 1.02, brows: 'thin', beard: 'mous', skin: 0xe2c4a0 },
-  sj_wu: { h: 1.1, brows: 'thick', bulk: true, rosy: true, grin: true, skin: 0xcd9f78 },
-  sj_qian: { h: 0.93, brows: 'high', beard: 'mous', grin: true, skin: 0xd6a880 },
+  sj_tian: { h: 0.88, hat: 'band', brows: 'high', young: true, rosy: true, skin: 0xe8c6a2 },
+  sj_lin: { h: 0.95, hat: 'straw', brows: 'thin', beard: 'goatee', skin: 0xb07e58 },
+  sj_ma: { h: 1.13, hat: 'cookcap', brows: 'thick', beard: 'full', bulk: true, bigNose: true, skin: 0xc49a72 },
+  sj_zhao: { h: 0.97, hat: 'wrap', wrap: 0x3a3430, brows: 'sad', beard: 'stubble', patch: true, scar: true, skin: 0xc8a07a },
+  sj_song: { h: 1.02, hat: 'scholar', brows: 'thin', beard: 'mous', skin: 0xe2c4a0 },
+  sj_wu: { h: 1.1, hat: 'felt', brows: 'thick', bulk: true, rosy: true, grin: true, skin: 0xcd9f78 },
+  sj_qian: { h: 0.93, hat: 'wrap', wrap: 0x5a2a2a, brows: 'high', beard: 'mous', grin: true, skin: 0xd6a880 },
   sj_gao: { h: 0.99, brows: 'sad', beard: 'longmous', longBeard: true, grey: true, skin: 0xb48a62 },
-  sj_n1: { h: 0.84, brows: 'high', young: true, skin: 0xdcb48e },
-  sj_n3: { h: 1.0, brows: 'knit', beard: 'stubble', skin: 0xc49a72 },
-  sj_n4: { h: 1.06, brows: 'thick', beard: 'full', bulk: true, skin: 0xb88c66 },
+  sj_n1: { h: 0.84, hat: 'band', bandCol: 0x2a4a8a, brows: 'high', young: true, skin: 0xdcb48e },
+  sj_n3: { h: 1.0, hat: 'felt', brows: 'knit', beard: 'stubble', skin: 0xc49a72 },
+  sj_n4: { h: 1.06, hat: 'wrap', wrap: 0x4a4e54, brows: 'thick', beard: 'full', bulk: true, skin: 0xb88c66 },
   sj_n6: { h: 0.96, brows: 'thin', young: true, skin: 0xe2bc96 },
   sj_n5: { h: 1.01, brows: 'thick', beard: 'mous', skin: 0xc8a07a },
-  sj_n2: { h: 1.08, brows: 'thick', beard: 'goatee', rosy: true, skin: 0xb07e58 },
+  sj_n2: { h: 1.08, hat: 'felt', brows: 'thick', beard: 'goatee', rosy: true, skin: 0xb07e58 },
   sjf: { h: 1.05, brows: 'knit', beard: 'mous', skin: 0xc49a72 },
   mangui: { h: 1.12, brows: 'thick', beard: 'full', scar: true, bulk: true, rosy: true, skin: 0xa87a54 },
   yuan: { h: 0.98, brows: 'knit', beard: 'longmous', longBeard: true, skin: 0xc8a07a },
@@ -11219,8 +11231,16 @@ function sjFresh() { const s = { v: 1, sj: true, stage: 'drill', name: { zh: '�
 function sjName() { const r = sRow('sjme'); if (ZS && ZS.name && ZS.me === 'sjme') { r.zh = ZS.name.zh; r.en = ZS.name.en; } else if (ZS && ZS.oldName) { r.zh = ZS.oldName.zh; r.en = ZS.oldName.en; } }
 // who says the scripted lines (commanders by their group id)
 const SJWHO = { sjf: ['崔英', 'Captain Cui Ying'], mangui: ['滿桂', 'General Man Gui'], hou: ['侯世祿', 'General Hou Shilu'], yuan: ['袁崇煥', 'Governor Yuan Chonghuan'], zu: ['祖大壽', 'General Zu Dashou'], zhang: ['張春', 'Intendant Zhang Chun'], wuxiang: ['吳襄', 'General Wu Xiang'] };
+// Chief Hu's scripted lines are the chief's: if Hu is gone (or falls in the fight) the senior man on his feet says them
+function sjWhoMap(who) {
+  if (who !== 'sj_hu' || !ZB || !ZB.sj || !state.sim) return who; const sim = state.sim;
+  const up = (k) => { const ci = sIdx(k); for (const uid in ZB.map) { const u = sim.units[uid]; if (ZB.map[uid] === ci && u && !u.dead && !u.wounded && u.ctrl < 0) return true; } return false; };
+  if (ZS.alive.sj_hu && up('sj_hu')) return who;
+  const pref = [ZS.team[0], 'sj_gao', 'sj_lin', 'sj_ma', 'sj_zhao', 'sj_song', 'sj_qian', 'sj_wu', 'sj_tian'].concat(ZS.team);
+  return pref.find(k => k && k !== ZS.me && k !== 'sj_hu' && ZS.team.includes(k) && up(k)) || who;
+}
 function sjActivate() {
-  ZKEY = SKEY; Object.assign(ZHOOK, { talk: sjTalk, sleep: sjSleep, finish: sjFinish, who: SJWHO, chatter: sjChatter, event: sjEvent });
+  ZKEY = SKEY; Object.assign(ZHOOK, { talk: sjTalk, sleep: sjSleep, finish: sjFinish, who: SJWHO, chatter: sjChatter, event: sjEvent, whoMap: sjWhoMap });
 }
 function sjGo(scene) { try { localStorage.setItem('mingShenjiGo', scene); } catch (e) { } location.reload(); }
 // the dead stay dead: before a new chapter every empty place gets a named draft
@@ -11398,6 +11418,11 @@ function sjBattle(scene) {
 function sjEvent(ev) {
   const sim = state.sim; if (!ZB || !ZB.sj || !sim) return;
   if (ev.t === 'possess' || ev.t === 'zcarry') sjVM();
+  if (ev.t === 'bounce' && state.renderer) { const r = state.renderer, h = localHero(), d = h ? Math.hypot(ev.x - h.x, ev.z - h.z) : 99;
+    r.dust(ev.x, ev.y + 0.2, ev.z, 22, 0, 6.5, 0, 2.6, 1.6, 0.5, 2.4); r.dust(ev.x, ev.y + 0.4, ev.z, 10, 0, 9, 0, 1.2, 1.1, 0.3, 1.2);
+    const cart = sim.boxes.find(b => b.kind === 'mantlet' && Math.abs(ev.x - b.x) < b.hw + 2.5 && Math.abs(ev.z - b.z) < b.hd + 2.5);
+    if (cart && r.burstSparks) r.burstSparks(ev.x, ev.y + 0.9, ev.z, 26, 7, 0.55, 0.38, 0.2, 1.1, 0.09);
+    if (d < 34) { const k = 1 - d / 34; r.shake = Math.max(r.shake, 1.25 * k); r.suppress = Math.min(1.2, (r.suppress || 0) + 0.8 * k); if (d < 12) { r.hitFlash = Math.max(r.hitFlash || 0, 0.18 * k); if (cart && !(ZB.splT > performance.now() - 8000)) { ZB.splT = performance.now(); feed('Splinters off the cart!', false); } } AUDIO.play('explosion', ev.x, ev.y, ev.z, 0.35 + 0.5 * k); } }
   if (ev.t === 'msay' && ev.who === 'sj_lin' && /^(Fire|First rank)/.test(ev.text)) banner(ev.text.startsWith('Fire') ? '放 · Fire!' : '舉銃 · Present!', ev.text.startsWith('Fire') ? 'Left mouse: three barrels, one after another · R to reload' : 'Raise your gun and wait for the drum', 3);
   if (ev.t === 'zhelp' && ev.id === ZB.wounded && ZB.scene === 'battle1' && ZB.map[ev.id] === sIdx('sj_zhao')) ZS.flags.helpedZhao = true;
   if (ev.t === 'zpromote' && ev.p === state.localIdx) { const n = SPEECH.nameOf(ev.chief); const q = sim.squads[ev.sq]; const w = q.unitIds.map(id => sim.units[id]).find(u => !u.dead && u.ctrl < 0 && !u.wounded);
