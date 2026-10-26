@@ -4839,7 +4839,7 @@ const M3 = (() => {
   const BUF = {};
   const sig = {terr:null, col:null, world:null, mm:null};
   let A = {hubs:[], steam:[], beacons:[], edges:[], crawl:[]};
-  const HOME = {tx:30, tz:70, yaw:0.12, pitch:0.7, dist:720}; const cam = {...HOME}, goal = {...HOME}; if (typeof window !== "undefined") window.__m3goal = goal;
+  const HOME = {tx:20, tz:40, yaw:0, pitch:1.0, dist:640}; const cam = {...HOME}, goal = {...HOME}; if (typeof window !== "undefined") window.__m3goal = goal;
   const MMW = 196, MMH = Math.round(196 * MAP_H / MAP_W); let mm = null, mmCtx = null, mmBase = null, mmTick = 0;
   let VP = null, IVP = null, EYE = [0, 0, 0], hover = -1, mouse = null, showLabels = true, raf = 0, drag = null, lastT = performance.now();
   const keys = new Set();
@@ -5030,7 +5030,7 @@ const M3 = (() => {
     const g = new Geo(), dx = W / NX, dz = H / NZ;
     const kk = [2, 5, 3, 1].find(k => NX % k === 0 && NZ % k === 0) || 1;
     const axis = (half, step, n) => { const inner = []; for (let k = 0; k <= n; k++) inner.push(-half + k * step);
-      const out = []; let d = 0, s = step; while (d < half * 2 + 2600){ s *= 1.075; d += s; out.push(d); }
+      const out = []; let d = 0, s = step; while (d < 1000){ s *= 1.05; d += s; out.push(d); }
       return [...out.slice().reverse().map(o => -half - o), ...inner, ...out.map(o => half + o)]; };
     const xs = axis(OX, dx * kk, NX / kk), zs = axis(OZ, dz * kk, NZ / kk), nx = xs.length, nz = zs.length;
     const HW2 = new Float32Array(nx * nz), CW = new Float32Array(nx * nz * 3), ins = (x, z) => x > -OX + 1e-3 && x < OX - 1e-3 && z > -OZ + 1e-3 && z < OZ - 1e-3;
@@ -5061,7 +5061,8 @@ const M3 = (() => {
         if (ny < 0.8) c = mix3(c, [0.30, 0.22, 0.18], cl((0.8 - ny) * 3, 0, 0.8));                       // exposed rock on steep slopes
         c = lineae(c, x, z, 1);
         c = c.map(q => cl(q + (n3 - 0.5) * 0.06, 0, 1)); }
-      if (!(ins(x, z) || onRect(x, z))){ const cx = cl(x, -OX, OX), cz = cl(z, -OZ, OZ), t = cl(Math.hypot(x - cx, z - cz) / 260, 0, 1); c = mix3(edgeC(x, z), c, t * t * (3 - 2 * t)); }
+      if (!(ins(x, z) || onRect(x, z))){ const cx = cl(x, -OX, OX), cz = cl(z, -OZ, OZ), dd = Math.hypot(x - cx, z - cz), t = cl(dd / 260, 0, 1); c = mix3(edgeC(x, z), c, t * t * (3 - 2 * t));
+        const k = cl((dd - 40) / 520, 0, 1), g = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11; c = mix3(c, mix3([g, g, g], [0.05, 0.06, 0.08], 0.55), k * k * (3 - 2 * k) * 0.85); }
       if (ins(x, z) || onRect(x, z)){ const [mx, mz] = [x + OX, z + OZ], vi = Math.round(mz / dz) * (NX + 1) + Math.round(mx / dx); if (BASEC && vi >= 0 && vi < NV){ c = [BASEC[vi * 3], BASEC[vi * 3 + 1], BASEC[vi * 3 + 2]]; } }
       CW.set(c, k * 3);
     }
@@ -5073,6 +5074,11 @@ const M3 = (() => {
       const V = [[a, b], [a, b + 1], [a + 1, b], [a + 1, b], [a, b + 1], [a + 1, b + 1]];
       for (const [p, q] of V) g.v(P(p, q), Nn(p, q), Cc(p, q), 0);
     }
+    // stitch: where one coarse edge meets two fine ones, fill the sliver with a triangle through the fine midpoint
+    if (kk > 1){ const st = (p) => [p[0], heightAt(p[0], p[2]) + 0.02, p[2]];
+      const runs = [[(k) => [-OX + k * dx, 0, -OZ], NX], [(k) => [-OX + k * dx, 0, OZ], NX], [(k) => [-OX, 0, -OZ + k * dz], NZ], [(k) => [OX, 0, -OZ + k * dz], NZ]];
+      for (const [f, n] of runs) for (let k = 0; k + kk <= n; k += kk){ const p0 = st(f(k)), pe = st(f(k + kk)), c = edgeC1(p0[0], p0[2]);
+        for (let m = 1; m < kk; m++){ const pm = st(f(k + m)), pm0 = st(f(k + m - 1)); g.v(pm0, [0, 1, 0], c, 0); g.v(pm, [0, 1, 0], c, 0); g.v(pe, [0, 1, 0], c, 0); g.v(p0, [0, 1, 0], c, 0); g.v(pm, [0, 1, 0], c, 0); g.v(pe, [0, 1, 0], c, 0); } } }
     // a skirt hidden under the district edge seals the seam between the detailed and the coarse grids
     const BOT = WATER - 30, sk = [[-OX, -OZ, OX, -OZ], [OX, -OZ, OX, OZ], [OX, OZ, -OX, OZ], [-OX, OZ, -OX, -OZ]];
     for (const [x0, z0, x1, z1] of sk){ const n = 160; for (let k = 0; k < n; k++){ const f0 = k / n, f1 = (k + 1) / n, p0 = [x0 + (x1 - x0) * f0, 0, z0 + (z1 - z0) * f0], p1 = [x0 + (x1 - x0) * f1, 0, z0 + (z1 - z0) * f1];
@@ -5081,7 +5087,7 @@ const M3 = (() => {
     // one sheet of brine from horizon to horizon
     const wg = new Geo(), E = 6000; wg.quadN([-E, WATER, -E], [E, WATER, -E], [E, WATER, E], [-E, WATER, E], [0, 1, 0], [0.05, 0.16, 0.21], 0.18); upload("water", wg.a);
     // lights of outlying settlements in the haze
-    const lp = []; for (let k = 0; k < 400 && lp.length < 48 * 8; k++){ const x = (hh(k, 7) - 0.5) * 2 * (OX + 1600), z = (hh(k, 8) - 0.5) * 2 * (OZ + 1400); if (Math.abs(x) < OX + 60 && Math.abs(z) < OZ + 60) continue; const y = worldH(x, z); if (y < WATER + 3 || y > 45) continue; lp.push(x, y + 3, z, 1.0, 0.68, 0.32, 0.55, 22 + hh(k, 9) * 26); }
+    const lp = []; for (let k = 0; k < 400 && lp.length < 18 * 8; k++){ const x = (hh(k, 7) - 0.5) * 2 * (OX + 420), z = (hh(k, 8) - 0.5) * 2 * (OZ + 360); if (Math.abs(x) < OX + 60 && Math.abs(z) < OZ + 60) continue; const y = worldH(x, z); if (y < WATER + 3 || y > 45) continue; lp.push(x, y + 3, z, 1.0, 0.68, 0.32, 0.55, 22 + hh(k, 9) * 26); }
     uploadPts("wlights", lp);
     return g.a;
   }
@@ -5192,7 +5198,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
       const b = e.target.closest("[data-m3]"); if (!b) return;
       const a = b.dataset.m3;
       if (a === "reset") Object.assign(goal, HOME);
-      if (a === "top") Object.assign(goal, {pitch:1.45, yaw:0, dist:Math.max(goal.dist, 640)});
+      if (a === "top") Object.assign(goal, {pitch:1.45, yaw:0, dist:Math.max(goal.dist, 760)});
       if (a === "labels"){ showLabels = !showLabels; b.classList.toggle("off", !showLabels); }
     });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
@@ -5201,7 +5207,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
       mouse = {x:e.clientX, y:e.clientY};
       if (!drag) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
-      if (drag.rot){ goal.yaw -= dx * 0.006; goal.pitch = cl(goal.pitch + dy * 0.005, 0.3, 1.48); cam.yaw = goal.yaw; cam.pitch = goal.pitch; }
+      if (drag.rot){ goal.yaw -= dx * 0.006; goal.pitch = cl(goal.pitch + dy * 0.005, 0.55, 1.48); cam.yaw = goal.yaw; cam.pitch = goal.pitch; }
       else { const s = cam.dist * 0.0017, sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
         goal.tx = cl(goal.tx - dx * s * cy - dy * s * sy, -OX, OX);
         goal.tz = cl(goal.tz + dx * s * sy - dy * s * cy, -OZ, OZ); cam.tx = goal.tx; cam.tz = goal.tz; }
@@ -5212,7 +5218,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     });
     canvas.addEventListener("pointerleave", () => { mouse = null; hover = -1; tip.hidden = true; });
     canvas.addEventListener("dblclick", e => { const i = pick(e.clientX, e.clientY); if (i >= 0){ goal.tx = NODE[i][0]; goal.tz = NODE[i][2]; goal.dist = Math.min(goal.dist, 300); } });
-    canvas.addEventListener("wheel", e => { e.preventDefault(); goal.dist = cl(goal.dist * Math.exp(e.deltaY * 0.0012), 110, 2200); }, {passive:false});
+    canvas.addEventListener("wheel", e => { e.preventDefault(); goal.dist = cl(goal.dist * Math.exp(e.deltaY * 0.0012), 110, 900); }, {passive:false});
     document.addEventListener("keydown", e => {
       if (!wrap.isConnected || e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
@@ -5457,6 +5463,8 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
       let fx = 0, fz = 0; if (keys.has("w") || keys.has("arrowup")) fz -= 1; if (keys.has("s") || keys.has("arrowdown")) fz += 1; if (keys.has("a") || keys.has("arrowleft")) fx -= 1; if (keys.has("d") || keys.has("arrowright")) fx += 1;
       goal.tx = cl(goal.tx + (fx * cy + fz * sy) * s, -OX, OX); goal.tz = cl(goal.tz + (-fx * sy + fz * cy) * s, -OZ, OZ);
       if (keys.has("q")) goal.yaw += 1.4 * dt; if (keys.has("e")) goal.yaw -= 1.4 * dt; }
+    /* strategy-map camera: zoomed out you look down on the map; zoomed in you may tilt toward the horizon, never into the sky */
+    { const pmin = 0.55 + 0.37 * cl((goal.dist - 150) / 500, 0, 1); if (goal.pitch < pmin) goal.pitch = pmin; }
     const k = 1 - Math.pow(0.0015, dt); for (const key of ["tx", "tz", "yaw", "pitch", "dist"]) cam[key] += (goal[key] - cam[key]) * k;
     // size
     const dpr = Math.min(window.devicePixelRatio || 1, 1.75), cw = Math.max(1, Math.round(canvas.clientWidth * dpr)), ch = Math.max(1, Math.round(canvas.clientHeight * dpr));
@@ -5470,12 +5478,12 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     // draw
     gl.viewport(0, 0, cw, ch); gl.clearColor(0.03, 0.038, 0.055, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
-    const sun = nrm([0.55, 0.6, 0.32]), jup = nrm([-0.4, 0.3, -0.85]), fogC = [0.13, 0.15, 0.20];
+    const sun = nrm([0.55, 0.6, 0.32]), jup = nrm([-0.4, 0.3, -0.85]), fogC = [0.035, 0.043, 0.06];
     gl.useProgram(progL.p); const U = progL.u;
     gl.uniformMatrix4fv(U.uVP, false, VP); gl.uniform3fv(U.uSun, sun); gl.uniform3fv(U.uJup, jup); gl.uniform3fv(U.uEye, EYE); gl.uniform3fv(U.uFogC, fogC); gl.uniform1f(U.uAlpha, 1);
     const draw = (b, mode = gl.TRIANGLES) => { if (!b || !b.n) return; gl.bindVertexArray(b.vao); gl.drawArrays(mode, 0, b.n); };
     gl.uniform2f(U.uFog, 1e6, 2e6); draw(BUF.sky);
-    gl.uniform2f(U.uFog, cam.dist * 0.95, cam.dist * 0.95 + 1500);
+    gl.uniform2f(U.uFog, cam.dist * 1.15, cam.dist * 1.15 + 900);
     gl.bindVertexArray(BUF.terr.vao); gl.drawElements(gl.TRIANGLES, BUF.terr.n, gl.UNSIGNED_INT, 0);
     draw(BUF.base); draw(BUF.world); draw(BUF.dyn);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
