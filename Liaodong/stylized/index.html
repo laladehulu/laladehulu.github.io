@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v51</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v52</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -100,6 +100,17 @@ kbd { font-family: var(--font-ui); font-size: 11px; background: var(--ink); colo
 .hudbox { position: absolute; background: rgba(14,12,10,.62); border: 1px solid rgba(233,225,207,.18); color: var(--fg); padding: 8px 12px; backdrop-filter: blur(3px); }
 #vitals { left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); min-width: 240px; }
 #vitals .name { font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .06em; margin-bottom: 6px; display: flex; justify-content: space-between; gap: 10px; }
+/* compact vitals: no long bars, health is one number that jumps when it changes */
+#vitals { min-width: 0 !important; padding: 8px 12px !important; }
+#vitals .bar { display: none; }
+#vitals .name { font-size: 13px; margin-bottom: 2px; }
+#vitals #hpText { font-family: var(--font-display); font-size: 24px; line-height: 1; font-weight: 800; display: inline-block; transform-origin: 50% 70%; }
+#vitals #hpText.bump { animation: hpBump .35s ease-out; } #vitals #hpText.up { animation: hpUp .5s ease-out; }
+@keyframes hpBump { 0% { transform: scale(1.45) translateY(-3px); filter: brightness(1.8); } 100% { transform: none; filter: none; } }
+@keyframes hpUp { 0% { transform: scale(1.15); } 100% { transform: none; } }
+#vitals .line { align-items: baseline; gap: 12px; }
+#vitals #dirText { font-size: 10.5px; opacity: .7; }
+body.storyhud #vitals #fury, body.storyhud #vitals #bombs, body.storyhud #vitals #dirText, body.storyhud #vitals .line:last-child { display: none; }
 #vitals .name .t0 { color: #ff7d86; } #vitals .name .t1 { color: #8aa9ff; }
 .bar { height: 8px; background: rgba(255,255,255,.12); margin: 4px 0; position: relative; overflow: hidden; }
 .bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ok); width: 100%; transition: width .12s; }
@@ -4075,26 +4086,34 @@ Sim.prototype.assaultCap = function () {
 // and being shoved back. A comrade standing in the way, or coming head-on: step round him (head-on, both keep right).
 // And if for all that he has hardly moved for half a second while meaning to, he is stuck: he side-steps, re-plans his
 // route, and if it keeps happening he squeezes past his own men for a moment. Deterministic: no randomness, ids only.
+const AV_C = [0.9397, 0.7660, 0.5000, 0.0872], AV_S = [0.3420, 0.6428, 0.8660, 0.9962]; // cos/sin of 20, 40, 60, 85 degrees
+// how far he can walk along (hx, hz) before touching a tree, rock, stake or building (up to L)
+Sim.prototype.freeRun = function (u, hx, hz, L) {
+  const r = u.def.r; let best = L; const cs = this.cellSize, W = this.gridW; const cx = Math.floor((u.x + HALF + 5) / cs), cz = Math.floor((u.z + HALF + 5) / cs);
+  for (let oz = -1; oz <= 1; oz++) for (let ox = -1; ox <= 1; ox++) { const gx = cx + ox, gz = cz + oz; if (gx < 0 || gz < 0 || gx >= W || gz >= W) continue;
+    let oid = this.obsHead[gz * W + gx];
+    while (oid >= 0) { const o = this.obstacles[oid]; oid = this.obsNext[oid]; const rx = o.x - u.x, rz = o.z - u.z, t = rx * hx + rz * hz; if (t < -0.2 || t > best + o.r + r) continue;
+      const s = rx * hz - rz * hx, clr = r + o.r + 0.12; if (s >= clr || s <= -clr) continue; const e = t - Math.sqrt(clr * clr - s * s); if (e < best) best = e < 0 ? 0 : e; } }
+  for (let t = 0.5; t <= best; t += 0.5) { const px = u.x + hx * t, pz = u.z + hz * t; const bl = this.boxCells[this.cellOf(px, pz)]; if (!bl) continue;
+    for (let k = 0; k < bl.length; k++) { const b = this.boxes[bl[k]]; if (b.hw < 0.1 || b.kind === 'gate' || (b.lad && b.lad.up)) continue;
+      if (Math.abs(px - b.x) < b.hw + r + 0.08 && Math.abs(pz - b.z) < b.hd + r + 0.08) return t - 0.5; } }
+  return best;
+};
 Sim.prototype.steerAround = function (u) {
   if (u.ghostT > 0) u.ghostT -= DT; if (u.unstickT > 0) u.unstickT -= DT;
   const sp = len(u.mx, u.mz);
   if (sp < 0.35) { u.stkX = u.x; u.stkZ = u.z; u.stkK = this.tick; u.stkN = 0; return; }
   let dx = u.mx / sp, dz = u.mz / sp; const nx = dz, nz = -dx, r = u.def.r; let ax = 0, az = 0;
-  // 1. trees, rocks and stakes
-  { const look = clamp(sp * 0.6, 1.4, 3.4), cs = this.cellSize, W = this.gridW; const cx = Math.floor((u.x + HALF + 5) / cs), cz = Math.floor((u.z + HALF + 5) / cs);
-    let bt = 1e9, bs = 0, br = 0;
-    for (let oz = -1; oz <= 1; oz++) for (let ox = -1; ox <= 1; ox++) { const gx = cx + ox, gz = cz + oz; if (gx < 0 || gz < 0 || gx >= W || gz >= W) continue;
-      let oid = this.obsHead[gz * W + gx];
-      while (oid >= 0) { const o = this.obstacles[oid]; oid = this.obsNext[oid]; const rx = o.x - u.x, rz = o.z - u.z; const t = rx * dx + rz * dz; if (t < -0.1 || t > look + o.r) continue;
-        const s = rx * nx + rz * nz, clr = r + o.r + 0.15; if (s >= clr || s <= -clr) continue; if (t < bt) { bt = t; bs = s; br = clr; } } }
-    if (bt < 1e9) { const side = bs > 0.02 ? -1 : bs < -0.02 ? 1 : ((u.id & 1) ? 1 : -1); const w = 1 - clamp(bt / (look + 0.5), 0, 1); const k = (0.7 + 1.6 * w) * clamp((br - Math.abs(bs)) / br + 0.3, 0.3, 1.3); ax += nx * side * k; az += nz * side * k; } }
-  // 2. the corner or face of a house, wall or palisade just ahead: slide along it toward the nearer end
-  { const look = clamp(sp * 0.45, 1.0, 2.4), px = u.x + dx * look, pz = u.z + dz * look; const bl = this.boxCells[this.cellOf(px, pz)];
-    if (bl) for (let k = 0; k < bl.length; k++) { const b = this.boxes[bl[k]]; if (b.hw < 0.1 || b.kind === 'gate' || (b.lad && b.lad.up)) continue; const ex = b.hw + r + 0.1, ez = b.hd + r + 0.1;
-      if (Math.abs(px - b.x) >= ex || Math.abs(pz - b.z) >= ez) continue;
-      if (Math.abs(u.x - b.x) >= ex - 0.05) { const tz = Math.abs(dz) > 0.15 ? Math.sign(dz) : (u.z >= b.z ? 1 : -1); ax += -dx * 0.9; az += tz * 1.1; }
-      else { const tx = Math.abs(dx) > 0.15 ? Math.sign(dx) : (u.x >= b.x ? 1 : -1); ax += tx * 1.1; az += -dz * 0.9; }
-      break; } }
+  // 1+2. trees, rocks, stakes and the faces of houses, walls and palisades: if the way ahead is not clear, try headings
+  // fanning out to either side (the side he chose last time first, so he doesn't dither) and take the first clear one
+  { const look = clamp(sp * 0.6, 1.6, 3.4);
+    if (this.freeRun(u, dx, dz, look) < look) {
+      const pref = u.avS || (((u.id >> 1) & 1) ? 1 : -1); let best = 0, bf = -1;
+      for (let k = 0; k < 8; k++) { const sg = (k & 1) ? -pref : pref, j = k >> 1; const c = AV_C[j], s = AV_S[j] * sg; const hx = dx * c + nx * s, hz = dz * c + nz * s;
+        const f = this.freeRun(u, hx, hz, look); if (f >= look) { best = k; bf = f; break; } if (f > bf + 0.25) { bf = f; best = k; } }
+      const sg = (best & 1) ? -pref : pref, j = best >> 1; u.avS = sg; u.avK = this.tick;
+      const c = AV_C[j], s = AV_S[j] * sg; ax += dx * c + nx * s - dx; az += dz * c + nz * s - dz;
+    } else if (u.avS && this.tick - (u.avK || 0) > 20) u.avS = 0; }
   // 3. a comrade in the way
   { const n = this.gatherNear(u.x, u.z, 1.8); let bt = 1e9, bs = 0, head = false;
     for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.team !== u.team || v.mount >= 0 || v.type === 'horse') continue;
@@ -5070,10 +5089,43 @@ const AUDIO = (() => {
     }
     return false;
   }
+  // ---- the great guns: a layered boom that carries across the whole field and is never dropped by the sound budget ----
+  // crack (near only) + pitched-down shot + sub-bass thump + body roar + a long rolling tail (thunder) + an echo slap
+  // off the hills; distance bends it all toward a low rumble that arrives late. Music ducks under it, and a gun fired
+  // right beside you leaves your ears ringing.
+  let lastBoom = 0;
+  function boom(x, y, z, vol, kind) {
+    const L = listener, dx = x - L.x, dz = z - L.z, dist = Math.sqrt(dx * dx + dz * dz + (y - L.y) * (y - L.y));
+    if (dist > 950) return;
+    const rx = -Math.cos(L.yaw), rz = Math.sin(L.yaw), pan = dist > 0.5 ? Math.max(-1, Math.min(1, (dx * rx + dz * rz) / dist * 0.7)) : 0;
+    const g = vol / (1 + dist / 85), near = Math.max(0, 1 - dist / 70), air = 14000 / (1 + dist / 55);
+    const sp = { gain: g, pan, dist, wet: Math.min(0.9, 0.25 + dist / 250) }, t = ctx.currentTime + Math.min(2.8, dist / 343);
+    const big = kind === 'hit' ? 0.55 : 1, S = SAMPLES.count ? SAMPLES : null;
+    if (near > 0) noise(sp, t, 0.045, 'highpass', 2200, 0.7, g * near * 1.4 * big, 0.001);                                   // crack
+    if (S && S.pick('shot')) { samp(sp, t, S.pick('shot'), 0.38, g * 1.2 * big, air); samp(sp, t + 0.012, S.pick('shot'), 0.55, g * 0.7 * big, air); }
+    tone(sp, t, 1.1, 'sine', 58, 24, g * 1.9 * big);                                                                         // sub thump
+    tone(sp, t, 0.35, 'triangle', 110, 40, g * 0.6 * big);
+    { const f = noise(sp, t, 1.8 + dist / 400, 'lowpass', Math.min(2400, air), 0.6, g * 1.25 * big, 0.006); f.frequency.exponentialRampToValueAtTime(140, t + 1.6); } // body roar
+    if (S && S.pick('thunder')) samp({ ...sp, wet: 0.9 }, t + 0.06, S.pick('thunder'), 1.35 + Math.random() * 0.2, g * 0.55 * big, Math.min(900, air));   // rolling tail
+    else noise({ ...sp, wet: 1 }, t + 0.08, 4, 'lowpass', 240, 0.5, g * 0.7 * big, 0.12);
+    const e1 = 0.35 + (dist % 7) * 0.06; noise({ ...sp, gain: g * 0.45, wet: 1 }, t + e1, 1.6, 'lowpass', 380, 0.6, g * 0.4 * big, 0.03);      // echo off the hills
+    noise({ ...sp, gain: g * 0.25, wet: 1 }, t + e1 * 2.1, 2.2, 'lowpass', 260, 0.6, g * 0.22 * big, 0.06);
+    const now = performance.now();
+    if (kind !== 'hit' && now - lastBoom > 250) { lastBoom = now; if (typeof MUSIC !== 'undefined' && MUSIC.duck) MUSIC.duck(Math.min(0.75, 0.25 + g * 0.5), 1.4); }
+    if (dist < 14 && kind !== 'hit') shellshock(Math.min(0.6, 0.6 * (1 - dist / 14)));
+  }
+  // a ball whistling past or overhead
+  function whistle(x, y, z, vol) {
+    const sp = spatial(x, y, z, vol, 60); if (!sp) return; const t = ctx.currentTime; sp.wet = 0.1;
+    const f = noise(sp, t, 0.55, 'bandpass', 1900, 6, sp.gain * 0.8, 0.12); f.frequency.exponentialRampToValueAtTime(700, t + 0.5);
+    noise(sp, t, 0.5, 'lowpass', 400, 0.7, sp.gain * 0.5, 0.1);
+  }
   function play(name, x, y, z, vol) {
     if (!ctx) return;
+    if (name === 'cannon' || name === 'cannonhit') { boom(x, y, z, vol === undefined ? 1 : vol, name === 'cannonhit' ? 'hit' : 'fire'); if (name === 'cannonhit' && SAMPLES.count) { sampled('dirt', x, y, z, (vol || 1) * 1.6); const sp = spatial(x, y, z, (vol || 1) * 0.9, 120), d = SAMPLES.pick('debris'); if (sp && d) samp(sp, ctx.currentTime + Math.min(1, sp.dist / 343) + 0.03, d, rr(0.9, 1.1), sp.gain * 0.8); } return; }
+    if (name === 'ballwhistle') { whistle(x, y, z, vol === undefined ? 1 : vol); return; }
     const now = performance.now(); if (now - lastFrame > 40) { budget = 16; lastFrame = now; }
-    if (budget-- <= 0) return;
+    if (budget-- <= 0 && name !== 'explosion' && name !== 'collapse' && name !== 'siegehit') return;
     vol = vol === undefined ? 1 : vol;
     if (SAMPLES.count && sampled(name, x, y, z, vol)) return;
     name = { flesh: 'thud', shield: 'clang', thrust: 'swish', woodhit: 'dirt', gatehit: 'thud', ram: 'thud', collapse: 'explosion', siegehit: 'explosion', horsedie: 'death', arrow: 'whiz' }[name] || name;
@@ -5347,6 +5399,9 @@ const MUSIC = (() => {
     vc: { A2: 56.97, B1: 46.99 },
   };
   const mf = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  let duckG = null;
+  // a great gun going off pushes the music down for a moment (k: how far, 0..1; d: seconds back up)
+  function duck(k, d) { if (!duckG || !ctx) return; const t = ctx.currentTime, g = duckG.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(Math.max(0.2, 1 - k), t + 0.05); g.linearRampToValueAtTime(1, t + 0.05 + (d || 1.2)); }
   let REC = null, recSrc = null, recG = null, recEnd = 0, comp = null, ctx, out, dry, nb, playing = null, nextT = 0, step = 0, timer = null, vol = 0.5, target = 0.5, I = 0.5, muted = false, prevMel = {};
   function ensure(c) {
     if (out && !c) return true; ctx = c || AUDIO.ctx; if (!ctx) return false; nb = AUDIO.noise;
@@ -5356,7 +5411,7 @@ const MUSIC = (() => {
     const L = Math.floor(ctx.sampleRate * 2.6), ir = ctx.createBuffer(2, L, ctx.sampleRate);
     for (let c = 0; c < 2; c++) { const ch = ir.getChannelData(c); let lp = 0; for (let i = 0; i < L; i++) { const t = i / ctx.sampleRate; lp += (Math.random() * 2 - 1 - lp) * Math.max(0.08, 0.6 - t * 0.2); ch[i] = lp * Math.exp(-t * 2.3) * (t < 0.018 ? 0 : 1); } for (const e of [0.021, 0.034, 0.047, 0.063]) ch[Math.floor((e + c * 0.003) * ctx.sampleRate)] += 0.5; }
     const verb = ctx.createConvolver(); verb.buffer = ir; const wet = ctx.createGain(); wet.gain.value = 0.3;
-    dry = ctx.createGain(); dry.connect(comp); dry.connect(wet); wet.connect(verb); verb.connect(comp); comp.connect(out); out.connect(ctx.destination);
+    dry = ctx.createGain(); dry.connect(comp); dry.connect(wet); wet.connect(verb); verb.connect(comp); duckG = ctx.createGain(); comp.connect(duckG); duckG.connect(out); out.connect(ctx.destination);
     return true;
   }
   const S = () => SAMPLES;
@@ -5578,7 +5633,7 @@ const MUSIC = (() => {
   }
   function toggle() { muted = !muted; if (out) out.gain.setTargetAtTime(muted ? 0 : vol, ctx.currentTime, 0.1); return !muted; }
   function setMuted(m) { muted = m; if (out) out.gain.setTargetAtTime(muted ? 0 : vol, ctx.currentTime, 0.1); }
-  return { _offline, play, stop, sting, accent, setIntensity, toggle, setMuted, get muted() { return muted; }, get track() { return playing; } };
+  return { duck, _offline, play, stop, sting, accent, setIntensity, toggle, setMuted, get muted() { return muted; }, get track() { return playing; } };
 })();
 </script>
 <script>
@@ -7019,6 +7074,8 @@ class Renderer {
     // duels: a ring of torches around the two fighters; frenzied heroes smoulder red
     for (const d of sim.duels) { if (Math.random() < dt * 20) { const a = Math.random() * 6.283, gx = d.x + Math.sin(a) * 9, gz = d.z + Math.cos(a) * 9; this.sparks.spawn(gx, terrainH(gx, gz) + 0.4, gz, 0, 1.5, 0, 0.7, 0.6, 0.1, 1, 0.75, 0.3, 1, 1, -0.6, 1, 0.3, 0.05); } }
     for (const u of sim.units) if (u.frenzyT > 0 && !u.dead && Math.random() < dt * 25) this.sparks.spawn(u.x + rnd(-0.4, 0.4), u.y + rnd(0.5, 1.9), u.z + rnd(-0.4, 0.4), 0, 1.2, 0, 0.5, 0.35, 0.05, 1, 0.25, 0.1, 1, 1, -0.5, 0.6, 0.05, 0.02);
+    { const cp = this.camera.position; if (!this.whistled) this.whistled = new WeakSet(); // a cannonball passing close overhead whistles, once
+      for (const pr of sim.projectiles) { if ((pr.kind !== 'solid' && pr.kind !== 'shell') || this.whistled.has(pr)) continue; const dx = pr.x - cp.x, dy = pr.y - cp.y, dz = pr.z - cp.z; if (dx * dx + dy * dy + dz * dz < 196) { this.whistled.add(pr); AUDIO.play('ballwhistle', pr.x, pr.y, pr.z, 1); } } }
     for (const pr of sim.projectiles) if (pr.kind === 'bomb' && Math.random() < dt * 40) this.sparks.spawn(pr.x, pr.y + 0.15, pr.z, rnd(-0.6, 0.6), rnd(0.5, 1.5), rnd(-0.6, 0.6), 0.25, 0.12, 0.02, 1, 0.8, 0.3, 1, 1, 0.5, 1, 0.4, 0.1);
     for (const u of sim.units) { if (!u.champ || u.dead) continue;
       if (u.spinT > 0.3 && Math.random() < dt * 60) { const a = Math.random() * 6.283; this.sparks.spawn(u.x + Math.sin(a) * 3.6, u.y + 0.15, u.z + Math.cos(a) * 3.6, 0, 0.3, 0, 0.18, 0.4, 0.2, 1, 0.75, 0.3, 1, 1, 0, 1, 0.4, 0.1); }
@@ -7146,7 +7203,7 @@ class Renderer {
         case 'arrow': { AUDIO.play('twang', ev.x, ev.y, ev.z, 1); break; }
         case 'arrowhit': { this.blood(ev.x, ev.y, ev.z, 5, 0, 0.5, 0); AUDIO.play('flesh', ev.x, ev.y, ev.z, 0.8); break; }
         case 'arrowstick': { const i = this.stuckNext; this.stuckNext = (this.stuckNext + 1) % this.stuckN; this.tmp.v.set(ev.vx, ev.vy, ev.vz).normalize(); this.tmp.q.setFromUnitVectors(this.tmp.v2.set(0, 0, 1), this.tmp.v); this.tmp.m.compose(this.tmp.v3.set(ev.x - this.tmp.v.x * 0.35, ev.y - this.tmp.v.y * 0.35, ev.z - this.tmp.v.z * 0.35), this.tmp.q, this.tmp.v4.set(1, 1, 1)); this.stuck.setMatrixAt(i, this.tmp.m); this.stuck.instanceMatrix.needsUpdate = true; this.dust(ev.x, ev.y + 0.05, ev.z, 2, 0, 0.6, 0, 0.5, 0.5, 0.15, 0.4); AUDIO.play(ev.y > 0.4 ? 'woodhit' : 'dirt', ev.x, ev.y, ev.z, 0.7); break; }
-        case 'bounce': { this.dust(ev.x, ev.y + 0.1, ev.z, ev.big ? 14 : 8, 0, 2.5, 0, 2.2, 1.0, 0.4, 1.8); AUDIO.play('thud', ev.x, ev.y, ev.z, ev.big ? 1.2 : 0.9); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 18) this.shake = Math.max(this.shake, 0.25 * (1 - dc / 18)); break; }
+        case 'bounce': { this.dust(ev.x, ev.y + 0.1, ev.z, ev.big ? 14 : 8, 0, 2.5, 0, 2.2, 1.0, 0.4, 1.8); AUDIO.play('cannonhit', ev.x, ev.y, ev.z, ev.big ? 1.2 : 0.9); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 18) this.shake = Math.max(this.shake, 0.25 * (1 - dc / 18)); break; }
         case 'solidhit': { this.blood(ev.x, ev.y, ev.z, 14, 0, 1.5, 0); this.dust(ev.x, ev.y, ev.z, 6, 0, 1.5, 0, 1.5, 0.7, 0.3, 1.2); AUDIO.play('flesh', ev.x, ev.y, ev.z, 1.3); break; }
         case 'gatlingstart': { break; }
         case 'rally': { this.burstSparks(ev.x, ev.y + 1.2, ev.z, 30, 6, 1, 0.85, 0.4, 0.8, 0.14); AUDIO.play('shout', ev.x, ev.y, ev.z, 1); break; }
@@ -7955,6 +8012,7 @@ class Renderer {
       if (this.biomeRain) this.env.weather.visible = !!sim.rain; else if (this.env.rain) { this.env.rain.visible = !!sim.rain; if (sim.rain) { this.env.rain.material.uniforms.time.value = this.time; this.env.rain.material.uniforms.cam.value.copy(cam.position); } } }
     this.sky.position.copy(cam.position);
     AUDIO.setListener(cam.position.x, cam.position.y, cam.position.z, camYaw);
+    if (sim.pickups && !this.studio) this.pkFrame(sim);
     if (typeof VOICE !== 'undefined' && !this.studio) { const lp = sim.players[this.localIdx]; VOICE.frame(dt, sim, lp ? lp.heroId : -1); }
     // fog of war: the enemy is only seen within sight of your own men, or by the flash of his muskets
     if (this.fog) { this.fogT = (this.fogT || 0) - dt; if (this.fogT <= 0) { this.fogT = 0.25; const R = 62 * (1 - 0.45 * (sim.bdef.fog || 0)) * (sim.rain ? 0.8 : 1), R2 = R * R; const mine = [];
@@ -8405,6 +8463,26 @@ Renderer.prototype.campPropDraw = function (u, a, G) {
   for (const k in g) { const m = g[k]; const on = k === kind && !u.dead; m.visible = on; if (!on) continue;
     m.position.set(G[hi], G[hi + 1], G[hi + 2]); const fx = G[hi] - G[ei], fz = G[hi + 2] - G[ei + 2];
     m.rotation.set(k === 'ladle' ? 0.3 : 0, Math.atan2(fx, fz), 0); if (k === 'ladle') m.position.y -= 0.3; if (k === 'gourd') m.position.y += 0.03; }
+};
+// weapons lying where men fell: one small low-poly model per kind, placed flat on the ground and turned by id
+Renderer.prototype.pkFrame = function (sim) {
+  const M = this.pkM || (this.pkM = new Map()), seen = this.pkSeen || (this.pkSeen = new Set()); seen.clear();
+  const mat = this.pkMat || (this.pkMat = { iron: new THREE.MeshLambertMaterial({ color: 0x9aa0a6 }), dark: new THREE.MeshLambertMaterial({ color: 0x3c3c40 }), wood: new THREE.MeshLambertMaterial({ color: 0x6b4a2c }), red: new THREE.MeshLambertMaterial({ color: 0x8a2a1e }), straw: new THREE.MeshLambertMaterial({ color: 0xb79a5a }), horn: new THREE.MeshLambertMaterial({ color: 0x4a3424 }) });
+  const box = (g, w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  const make = (k) => { const g = new THREE.Group();
+    if (k === 'dao' || k === 'jsword') { box(g, 0.05, 0.02, 0.78, mat.iron, 0, 0.02, 0.25); box(g, 0.12, 0.03, 0.03, mat.dark, 0, 0.02, -0.15); box(g, 0.04, 0.035, 0.24, k === 'dao' ? mat.red : mat.wood, 0, 0.02, -0.29); }
+    else if (k === 'spear' || k === 'qiang' || k === 'trident' || k === 'brush') { const L = k === 'spear' ? 4.6 : k === 'brush' ? 4.2 : k === 'trident' ? 2.6 : 3.0; box(g, 0.045, 0.045, L, mat.wood, 0, 0.03, 0);
+      if (k === 'brush') for (let i = 0; i < 6; i++) box(g, 0.6 - i * 0.07, 0.03, 0.03, mat.wood, 0, 0.03, L / 2 - 0.2 - i * 0.22);
+      else if (k === 'trident') { box(g, 0.34, 0.03, 0.03, mat.iron, 0, 0.03, L / 2); for (const s of [-1, 0, 1]) box(g, 0.025, 0.025, 0.28, mat.iron, s * 0.16, 0.03, L / 2 + 0.14); }
+      else box(g, 0.03, 0.02, 0.3, mat.iron, 0, 0.03, L / 2 + 0.15); }
+    else if (k === 'musket' || k === 'jmusket') { box(g, 0.05, 0.06, 0.75, mat.wood, 0, 0.04, -0.15); box(g, 0.025, 0.025, 1.0, mat.dark, 0, 0.07, 0.35); }
+    else if (k === 'sanyan') { box(g, 0.04, 0.04, 1.1, mat.wood, 0, 0.04, -0.3); for (const s of [-1, 0, 1]) box(g, 0.035, 0.035, 0.42, mat.dark, s * 0.04, 0.05 + (s === 0 ? 0.035 : 0), 0.45); }
+    else if (k === 'bow' || k === 'jbow') { const m = k === 'jbow' ? mat.horn : mat.wood; for (let i = -3; i <= 3; i++) { const a = i / 3 * 0.9; box(g, 0.035, 0.025, 0.2, m, Math.cos(a) * 0.45 - 0.42, 0.02, Math.sin(a) * 0.62); } box(g, 0.006, 0.006, 1.2, mat.straw, 0.0, 0.02, 0); }
+    else if (k === 'shield' || k === 'jshield') { const s = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 10), k === 'shield' ? mat.straw : mat.red); s.position.y = 0.04; g.add(s); box(g, 0.1, 0.03, 0.1, mat.dark, 0, 0.08, 0); }
+    return g; };
+  for (const p of sim.pickups) { seen.add(p.id); let g = M.get(p.id);
+    if (!g) { g = make(p.k); const y = terrainH(p.x, p.z); g.position.set(p.x, y + 0.01, p.z); g.rotation.y = (p.id * 2.399) % 6.283; g.rotation.z = ((p.id * 0.37) % 0.3) - 0.15; this.scene.add(g); M.set(p.id, g); } }
+  for (const [id, g] of M) if (!seen.has(id)) { this.scene.remove(g); g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); M.delete(id); }
 };
 return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear, roundBox, uhash };
 })();
@@ -10015,9 +10093,15 @@ function updateHUD(dt) {
   } else { $('crosshair').style.opacity = 0; }
   // vitals
   if (hero) {
-    $('hpFill').style.width = Math.max(0, hero.hp / hero.def.hp * 100).toFixed(1) + '%'; $('hpText').textContent = `${Math.max(0, Math.round(hero.hp))} / ${Math.round(hero.def.hp)}`;
+    $('hpFill').style.width = Math.max(0, hero.hp / hero.def.hp * 100).toFixed(1) + '%';
+    { // health is one number: green, amber, red; it jumps when it changes
+      const hv = Math.max(0, Math.round(hero.hp)), fr = hero.hp / hero.def.hp, ht = $('hpText'); if (ht._v !== hv) { ht.textContent = hv; ht.style.color = fr > 0.6 ? '#9fdc76' : fr > 0.3 ? '#efb24a' : '#f0553f'; if (ht._v !== undefined) { ht.classList.remove('bump', 'up'); void ht.offsetWidth; ht.classList.add(hv < ht._v ? 'bump' : 'up'); } ht._v = hv; } }
+    document.body.classList.toggle('storyhud', !!(sim.mission && (sim.mission.soldier || sim.mission.camp)));
     const nm = state.peerNames[state.localIdx] || 'Commander'; const label = hero.type === 'hero' ? nm : `${nm} · ${hero.def.name.replace(/men$/, 'man').replace(/Infantry/, 'infantryman')}`; if ($('heroName').textContent !== label) $('heroName').textContent = label;
-    { const ws = hero.def.weapons || []; const key = hero.dead ? 'x' : ws.join() + hero.weapon + (hero.def.arm || ''); if (state.wpnKey !== key) { state.wpnKey = key; $('wpns').innerHTML = hero.dead ? '' : ws.map(x => `<span class="${x === hero.weapon ? 'on' : ''}">${wpnName(hero, x)}</span>`).join('') + (ws.length > 1 ? '<kbd>Q</kbd>' : ''); } }
+    if (hero.kit) { const K = hero.kit, am = (sl, i) => { const W = S.WPN[sl.k]; if (!(W && W.gun) && !(sl.o && (sl.w === 'rifle' || sl.w === 'bow'))) return ''; const n = i === hero.kitI ? hero.ammo : sl.am; return n === undefined ? '' : ` <b>${n}</b>`; };
+      const key = hero.dead ? 'x' : 'k' + K.map((s, i) => s.k + (i === hero.kitI ? '*' + hero.ammo : s.am)).join() + (hero.kitSh ? 'S' : '') + hero.weapon;
+      if (state.wpnKey !== key) { state.wpnKey = key; $('wpns').innerHTML = hero.dead ? '' : K.map((s, i) => `<span class="${i === hero.kitI ? 'on' : ''}"><kbd>${i + 1}</kbd> ${s.o ? wpnName(hero.kitI === i ? hero : Object.assign({}, hero, { def: hero.baseDef }), s.w) : S.WPN[s.k].n}${am(s, i)}</span>`).join('') + (hero.kitSh ? `<span>🛡 ${hero.team === 1 ? '盾' : '藤牌'}</span>` : ''); } }
+    else { const ws = hero.def.weapons || []; const key = hero.dead ? 'x' : ws.join() + hero.weapon + (hero.def.arm || ''); if (state.wpnKey !== key) { state.wpnKey = key; $('wpns').innerHTML = hero.dead ? '' : ws.map(x => `<span class="${x === hero.weapon ? 'on' : ''}">${wpnName(hero, x)}</span>`).join('') + (ws.length > 1 ? '<kbd>Q</kbd>' : ''); } }
     { let sb = document.getElementById('stam'); if (!sb) { sb = document.createElement('div'); sb.id = 'stam'; sb.innerHTML = '<i></i>'; sb.style.cssText = 'position:fixed;left:50%;bottom:86px;width:180px;height:5px;margin-left:-90px;background:rgba(0,0,0,.45);border:1px solid rgba(240,230,210,.25);border-radius:3px;overflow:hidden;pointer-events:none;transition:opacity .4s;z-index:5'; sb.firstChild.style.cssText = 'display:block;height:100%;background:#d9cfb6'; document.body.appendChild(sb); }
       const st = hero.champ ? Math.min(1, Math.max(0, (hero.sta || 0) / 100)) : 1 - Math.min(1, Math.max(0, (hero.fat || 0) / 100)); const show = !hero.dead && !Input.cmdMode && (st < 0.97 || hero.sprint);
       sb.style.opacity = show ? 1 : 0; sb.firstChild.style.width = (st * 100).toFixed(1) + '%'; sb.firstChild.style.background = hero.winded ? '#c0452e' : '#d9cfb6'; }
@@ -10046,7 +10130,9 @@ function updateHUD(dt) {
     const horse = sim.units[me.horseId];
     if (hero.mount < 0 && !hero.mounted && horse && !horse.dead && horse.rider < 0 && Math.hypot(horse.x - hero.x, horse.z - hero.z) < 3.4) ht = 'E · mount your horse';
     else if (hero.downT > 0) ht = 'You are down';
-    else if (hero.type !== 'hero') { const c = sim.units[me.commanderId]; if (c && !c.dead) ht = 'Backspace · return to your commander'; }
+    else if (sim.pickups && sim.pickups.length && hero.mount < 0 && !(hero.manE >= 0)) { let pk = null, bd = 1.9; for (const p of sim.pickups) { const d = Math.hypot(p.x - hero.x, p.z - hero.z); if (d < bd) { bd = d; pk = p; } }
+      if (pk && !sim.units.some(v => v.downed && !v.dead && v.team === hero.team && Math.hypot(v.x - hero.x, v.z - hero.z) < 2.6)) { const W = S.WPN[pk.k]; const full = hero.kit ? hero.kit.length >= 4 : (hero.def.weapons || []).length >= 4; ht = `E · pick up ${W.n}${W.sh ? '' : full ? ' (swap for the one in your hands)' : ''}`; } }
+    else if (hero.type !== 'hero' && !(sim.mission && sim.mission.soldier)) { const c = sim.units[me.commanderId]; if (c && !c.dead) ht = 'Backspace · return to your commander'; }
   } else if (hero && hero.dead) ht = (state.sim.mode === 'campaign' ? 'You have fallen. Press P to rejoin the fight with one of your companies' : 'You have fallen. Select a squad and press O, then U, to fight on in their ranks');
   if (!sim.heroMode) { if (ht !== hint.textContent) hint.textContent = ht; hint.hidden = !ht; }
   // periodic panels
