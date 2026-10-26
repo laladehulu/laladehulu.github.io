@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v54</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v55</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1521,7 +1521,8 @@ class Sim {
     if (u.swapQ && (u.st === ST_RELOAD || u.st === ST_AIM)) { u.st = ST_IDLE; u.stT = 0; u.aiming = false; } // drawing the other weapon breaks off a reload
     if (u.swapQ && u.st === ST_IDLE) { u.swapQ = false; if (u.nextWeapon && u.nextWeapon !== u.weapon) { u.st = ST_SWAP; u.stT = 0; u.blocking = false; u.aiming = false; } }
     const gun = gunOf(u.def, u.weapon);
-    if (gun && this.phase === 1) {
+    if (gun && this.phase === 1 && u.weapon === 'bow' && !(gun.xbow)) this.heroBow(u, a, gun);
+    else if (gun && this.phase === 1) {
       u.aiming = !!(a & A_AIM) && (u.st === ST_IDLE || u.st === ST_RELOAD) && !(a & A_BLOCK); u.aimHold = u.aiming && u.st === ST_IDLE ? (u.aimHold || 0) + DT : 0;
       const have = u.weapon === 'revolver' ? u.ammoR : u.ammo;
       if ((a & A_RELOAD) && u.club) { u.club = false; this.events.push({ t: 'grip', id: u.id, club: false }); }
@@ -1567,6 +1568,7 @@ class Sim {
       let sp = u.def.speed * this.zoneSpeed(u.x, u.z, mx, mz);
       if ((keys & KEY_S) && !(keys & KEY_W)) sp *= 0.65;
       if (u.st === ST_WINDUP || u.st === ST_RELEASE) sp *= 0.7; else if (u.st === ST_STUN) sp = 0;
+      if (u.drawT > 0) sp *= 0.55; // a drawn bow: you walk, you don't run
       if (u.blocking) sp *= 0.85; if (u.aiming) sp *= 0.5; if (u.st === ST_RELOAD) sp *= 0.8;
       // sprint: hold Shift while moving forward; burns stamina, and a winded man must get his breath back
       if (u.champ) { if (u.sta < 4) u.winded = true; else if (u.sta > 30) u.winded = false; } else { if ((u.fat || 0) >= 96) u.winded = true; else if ((u.fat || 0) < 55) u.winded = false; }
@@ -2464,7 +2466,8 @@ class Sim {
   }
   // ---------- ranged ----------
   fireHeroGun(u, g) {
-    let spread = (u.aiming ? (g.ads || g.spread * 0.3) : g.spread) + u.speedNow * 0.004 + (u.mount >= 0 ? 0.008 : 0) + (u.airborne ? 0.03 : 0);
+    // a bow def has no spread of its own (its archers aim by 'aim'): without a default every arrow a player loosed flew NaN
+    const gsp = g.spread !== undefined ? g.spread : 0.03; let spread = (u.aiming ? (g.ads || gsp * 0.3) : gsp) + (u.speedNow || 0) * 0.004 + (u.mount >= 0 ? 0.008 : 0) + (u.airborne ? 0.03 : 0);
     if (this.real) spread = spread * (1 + 2.2 * Math.max(0, 1 - (u.aimHold || 0) / 1.4)) + u.speedNow * 0.01 + ((u.fat || 0) > 50 ? 0.01 : 0);
     if (u.weapon === 'bow') { const v = g.speed || 50, cp = cos(u.pitch); const ox = u.x + sin(u.yaw) * 0.5, oy = u.y + 1.55, oz = u.z + cos(u.yaw) * 0.5; const sp2 = spread * 0.6;
       const yw = u.yaw + (this.rng.next() - 0.5) * sp2, pt = u.pitch + (this.rng.next() - 0.5) * sp2;
@@ -2633,7 +2636,7 @@ class Sim {
               if (p.kind === 'arrow' && v.def.shield && !v.dead && v.st !== ST_RELEASE && Math.abs(wrap(atan2(p.x - v.x, p.z - v.z) - v.yaw)) < 1.1 && this.rng.next() < 0.75) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
               if (p.kind === 'arrow' && v.ctrl >= 0 && !v.dead && (v.iframe > 0 || (v.blocking && Math.abs(wrap(atan2(p.x - v.x, p.z - v.z) - v.yaw)) < 1.2 && this.rng.next() < (v.def.shield ? 1 : 0.8)))) { this.events.push({ t: v.iframe > 0 ? 'evade' : 'arrowstick', id: v.id, x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); if (v.iframe <= 0) this.events.push({ t: 'block', x: p.x, y: p.y, z: p.z, perfect: false, by: v.id, att: -1, shield: !!v.def.shield }); done = true; break; } // you can slide under an arrow or turn it on your guard
               if (p.kind === 'arrow' && v.zfile && !v.dead && this.coverShield(v, p)) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
-              if (p.kind === 'arrow') { v.lastAttacker = p.owner; this.applyDamage(v, this.units[p.owner].def.bow.dmg * (v.def.ai === 'cannon' ? 0.3 : 1) * (v.ctrl >= 0 && !(this.players[v.ctrl] && this.players[v.ctrl].ai) ? 0.65 : 1), p.owner, p.vx * 0.03, 0, p.vz * 0.03, 'arrow', p.x, p.y, p.z); if (!v.dead) { if (this.xc) this.hitReact(v, this.units[p.owner], 'shot', false, false); else { v.flinchT = Math.max(v.flinchT, 0.25); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } } } this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); done = true; break; }
+              if (p.kind === 'arrow') { v.lastAttacker = p.owner; this.applyDamage(v, (p.dmg || (this.units[p.owner].def.bow || { dmg: 30 }).dmg) * (v.def.ai === 'cannon' ? 0.3 : 1) * (v.ctrl >= 0 && !(this.players[v.ctrl] && this.players[v.ctrl].ai) ? 0.65 : 1), p.owner, p.vx * 0.03, 0, p.vz * 0.03, 'arrow', p.x, p.y, p.z); if (!v.dead) { if (this.xc) this.hitReact(v, this.units[p.owner], 'shot', false, false); else { v.flinchT = Math.max(v.flinchT, 0.25); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } } } this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); done = true; break; }
               if (p.bolt) { v.lastShotBy = p; p.hits++; this.applyDamage(v, 80, p.owner, p.vx * 0.05, 1, p.vz * 0.05, 'arrow', p.x, p.y, p.z); if (!v.dead && v.mass < 5) v.downT = Math.max(v.downT, 0.8); this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); if (p.hits >= 3) { done = true; break; } continue; }
               // solid shot: bowl through
               const sp = len(p.vx, p.vz) || 1; const nx = p.vx / sp, nz = p.vz / sp;
@@ -4075,6 +4078,7 @@ Sim.prototype.assaultCap = function () {
   const humanMen = this.players.filter(p => !p.ai && p.team === A).reduce((s, p) => s + size(p), 0), humanDef = this.players.filter(p => !p.ai && p.team !== A).reduce((s, p) => s + size(p), 0);
   // attackers come as many small companies (about a fifth of the field each) so there are enough to fill the ditch,
   // push every engine and climb every ladder at once
+  // a siege needs more, smaller companies: one at each ditch, one at the ram, one at each tower
   const per = Math.max(8, Math.round(CAP / 3)); fit(groups(A, false), Math.max(16, CAP - humanMen)); for (const p of groups(A, true)) if (size(p) > per) this.mTrim(p, per, true);
   // the defenders' reserves count against the same field: garrison plus reserves never exceed the cap
   // (an assault needs odds: the attackers field the full cap, the defenders about 70% of it, as before the cap)
@@ -4450,6 +4454,28 @@ function siegeDitchH(d, x, z, h) { const dz = z - d.zc, ad = dz < 0 ? -dz : dz; 
 function siegeDitchWater(d, x, z) { const dz = z - d.zc, ad = dz < 0 ? -dz : dz; if (ad >= d.w * 0.8) return 0; const ax = x < 0 ? -x : x; if (ax < d.bridge) return -1;
   for (let i = 0; i < d.fills.length; i++) { const f = d.fills[i]; if (f.done && (x - f.x < 0 ? f.x - x : x - f.x) < f.hw) return 2; } return 1; }
 // a man on the wall top leans over the parapet in front of him to shoot down at the foot of the wall
+// a player's bow: hold to draw (A_AIM while the button is down), let go to loose (A_FIRE). The longer the draw, up to
+// about 0.8 s, the faster and harder the arrow; held at full draw past ~2.5 s the arm tires and the aim wavers. After
+// each arrow the next is nocked (about 0.8 s). Arrows come from his quiver (u.shots).
+Sim.prototype.heroBow = function (u, a, g) {
+  const FULL = 0.8, NOCK = 0.8;
+  if (u.st === ST_RELOAD || u.st === ST_SWAP || u.st === ST_STUN || u.downT > 0) { u.drawT = 0; u.aiming = false; return; }
+  if (u.ammo <= 0) { u.drawT = 0; u.aiming = false; if (u.st === ST_IDLE && (u.shots === undefined || u.shots > 0)) this.startReload(u, NOCK, true); return; }
+  const drawing = !!(a & A_AIM) && (u.st === ST_IDLE || u.st === ST_AIM) && !(a & A_BLOCK) && !u.club;
+  if (drawing) { if (!u.drawT) this.events.push({ t: 'bowdraw', id: u.id }); u.drawT = (u.drawT || 0) + DT; u.aiming = true; u.aimHold = u.drawT; }
+  if ((a & A_FIRE) && (u.drawT || 0) > 0.12) {
+    const p = clamp(u.drawT / FULL, 0.3, 1), tire = Math.max(0, u.drawT - 2.5), v = (g.speed || 40) * (0.55 + 0.45 * p);
+    let spread = 0.008 + (1 - p) * 0.03 + Math.min(0.06, tire * 0.02) + (u.speedNow || 0) * 0.004 + (u.mount >= 0 ? 0.012 : 0) + (u.airborne ? 0.03 : 0);
+    const ox = u.x + sin(u.yaw) * 0.5, oy = u.y + 1.55, oz = u.z + cos(u.yaw) * 0.5;
+    const yw = u.yaw + (this.rng.next() - 0.5) * spread, pt = u.pitch + (this.rng.next() - 0.5) * spread;
+    this.projectiles.push({ kind: 'arrow', x: ox, y: oy, z: oz, vx: sin(yw) * cos(pt) * v, vy: sin(pt) * v, vz: cos(yw) * cos(pt) * v, team: u.team, owner: u.id, life: 0, hits: 0, dmg: g.dmg * (0.45 + 0.55 * p), over: this.overParapet(u) });
+    this.events.push({ t: 'arrow', id: u.id, x: ox, y: oy, z: oz, hero: true, pw: p });
+    u.ammo = 0; if (u.shots !== undefined) u.shots = Math.max(0, u.shots - 1); u.drawT = 0; u.aiming = false;
+    if (u.shots === undefined || u.shots > 0) this.startReload(u, NOCK, true);
+    return;
+  }
+  if (!drawing) { u.drawT = 0; u.aiming = false; }
+};
 Sim.prototype.overParapet = function (u) { const W = TERR.swall; if (!this.sg || !W) return false; return u.z > W.z0 + 0.4 && u.z < W.z1 + 0.5 && u.y > W.h - 1.2; };
 Sim.prototype.siegeInit = function () {
   const M = this.mission, A = M.attacker, D = 1 - A, W = TERR.swall; const sg = this.sg = { A, D, gateHp: 6000, gateMax: 6000, engines: [], lads: [], emp: [], holes: [], fired: false, oilT: 0, stoneT: 0, slipT: 0, ice: this.bdef.biome === 'winter', sec: -1 };
@@ -6447,13 +6473,24 @@ class Renderer {
     function L0x(c) { return new THREE.MeshBasicMaterial({ color: c }); }
     this.sgv = true;
   }
+  // crewing a piece: the camera stands up and behind the gun (a little to the side) so the barrel never hides the field;
+  // RMB (empZoom) brings it back down to the sight. Blended in and out; the shot kicks it back.
+  empCam(hero, yaw, pitch, dt, look) {
+    const sg = this.sim.sg, e = sg && hero.manE >= 0 ? sg.emp[hero.manE] : null, on = !!(e && e.man === hero.id) && hero.downT <= 0;
+    const want = on && !this.empZoom ? 1 : 0; this.empK = (this.empK || 0) + (want - (this.empK || 0)) * (1 - Math.exp(-dt * 6)); const k0 = this.empK; if (k0 < 0.01 || !e) return;
+    const k = k0 * k0 * (3 - 2 * k0), cam = this.camera, fx = Math.sin(yaw), fz = Math.cos(yaw), kick = (this.empKick || 0) * (this.empKick || 0);
+    const bow = e.kind === 'bow', back = (bow ? 3.0 : 3.6) + kick * 0.6, up = (bow ? 2.2 : 2.7) + kick * 0.15, side = bow ? 0.7 : 0.9, gy = e.y + 1.2;
+    const px = e.x - fx * back - fz * side, py = gy + up, pz = e.z - fz * back + fx * side;
+    cam.position.set(lerp(cam.position.x, px, k), lerp(cam.position.y, py, k), lerp(cam.position.z, pz, k));
+    const lp = pitch - 0.16, cp = Math.cos(lp); look.set(lerp(look.x, cam.position.x + fx * cp * 10, k), lerp(look.y, cam.position.y + Math.sin(lp) * 10, k), lerp(look.z, cam.position.z + fz * cp * 10, k));
+  }
   // manning a bed crossbow or a gun: your own weapon is slung, your hands are on the piece (tiller and trigger bar, or the
   // two handspikes), and the ground shows where a shot at the present lay would first strike (Sim.sgPredict: the sim's own steps)
   empView(hero, dt) {
     const sg = this.sim.sg, e = sg && hero.manE >= 0 ? sg.emp[hero.manE] : null, on = !!(e && e.man === hero.id) && (this.tp || 0) < 0.3 && hero.downT <= 0;
     if (on && !this.vmEmp) this.buildEmpVM(hero);
     if (!this.vmEmp) return;
-    this.vmEmp.visible = on; this.empMark.visible = on; this.empArc.visible = on; if (!on) { this.empHud = null; return; }
+    this.vmEmp.visible = on && (this.empK || 0) < 0.4; this.empMark.visible = on; this.empArc.visible = on; if (!on) { this.empHud = null; return; }
     this.vm.visible = false; this.vmArms.visible = false; this.vmShield.visible = false; this.vmBow.visible = false;
     const bow = e.kind === 'bow'; this.vmEmpBow.visible = bow; this.vmEmpGun.visible = !bow;
     this.fovTarget = this.empZoom ? (bow ? 36 : 30) : 70;
@@ -6461,10 +6498,14 @@ class Renderer {
     this.vmEmp.position.set(0, -k * 0.06, k * 0.16); this.vmEmp.rotation.x = k * 0.12;
     this.empN = (this.empN || 0) + 1;
     if (this.empN % 3 === 1 || !this.empP) { const P = this.sim.sgPredict(e, e.yaw, e.pitch || 0); this.empP = P;
-      const gy = P.box ? P.y : SIM.terrainH(P.x, P.z); this.empMark.position.set(P.x, gy + 0.06, P.z); const dist = Math.hypot(P.x - e.x, P.z - e.z); const s = 0.8 + dist * 0.025; this.empMark.scale.set(s, s, s);
+      const gy = P.box ? P.y : SIM.terrainH(P.x, P.z); this.empMark.position.set(P.x, gy + 0.06, P.z); const dist = Math.hypot(P.x - e.x, P.z - e.z); 
       const A = this.empArc.geometry.attributes.position, n = Math.min(A.count, P.pts.length / 3); for (let i = 0; i < A.count; i++) { const j = Math.min(i, n - 1) * 3; if (n > 0) A.setXYZ(i, P.pts[j], P.pts[j + 1], P.pts[j + 2]); else A.setXYZ(i, e.x, e.y, e.z); } A.needsUpdate = true; this.empArc.geometry.setDrawRange(0, n); this.empArc.geometry.computeBoundingSphere();
-      this.empHud = { kind: e.kind, cd: e.cd, cdMax: e.cdMax || (bow ? 150 : 270), elev: e.pitch || 0, want: this._viewPitch, dist, wall: !!P.box, out: !!P.out }; }
+      // the ring: where a ball first strikes it skips and ploughs on (a bolt sticks), so mark the ground it can sweep; foes inside turn it red
+      const rr = bow ? 1.6 : 3.2; let foes = 0; if (!P.out) for (const u of this.sim.units) { if (u.dead || u.team === e.team || u.type === 'horse') continue; if (Math.hypot(u.x - P.x, u.z - P.z) < rr) foes++; }
+      this.empMark.scale.set(rr, rr, rr); this.empMark.children[0].material.color.setHex(foes ? 0xff6a4a : 0xffd27a);
+      this.empHud = { kind: e.kind, cd: e.cd, cdMax: e.cdMax || (bow ? 150 : 270), elev: e.pitch || 0, want: this._viewPitch, dist, wall: !!P.box, out: !!P.out, foes }; }
     else if (this.empHud) { this.empHud.cd = e.cd; this.empHud.elev = e.pitch || 0; this.empHud.want = this._viewPitch; }
+    { const m = this.empArc.material, tk = this.empK || 0; m.size = 0.16 + tk * 0.22; m.opacity = (e.cd > 0 ? 0.22 : 0.85) * (0.55 + 0.45 * tk); }
   }
   buildEmpVM(hero) {
     const g = new THREE.Group(); this.camera.add(g); this.vmEmp = g; const mk = (c) => new THREE.MeshLambertMaterial({ color: c, depthTest: false });
@@ -6895,7 +6936,10 @@ class Renderer {
     vm.add(rifle); this.vmRifle = rifle;
     // horn bow held out at arm's length, and a rattan shield on the left arm
     const vb = new THREE.Group(); const bw2 = new THREE.MeshLambertMaterial({ color: 0x5a3b1e });
-    vb.add(bx(0.03, 0.42, 0.035, bw2, 0, 0.2, -0.02, -0.25)); vb.add(bx(0.03, 0.42, 0.035, bw2, 0, -0.2, -0.02, 0.25)); vb.add(bx(0.006, 0.8, 0.006, new THREE.MeshLambertMaterial({ color: 0xe8e2cc }), 0, 0, 0.07));
+    vb.add(bx(0.03, 0.42, 0.035, bw2, 0, 0.2, -0.02, -0.25)); vb.add(bx(0.03, 0.42, 0.035, bw2, 0, -0.2, -0.02, 0.25));
+    { // the string in two halves that meet at the nock and pull back with the draw, and the nocked arrow
+      const sm = new THREE.MeshLambertMaterial({ color: 0xe8e2cc }); this.vmBowS = [bx(0.006, 1, 0.006, sm, 0, 0.2, 0.07), bx(0.006, 1, 0.006, sm, 0, -0.2, 0.07)]; for (const s of this.vmBowS) vb.add(s);
+      const ar = new THREE.Group(); ar.add(bx(0.008, 0.008, 0.72, new THREE.MeshLambertMaterial({ color: 0x8a6a40 }), 0, 0, -0.36)); ar.add(bx(0.012, 0.012, 0.06, new THREE.MeshLambertMaterial({ color: 0x9aa0a6 }), 0, 0, -0.74)); ar.add(bx(0.002, 0.03, 0.08, new THREE.MeshLambertMaterial({ color: 0xd8d0c0 }), 0, 0.012, -0.03)); vb.add(ar); this.vmBowA = ar; }
     vb.visible = false; vmFov.add(vb); this.vmBow = vb;
     const sh = new THREE.Group(); const disk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 18), new THREE.MeshLambertMaterial({ color: 0xa8844a })); disk.rotation.x = Math.PI / 2; sh.add(disk);
     const boss = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 10), new THREE.MeshLambertMaterial({ color: 0x8a2a20 })); boss.rotation.x = Math.PI / 2; boss.position.z = -0.03; sh.add(boss);
@@ -7827,7 +7871,13 @@ class Renderer {
     const P = (px, py, pz, rx, ry, rz) => ({ px, py, pz, rx, ry, rz });
     const xbow = hero.weapon === 'bow' && hero.def.bow && hero.def.bow.xbow; const w = xbow ? 'rifle' : hero.weapon, T = this.tmp;
     this.vmXbar.visible = xbow; this.vmBow.visible = hero.weapon === 'bow' && !xbow;
-    if (this.vmBow.visible) { const dr = hero.st === ST_AIM || hero.aiming ? 1 : 0; this.vmBow.position.set(-0.05 + dr * 0.04, -0.12 + dr * 0.08, -0.55); this.vmBow.rotation.set(0, 0, 0.2 - dr * 0.15); }
+    if (this.vmBow.visible) { const dr = hero.st === ST_AIM || hero.aiming ? 1 : 0;
+      // the draw: the bow comes up to the eye, the string comes back toward the cheek; a long-held full draw trembles
+      const d = Math.min(1, (hero.drawT || 0) / 0.8), k = this.vmBowK = (this.vmBowK || 0) + (d - (this.vmBowK || 0)) * Math.min(1, dt * 16), tr = Math.max(0, (hero.drawT || 0) - 2.5) * 0.004;
+      const sh = tr ? Math.sin(performance.now() / 23) * tr : 0;
+      this.vmBow.position.set(-0.05 + dr * 0.04 + sh, -0.12 + dr * 0.08 + sh * 0.7, -0.55 + k * 0.05); this.vmBow.rotation.set(0, 0, 0.2 - dr * 0.15 - k * 0.05);
+      if (this.vmBowS) { const nz = 0.07 + k * 0.34, tips = [[0.4, -0.02], [-0.4, -0.02]]; this.vmBowS.forEach((s, i) => { const ty = tips[i][0], tz = tips[i][1], dy = 0 - ty, dz = nz - tz, L = Math.hypot(dy, dz); s.position.set(0, ty + dy / 2, tz + dz / 2); s.scale.set(1, L, 1); s.rotation.set(Math.atan2(dz, dy), 0, 0); });
+        const nocked = hero.ammo > 0 || (hero.st === ST_RELOAD && hero.stT > (hero.reloadT || 0.8) * 0.6); this.vmBowA.visible = nocked; this.vmBowA.position.set(0.012, 0, nz); } }
     { const arm = hero.def.arm, K = this.vmKatana.scale; if (arm === 'guandao') K.set(1.1, 1.8, 2.2); else if (arm === 'mace') K.set(3, 0.72, 1.3); else if (arm === 'jian') K.set(0.75, 1.15, 0.6); else K.set(1, 1, 1); }
     { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * 14); const k = this.vmShieldK; tp.set(-0.42 + k * 0.15, -0.36 + k * 0.05, -0.55 - k * 0.07); this.vmShield.rotation.set(0.1 + k * 0.12, 0.5 - k * 0.3, k * 0.12); } }
     const yrole = w === 'yari' ? (hero.kitRole !== undefined ? hero.kitRole : hero.role) : null; this.vmYari.scale.y = yrole === 'spear' ? 1.75 : 1; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
@@ -7997,6 +8047,7 @@ class Renderer {
       { const big = hero.champ && (hero.spinT > 0 || hero.dashT > 0 || hero.castT > 0 || hero.vault || hero.plunge); this.tp = (this.tp || 0) + ((big ? 1 : 0) - (this.tp || 0)) * (1 - Math.exp(-dt * (big ? 9 : 4)));
         if (this.tp > 0.01) { const k = this.tp * this.tp * (3 - 2 * this.tp); const back = 4.6 * k, up = 1.1 * k, side = 0.9 * k; const fx = Math.sin(yaw), fz = Math.cos(yaw);
           cam.position.set(cam.position.x - fx * back - fz * side, cam.position.y + up, cam.position.z - fz * back + fx * side); T.v.y -= 0.4 * k; T.v.x = lerp(T.v.x, hx + fx * 3, k); T.v.z = lerp(T.v.z, hz + fz * 3, k); T.v.y = lerp(T.v.y, hy + 1.4, k); } }
+      this.empCam(hero, yaw, pitch, dt, T.v);
       cam.lookAt(T.v); this.dodgeRoll = (this.dodgeRoll || 0) * Math.exp(-dt * 7); cam.rotateZ(this.recoilRoll * 0.03 + (hero.downT > 0 ? 0.6 : 0) + this.camRoll + this.dodgeRoll + (this.slideRoll || 0) + IM.r + flin * 0.03); cam.rotateX(this.camPitch); cam.translateZ(-this.camPush);
       this.fov += (this.fovTarget - this.fov) * (1 - Math.exp(-dt * 14));
       { const f = this.fov - IM.fov; if (Math.abs(cam.fov - f) > 0.05) { cam.fov = f; cam.updateProjectionMatrix(); } const vk = Math.min(1, Math.tan(cam.fov * PI / 360) / Math.tan(64 * PI / 360)); this.vmFov.scale.set(vk, vk, 1); }
@@ -8062,7 +8113,7 @@ class Renderer {
       const yaw = lerpA(u.pyaw, u.yaw, alpha);
       if (u.mounted) { const hs = this.horseSlot.get(u.id); this.drawHorse(hs, u, x, y, z, lerpA(u.phyaw, u.hyaw, alpha), u.speedNow, u.walk, false, 0); }
       const sy = u.champ && u.spinT > 0 ? yaw + (1 - clamp(u.spinT / 0.55, 0, 1)) * PI * 2 : yaw;
-      this.drawFigure(i, u, x, y, z, sy, alpha, far || (fp && i === heroId && (this.tp || 0) < 0.3));
+      this.drawFigure(i, u, x, y, z, sy, alpha, far || (fp && i === heroId && (this.tp || 0) < 0.3 && (this.empK || 0) < 0.35));
     }
     this.ownMarkEnd(om, capt, view);
     // dead horses
@@ -9450,12 +9501,14 @@ function empHUD(hero) {
   el.hidden = false; const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), gun = H.kind !== 'bow', deg = (x) => (x * 180 / Math.PI), e = deg(H.elev), w = deg(H.want), laying = Math.abs(w - e) > 0.6;
   const ticks = []; for (let d = -25; d <= 30; d += 5) ticks.push(`<i style="bottom:${((d + 25) / 55 * 100).toFixed(1)}%"${d === 0 ? ' class="z"' : ''}><b>${d > 0 ? '+' : ''}${d}°</b></i>`);
   el.innerHTML = `<div class="scale">${ticks.join('')}<u style="bottom:${((clamp(e, -25, 30) + 25) / 55 * 100).toFixed(1)}%"></u><s style="bottom:${((clamp(w, -25, 30) + 25) / 55 * 100).toFixed(1)}%"></s></div>`
-    + `<div class="rd"><b>${gun ? '砲' : '弩'}</b> 仰 ${e >= 0 ? '+' : ''}${e.toFixed(1)}°${laying ? ' · laying…' : ''}<br>${H.out ? 'beyond the field' : H.wall ? 'strikes the wall ahead' : `falls at ${Math.round(H.dist)} m`}</div>`;
+    + `<div class="rd"><b>${gun ? '砲' : '弩'}</b> 仰 ${e >= 0 ? '+' : ''}${e.toFixed(1)}°${laying ? ' · laying…' : ''}<br>${H.out ? 'beyond the field' : H.wall ? 'strikes the wall ahead' : `落 ${Math.round(H.dist / 1.6)} 步 · ${Math.round(H.dist)} m`}${H.foes ? ` · <b style="color:#ff8a6a">${H.foes} in the ring</b>` : ''}</div>`;
   $('weapon').textContent = gun ? '紅夷砲 · the gun' : '床弩 · bed crossbow';
   const ready = H.cd <= 0; $('ammoFill').style.width = (ready ? 100 : (1 - H.cd / H.cdMax) * 100).toFixed(0) + '%'; $('ammoText').textContent = ready ? 'Ready · LMB fire' : `${gun ? 'Sponging and loading' : 'Spanning the bow'}… ${Math.ceil(H.cd / 30)} s`;
-  $('dirText').textContent = 'Mouse lays the piece · RMB look closer · LMB fire · E leave it';
+  $('dirText').textContent = 'Mouse lays the piece · wheel fine elevation · RMB sight · LMB fire · E leave it';
 }
-function gunMode() { const h = localHero(); return h && ((h.weapon === 'rifle' && !Input.bayonet && !h.club) || h.weapon === 'revolver'); }
+function gunMode() { const h = localHero(); return h && ((h.weapon === 'rifle' && !Input.bayonet && !h.club) || h.weapon === 'revolver' || h.weapon === 'bow'); }
+// a bow (not a crossbow): hold the left button to draw, let go to loose
+function bowMode() { const h = localHero(); return !!(h && !h.dead && h.weapon === 'bow' && !(h.def.bow && h.def.bow.xbow)); }
 document.addEventListener('keydown', (e) => {
   if (state.screen !== 'game') return;
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
@@ -9629,6 +9682,7 @@ canvas.addEventListener('mousedown', (e) => {
   if (!Input.locked) { requestLock(); return; }
   if (Input.orderMode) { if (e.button === 0) fpMove(); else if (e.button === 2) fpCharge(); return; }
   if (e.button === 1) { e.preventDefault(); if (fpReady()) fpMove(); return; }
+  if (e.button === 0 && bowMode()) { Input.bowHeld = true; return; }
   if (e.button === 0) { if (gunMode()) Input.pressed |= S.A_FIRE; else { Input.lmb = true; Input.atkDir = slashDir(); } }
   else if (e.button === 2) { if (gunMode()) Input.ads = !Input.ads; else { Input.rmb = true; Input.blockDir = S.DIR_UP; } }
 });
@@ -9636,6 +9690,7 @@ document.addEventListener('mouseleave', () => { Input.mouseMoved = false; });
 window.addEventListener('mouseout', (e) => { if (!e.relatedTarget) Input.mouseMoved = false; });
 document.addEventListener('mouseup', (e) => {
   if (e.button === 0) Input.lmb = false; if (e.button === 2) Input.rmb = false;
+  if (e.button === 0 && Input.bowHeld) { Input.bowHeld = false; if (bowMode()) Input.pressed |= S.A_FIRE; }
   if (Drag.btn !== e.button || state.screen !== 'game') return;
   const btn = Drag.btn; Drag.btn = -1;
   if (!Input.cmdMode) return;
@@ -9699,6 +9754,8 @@ function lineOrder(a, b) {
 }
 canvas.addEventListener('wheel', (e) => {
   if (state.screen !== 'game') return; e.preventDefault();
+  const mh = localHero();
+  if (mh && mh.manE >= 0 && !Input.cmdMode) { Input.pitch = Math.max(-1.45, Math.min(1.45, Input.pitch + (e.deltaY < 0 ? 1 : -1) * 0.0087)); return; } // on a gun the wheel lays it half a degree at a time
   if (Input.cmdMode) { const r = state.renderer; if (r) r.cmdCam.h = Math.max(22, Math.min(200, r.cmdCam.h * (e.deltaY > 0 ? 1.15 : 0.87))); }
   else if (!tapAttack(e.deltaY < 0 ? S.DIR_UP : S.DIR_DOWN)) { Input.pressed |= S.A_SWAP; Input.ads = false; }
 }, { passive: false });
@@ -9875,6 +9932,7 @@ function collectInput() {
   let acts = Input.pressed; Input.pressed = 0;
   if (Input.cmdMode) acts |= S.A_CMD;
   if (!gun) { if (Input.lmb || Input.tapAtk) acts |= S.A_ATK; Input.tapAtk = false; if (Input.rmb) acts |= S.A_BLOCK; acts &= ~S.A_FIRE; }
+  else if (bowMode()) { if (Input.bowHeld) acts |= S.A_AIM; }
   else { if (Input.ads) acts |= S.A_AIM; }
   const yawQ = ((Math.round(Input.yaw / (Math.PI * 2) * 65536) % 65536) + 65536) % 65536;
   const pitchQ = Math.round(Input.pitch * 10000);
@@ -10111,8 +10169,16 @@ function updateHUD(dt) {
   const sim = state.sim, r = state.renderer; const hero = localHero(); const me = sim.players[state.localIdx];
   if (state.toastT > 0) { state.toastT -= dt; if (state.toastT <= 0) $('toast').classList.remove('show'); }
   { // the red at the edges grows as you lose blood, and beats when you are close to the end; a hit flashes on top
-    const hp0 = hero && !hero.dead ? Math.max(0, Math.min(1, 1 - hero.hp / hero.def.hp)) : 0, low = Math.max(0, (hp0 - 0.25) / 0.75), pulse = hp0 > 0.7 ? 0.12 * (0.5 + 0.5 * Math.sin(performance.now() / 260)) : 0;
-    const fl = r.hitFlash > 0 || r.imp.blur > 0.02 ? Math.min(1, r.hitFlash * 1.6 + r.imp.blur * 0.4) : 0; $('vignette').style.opacity = Math.max(fl, Math.min(0.85, low * 0.7 + pulse)); } $('vignette').style.transform = r.imp.blur > 0.02 ? `scale(${1 + r.imp.blur * 0.06})` : '';
+    // health you can read from the screen alone: the red edge creeps in from the first wound, the colour drains,
+    // the world darkens and below half it beats like a heart, faster and harder the closer you are to the end
+    const hp0 = hero && !hero.dead ? Math.max(0, Math.min(1, 1 - hero.hp / hero.def.hp)) : 0, low = Math.max(0, (hp0 - 0.08) / 0.92);
+    const beat = hp0 > 0.5 ? (hp0 - 0.5) * 2 : 0, ph = performance.now() / (520 - beat * 220), pulse = beat * (0.5 + 0.5 * Math.pow(Math.max(0, Math.sin(ph)), 6)) * 0.35;
+    const fl = r.hitFlash > 0 || r.imp.blur > 0.02 ? Math.min(1, r.hitFlash * 1.6 + r.imp.blur * 0.4) : 0; $('vignette').style.opacity = Math.max(fl, Math.min(1, low * 0.85 + pulse));
+    // near fainting (below about a third): the colour all but goes, the view swims in and out of focus and closes in
+    const fa = Math.max(0, (hp0 - 0.65) / 0.35), swim = fa > 0 ? fa * (0.55 + 0.45 * Math.sin(performance.now() / 900)) : 0;
+    const cv = $('c'); if (cv) { const k = Math.round(low * 100) / 100, f = k > 0.01 ? `saturate(${Math.max(0.08, 1 - k * 0.7 - fa * 0.25).toFixed(2)}) brightness(${(1 - k * 0.25 - pulse * 0.25 - fa * 0.12).toFixed(2)}) contrast(${(1 + k * 0.12).toFixed(2)})${swim > 0.02 ? ` blur(${(swim * 3.2).toFixed(1)}px)` : ''}` : ''; if (cv._f !== f) { cv.style.filter = f; cv._f = f; } }
+    { let t = document.getElementById('faintv'); if (!t) { t = document.createElement('div'); t.id = 'faintv'; t.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:6;background:radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,.92) 85%)'; document.body.appendChild(t); }
+      const o = (fa * (0.75 + 0.25 * Math.sin(performance.now() / 700))).toFixed(2); if (t._o !== o) { t.style.opacity = o; t._o = o; } } } $('vignette').style.transform = r.imp.blur > 0.02 ? `scale(${1 + r.imp.blur * 0.06})` : '';
   $('parry').style.opacity = r.parryFlash > 0 ? r.parryFlash : 0;
   if (hero && !hero.dead && !Input.cmdMode && sim.phase === 1) { // a horseman bearing down on you: warn in time to dodge or brace
     state.cavT = (state.cavT || 0) - dt; if (state.cavT <= 0) { for (const v of sim.teamAlive[1 - hero.team]) { if (!v.mounted || Math.abs(v.hspeed || 0) < 5.5) continue; const dx = hero.x - v.x, dz = hero.z - v.z, d = Math.hypot(dx, dz); if (d > 28 || d < 3) continue; if ((dx * Math.sin(v.yaw) + dz * Math.cos(v.yaw)) / d < 0.9) continue;
@@ -10160,7 +10226,10 @@ function updateHUD(dt) {
     const g = S.gunOf(hero.def, w);
     if (g) {
       const mag = g.mag || 1; const have = w === 'revolver' ? hero.ammoR : hero.ammo;
-      if (hero.st === S.ST_RELOAD && hero.reloadT > 0.6) { $('ammoFill').style.width = (hero.stT / hero.reloadT * 100).toFixed(1) + '%'; $('ammoText').textContent = mag > 1 ? `Reloading… ${have}/${mag}` : 'Reloading…'; }
+      if (bowMode()) { const q = hero.shots === undefined ? '' : ` · ${hero.shots} in the quiver`, d = Math.min(1, (hero.drawT || 0) / 0.8);
+        if (hero.st === S.ST_RELOAD) { $('ammoFill').style.width = (hero.stT / Math.max(0.1, hero.reloadT) * 100).toFixed(0) + '%'; $('ammoText').textContent = 'Nocking…' + q; }
+        else { $('ammoFill').style.width = (hero.ammo > 0 ? (d > 0 ? d * 100 : 100) : 0).toFixed(0) + '%'; $('ammoText').textContent = (hero.ammo > 0 ? (d > 0 ? (d >= 1 ? 'Full draw · let go' : 'Drawing…') : 'Hold LMB to draw') : 'No arrow') + q; } }
+      else if (hero.st === S.ST_RELOAD && hero.reloadT > 0.6) { $('ammoFill').style.width = (hero.stT / hero.reloadT * 100).toFixed(1) + '%'; $('ammoText').textContent = mag > 1 ? `Reloading… ${have}/${mag}` : 'Reloading…'; }
       else { $('ammoFill').style.width = (have / mag * 100).toFixed(0) + '%'; $('ammoText').textContent = mag > 1 ? `${'●'.repeat(have)}${'○'.repeat(mag - have)}${have === 0 ? ' · R reload · Q club' : ''}` : (have > 0 ? 'Loaded' : 'Empty · R reload' + (hero.def.weapons.length > 1 ? '' : ' · Q club')); }
     } else { $('ammoFill').style.width = (hero.st === S.ST_WINDUP ? Math.min(1, (hero.stT) / 0.28) * 100 : hero.blocking ? 100 : 0).toFixed(0) + '%'; $('ammoText').textContent = hero.st === S.ST_WINDUP ? `Winding up: ${DIRN[hero.atkDir]}` : hero.blocking ? `Blocking ${BLKN[hero.blockDir]}` : hero.st === S.ST_RECOVER ? 'Recovering' : ''; }
     $('dirText').textContent = (!hero.dead && !Input.cmdMode && !gunMode()) ? (hero.weapon === 'yari' ? 'LMB thrust · wheel↑ slam · RMB block · double-tap A/D slide' : 'LMB slash · hold heavy · wheel↑ overhead · R stab · RMB block · double-tap A/D slide') : (me.rallyT > 0 ? `rally in ${Math.ceil(me.rallyT / 30)}s` : 'V · rally');
