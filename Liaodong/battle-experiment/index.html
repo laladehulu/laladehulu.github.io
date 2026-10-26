@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v55</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v56</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -4578,7 +4578,10 @@ Sim.prototype.siegeThink = function () {
   for (const f of TERR.sditch.fills) { if (f.done) continue; const z = this.missionZone(f.key); if (z && z.owner === A) { f.done = true; this.sgRewater(f); nav = true; this.events.push({ t: 'sgfill', x: f.x, z: TERR.sditch.zc }); } }
   // engines: pushed by the besiegers behind them, hacked at and burned by the defenders
   for (const e of sg.engines) { if (e.hp <= 0) continue; const S = SGE[e.kind];
-    const pushers = this.sgCount(e.x, e.z - S.hd - 1.5, 6, A), foes = this.sgCount(e.x, e.z, S.hw + 2.5, D); e.push = pushers;
+    // every engine comes with its own crew sheltering behind it (the men who push it are not the company that escorts
+    // it); a badly damaged engine has lost its crew and moves only if soldiers lay hands on it
+    const crew = e.hp > e.max * 0.3 ? e.need : 0;
+    const pushers = this.sgCount(e.x, e.z - S.hd - 1.5, 6, A) + crew, foes = this.sgCount(e.x, e.z, S.hw + 2.5, D); e.push = pushers; e.crew = crew;
     if (foes) this.sgHurt(e, foes * 5);
     if (e.burn > 0) { e.burn -= 0.5; this.sgHurt(e, e.kind === 'tower' ? 28 : 22); if (this.tick % 45 === 0) this.events.push({ t: 'sgburn', x: e.x, z: e.z, kind: e.kind }); }
     { const c = this.fireCell(e.x, e.z); if (c >= 0 && this.fireState[c] === 1 && e.burn < 2) e.burn = 4; }
@@ -4661,7 +4664,12 @@ Sim.prototype.siegeDirs = function () {
   // every time an engine is hit or a ladder falls
   const ram = eng('ram')[0]; if (ram && !(ram.atGate && sg.gateHp <= 0)) jobs.push([ram.x, ram.z - 5, false, 'ram']);
   eng('tower').forEach((t, i) => jobs.push(t.docked ? [t.x, W.z0 + 2.5, false, 'tw' + t.id] : [t.x, t.z - 5, false, 'tw' + t.id]));
-  if (s === 0) { const dz = M.sectors[0].map(k => { const z = this.missionZone(k); return [z.x, z.z, false, 'z' + k]; }); jobs.unshift(...dz, ...dz.map(j => [j[0], j[1], false, j[3] + 'b'])); for (const c of eng('cart')) if (c.cover) jobs.push([c.x, c.z - 4, false, 'ct' + c.id]); }
+  if (s === 0) { // three lanes: west (its ditch, then its tower), centre (the ram), east; extra companies take the ditches and the carts
+    const tw = eng('tower'), lane = (k, t) => { const z = this.missionZone(k); return z.owner !== A || !t ? [z.x, z.z] : [t.x, t.z - 5]; };
+    jobs.length = 0; const W0 = lane(M.sectors[0][0], tw.find(t => t.lane < 0)), E0 = lane(M.sectors[0][1], tw.find(t => t.lane > 0));
+    jobs.push([W0[0], W0[1], false, 'LW'], ram ? [ram.x, ram.z - 5, false, 'ram'] : [0, TERR.sditch.zc - 8, false, 'LC'], [E0[0], E0[1], false, 'LE']);
+    for (const k of M.sectors[0]) { const z = this.missionZone(k); jobs.push([z.x, z.z, false, 'z' + k]); }
+    for (const c of eng('cart')) if (c.cover) jobs.push([c.x, c.z - 4, false, 'ct' + c.id]); }
   else { sg.lads.forEach((L, i) => jobs.push(L.up ? [L.x, W.z0 + 2.5, false, 'ld' + i] : [L.x, W.z0 - 3, false, 'ld' + i])); for (const c of eng('cart')) if (!c.cover) jobs.push([c.lane, W.z0 - 2.5, false, 'ct' + c.id]); if (sg.gateHp <= 0) jobs.unshift([0, W.z1 + 6, false, 'gate']); }
   const load = {}; for (const g of att) { const G = this.mg[g]; if (G.jid && G.jsec === s && jobs.some(j => j[3] === G.jid)) load[G.jid] = (load[G.jid] || 0) + 1; else { G.jid = null; G.jsec = s; } }
   att.forEach((g) => { const G = this.mg[g], p = this.players[G.p]; if (!jobs.length) return;
@@ -6929,7 +6937,7 @@ class Renderer {
     rifle.add(bx(0.04, 0.05, 0.22, wood, 0, -0.04, 0.0));
     rifle.add(bx(0.034, 0.07, 0.3, wood, 0, -0.1, 0.22, 0.38));
     rifle.add(bx(0.008, 0.024, 0.012, brass, 0, 0.022, 0)); rifle.add(bx(0.006, 0.02, 0.006, brass, 0, 0.022, -1.1));
-    rifle.add(bx(0.012, 0.012, 0.09, brass, 0.03, 0.02, -0.06, -0.8)); rifle.add(bx(0.016, 0.016, 0.016, glow, 0.03, 0.05, -0.1));
+    rifle.add(bx(0.012, 0.012, 0.09, brass, 0.03, 0.02, -0.06, -0.8)); rifle.add(bx(0.016, 0.016, 0.016, glow, 0.03, 0.05, -0.1)); this.vmNearEye = rifle.children.slice(-2);
     rifle.add(bx(0.012, 0.012, 0.28, blade, 0, 0.0, -1.24));
     const breech = new THREE.Group(); breech.position.set(0.026, 0.004, -0.13); breech.add(bx(0.03, 0.006, 0.03, brass, 0, 0.006, 0)); rifle.add(breech); this.vmBreech = breech;
     const xbar = new THREE.Group(); xbar.add(bx(0.74, 0.024, 0.034, wood, 0, -0.005, -0.92)); xbar.add(bx(0.006, 0.006, 0.5, new THREE.MeshLambertMaterial({ color: 0xe8e2cc }), 0.19, 0, -0.72, 0, 0.72)); xbar.add(bx(0.006, 0.006, 0.5, new THREE.MeshLambertMaterial({ color: 0xe8e2cc }), -0.19, 0, -0.72, 0, -0.72)); xbar.visible = false; rifle.add(xbar); this.vmXbar = xbar;
@@ -7980,6 +7988,7 @@ class Renderer {
     vm.rotation.set(st.rot.x + this.recoil * 0.3 + st.lagY * 2 * ads - jo * 0.22, st.rot.y + st.lagX * 1.5 * ads, st.rot.z + this.recoilRoll * 0.1 + jr * 0.5);
     // moving parts
     this.vmBreech.rotation.z = -2.0 * breechOpen;
+    if (!(this.vmSj && this.vmSj.visible)) { const sight = hero.aiming && hero.st !== ST_RELOAD; if (this.vmNearEye) for (const m of this.vmNearEye) m.visible = !sight; this.vmBreech.visible = !sight; } // down the sights the brass serpentine and the match sit right at your eye: leave them out
     this.vmCyl.position.x = -0.04 * cylOut;
     this.vmCart.visible = cart;
     this.vmRod.visible = rod; if (rod) { this.vmRod.position.copy(st.rh).add(T.v.set(0, 0, 0.45)); }
