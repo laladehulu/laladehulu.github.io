@@ -6,7 +6,7 @@
 <meta name="description" content="Turbine Hall: run an AI research lab in Marfrancisco on Europa. Real papers, real code, real statistics.">
 <title>Turbine Hall</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
 [hidden]{display:none!important}
 /* Layout: grand-strategy console. Resource bar + nav on top, objectives strip, then a working view per tab
@@ -929,6 +929,14 @@ body.imm .m3mm{border-radius:0}
 .ml-act{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap} .ml-act input{width:110px;accent-color:var(--haz)}
 .ml>small{grid-column:1/-1}
 @media (max-width:900px){.ml-wrap{grid-template-columns:1fr}}
+
+/* ---------- Map labels: Paradox-style tiers ---------- */
+body .m3lab{font:700 11px/1 var(--display);letter-spacing:.06em;padding-bottom:2px;border-bottom:2px solid transparent}
+body .m3lab.mine{color:var(--haz)}
+body .m3lab.big{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:600;text-transform:uppercase;letter-spacing:.35em;border:0;text-shadow:0 0 6px rgba(0,0,0,.55)}
+body .m3lab.big.water{color:rgba(170,205,215,.78)}
+body .m3lab.big.land{color:rgba(245,235,220,.62)}
+.m3ui button.on{background:var(--haz);color:#111}
 </style>
 
 <div id="world"></div>
@@ -4820,21 +4828,23 @@ function paperPanel(){
    the nearest site is picked). Buildings stand on foundations, owners' sites are linked by
    conduits that carry animated power/data pulses. Falls back to the 2D map without WebGL2. */
 const M3 = (() => {
-  const W = MAP_W, H = MAP_H, OX = W / 2, OZ = H / 2, NX = 230, NZ = Math.round(230 * MAP_H / MAP_W);
+  /* the detailed terrain covers the district plus a margin MG drawn at the same resolution, so the land around
+     the playable area is as crisp as the district itself (no stretched, blurry cells) */
+  const W = MAP_W, H = MAP_H, OX = W / 2, OZ = H / 2, MG = 380, DXG = W / 230, NX = Math.round((W + 2 * MG) / DXG), NZ = Math.round((H + 2 * MG) / DXG), GW = W + 2 * MG, GH = H + 2 * MG;
   const NV = (NX + 1) * (NZ + 1), WATER = -11;
   const OIDS = ["you", "halyard", "meridian", "northwind", "utility"];
   const OCOL = {you:[0.95,0.78,0.26], halyard:[0.50,0.74,0.92], meridian:[0.74,0.62,0.95], northwind:[0.50,0.80,0.46], utility:[0.66,0.70,0.72]};
   const C = {metal:[0.46,0.50,0.54], dark:[0.17,0.19,0.22], white:[0.86,0.89,0.91], conc:[0.34,0.35,0.38], win:[1.0,0.84,0.52], teal:[0.36,0.86,0.76], orange:[1.0,0.52,0.18], rock:[0.42,0.31,0.24], ice:[0.80,0.89,0.96], glass:[0.62,0.84,0.95], red:[0.78,0.26,0.15]};
   const TP = {
     ice:{h:8, amp:9, c1:[0.80,0.85,0.88], c2:[0.62,0.71,0.78], e:0},
-    regolith:{h:3, amp:3, c1:[0.56,0.39,0.29], c2:[0.68,0.53,0.41], e:0},
+    regolith:{h:3, amp:3, c1:[0.52,0.38,0.30], c2:[0.63,0.50,0.40], e:0},
     vent:{h:1.5, amp:4.5, c1:[0.30,0.19,0.13], c2:[0.52,0.29,0.15], e:0.16},
     dome:{h:4, amp:0.8, c1:[0.40,0.43,0.48], c2:[0.49,0.52,0.57], e:0},
     archive:{h:7, amp:5, c1:[0.28,0.34,0.34], c2:[0.38,0.45,0.43], e:0.02},
     port:{h:3.5, amp:0.3, c1:[0.32,0.33,0.37], c2:[0.38,0.39,0.43], e:0},
     crack:{h:-25, amp:4, c1:[0.28,0.15,0.10], c2:[0.44,0.24,0.14], e:0}
   };
-  let avail = null, gl = null, canvas = null, wrap = null, tip = null, labelEls = [], progL = null, progP = null;
+  let GP = null, polMode = false, avail = null, gl = null, canvas = null, wrap = null, tip = null, labelEls = [], progL = null, progP = null;
   let HF = null, WI = null, WV = null, WS = null, BASEC = null, BASEE = null, COLS4 = null, NODE = [];
   const BUF = {};
   const sig = {terr:null, col:null, world:null, mm:null};
@@ -4869,7 +4879,8 @@ const M3 = (() => {
   function xf(m, p){ const x = p[0], y = p[1], z = p[2]; const w = m[3]*x + m[7]*y + m[11]*z + m[15]; return [(m[0]*x + m[4]*y + m[8]*z + m[12]) / w, (m[1]*x + m[5]*y + m[9]*z + m[13]) / w, (m[2]*x + m[6]*y + m[10]*z + m[14]) / w, w]; }
 
   /* ---------- noise ---------- */
-  const hh = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+  /* fast integer hash (the old sin-based one dominated terrain build time) */
+  const hh = (x, y) => { let h = Math.imul((x | 0) ^ 0x27d4eb2d, 0x165667b1) ^ Math.imul((y | 0) + 0x9e3779b9, 0x85ebca6b); h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15; return (h >>> 0) / 4294967296; };
   function vn(x, y){ const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy; const a = hh(ix, iy), b = hh(ix + 1, iy), c = hh(ix, iy + 1), d = hh(ix + 1, iy + 1); const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy); return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy; }
   function fbm(x, y, o = 4){ let s = 0, a = 0.5, f = 1, n = 0; for (let i = 0; i < o; i++){ s += a * vn(x * f, y * f); n += a; a *= 0.5; f *= 2.03; } return s / n; }
 
@@ -4927,7 +4938,7 @@ const M3 = (() => {
   }
   const toWorld = (mx, mz) => [mx - OX, mz - OZ];
   function heightAt(x, z){
-    const fx = cl((x + OX) / W * NX, 0, NX - 1e-4), fz = cl((z + OZ) / H * NZ, 0, NZ - 1e-4), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+    const fx = cl((x + OX + MG) / GW * NX, 0, NX - 1e-4), fz = cl((z + OZ + MG) / GH * NZ, 0, NZ - 1e-4), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
     const a = HF[j * (NX + 1) + i], b = HF[j * (NX + 1) + i + 1], c = HF[(j + 1) * (NX + 1) + i], d = HF[(j + 1) * (NX + 1) + i + 1];
     return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
   }
@@ -4936,38 +4947,49 @@ const M3 = (() => {
   function detail(t, nA, nB, ridge){
     switch (t){ case "ice": return ridge * 1.0 + nB * 0.3; case "regolith": return nA * 0.5 + nB * 0.5; case "vent": return nB; case "dome": return nB * 0.15; case "archive": return Math.floor(nA * 4) / 4; case "port": return 0; default: return nA; }
   }
+  const VT = ["ice", "regolith", "vent", "archive", "crack"], VTI = {ice:0, regolith:1, vent:2, archive:3, crack:4};
+  const VCACHE = new Map();
+  function vType(c, r){ const key = c * 4096 + r; let t = VCACHE.get(key); if (t === undefined){ t = vType0(c, r); VCACHE.set(key, t); } return t; }
+  function vType0(c, r){
+    const u = c / (COLS - 1), v = r / (ROWS - 1), h = hash(c + 1000, r + 1000);
+    if (!worldLand(u, v)) return "crack";
+    if (v < 0.13 && u < 0.5) return h < 0.3 ? "vent" : "ice";
+    if (u >= eastShore(cl(v, 0, 1))) return h < 0.16 ? "vent" : h < 0.3 ? "archive" : h < 0.75 ? "regolith" : "ice";
+    return h < 0.1 ? "vent" : h < 0.16 ? "archive" : h < 0.6 ? "regolith" : "ice";
+  }
   function computeTerrain(){
     HF = new Float32Array(NV); WI = new Int16Array(NV * 8).fill(-1); WV = new Float32Array(NV * 8); WS = new Float32Array(NV); BASEC = new Float32Array(NV * 3); BASEE = new Float32Array(NV);
     const s2 = 2 * (0.42 * HW) ** 2, ci = new Int16Array(8), cw = new Float32Array(8);
     for (let j = 0; j <= NZ; j++) for (let i = 0; i <= NX; i++){
-      const v = j * (NX + 1) + i, mx = i / NX * W, mz = j / NZ * H;
+      const v = j * (NX + 1) + i, mx = -MG + i / NX * GW, mz = -MG + j / NZ * GH;
       const wx = mx + (fbm(mx * 0.018, mz * 0.018, 3) - 0.5) * 34, wz = mz + (fbm(mx * 0.018 + 7.3, mz * 0.018 + 1.9, 3) - 0.5) * 34;
       ci.fill(-1); cw.fill(0);
       const r0 = Math.round((wz - PAD - HS) / (1.5 * HS));
-      for (let r = Math.max(0, r0 - 2); r <= Math.min(ROWS - 1, r0 + 2); r++){
+      for (let r = r0 - 2; r <= r0 + 2; r++){
         const c0 = Math.round((wx - PAD) / HW - 0.5 - 0.5 * (r & 1));
-        for (let c = Math.max(0, c0 - 2); c <= Math.min(COLS - 1, c0 + 2); c++){
+        for (let c = c0 - 2; c <= c0 + 2; c++){
           const w = Math.exp(-((wx - hx(c, r)) ** 2 + (wz - hy(r)) ** 2) / s2);
           let k = 7; if (w <= cw[k]) continue;
           while (k > 0 && cw[k - 1] < w){ cw[k] = cw[k - 1]; ci[k] = ci[k - 1]; k--; }
-          cw[k] = w; ci[k] = r * COLS + c;
+          cw[k] = w; ci[k] = r >= 0 && r < ROWS && c >= 0 && c < COLS ? r * COLS + c : -2 - VTI[vType(c, r)];
         }
       }
       let tot = 0; for (let k = 0; k < 8; k++) tot += cw[k];
-      if (tot < 1e-9){ cw[0] = 1; tot = 1; if (ci[0] < 0) ci[0] = 0; }
+      if (tot < 1e-9){ cw[0] = 1; tot = 1; if (ci[0] === -1) ci[0] = -2 - VTI.regolith; }
       const nA = fbm(mx * 0.03, mz * 0.03), nB = fbm(mx * 0.09 + 5, mz * 0.09 + 3, 3), ridge = (1 - Math.abs(2 * nA - 1)) ** 3;
       let h = 0, col = [0, 0, 0], e = 0;
       for (let k = 0; k < 8; k++){
-        if (ci[k] < 0) continue; const w = cw[k] / tot, t = MAP[ci[k]].t, P = TP[t] || TP.regolith;
+        if (ci[k] === -1) continue; const w = cw[k] / tot, t = ci[k] >= 0 ? MAP[ci[k]].t : VT[-ci[k] - 2], P = TP[t] || TP.regolith;
         h += w * (P.h + P.amp * detail(t, nA, nB, ridge));
         const cc = mix3(P.c1, P.c2, nB); col[0] += w * cc[0]; col[1] += w * cc[1]; col[2] += w * cc[2];
         e += w * P.e * Math.max(0, nB - 0.5) * 4;
-        WI[v * 8 + k] = ci[k]; WV[v * 8 + k] = w;
+        WI[v * 8 + k] = ci[k] >= 0 ? ci[k] : -1; WV[v * 8 + k] = w;
       }
       h += (fbm(mx * 0.006, mz * 0.006, 3) - 0.5) * 8;
       const s = 1 - Math.abs(2 * fbm(mx * 0.012 + 3, mz * 0.012 + 9, 3) - 1);
       if (s > 0.86 && h > -6){ const k = (s - 0.86) / 0.14 * 0.65; col = mix3(col, [0.52, 0.29, 0.19], k); h -= k * 2; }
       const fine = (fbm(mx * 0.35, mz * 0.35, 2) - 0.5) * 0.08; col = col.map(x => cl(x + fine, 0, 1)); if (h > WATER) col = lineae(col, mx - OX, mz - OZ, 0.5); else { const t = cl((WATER - h) / 18, 0, 1); col = mix3([0.10, 0.30, 0.32], [0.02, 0.05, 0.09], t); }
+      { const ddx = Math.max(0, -mx, mx - W), ddz = Math.max(0, -mz, mz - H), dd = Math.hypot(ddx, ddz); if (dd > 0){ const kk2 = cl((dd - 50) / (MG - 50), 0, 1), k3 = kk2 * kk2 * (3 - 2 * kk2) * 0.6, gl_ = col[0] * 0.3 + col[1] * 0.59 + col[2] * 0.11; col = mix3(col, mix3([gl_, gl_, gl_], [0.16, 0.17, 0.20], 0.5), k3); e *= 1 - k3; } }
       HF[v] = h; WS[v] = 1; BASEC[v * 3] = col[0]; BASEC[v * 3 + 1] = col[1]; BASEC[v * 3 + 2] = col[2]; BASEE[v] = e;
     }
     NODE = MAP.map((x, i) => {
@@ -4978,9 +5000,9 @@ const M3 = (() => {
     });
   }
   function terrainMesh(){
-    const pn = new Float32Array(NV * 6), dx = W / NX, dz = H / NZ;
+    const pn = new Float32Array(NV * 6), dx = GW / NX, dz = GH / NZ;
     for (let j = 0; j <= NZ; j++) for (let i = 0; i <= NX; i++){
-      const v = j * (NX + 1) + i, [x, z] = toWorld(i * dx, j * dz);
+      const v = j * (NX + 1) + i, [x, z] = toWorld(-MG + i * dx, -MG + j * dz);
       const hl = HF[j * (NX + 1) + Math.max(0, i - 1)], hr = HF[j * (NX + 1) + Math.min(NX, i + 1)], hu = HF[Math.max(0, j - 1) * (NX + 1) + i], hd = HF[Math.min(NZ, j + 1) * (NX + 1) + i];
       const n = nrm([-(hr - hl) / (2 * dx), 1, -(hd - hu) / (2 * dz)]);
       pn.set([x, HF[v], z, n[0], n[1], n[2]], v * 6);
@@ -5027,8 +5049,9 @@ const M3 = (() => {
   }
   function landFrac(u, v){ let n = 0; const r = 0.035; for (let k = 0; k < 8; k++){ const a = k * Math.PI / 4; n += worldLand(u + Math.cos(a) * r, v + Math.sin(a) * r * 1.8) ? 1 : 0; } return (n + (worldLand(u, v) ? 2 : 0)) / 10; }
   function worldMesh(){
-    const g = new Geo(), dx = W / NX, dz = H / NZ;
-    const kk = [2, 5, 3, 1].find(k => NX % k === 0 && NZ % k === 0) || 1;
+    const OX = GW / 2, OZ = GH / 2;  // the coarse world starts where the detailed grid ends
+    const g = new Geo(), dx = GW / NX, dz = GH / NZ;
+    const kk = [3, 2, 5, 1].find(k => NX % k === 0 && NZ % k === 0) || 1;
     const axis = (half, step, n) => { const inner = []; for (let k = 0; k <= n; k++) inner.push(-half + k * step);
       const out = []; let d = 0, s = step; while (d < 1000){ s *= 1.05; d += s; out.push(d); }
       return [...out.slice().reverse().map(o => -half - o), ...inner, ...out.map(o => half + o)]; };
@@ -5062,7 +5085,7 @@ const M3 = (() => {
         c = lineae(c, x, z, 1);
         c = c.map(q => cl(q + (n3 - 0.5) * 0.06, 0, 1)); }
       if (!(ins(x, z) || onRect(x, z))){ const cx = cl(x, -OX, OX), cz = cl(z, -OZ, OZ), dd = Math.hypot(x - cx, z - cz), t = cl(dd / 260, 0, 1); c = mix3(edgeC(x, z), c, t * t * (3 - 2 * t));
-        const k = cl((dd - 40) / 520, 0, 1), g = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11; c = mix3(c, mix3([g, g, g], [0.05, 0.06, 0.08], 0.55), k * k * (3 - 2 * k) * 0.85); }
+        const k = cl((dd - 80) / 620, 0, 1), g = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11; c = mix3(c, mix3([g, g, g], [0.16, 0.17, 0.20], 0.6), k * k * (3 - 2 * k) * 0.9); }
       if (ins(x, z) || onRect(x, z)){ const [mx, mz] = [x + OX, z + OZ], vi = Math.round(mz / dz) * (NX + 1) + Math.round(mx / dx); if (BASEC && vi >= 0 && vi < NV){ c = [BASEC[vi * 3], BASEC[vi * 3 + 1], BASEC[vi * 3 + 2]]; } }
       CW.set(c, k * 3);
     }
@@ -5098,9 +5121,13 @@ const M3 = (() => {
       for (let k = 0; k < 8; k++){ const i = WI[v * 8 + k]; if (i < 0) continue; const w = WV[v * 8 + k], o = S.own[i]; if (o){ const oi = OIDS.indexOf(o); if (oi >= 0) acc[oi] += w; } if (ab[i]) abw += w; }
       let best = -1, bw = 0; for (let k = 0; k < 5; k++) if (acc[k] > bw){ bw = acc[k]; best = k; }
       let r = BASEC[v * 3], g = BASEC[v * 3 + 1], b = BASEC[v * 3 + 2], e = BASEE[v];
+      if (polMode){ const L = (r * 0.3 + g * 0.59 + b * 0.11) * 0.6; r = g = b = L; }
       if (best >= 0){
-        const oc = OCOL[OIDS[best]], border = bw > 0.18 ? Math.exp(-(((bw - 0.5) / 0.075) ** 2)) : 0, k = Math.min(0.7, bw * 0.14 + border * 0.5);
-        r += (oc[0] - r) * k; g += (oc[1] - g) * k; b += (oc[2] - b) * k; e += border * 0.28;
+        const oc = OCOL[OIDS[best]], fill = bw > 0.5 ? (polMode ? 0.75 : 0.36) : bw > 0.3 ? (polMode ? 0.75 : 0.36) * (bw - 0.3) / 0.2 : 0;
+        const bIn = bw > 0.2 ? Math.exp(-(((bw - 0.57) / 0.045) ** 2)) : 0, bOut = bw > 0.2 ? Math.exp(-(((bw - 0.45) / 0.04) ** 2)) : 0;
+        r += (oc[0] - r) * fill; g += (oc[1] - g) * fill; b += (oc[2] - b) * fill;
+        const hi = 0.8 * bIn; r += (Math.min(1, oc[0] * 1.15) - r) * hi; g += (Math.min(1, oc[1] * 1.15) - g) * hi; b += (Math.min(1, oc[2] * 1.15) - b) * hi;
+        const lo = 0.75 * bOut; r += (0.08 - r) * lo; g += (0.07 - g) * lo; b += (0.06 - b) * lo; e += bIn * 0.22;
       }
       if (abw > 0.05){ const k = Math.min(1, abw * 1.4); r += (1 - r) * k * 0.6; g += (0.4 - g) * k * 0.6; b += (0.15 - b) * k * 0.6; e += k * 0.5; }
       COLS4[v * 4] = r; COLS4[v * 4 + 1] = g; COLS4[v * 4 + 2] = b; COLS4[v * 4 + 3] = e;
@@ -5136,20 +5163,22 @@ uniform mat4 uVP; out vec3 vN; out vec4 vC; out vec3 vW;
 void main(){ vN = aN; vC = aC; vW = aP; gl_Position = uVP * vec4(aP, 1.0); }`;
   const FS_L = `#version 300 es
 precision highp float; in vec3 vN; in vec4 vC; in vec3 vW;
-uniform vec3 uSun, uJup, uEye, uFogC; uniform vec2 uFog; uniform float uAlpha;
+uniform vec3 uSun, uJup, uEye, uFogC; uniform vec2 uFog, uRes; uniform float uAlpha;
 out vec4 o;
 void main(){
   vec3 v = normalize(uEye - vW); vec3 n = normalize(vN); if (dot(n, v) < 0.0) n = -n;
-  float d = max(dot(n, uSun), 0.0); float hemi = n.y * 0.5 + 0.5;
+  float d = max(dot(n, uSun), 0.0); d = mix(d, floor(d * 4.0) / 4.0 + 0.125, 0.3); float hemi = n.y * 0.5 + 0.5;
   vec3 amb = mix(vec3(0.06, 0.07, 0.10), vec3(0.25, 0.27, 0.33), hemi);
   vec3 lit = amb + d * vec3(1.0, 0.94, 0.84) + max(dot(n, uJup), 0.0) * vec3(0.30, 0.21, 0.12);
   vec3 h = normalize(uSun + v); float sp = pow(max(dot(n, h), 0.0), 48.0) * 0.14;
-  vec3 c = vC.rgb * lit + sp + vC.rgb * vC.a * 1.25;
+  vec3 c = vC.rgb * lit * mix(0.78, 1.0, clamp(n.y, 0.0, 1.0)) + sp + vC.rgb * vC.a * 1.25;
   float f = clamp((length(uEye - vW) - uFog.x) / (uFog.y - uFog.x), 0.0, 1.0);
   f = 1.0 - exp(-3.0 * f); f *= mix(1.0, 0.6, clamp((vW.y + 11.0) / 80.0, 0.0, 1.0));
   c = mix(c, vec3(dot(c, vec3(0.3, 0.59, 0.11))), f * 0.5);
   if (uAlpha < 0.99 && uAlpha > 0.5){ vec3 rj = reflect(-v, n); c += pow(max(dot(rj, uJup), 0.0), 32.0) * vec3(0.5, 0.35, 0.2) + pow(max(dot(rj, uSun), 0.0), 24.0) * 0.25; }
-  o = vec4(mix(c, uFogC, f), uAlpha);
+  c = mix(c, uFogC, f);
+  if (uRes.x > 0.0) c *= 1.0 - 0.35 * smoothstep(0.55, 1.0, length(gl_FragCoord.xy / uRes - 0.5) * 1.6);
+  o = vec4(c, uAlpha);
 }`;
   const VS_P = `#version 300 es
 layout(location=0) in vec3 aP; layout(location=1) in vec4 aC; layout(location=2) in float aS;
@@ -5179,14 +5208,14 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     wrap = document.createElement("div"); wrap.className = "m3wrap";
     wrap.innerHTML = `<div class="m3labels"></div><div class="m3tip" hidden></div>
       <div class="m3mini"><div class="m3mtop" title="Show or hide the minimap"><span>Marfrancisco</span><div class="m3comp"><span>N</span></div></div><canvas class="m3mm"></canvas>
-        <div class="m3ui"><button type="button" data-m3="reset" title="Reset the camera">Reset</button><button type="button" data-m3="top" title="Look straight down">Top</button><button type="button" data-m3="labels" title="Show or hide place names">Labels</button><button type="button" data-act="map2d" title="Switch to the flat 2D map">2D</button></div></div>
+        <div class="m3ui"><button type="button" data-m3="reset" title="Reset the camera">Reset</button><button type="button" data-m3="top" title="Look straight down">Top</button><button type="button" data-m3="labels" title="Show or hide place names">Labels</button><button type="button" data-m3="pol" title="Political map mode (M)">Map</button><button type="button" data-act="map2d" title="Switch to the flat 2D map">2D</button></div></div>
       <div class="m3help">Drag to pan · right-drag to rotate · scroll to zoom · double-click to focus · WASD, Q/E</div>`;
     wrap.prepend(canvas);
     tip = wrap.querySelector(".m3tip");
     const lab = wrap.querySelector(".m3labels");
     labelEls = [];
     for (const d of DISTRICTS){ const i = findTile(d.name); if (i < 0) continue; const el = document.createElement("div"); el.className = "m3lab"; el.textContent = d.name; lab.appendChild(el); labelEls.push({el, i, big:false}); }
-    for (const L of LABELS){ const el = document.createElement("div"); el.className = "m3lab big"; el.textContent = L.name; lab.appendChild(el); const span = L.name === "GOLDEN SPAN", [x, z] = span ? toWorld(hx(8, 3), hy(3)) : toWorld(PAD + L.u * (W - 2 * PAD), PAD + 14 + L.v * (H - 2 * PAD - 20)); labelEls.push({el, x, z, big:true, yo: span ? 52 : 8}); }
+    for (const L of LABELS){ const el = document.createElement("div"); el.className = "m3lab big"; el.textContent = L.name; lab.appendChild(el); const span = L.name === "GOLDEN SPAN", [x, z] = span ? toWorld(hx(8, 3), hy(3)) : toWorld(PAD + L.u * (W - 2 * PAD), PAD + 14 + L.v * (H - 2 * PAD - 20)); const water = /LINEAE|SPAN|BEACH/.test(L.name); el.classList.add(water ? "water" : "land"); labelEls.push({el, x, z, big:true, yo: span ? 52 : 8, ax:L.name === "THE LINEAE" ? [0, 0, 1] : [1, 0, 0]}); }
     mm = wrap.querySelector(".m3mm"); mm.width = MMW * 2; mm.height = MMH * 2; mm.style.width = MMW + "px"; mm.style.height = MMH + "px"; mmCtx = mm.getContext("2d");
     const mmGo = e => { const r = mm.getBoundingClientRect(); goal.tx = cl((e.clientX - r.left) / r.width * W - OX, -OX, OX); goal.tz = cl((e.clientY - r.top) / r.height * H - OZ, -OZ, OZ); };
     mm.addEventListener("pointerdown", e => { mm.setPointerCapture(e.pointerId); mmGo(e); mm.dataset.d = "1"; });
@@ -5200,6 +5229,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
       if (a === "reset") Object.assign(goal, HOME);
       if (a === "top") Object.assign(goal, {pitch:1.45, yaw:0, dist:Math.max(goal.dist, 760)});
       if (a === "labels"){ showLabels = !showLabels; b.classList.toggle("off", !showLabels); }
+      if (a === "pol"){ polMode = !polMode; b.classList.toggle("on", polMode); sig.col = null; mount(); }
     });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
     canvas.addEventListener("pointerdown", e => { drag = {x:e.clientX, y:e.clientY, b:e.button, moved:0, rot:e.button === 2 || e.button === 1 || e.shiftKey}; canvas.setPointerCapture(e.pointerId); });
@@ -5207,7 +5237,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
       mouse = {x:e.clientX, y:e.clientY};
       if (!drag) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
-      if (drag.rot){ goal.yaw -= dx * 0.006; goal.pitch = cl(goal.pitch + dy * 0.005, 0.55, 1.48); cam.yaw = goal.yaw; cam.pitch = goal.pitch; }
+      if (drag.rot){ goal.yaw -= dx * 0.006; goal.pitch = cl(goal.pitch + dy * 0.005, 0.42, 1.48); cam.yaw = goal.yaw; cam.pitch = goal.pitch; }
       else { const s = cam.dist * 0.0017, sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
         goal.tx = cl(goal.tx - dx * s * cy - dy * s * sy, -OX, OX);
         goal.tz = cl(goal.tz + dx * s * sy - dy * s * cy, -OZ, OZ); cam.tx = goal.tx; cam.tz = goal.tz; }
@@ -5223,7 +5253,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
       if (!wrap.isConnected || e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
       if (typeof wb !== "undefined" && !wb.hidden) return;
-      const k = e.key.toLowerCase(); if (["w","a","s","d","q","e","arrowup","arrowdown","arrowleft","arrowright"].includes(k)){ keys.add(k); if (k.startsWith("arrow")) e.preventDefault(); }
+      const k = e.key.toLowerCase(); if (k === "m"){ polMode = !polMode; const pb = wrap.querySelector('[data-m3="pol"]'); if (pb) pb.classList.toggle("on", polMode); sig.col = null; mount(); return; } if (["w","a","s","d","q","e","arrowup","arrowdown","arrowleft","arrowright"].includes(k)){ keys.add(k); if (k.startsWith("arrow")) e.preventDefault(); }
     });
     document.addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
     window.addEventListener("blur", () => keys.clear());
@@ -5320,7 +5350,8 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
       beacon(x, y + 10, z);
     }
   }
-  function scenery(g, gt, i, p){
+  function scenery(g0, gt, i, p){
+    const g = (MAP[i].t === "dome" || MAP[i].t === "port" || MAP[i].t === "vent" || MAP[i].t === "crack") ? g0 : GP;
     const t = MAP[i], [x, y, z] = p, r = n => hh(i * 7 + n, n * 3 + 1);
     if (t.t === "dome"){
       const big = t.center, n = big ? 1 : 2 + Math.floor(r(1) * 2);
@@ -5367,7 +5398,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     return out;
   }
   function buildWorld(){
-    const g = new Geo(), gt = new Geo();
+    const g = new Geo(), gt = new Geo(); GP = new Geo();
     A = {hubs:[], steam:[], beacons:[], edges:[], crawl:[]};
     // colony roads between settlements and the spaceport
     const towns = DISTRICTS.filter(d => d.t !== "vent").map(d => findTile(d.name)).filter(i => i >= 0);
@@ -5400,7 +5431,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     for (let k = 0; k < nc && myEdges.length; k++) A.crawl.push({e:myEdges[k % myEdges.length], ph:hh(k, 9), sp:0.6 + hh(k, 4) * 0.8});
     // robotic claims get a survey beacon
     for (const i in (S.robo || {})) A.beacons.push([NODE[i][0], NODE[i][1] + 10, NODE[i][2], [0.95, 0.7, 0.25], +i, 2]);
-    upload("world", g.a); upload("glass", gt.a);
+    upload("world", g.a); upload("glass", gt.a); upload("props", GP.a);
   }
 
   /* ---------- per-frame ---------- */
@@ -5424,7 +5455,8 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     upload("dyn", g.a, true);
     // points: steam, pulses, beacons
     const P = [];
-    for (const [x, y, z, s, kind] of A.steam){ const n = Math.round(5 + s * 7);
+    const zs = cl(1.4 - cam.dist / 700, 0.35, 1);
+    for (const [x, y, z, s0, kind] of A.steam){ const s = s0 * zs, n = Math.round(5 + s * 7);
       for (let k = 0; k < n; k++){ const ph = (t * (0.12 + (k % 3) * 0.03) + k * 0.137 + x * 0.01) % 1, rise = ph * 38 * Math.sqrt(s);
         P.push(x + Math.sin(ph * 5 + k) * 3 * ph, y + rise, z + Math.cos(ph * 4 + k * 2) * 3 * ph, kind ? 1 : 0.9, kind ? 0.55 : 0.92, kind ? 0.3 : 0.95, (1 - ph) * (kind ? 0.5 : 0.28), (6 + ph * 18) * Math.sqrt(s)); }
       P.push(x, y + 1, z, 1, 0.55, 0.2, kind ? 0.9 : 0.45, 16 * s); }
@@ -5441,11 +5473,11 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     let t = 0, hit = null, prevT = 0;
     for (let k = 0; k < 3000 && t < 6000; k++){
       const p = add(a, scl(d, t));
-      if (inMap(p[0], p[2]) && p[1] <= groundY(p[0], p[2])){ let lo = prevT, hi = t; for (let m = 0; m < 10; m++){ const mid = (lo + hi) / 2, q = add(a, scl(d, mid)); if (inMap(q[0], q[2]) && q[1] <= groundY(q[0], q[2])) hi = mid; else lo = mid; } hit = add(a, scl(d, hi)); break; }
+      if (p[1] <= groundY(p[0], p[2])){ let lo = prevT, hi = t; for (let m = 0; m < 10; m++){ const mid = (lo + hi) / 2, q = add(a, scl(d, mid)); if (q[1] <= groundY(q[0], q[2])) hi = mid; else lo = mid; } hit = add(a, scl(d, hi)); break; }
       if (p[1] < -90) break;
       prevT = t; t += 3;
     }
-    if (!hit) return -1;
+    if (!hit || !inMap(hit[0], hit[2])) return -1;
     let best = -1, bd = 1e9; NODE.forEach((n, i) => { const dd = (n[0] - hit[0]) ** 2 + (n[2] - hit[2]) ** 2; if (dd < bd){ bd = dd; best = i; } });
     return best;
   }
@@ -5464,7 +5496,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
       goal.tx = cl(goal.tx + (fx * cy + fz * sy) * s, -OX, OX); goal.tz = cl(goal.tz + (-fx * sy + fz * cy) * s, -OZ, OZ);
       if (keys.has("q")) goal.yaw += 1.4 * dt; if (keys.has("e")) goal.yaw -= 1.4 * dt; }
     /* strategy-map camera: zoomed out you look down on the map; zoomed in you may tilt toward the horizon, never into the sky */
-    { const pmin = 0.55 + 0.37 * cl((goal.dist - 150) / 500, 0, 1); if (goal.pitch < pmin) goal.pitch = pmin; }
+    { const pmin = 0.42 + 0.5 * cl((goal.dist - 150) / 500, 0, 1); if (goal.pitch < pmin) goal.pitch = pmin; }
     const k = 1 - Math.pow(0.0015, dt); for (const key of ["tx", "tz", "yaw", "pitch", "dist"]) cam[key] += (goal[key] - cam[key]) * k;
     // size
     const dpr = Math.min(window.devicePixelRatio || 1, 1.75), cw = Math.max(1, Math.round(canvas.clientWidth * dpr)), ch = Math.max(1, Math.round(canvas.clientHeight * dpr));
@@ -5480,12 +5512,12 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
     const sun = nrm([0.55, 0.6, 0.32]), jup = nrm([-0.4, 0.3, -0.85]), fogC = [0.035, 0.043, 0.06];
     gl.useProgram(progL.p); const U = progL.u;
-    gl.uniformMatrix4fv(U.uVP, false, VP); gl.uniform3fv(U.uSun, sun); gl.uniform3fv(U.uJup, jup); gl.uniform3fv(U.uEye, EYE); gl.uniform3fv(U.uFogC, fogC); gl.uniform1f(U.uAlpha, 1);
+    gl.uniformMatrix4fv(U.uVP, false, VP); gl.uniform3fv(U.uSun, sun); gl.uniform3fv(U.uJup, jup); gl.uniform3fv(U.uEye, EYE); gl.uniform3fv(U.uFogC, fogC); gl.uniform1f(U.uAlpha, 1); gl.uniform2f(U.uRes, 0, 0);
     const draw = (b, mode = gl.TRIANGLES) => { if (!b || !b.n) return; gl.bindVertexArray(b.vao); gl.drawArrays(mode, 0, b.n); };
     gl.uniform2f(U.uFog, 1e6, 2e6); draw(BUF.sky);
-    gl.uniform2f(U.uFog, cam.dist * 1.15, cam.dist * 1.15 + 900);
+    gl.uniform2f(U.uFog, cam.dist * 1.15, cam.dist * 1.15 + 900); gl.uniform2f(U.uRes, cw, ch);
     gl.bindVertexArray(BUF.terr.vao); gl.drawElements(gl.TRIANGLES, BUF.terr.n, gl.UNSIGNED_INT, 0);
-    draw(BUF.base); draw(BUF.world); draw(BUF.dyn);
+    draw(BUF.base); draw(BUF.world); if (cam.dist < 520) draw(BUF.props); draw(BUF.dyn);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
     gl.uniform1f(U.uAlpha, 0.82); draw(BUF.water);
     gl.uniform1f(U.uAlpha, 0.3); draw(BUF.glass);
@@ -5494,10 +5526,29 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     gl.depthMask(true); gl.disable(gl.BLEND); gl.bindVertexArray(null);
     // labels
     const r = wrap.getBoundingClientRect();
+    /* map labels in two tiers: geography (painted, italic, sized and rotated with the map) zoomed out,
+       districts (small, owner-underlined, deduplicated by screen distance) zoomed in */
+    const placed = [], dl = [];
     for (const L of labelEls){
-      const p = L.big ? [L.x, groundY(L.x, L.z) + L.yo, L.z] : [NODE[L.i][0], NODE[L.i][1] + (MAP[L.i].center && MAP[L.i].t === "dome" ? 30 : 22), NODE[L.i][2]], q = xf(VP, p);
-      const vis = showLabels && q[3] > 0 && Math.abs(q[0]) < 1.05 && Math.abs(q[1]) < 1.05 && (!L.big || cam.dist > 380);
-      L.el.style.display = vis ? "" : "none"; if (vis){ L.el.style.transform = `translate(${((q[0] * 0.5 + 0.5) * r.width).toFixed(1)}px, ${((0.5 - q[1] * 0.5) * r.height).toFixed(1)}px) translate(-50%, -100%)`; }
+      if (L.big){
+        const p = [L.x, groundY(L.x, L.z) + L.yo, L.z], q = xf(VP, p), vis = showLabels && q[3] > 0 && Math.abs(q[0]) < 1.05 && Math.abs(q[1]) < 1.05 && cam.dist > 380;
+        L.el.style.display = vis ? "" : "none"; if (!vis) continue;
+        const q2 = xf(VP, add(p, scl(L.ax, 60))); let ang = Math.atan2(-(q2[1] - q[1]) * r.height, (q2[0] - q[0]) * r.width) * 180 / Math.PI; if (ang > 90) ang -= 180; if (ang < -90) ang += 180;
+        L.el.style.fontSize = cl(9000 / cam.dist, 13, 30).toFixed(1) + "px";
+        L.el.style.transform = `translate(${((q[0] * 0.5 + 0.5) * r.width).toFixed(1)}px, ${((0.5 - q[1] * 0.5) * r.height).toFixed(1)}px) translate(-50%, -50%) rotate(${ang.toFixed(1)}deg)`;
+        continue;
+      }
+      const p = [NODE[L.i][0], NODE[L.i][1] + (MAP[L.i].center && MAP[L.i].t === "dome" ? 30 : 22), NODE[L.i][2]], q = xf(VP, p);
+      const vis = showLabels && q[3] > 0 && Math.abs(q[0]) < 1.05 && Math.abs(q[1]) < 1.05 && cam.dist < 780;
+      if (!vis){ L.el.style.display = "none"; continue; }
+      const o = S.own[L.i]; dl.push({L, sx:(q[0] * 0.5 + 0.5) * r.width, sy:(0.5 - q[1] * 0.5) * r.height, pr:(o === "you" ? 2 : 0) + (MAP[L.i].center ? 1 : 0), o});
+    }
+    dl.sort((a, b) => b.pr - a.pr);
+    for (const d of dl){
+      if (placed.some(p => Math.abs(p[0] - d.sx) < 70 && Math.abs(p[1] - d.sy) < 16)){ d.L.el.style.display = "none"; continue; }
+      placed.push([d.sx, d.sy]); const el = d.L.el; el.style.display = "";
+      el.classList.toggle("mine", d.o === "you"); el.style.borderBottomColor = d.o ? `rgb(${OCOL[d.o].map(v => Math.round(v * 255)).join(",")})` : "transparent";
+      el.style.transform = `translate(${d.sx.toFixed(1)}px, ${d.sy.toFixed(1)}px) translate(-50%, -100%)`;
     }
     if (mmBase && (mmTick++ % 2 === 0)) drawMini();
     wrap.querySelector(".m3comp").style.transform = `rotate(${(cam.yaw * 180 / Math.PI).toFixed(1)}deg)`;
@@ -5517,7 +5568,7 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     mmBase = document.createElement("canvas"); mmBase.width = MMW * 2; mmBase.height = MMH * 2;
     const c = mmBase.getContext("2d"), w = mmBase.width, h = mmBase.height, img = c.createImageData(w, h), d = img.data;
     for (let py = 0; py < h; py++) for (let px = 0; px < w; px++){
-      const i = Math.round(px / (w - 1) * NX), j = Math.round(py / (h - 1) * NZ), v = j * (NX + 1) + i, o = (py * w + px) * 4;
+      const i = Math.round((MG + px / (w - 1) * W) / GW * NX), j = Math.round((MG + py / (h - 1) * H) / GH * NZ), v = j * (NX + 1) + i, o = (py * w + px) * 4;
       const hv = HF[v], hx2 = HF[j * (NX + 1) + Math.min(NX, i + 1)] - HF[j * (NX + 1) + Math.max(0, i - 1)], hz2 = HF[Math.min(NZ, j + 1) * (NX + 1) + i] - HF[Math.max(0, j - 1) * (NX + 1) + i];
       if (hv < WATER){ d[o] = 10; d[o + 1] = 34; d[o + 2] = 44; d[o + 3] = 255; continue; }
       const sh = cl(0.92 - (hx2 + hz2) * 0.05, 0.55, 1.3), e = COLS4[v * 4 + 3];
