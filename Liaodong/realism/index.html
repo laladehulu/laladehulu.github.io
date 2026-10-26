@@ -3192,7 +3192,7 @@ const MISSIONS = {
       chase2: { team: 1, name: 'Jin horsemen', army: ['cavalry', 'samurai'], at: [92, -118, -PI / 2], reserve: true },
     },
     phases: [
-      { title: '一 · 入谷 · Into the valley', text: 'March with the column up the valley toward Hetu Ala. Keep up with your file.',
+      { title: '一 · 入谷 · Into the valley', goal: 'Keep up with your file', text: 'March with the column up the valley toward Hetu Ala. Keep up with your file.',
         obj: { survive: 58 },
         at: [[18, ['dir', 'liu', 'hold', 0, -50]], [34, ['dir', 'liu', 'hold', 0, -32]], [34, ['dir', 'tusi', 'hold', 0, -4]]],
         say: [[2, 'liu', 'Three Jin stockades burned in three days and their villages empty. The slave chief is afraid of us!', '三日連破三寨，奴酋怯矣！'],
@@ -3201,19 +3201,19 @@ const MISSIONS = {
           [31, 'liu', 'Du Song takes the Khan\'s head while we crawl through these hills? Double pace! The guns can follow!', '杜松欲獨得首功耶？倍道而進！'],
           [40, 'fang', 'A rider from Du Song, come this way through Jin country? Who let him through the passes?', '杜總兵的人，怎麼從金人地界過來的？'],
           [50, 'chief', 'Double pace, and the guns half a li behind. This is how a column gets cut in pieces.', '倍道而進，砲落後半里……這是找死。']] },
-      { title: '二 · 代善 · The first charge', text: 'Banners in the pass ahead. The levies at the head of the column take the first shock; the duck teams close up behind them and wait for the gap.', start: [['release', 'daisan'], ['dir', 'liu', 'hold', 0, -36], ['dir', 'tusi', 'hold', 0, -10]],
+      { title: '二 · 代善 · The first charge', goal: 'Close up behind the levies and hold', text: 'Banners in the pass ahead. The levies at the head of the column take the first shock; the duck teams close up behind them and wait for the gap.', start: [['release', 'daisan'], ['dir', 'liu', 'hold', 0, -36], ['dir', 'tusi', 'hold', 0, -10]],
         obj: { survive: 66 },
         say: [[1, 'lookout', 'Banners in the pass ahead — red, and red bordered in white! Those are no Ming riders!', '前面有旗！紅旗，鑲紅！不是我們的人！'],
           [4, 'liu', 'Levies, hold them! Duck teams, close up behind and be ready!', '土兵頂住！鴛鴦陣隨後待命！'],
           [7, 'chief', 'Shields down! Brushes up! Spears behind me — as Marshal Qi taught us!', '藤牌在前，狼筅次之，長槍隨後！'],
           [52, 'chief', 'They give way! Hold the line — nobody chases!', '他們退了！穩住，不許追！']] },
-      { title: '三 · 皇太極 · The ridge', text: 'A second Jin host comes down the west ridge into the side of the column.', start: [['release', 'hong'], ['release', 'ridge'], ['dir', 'hong', 'attack']],
+      { title: '三 · 皇太極 · The ridge', goal: 'Stay with your file and live', text: 'A second Jin host comes down the west ridge into the side of the column.', start: [['release', 'hong'], ['release', 'ridge'], ['dir', 'hong', 'attack']],
         obj: { survive: 48 },
         at: [[13, ['kill', 'liu']], [17, ['promote']], [23, ['wound', 3]]],
         say: [[1, 'fang', 'The west ridge — more banners! The rider lied. Du Song is not coming!', '西嶺上還有！那人是假的，杜總兵不會來了！'],
           [6, 'lookout', 'Arrows from the east slope!', '東坡有弓手！'],
           [14, 'soldier', 'General Liu has fallen! Liu Ting is dead!', '劉總兵陣亡了！']] },
-      { title: '四 · 突圍 · Break out', text: 'The column is broken. Get your file back down the valley to the south gorge, where the Koreans are camped. Leave no one who can still walk.', show: ['mouth'],
+      { title: '四 · 突圍 · Break out', goal: 'Get your file out to the south gorge', text: 'The column is broken. Get your file back down the valley to the south gorge, where the Koreans are camped. Leave no one who can still walk.', show: ['mouth'],
         obj: { extract: 'mouth' }, limit: 420, fail: 'The valley closed behind you.',
         waves: [[3, 'chase', ['attack']], [30, 'chase2', ['attack']]],
         say: [[2, 'fang', 'The way we came — the gorge to the south! The Korean camp is beyond it!', '回頭，往南邊的峽口！朝鮮兵在那邊扎營！'],
@@ -3327,6 +3327,64 @@ const MISSIONS = {
     ],
     win: 'You brought your file back to Tieling.',
   },
+  // ===== 第三章 · Chapter Three: Ningyuan, the first month of 1626 (story-ch3) =====
+  // You lead your file on the west wall of Ningyuan. The siege engines, ladders, saltpeter, oil and guns are the siege
+  // system's (siegeInit runs for a story mission with `siege`); the phases follow the Ming record: the camp shelled
+  // inside the guns' range, the assault on the walls, the sappers at the wall foot, the guns, the withdrawal.
+  nyz: {
+    title: '寧遠 · Ningyuan', year: 'The first month of 1626', battle: 'siegecity', side: 0, soldier: { group: 'zhe' }, hidden: true, ch: 3, siege: true, attacker: 1,
+    brief: 'Nurhaci has crossed the Liao River with the Eight Banners. Every Ming fort beyond the Pass has been abandoned on orders from the new commissioner, except one: Ningyuan, where Yuan Chonghuan has refused to leave. You lead your file on the west wall.',
+    start: [-18, 60, Math.PI],
+    zones: [{ key: 'ditchW', x: -28, z: 22, r: 9, name: '壕 · The ditch (west)', rate: 0.5 }, { key: 'ditchE', x: 28, z: 22, r: 9, name: '壕 · The ditch (east)', rate: 0.5 },
+      { key: 'wallW', x: -25, z: 43.5, r: 7, name: 'A · Your post: the west wall', owner: 0, rate: 0.35 }, { key: 'wallE', x: 25, z: 43.5, r: 7, name: 'B · The east wall', owner: 0, rate: 0.35 }],
+    sectors: [['ditchW', 'ditchE'], ['wallW', 'wallE']],
+    groups: {
+      zhe: { team: 0, name: 'Your company', army: ['yuanyang', 'rifle_imp'], at: [-18, 60, Math.PI], dir: ['hold', -25, 44.5], stay: true, free: true },
+      yuan: { team: 0, name: 'Yuan Chonghuan', zh: '袁崇煥', army: ['samurai'], at: [-7, 45, Math.PI], dir: ['hold', -7, 45], stay: true, free: true, officer: 4 },
+      ww: { team: 0, name: 'West wall garrison', army: ['rifle_imp', 'armstrong', 'rifle_spencer'], at: [-40, 44, Math.PI] },
+      ew: { team: 0, name: 'East wall garrison', army: ['rifle_imp', 'armstrong', 'samurai'], at: [28, 44, Math.PI] },
+      gate: { team: 0, name: 'The gate guard', army: ['samurai', 'rifle_imp'], at: [0, 58, Math.PI] },
+      camp: { team: 1, name: 'The Jin vanguard camp', army: ['cavalry', 'samurai', 'archer'], exit: [-30, -150], at: [-30, -110, 0], dir: ['hold', -30, -62], stay: true },
+      van: { team: 1, name: 'The Bordered banners', army: ['samurai', 'samurai', 'archer', 'archer'], exit: [-40, -150], at: [-40, -122, 0], reserve: true },
+      carts: { team: 1, name: 'The shield carts', army: ['samurai', 'ashigaru', 'archer', 'horokutai'], exit: [30, -150], at: [30, -122, 0], reserve: true },
+      sap: { team: 1, name: 'Sappers', zh: '穴城', army: ['ashigaru', 'ashigaru', 'samurai'], exit: [-20, -150], at: [-20, -120, 0], reserve: true },
+      guard: { team: 1, name: 'The Khan\'s guard', zh: '巴牙喇', army: ['shinsengumi', 'samurai', 'archer', 'archer'], exit: [0, -150], at: [0, -126, 0], reserve: true },
+    },
+    phases: [
+      { title: '一 · 清野 · Scorched earth', text: 'The houses outside the walls are ash; the people and the grain are inside. Take your file up the ramp onto the west wall.', show: ['wallW'],
+        obj: { all: [{ reach: 'wallW' }, { survive: 44 }] }, at: [[1, ['promote']], [8, ['dir', 'yuan', 'hold', -21, 45]], [36, ['dir', 'yuan', 'hold', 6, 45]], [30, ['dir', 'camp', 'hold', -30, -126]]],
+        say: [[3, 'captain', 'Up on the wall, west side. Nobody stays below tonight.', '上城，西面。今晚誰也不許待在下面。'],
+          [12, 'yuan', 'Zhejiang men? I am a southerner too. We are a long way from home, the two of us.', '浙兵？我也是南方人。咱們都離家很遠啊。'],
+          [18, 'yuan', 'Every fort beyond the Pass has been given up. This one will not be. I have written it in my own blood.', '關外諸城都撤了，這一座不撤。我刺血為書，與此城共存亡。'],
+          [25, 'yuan', 'Men who run will be cut down at Shanhai Pass — I have sent the order. So there is nowhere to run. Stand here with me.', '逃到山海關的，一律斬——我已經下了令。所以無處可逃。跟我站在這裡。'],
+          [28, 'lookout', 'They\'re making camp out on the plain — close, too close!', '他們在平地上紮營了——太近了！'],
+          [33, 'gunner', 'Inside the red cannon\'s reach! Light the match!', '進了紅夷砲的射程了！點火！'],
+          [40, 'lookout', 'They\'re pulling the camp back! They didn\'t know how far our guns carry!', '他們拔營往後退了！不知道我們的砲打多遠！']] },
+      { title: '二 · 攻城 · The assault', text: 'The Jin come on with shield carts and ladders. Hold the west wall: throw down any ladder that goes up (E at its top) and keep your file together.', show: ['ditchW', 'ditchE'],
+        start: [['release', 'van'], ['release', 'carts'], ['dir', 'yuan', 'hold', 0, 50]],
+        obj: { survive: 110, keep: 'wallW' }, at: [[40, ['sector', 1]], [74, ['wound', 4]]],
+        say: [[3, 'captain', 'Shield carts! They\'re filling the ditch!', '盾車！他們在填壕！'],
+          [20, 'yuan', 'Let them come close. Muskets and guns, all together when I give the word.', '放近了打。銃砲齊發，聽我號令。'],
+          [42, 'lookout', 'Ladders at the wall! Saltpeter at the foot — fire it!', '雲梯靠城了！城下的硝——點！'],
+          [60, 'captain', 'Throw the ladders down! Get to the top of them!', '把梯子推下去！上梯頭！']] },
+      { title: '三 · 穴城 · Under the wall', text: 'Under their carts, men are chiselling at the foot of the wall where arrows and stones cannot reach them. Hold your post while the wall burns them out.',
+        start: [['release', 'sap']],
+        obj: { survive: 110, keep: 'wallW' },
+        say: [[4, 'lookout', 'They\'re digging into the wall under the carts! We can\'t hit them from up here!', '他們躲在車底下鑿城！從上面打不著！'],
+          [14, 'yuan', 'Bedding! Quilts, straw, oil and powder — roll them up, light them, throw them down!', '把被褥、柴草拿來！澆油裹藥，點著了往下扔！'],
+          [40, 'soldier', 'It\'s caught under the cart — they\'re running out!', '燒到車底下了——他們往外跑了！'],
+          [75, 'captain', 'The cold\'s on our side. The ground is frozen hard as iron. Let them dig.', '天冷幫我們。地凍得跟鐵一樣。讓他們挖。']] },
+      { title: '四 · 紅夷砲 · The red cannon', text: 'The Khan\'s own guard comes at the walls. The guns are firing over your heads. Hold until they break.',
+        start: [['release', 'guard'], ['dir', 'yuan', 'hold', -14, 45]],
+        obj: { survive: 100, keep: 'wallW' }, at: [[66, ['break', 'guard']], [68, ['break', 'van']], [70, ['break', 'carts']], [72, ['break', 'sap']], [74, ['break', 'camp']]],
+        say: [[3, 'lookout', 'Yellow banners — the Khan\'s guard!', '黃旗！大汗的親兵！'],
+          [16, 'gunner', 'Again! Swab it, load it, again!', '再來！洗膛，裝藥，再來！'],
+          [58, 'lookout', 'A great chief is hit! They\'re carrying him off wrapped in red cloth!', '打中一個大頭目！他們用紅布裹著抬走了！'],
+          [70, 'lookout', 'They\'re pulling back! All along the line, they\'re pulling back!', '退了！整條線都在退！'],
+          [84, 'yuan', 'Let them go. Let them go. The city stands.', '讓他們走。讓他們走。城還在。']] },
+    ],
+    win: 'The Jin fell back from the walls of Ningyuan.',
+  },
   zcamp: { title: '營 · Camp', year: '', battle: 'zcamp', side: 0, camp: true, hidden: true, brief: '', start: [0, 0, 0], zones: [], groups: {}, phases: [{ title: '營 · Camp', text: '', obj: { never: true } }], win: '' },
 };
 const OPS = { // Assault: attackers with limited manpower take sectors of fortified points one by one; defenders fall back
@@ -3398,7 +3456,7 @@ Sim.prototype.setupMission = function (teams, aiPl) {
   if (!ass && !M.soldier) { // campaign balance: the enemy rank and file are a little softer, your allies a little harder (officers excepted)
     const cache = new Map(); const tune = (d, k, m) => { const key = d; if (!cache.has(key)) cache.set(key, new Map()); const c = cache.get(key); if (!c.has(k)) c.set(k, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return c.get(k); };
     for (const u of this.units) { if (u.type === 'horse' || u.officer || u.def.ai === 'cannon') continue; const foe = u.team !== M.side; u.def = foe ? tune(u.def, 0.82, 0.82) : tune(u.def, 1.12, 1.05); u.hp = u.def.hp; } }
-  if (ass && M.siege) this.siegeInit();
+  if (M.siege && (ass || M.soldier)) { if (!ass) this.sector = 0; this.siegeInit(); } // a story chapter on the walls uses the siege engines too
   if (ass) { let n = 0; for (const u of this.units) if (u.team === M.attacker && u.type !== 'horse' && u.type !== 'hero') n++; this.tickets = Math.round(n * 0.8); for (const o of this.objectives) o.rate *= 0.6; this.sector = 0; M.sectors[0].forEach(k => this.missionZone(k).hidden = false); this.assaultDirs(); this.mv.ph = 0; }
   // humans: in the campaign each leads a squad of the troops they chose (two when alone) and rides with it
   if (M.soldier) { // a story chapter: you are one man in a mandarin duck team of the named group
@@ -3459,6 +3517,7 @@ Sim.prototype.mAct = function (a) {
   else if (a[0] === 'promote') this.zPromote();
   else if (a[0] === 'break') this.mBreak(a[1]);
   else if (a[0] === 'wound') this.zWound(a[1] | 0);
+  else if (a[0] === 'sector') { this.sector = a[1] | 0; if (this.sg) this.siegeDirs(); }
 };
 // the section chief falls and the file is yours: his squad passes to the man who is left
 Sim.prototype.zPromote = function () {
@@ -3825,7 +3884,7 @@ Sim.prototype.siegeDirs = function () {
   att.forEach((g, i) => { const p = this.players[this.mg[g].p], j = jobs[i % jobs.length]; if (!j) return; p.directive = { kind: DIR_HOLD, x: clamp(j[0], -HALF + 3, HALF - 3), z: clamp(j[1], -HALF + 3, HALF - 3), by: -1 }; p.standoff = j[2]; });
   // defenders: the wall garrisons stand on the wall top above the ladders; the rest hold the gatehouse and the town
   const posts = [[-26, 43.6], [26, 43.6], [-14, 43.6], [14, 43.6], [0, W.z1 + 7], [-18, 80], [0, 110]];
-  let j = 0; for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== D || g.broken) continue; const pt = posts[j++ % posts.length]; p.directive = { kind: DIR_HOLD, x: pt[0], z: pt[1], by: -1 }; }
+  let j = 0; for (const gid in this.mg) { const g = this.mg[gid], p = this.players[g.p]; if (g.G.team !== D || g.broken || g.G.free) continue; const pt = posts[j++ % posts.length]; p.directive = { kind: DIR_HOLD, x: pt[0], z: pt[1], by: -1 }; }
 };
 
 return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, spacingOf, gunOf,
@@ -9190,6 +9249,56 @@ function zMenu() {
 zMenu();
 { let go = null; try { go = localStorage.getItem('mingZheGo'); localStorage.removeItem('mingZheGo'); } catch (e) { } if (go) setTimeout(() => zStart(go), 60); }
 
+// ===================== 間章 · Interlude: the Kaiyuan road, summer 1619 =====================
+// Three months after Abudali. The survivors serve in the Tieling garrison; Kaiyuan is attacked in the rain and a relief
+// column goes north from Tieling and is turned back on the road. Then cards: Kaiyuan, Tieling, Xiong Tingbi.
+function zFileK() { return ZR.filter(r => !r.ch && r.k !== 'wu' && r.k !== 'me' && r.k !== ZS.me && ZS.alive[r.k]); }
+function zStartK(scene) {
+  ZS = zLoad(); if (!ZS) { ZS = zFresh(); }
+  $('menu').hidden = true; state.lowfx = $('lowfxIn').checked; state.fog = false;
+  if (scene === 'kai') { const n = zFileK().length;
+    zCards([
+      { title: '鐵嶺 · Tieling', year: 'Summer 1619 · 萬曆四十七年', p: ['Three months after Sarhu, the Ming hold on the north is two walled towns and the road between them: Tieling, and a day\'s march beyond it, Kaiyuan, the old gate to the Mongol and Jurchen country.',
+        'In the sixth month Nurhaci comes for Kaiyuan, in rain that does not stop. Word reaches Tieling that the town is under attack, and a relief column is made ready to march.'], zh: '萬曆四十七年六月，努爾哈赤冒雨攻開原。' },
+      { title: '伍 · Your file', year: n ? `${n + 1} men` : 'You alone', p: [n ? `${n} of your file came out of the mountains with you. Chief Wu is dead; the file is yours. When you give an order you hear his voice in it.` : 'None of your file came out of the mountains with you. The garrison has put you over a file of strangers.', 'F follow me · H halt · C charge · Z form up where you look.'], btn: 'March →' },
+    ], () => { ZS.stage = 'battlek'; zSave(); zStartK('battlek'); }); return; }
+  const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: ZS.name.zh || 'You', team: 0, yyRole: 'lead', connected: true }];
+  startGame({ seed, battle: 'field', mode: 'campaign', mission: 'kaiyuan', players: pl }, 0, null, 1);
+  const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq]; const meIdx = ZR.findIndex(r => r.k === (ZS.me || 'me'));
+  ZB = { map: {}, sq: q.id, first: me.heroId, cur: ZS.me || 'me', fell: false, ch2: true, chK: true };
+  const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = meIdx;
+  const left = []; for (const r of zFileK()) { const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role === r.role); if (id !== undefined) { used[id] = 1; ZB.map[id] = ZR.indexOf(r); } else left.push(r); }
+  for (const r of left) { const id = q.unitIds.find(uid => !used[uid] && sim.units[uid].role !== 'lead'); if (id !== undefined) { used[id] = 1; ZB.map[id] = ZR.indexOf(r); } }
+  for (const uid in ZB.map) zDress(sim.units[uid], ZB.map[uid]);
+  setTimeout(() => storyCard('Summer 1619. Rain on the Kaiyuan road. Your file marches north with the relief column from Tieling. Wet match-cord fails: in this rain trust the spear more than the gun.', '開原道 · The Kaiyuan road'), 700);
+}
+function zheFinishK(winner) {
+  const sim = state.sim, h = localHero(); const M = sim.mission, z = sim.missionZone('tieling'); const won = winner === M.side;
+  const fate = {}; const near = (u, r) => h && !h.dead && Math.hypot(u.x - h.x, u.z - h.z) < r;
+  for (const uid in ZB.map) { const r = ZR[ZB.map[uid]]; if (!r) continue; const k = r.k; const u = sim.units[uid]; if (u.dead) { fate[k] = 'dead'; continue; }
+    const out = (near(u, won ? 26 : 12) || (z && Math.hypot(u.x - z.x, u.z - z.z) < z.r + 10)) && !(u.wounded && u.helpedBy < 0 && !near(u, 4)); fate[k] = out ? 'out' : 'lost'; }
+  for (const k of ZB.deadMe || []) fate[k] = 'dead';
+  const meK = ZS.me || 'me'; if (fate[meK] === undefined) fate[meK] = h && !h.dead ? 'out' : 'dead';
+  if (ZB.cur && ZB.cur !== meK && ZB.cur !== 'stranger' && fate[meK] === 'dead') { const nk = ZB.cur; ZS.me = nk; ZS.oldName = ZS.name; ZS.name = { zh: zRow(nk).zh, en: zRow(nk).en }; }
+  const file = zFileK(); ZS.fateK = {}; for (const r of file) { const f = fate[r.k] || 'lost'; ZS.fateK[r.k] = f; ZS.alive[r.k] = f === 'out'; }
+  if (ZB.cur && ZB.cur !== 'me' && ZB.cur !== 'stranger') ZS.alive[ZB.cur] = !!(h && !h.dead);
+  ZS.stage = 'endk'; zSave();
+  const all = [{ k: meK, zh: ZS.name.zh, en: ZS.name.en, me: true }].concat(file.filter(r => r.k !== meK));
+  const li = all.map(r => { const f = r.me ? 'out' : ZS.fateK[r.k] || 'lost'; return `<li class="${f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${r.zh} ${r.en}${r.me ? ' (you)' : ''} — ${f === 'out' ? 'back in Tieling' : f === 'dead' ? 'killed on the road' : 'missing in the rain'}</li>`; }).join('');
+  const outN = file.filter(r => ZS.fateK[r.k] === 'out').length + 1;
+  $('resultTitle').textContent = won ? '回 · Back to Tieling' : '散 · Scattered on the road'; $('resultTitle').className = won ? 'win' : 'lose';
+  $('resultText').innerHTML = `${won ? 'The column came back to Tieling, and the people of Kaiyuan with it.' : 'The horsemen closed the road, but some of you found your way back through the fields after dark.'} ${outN} of your file came back.`;
+  $('btnNext').hidden = false; $('btnNext').textContent = 'What happened →';
+  $('btnNext').onclick = () => { $('result').hidden = true; zCards([
+    { title: '開原 · Kaiyuan', year: 'The sixth month of 1619', p: ['Nurhaci attacked Kaiyuan in heavy rain. Its general, Ma Lin, led much of the garrison out of the gates to fight in the open, and too few men were left on the walls. A small relief party sent to the town was cut off on the way; a second relief force from Tieling was intercepted and driven back.',
+      'The Jin broke in, and the fighting went on in the streets for three days. Ma Lin was taken and put to death. One of the censors of the town fled.'], zh: '開原陷，馬林死之。' },
+    { title: '鐵嶺 · Tieling', year: 'The seventh month of 1619', p: ['Six weeks later the Jin came for Tieling. The town had cannon on its walls, but many of its soldiers went over to the enemy, and the gunners could not reload before the walls were stormed. Its commander, Li Ruzhen, fled.',
+      'Those of the garrison who got out walked south to Shenyang. Your file walked with them.'] },
+    { title: '熊廷弼 · Xiong Tingbi', year: 'Autumn 1619 – 1620', p: ['That summer the court sent Xiong Tingbi to take charge of Liaodong. He arrived as the frontier was coming apart. He punished officers who had run, rebuilt the walls of Liaoyang and Shenyang, and gathered the scattered soldiers back into an army.',
+      'For a year and a half the Jin made no great attack. Your file wintered in Shenyang, mending shields and drilling in the snow.'] },
+    { title: '伍 · Your file', year: `${outN} came back`, html: `<ul>${li}</ul>`, btn: 'Spring 1621 →' },
+  ], () => zGo('ch2')); };
+}
 // ===================== 第二章 · Chapter Two: the Hun River, spring 1621 =====================
 // Two years after Abudali. The survivors of the file and new drafts from Zhejiang stand in Qi Jin's wagon camp south of the
 // Hun River bridge while the Sichuan White Poles fight on the far bank. You lead the file now.
@@ -9264,7 +9373,7 @@ function zSleep2() {
 }
 // ---------- dialogue ----------
 function zTalk2(k, night) {
-  const S0 = ZS, F1 = S0.fate1 || {}, d1 = (x) => F1[x] && F1[x] !== 'out', lou1 = !d1('lou'), nm = S0.name;
+  const S0 = ZS, F1 = S0.fate1 || {}, FK = S0.fateK || {}, d1 = (x) => F1[x] && F1[x] !== 'out', dK = (x) => FK[x] && FK[x] !== 'out', lou1 = !d1('lou') && !dK('lou'), nm = S0.name;
   const deadAt1 = ZR.filter(r => !r.ch && r.k !== 'me' && r.k !== 'wu' && d1(r.k)).map(r => r.zh);
   if (night === 2) return ({
     lou: { g: ['兩年了。我還是沒把那封信寄出去。', 'Two years. I still haven\'t sent that letter.'], t: [
@@ -9272,7 +9381,7 @@ function zTalk2(k, night) {
       { q: 'Why not send it?', bond: 1, a: [['寄了，家裡就以為我還好。', 'If I send it, they\'ll think I\'m still well.'], ['等打完這一仗，我自己帶回去。', 'When this one\'s done, I\'ll carry it home myself.']] }] },
     xiaoman: { g: lou1 ? ['我哥說你是隊長。他說你在山裡沒丟下人。', 'My brother says you\'re chief. He says you didn\'t leave anyone in those mountains.'] : ['你是我哥的隊長？樓阿根。他在哪？', 'You were my brother\'s chief? Lou Agen. Where is he?'], t: lou1 ? [
       { q: 'Stay behind your brother tomorrow.', bond: 1, a: [['我不要躲。我是藤牌手，跟他一樣。', 'I won\'t hide. I\'m a shield man, same as him.'], ['……好吧。我站他旁邊。', '...All right. I\'ll stand beside him.']] }] : [
-      { q: 'Tell him the truth.', bond: 1, a: [['（你告訴他阿布達里岡的事。他很久沒說話。）', '(You tell him about Abudali Pass. He says nothing for a long time.)'], ['……娘一直在等他的信。', '...Mother has been waiting all this time for his letter.']] },
+      { q: 'Tell him the truth.', bond: 1, a: [[`（你告訴他${dK('lou') ? '開原道' : '阿布達里岡'}的事。他很久沒說話。）`, `(You tell him about ${dK('lou') ? 'the Kaiyuan road' : 'Abudali Pass'}. He says nothing for a long time.)`], ['……娘一直在等他的信。', '...Mother has been waiting all this time for his letter.']] },
       { q: S0.flags.letter ? 'I wrote a letter for him. I remember it.' : 'He spoke of home often.', bond: 1, a: S0.flags.letter ? [['他說：跟娘說北邊冷，可我有棉襖。跟媳婦說，我很好。', 'He said: tell my mother it\'s cold up north, but I have a padded coat. Tell my wife I\'m well.'], ['（樓小滿低下頭，用袖子擦了擦臉。）', '(Lou Xiaoman bows his head and wipes his face with his sleeve.)']] : [['義烏，山裡，礦坑邊上。他說戚爺爺就是看上他們那股狠勁。', 'Yiwu, up by the mines. He said that was what Marshal Qi liked about them: they never back down.']] }] },
     liu6: S0.flags.saved6 ? { g: [`${nm.zh}哥。腿好了，你看。`, `Brother ${nm.en}. The leg healed — look.`], t: [
       { q: 'Look after Shao Afu tomorrow.', bond: 1, a: [['他跟我那時候一樣大。……我會的。', 'He\'s the age I was. ...I will.']] }] } : { g: ['我還記得那個山谷。', 'I still remember that valley.'], t: [{ q: 'So do I.', a: [['這回別讓人掉隊。', 'This time, nobody gets left.']] }] },
@@ -9300,7 +9409,7 @@ function zTalk2(k, night) {
       { q: 'Are you kin to Marshal Qi?', a: [['他是我叔父。', 'He was my uncle.'], ['人人都說戚家軍。可戚家軍從來不是姓戚的人，是你們這些人。', 'Everyone talks about the Qi family army. It was never the men named Qi. It was men like you.']] },
       { q: 'What do they think of us here?', a: [['熊經略頭一回見我們，說南兵虛而猾。', 'The first time Commissioner Xiong saw us, he said the southern troops were hollow and sly.'], ['（他笑了一聲。）明天讓他們看看。', '(He gives a short laugh.) Tomorrow we let them see.']] },
       { q: 'Will we cross the river?', a: [['陳總兵要回遼陽，川兵要過河。不管誰對，總得有個地方讓人退回來。', 'General Chen wants to go back to Liaoyang; the Sichuan men want to cross. Whoever is right, there has to be somewhere for men to fall back to.'], ['所以我們挖壕、立柵、排車。聽我的鼓。鼓在響，營就在。', 'So we dig the ditch, raise the palisade, line up the wagons. Listen for my drum. While it beats, the camp holds.']] },
-      { q: 'Eat with us.', a: [['（他從懷裡掏出一塊乾餅，掰成兩半，一半遞給你，一半遞給樓小滿。）', '(He takes a dry cake from inside his coat, breaks it in two, and hands one half to you and the other to Lou Xiaoman.)']] }] },
+      { q: 'Eat with us.', flag: 'qicake', a: [['（他從懷裡掏出一塊乾餅，掰成兩半，一半遞給你，一半遞給樓小滿。）', '(He takes a dry cake from inside his coat, breaks it in two, and hands one half to you and the other to Lou Xiaoman.)']] }] },
     chence: { g: ['南兵？這麼冷的天，腳還好吧？', 'Southern men? In this cold — how are your feet?'], t: [
       { q: 'Will we cross the river?', a: [['瀋陽已經丟了。過河去救一座空城，是白白送死。', 'Shenyang is already lost. Crossing to save an empty city is throwing men away.'], ['可底下的人不肯走。……明早再說。', 'But the officers won\'t turn back. ...We\'ll see in the morning.']] },
       { q: 'Where do you want us?', a: [['跟著戚副將。他的車營比城牆還結實。', 'Stay with Deputy General Qi. His wagon camp is sturdier than a city wall.'], ['看見東邊那面大旗沒有？那是我的。旗在，兵就在。', 'See the big banner on the east side? That\'s mine. While it stands, the army stands.']] }] },
@@ -9310,7 +9419,8 @@ function zTalk2(k, night) {
   const F2 = S0.fate2 || {}, d2 = (x) => F2[x] && F2[x] !== 'out';
   return ({
     lou: { g: ['我說過我替他擋。', 'I said I\'d take what came for him.'], t: [{ q: d2('xiaoman') ? 'Xiaoman...' : 'He\'s alive.', bond: 1, a: d2('xiaoman') ? [['（樓阿根把那封兩年前的信拿出來，看了很久，又收回懷裡。）', '(Lou Agen takes out the letter from two years ago, looks at it for a long time, and puts it back against his chest.)']] : [['是。……是。', 'Yes. ...Yes.']] }] },
-    xiaoman: { g: lou1 && !d2('lou') ? ['哥還在。我們都還在。', 'My brother\'s alive. We\'re both alive.'] : ['……', '...'], t: [{ q: 'Rest.', a: [['我閉上眼就聽見砲聲。', 'When I close my eyes I hear the guns.']] }] },
+    xiaoman: { g: lou1 && !d2('lou') ? ['哥還在。我們都還在。', 'My brother\'s alive. We\'re both alive.'] : ['……', '...'], t: [{ q: 'Rest.', a: [['我閉上眼就聽見砲聲。', 'When I close my eyes I hear the guns.']] },
+      ...(S0.flags.qicake ? [{ q: 'The old general gave you half his cake.', bond: 1, a: [['我還留著一角，沒捨得吃。', 'I kept a corner of it. I couldn\'t bring myself to eat it.'], ['他叫我小兄弟。', 'He called me little brother.']] }] : [])] },
     liu6: { g: ['這回沒人掉隊吧？……有沒有？', 'Nobody got left this time? ...Did they?'], t: [{ q: 'Some did.', a: [['（他點點頭，把狼筅抱在懷裡。）', '(He nods, and holds the wolf-brush close.)']] }] },
     shao: { g: ['我插住了一匹馬。牠自己撞上來的，跟你說的一樣。', 'I stopped a horse. It ran right onto the brush, like you said.'], t: [{ q: 'You did well.', bond: 1, a: [['可是旁邊的人……', 'But the man beside me...']] }] },
     bao: { g: ['我們往南走，對吧？離河越遠越好。', 'We go south, right? The farther from that river the better.'], t: [{ q: 'South.', a: [['遼陽還守得住嗎？', 'Can Liaoyang hold?']] }] },
