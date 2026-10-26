@@ -4918,6 +4918,13 @@ const M3 = (() => {
   }
 
   /* ---------- terrain ---------- */
+  /* Europa's lineae: thin reddish double ridges crossing the ice, the moon's signature */
+  function lineae(c, x, z, k){
+    let l1 = 1 - Math.abs(Math.sin((x * 0.8 + z * 0.6) * 0.012 + fbm(x * 0.002, z * 0.002, 3) * 9)), l2 = 1 - Math.abs(Math.sin((x * -0.5 + z * 0.86) * 0.009 + fbm(x * 0.002 + 5, z * 0.002 + 1, 3) * 7));
+    if (l1 > 0.93) c = mix3(c, [0.50, 0.27, 0.17], (l1 - 0.93) * 10 * k);
+    if (l2 > 0.94) c = mix3(c, [0.46, 0.25, 0.16], (l2 - 0.94) * 10 * k);
+    return c;
+  }
   const toWorld = (mx, mz) => [mx - OX, mz - OZ];
   function heightAt(x, z){
     const fx = cl((x + OX) / W * NX, 0, NX - 1e-4), fz = cl((z + OZ) / H * NZ, 0, NZ - 1e-4), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
@@ -4960,7 +4967,7 @@ const M3 = (() => {
       h += (fbm(mx * 0.006, mz * 0.006, 3) - 0.5) * 8;
       const s = 1 - Math.abs(2 * fbm(mx * 0.012 + 3, mz * 0.012 + 9, 3) - 1);
       if (s > 0.86 && h > -6){ const k = (s - 0.86) / 0.14 * 0.65; col = mix3(col, [0.52, 0.29, 0.19], k); h -= k * 2; }
-      const fine = (fbm(mx * 0.35, mz * 0.35, 2) - 0.5) * 0.08; col = col.map(x => cl(x + fine, 0, 1));
+      const fine = (fbm(mx * 0.35, mz * 0.35, 2) - 0.5) * 0.08; col = col.map(x => cl(x + fine, 0, 1)); if (h > WATER) col = lineae(col, mx - OX, mz - OZ, 0.5); else { const t = cl((WATER - h) / 18, 0, 1); col = mix3([0.10, 0.30, 0.32], [0.02, 0.05, 0.09], t); }
       HF[v] = h; WS[v] = 1; BASEC[v * 3] = col[0]; BASEC[v * 3 + 1] = col[1]; BASEC[v * 3 + 2] = col[2]; BASEE[v] = e;
     }
     NODE = MAP.map((x, i) => {
@@ -4995,21 +5002,30 @@ const M3 = (() => {
     upload("base", worldMesh());
   }
   function worldUV(x, z){ return [((x + OX) - PAD) / (W - 2 * PAD), ((z + OZ) - PAD - 14) / (H - 2 * PAD - 20)]; }
-  function worldLand(u, v){
-    if (v < -1.4 || v > 2.6) return u > 0.065 || v > 3.2;              // the bay closes far to the north and south
+  function worldLand(u0, v0){
+    const d = Math.max(0, Math.abs(v0 - .5) - .5) + Math.max(0, Math.abs(u0 - .5) - .5), w = 0.04 + 0.18 * Math.min(d, 1);
+    const u = u0 + (fbm(u0 * 2.1 + 3, v0 * 2.1, 4) - .5) * w * 2, v = v0 + (fbm(u0 * 2.1, v0 * 2.1 + 8, 4) - .5) * w * 2;
+    if (u < 0.065 - 0.08 * cl(-v, 0, 1) - 0.25 * Math.exp(-(((v + 0.55) / 0.3) ** 2)) * 0) return false;      // the open ocean, swinging out toward a far point
+    if (v < 0 && u < 0.43 + 0.25 * Math.exp(-(((v + 0.55) / 0.3) ** 2))) return u > 0.065 - 0.08 * cl(-v, 0, 1); // the headlands bulge west and north
+    if (v < -0.6 && v > -1.2 && u > 0.5 && u < 0.7) return false;                                                  // a northern inlet
+    if (v < -1.4) return true;                                                                                     // the bay closes in the far north
+    if (v > 1){ const half = 0.145 * cl(1 - (v - 1) / 1.6, 0, 1), mid = 0.725; if (Math.abs(u - mid) < half) return false; return u > 0.065; } // the south bay narrows and closes
     return !sfWater(u, v);
   }
   const ridged = (x, z, o = 4) => { const r = 1 - Math.abs(2 * fbm(x, z, o) - 1); return r * r; };
   function worldH(x, z){
-    const [u, v] = worldUV(x, z), land = worldLand(u, v), n1 = fbm(x * 0.004 + 11, z * 0.004 + 4, 4), n2 = fbm(x * 0.017 + 2, z * 0.017 + 7, 3), rg = ridged(x * 0.006 + 5, z * 0.006 + 1, 5);
-    if (!land) return WATER - 5 - 16 * n1;
+    const [u, v] = worldUV(x, z), lf = landFrac(u, v), land = lf > 0.5, n1 = fbm(x * 0.004 + 11, z * 0.004 + 4, 4), n2 = fbm(x * 0.017 + 2, z * 0.017 + 7, 3), rg = ridged(x * 0.006 + 5, z * 0.006 + 1, 5);
+    const sea = WATER - 4 - 14 * n1 * (1 - lf);
+    if (lf < 0.02) return sea;
     const bump = (cu, cv, ru, rv) => Math.exp(-(((u - cu) / ru) ** 2 + ((v - cv) / rv) ** 2));
     let m = Math.max(bump(0.16, -0.5, 0.25, 0.35), 0.7 * bump(-0.08, -0.25, 0.14, 0.22), 0.8 * bump(0.30, 1.4, 0.2, 0.2), bump(0.22, 2.1, 0.3, 0.35));
     const ridge = u - eastShore(cl(v, 0, 1)); if (ridge > 0) m = Math.max(m, Math.exp(-(((ridge - 0.24) / 0.13) ** 2)), cl((ridge - 0.45) * 1.4, 0, 1));
     const far = cl((Math.hypot(Math.max(0, Math.abs(x) - OX), Math.max(0, Math.abs(z) - OZ)) - 700) / 1800, 0, 1);
     m = Math.max(m, far * (0.4 + 0.6 * n1));
-    return 4 + 7 * n1 + 3 * n2 + m * (18 + 70 * rg + 12 * n2);
+    const landH = 4 + 7 * n1 + 3 * n2 + m * (18 + 70 * rg + 12 * n2), t = cl((lf - 0.25) / 0.65, 0, 1);
+    return sea + (landH - sea) * t * t * (3 - 2 * t);
   }
+  function landFrac(u, v){ let n = 0; const r = 0.035; for (let k = 0; k < 8; k++){ const a = k * Math.PI / 4; n += worldLand(u + Math.cos(a) * r, v + Math.sin(a) * r * 1.8) ? 1 : 0; } return (n + (worldLand(u, v) ? 2 : 0)) / 10; }
   function worldMesh(){
     const g = new Geo(), dx = W / NX, dz = H / NZ;
     const kk = [2, 5, 3, 1].find(k => NX % k === 0 && NZ % k === 0) || 1;
@@ -5022,21 +5038,30 @@ const M3 = (() => {
     for (let b = 0; b < nz; b++) for (let a = 0; a < nx; a++){
       const x = xs[a], z = zs[b], k = b * nx + a;
       if (ins(x, z) || onRect(x, z)){ HW2[k] = heightAt(x, z); continue; }
-      const cx = cl(x, -OX, OX), cz = cl(z, -OZ, OZ), d = Math.hypot(x - cx, z - cz), e = heightAt(cx, cz), t = cl(d / 420, 0, 1), sm = t * t * (3 - 2 * t);
+      const cx = cl(x, -OX, OX), cz = cl(z, -OZ, OZ), d = Math.hypot(x - cx, z - cz), t = cl(d / 420, 0, 1), sm = t * t * (3 - 2 * t);
+      /* sample the district edge over a window that widens with distance, so the edge doesn't extrude into stripes */
+      const rr = Math.min(160, 8 + d * 0.7); let e = 0; for (const [ox, oz] of [[0,0],[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]]) e += heightAt(cl(cx + ox * rr, -OX, OX), cl(cz + oz * rr, -OZ, OZ)); e /= 9;
       HW2[k] = e + (worldH(x, z) - e) * sm;
     }
     // soften the coast outside the district (the binary land/water map would leave cliffs)
     for (let it = 0; it < 3; it++){ const cp = HW2.slice(); for (let b = 1; b < nz - 1; b++) for (let a = 1; a < nx - 1; a++){ const x = xs[a], z = zs[b], k = b * nx + a; if (ins(x, z) || onRect(x, z)) continue; const d = Math.hypot(x - cl(x, -OX, OX), z - cl(z, -OZ, OZ)); if (d < 60) continue; HW2[k] = (cp[k] * 2 + cp[k - 1] + cp[k + 1] + cp[k - nx] + cp[k + nx]) / 6; } }
+    const edgeC1 = (x, z) => { const vi = Math.round((cl(z, -OZ, OZ) + OZ) / dz) * (NX + 1) + Math.round((cl(x, -OX, OX) + OX) / dx); return BASEC && vi >= 0 && vi < NV ? [BASEC[vi * 3], BASEC[vi * 3 + 1], BASEC[vi * 3 + 2]] : [0.5, 0.4, 0.3]; };
+    const edgeC = (x, z) => { const cx = cl(x, -OX, OX), cz = cl(z, -OZ, OZ), d = Math.hypot(x - cx, z - cz), rr = Math.min(160, 6 + d * 0.7); let c = [0, 0, 0]; for (const [ox, oz] of [[0,0],[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]]){ const q = edgeC1(cx + ox * rr, cz + oz * rr); c[0] += q[0] / 9; c[1] += q[1] / 9; c[2] += q[2] / 9; } return c; };
     for (let b = 0; b < nz; b++) for (let a = 0; a < nx; a++){
-      const x = xs[a], z = zs[b], k = b * nx + a, h = HW2[k], n = fbm(x * 0.02 + 3, z * 0.02 + 8, 3);
+      const x = xs[a], z = zs[b], k = b * nx + a, h = HW2[k], cell = Math.max(xs[Math.min(nx - 1, a + 1)] - x, zs[Math.min(nz - 1, b + 1)] - z), cf = Math.min(1, 12 / cell), n = fbm(x * 0.02 * cf + 3, z * 0.02 * cf + 8, 3);
+      const a0 = Math.max(0, a - 1), a1 = Math.min(nx - 1, a + 1), b0 = Math.max(0, b - 1), b1 = Math.min(nz - 1, b + 1);
+      const ny = nrm([-(HW2[b * nx + a1] - HW2[b * nx + a0]) / (xs[a1] - xs[a0]), 1, -(HW2[b1 * nx + a] - HW2[b0 * nx + a]) / (zs[b1] - zs[b0])])[1];
       let c;
-      if (h < WATER - 0.5) c = mix3([0.20, 0.13, 0.10], [0.30, 0.19, 0.13], n);                           // brine shelf under the water
-      else if (h < WATER + 3) c = mix3([0.36, 0.26, 0.20], [0.46, 0.34, 0.26], n);                       // dark salt beach
-      else { const n3 = fbm(x * 0.05 + 1, z * 0.05 + 6, 3), ice = cl((h - 14) / 40 + (fbm(x * 0.008 + 9, z * 0.008 + 2, 3) - 0.5) * 1.6, 0, 1);
+      if (h < WATER - 0.5){ const t = cl((WATER - h) / 25, 0, 1); c = mix3([0.10, 0.30, 0.32], [0.02, 0.05, 0.09], t); }   // seabed, seen through the brine
+      else if (h < WATER + 2.2) c = mix3([0.62, 0.66, 0.68], [0.74, 0.80, 0.84], n);                      // salt-frost beach
+      else { const n3 = fbm(x * 0.05 * cf + 1, z * 0.05 * cf + 6, 3), ice = cl((h - 8) / 30 + (fbm(x * 0.008 + 9, z * 0.008 + 2, 3) - 0.5) * 1.2, 0, 1);
         c = mix3(mix3(TP.regolith.c1, TP.regolith.c2, n3), mix3(TP.ice.c1, TP.ice.c2, n3), ice);
         if (h > 60) c = mix3(c, [0.88, 0.93, 0.97], cl((h - 60) / 25, 0, 1));                              // ice caps on the peaks
         const vs = 1 - Math.abs(2 * fbm(x * 0.011 + 3, z * 0.011 + 9, 3) - 1); if (vs > 0.9 && h < 40) c = mix3(c, TP.vent.c2, (vs - 0.9) * 6); // vent seams
+        if (ny < 0.8) c = mix3(c, [0.30, 0.22, 0.18], cl((0.8 - ny) * 3, 0, 0.8));                       // exposed rock on steep slopes
+        c = lineae(c, x, z, 1);
         c = c.map(q => cl(q + (n3 - 0.5) * 0.06, 0, 1)); }
+      if (!(ins(x, z) || onRect(x, z))){ const cx = cl(x, -OX, OX), cz = cl(z, -OZ, OZ), t = cl(Math.hypot(x - cx, z - cz) / 260, 0, 1); c = mix3(edgeC(x, z), c, t * t * (3 - 2 * t)); }
       if (ins(x, z) || onRect(x, z)){ const [mx, mz] = [x + OX, z + OZ], vi = Math.round(mz / dz) * (NX + 1) + Math.round(mx / dx); if (BASEC && vi >= 0 && vi < NV){ c = [BASEC[vi * 3], BASEC[vi * 3 + 1], BASEC[vi * 3 + 2]]; } }
       CW.set(c, k * 3);
     }
@@ -5051,10 +5076,13 @@ const M3 = (() => {
     // a skirt hidden under the district edge seals the seam between the detailed and the coarse grids
     const BOT = WATER - 30, sk = [[-OX, -OZ, OX, -OZ], [OX, -OZ, OX, OZ], [OX, OZ, -OX, OZ], [-OX, OZ, -OX, -OZ]];
     for (const [x0, z0, x1, z1] of sk){ const n = 160; for (let k = 0; k < n; k++){ const f0 = k / n, f1 = (k + 1) / n, p0 = [x0 + (x1 - x0) * f0, 0, z0 + (z1 - z0) * f0], p1 = [x0 + (x1 - x0) * f1, 0, z0 + (z1 - z0) * f1];
-      const h0 = heightAt(p0[0], p0[2]) - 0.05, h1 = heightAt(p1[0], p1[2]) - 0.05, c = [0.30, 0.22, 0.17];
+      const h0 = heightAt(p0[0], p0[2]) - 0.05, h1 = heightAt(p1[0], p1[2]) - 0.05, c = edgeC1(p0[0], p0[2]);
       g.quad([p0[0], h0, p0[2]], [p1[0], h1, p1[2]], [p1[0], BOT, p1[2]], [p0[0], BOT, p0[2]], c, 0); } }
     // one sheet of brine from horizon to horizon
-    const E = 6000; g.quadN([-E, WATER, -E], [E, WATER, -E], [E, WATER, E], [-E, WATER, E], [0, 1, 0], [0.035, 0.12, 0.16], 0.26);
+    const wg = new Geo(), E = 6000; wg.quadN([-E, WATER, -E], [E, WATER, -E], [E, WATER, E], [-E, WATER, E], [0, 1, 0], [0.05, 0.16, 0.21], 0.18); upload("water", wg.a);
+    // lights of outlying settlements in the haze
+    const lp = []; for (let k = 0; k < 400 && lp.length < 48 * 8; k++){ const x = (hh(k, 7) - 0.5) * 2 * (OX + 1600), z = (hh(k, 8) - 0.5) * 2 * (OZ + 1400); if (Math.abs(x) < OX + 60 && Math.abs(z) < OZ + 60) continue; const y = worldH(x, z); if (y < WATER + 3 || y > 45) continue; lp.push(x, y + 3, z, 1.0, 0.68, 0.32, 0.55, 22 + hh(k, 9) * 26); }
+    uploadPts("wlights", lp);
     return g.a;
   }
   function recolor(){
@@ -5112,7 +5140,10 @@ void main(){
   vec3 h = normalize(uSun + v); float sp = pow(max(dot(n, h), 0.0), 48.0) * 0.14;
   vec3 c = vC.rgb * lit + sp + vC.rgb * vC.a * 1.25;
   float f = clamp((length(uEye - vW) - uFog.x) / (uFog.y - uFog.x), 0.0, 1.0);
-  o = vec4(mix(c, uFogC, f * f * 0.92), uAlpha);
+  f = 1.0 - exp(-3.0 * f); f *= mix(1.0, 0.6, clamp((vW.y + 11.0) / 80.0, 0.0, 1.0));
+  c = mix(c, vec3(dot(c, vec3(0.3, 0.59, 0.11))), f * 0.5);
+  if (uAlpha < 0.99 && uAlpha > 0.5){ vec3 rj = reflect(-v, n); c += pow(max(dot(rj, uJup), 0.0), 32.0) * vec3(0.5, 0.35, 0.2) + pow(max(dot(rj, uSun), 0.0), 24.0) * 0.25; }
+  o = vec4(mix(c, uFogC, f), uAlpha);
 }`;
   const VS_P = `#version 300 es
 layout(location=0) in vec3 aP; layout(location=1) in vec4 aC; layout(location=2) in float aS;
@@ -5439,18 +5470,19 @@ void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.
     // draw
     gl.viewport(0, 0, cw, ch); gl.clearColor(0.03, 0.038, 0.055, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
-    const sun = nrm([0.55, 0.6, 0.32]), jup = nrm([-0.4, 0.3, -0.85]), fogC = [0.075, 0.085, 0.11];
+    const sun = nrm([0.55, 0.6, 0.32]), jup = nrm([-0.4, 0.3, -0.85]), fogC = [0.13, 0.15, 0.20];
     gl.useProgram(progL.p); const U = progL.u;
     gl.uniformMatrix4fv(U.uVP, false, VP); gl.uniform3fv(U.uSun, sun); gl.uniform3fv(U.uJup, jup); gl.uniform3fv(U.uEye, EYE); gl.uniform3fv(U.uFogC, fogC); gl.uniform1f(U.uAlpha, 1);
     const draw = (b, mode = gl.TRIANGLES) => { if (!b || !b.n) return; gl.bindVertexArray(b.vao); gl.drawArrays(mode, 0, b.n); };
     gl.uniform2f(U.uFog, 1e6, 2e6); draw(BUF.sky);
-    gl.uniform2f(U.uFog, cam.dist * 1.1, cam.dist * 1.1 + 2600);
+    gl.uniform2f(U.uFog, cam.dist * 0.95, cam.dist * 0.95 + 1500);
     gl.bindVertexArray(BUF.terr.vao); gl.drawElements(gl.TRIANGLES, BUF.terr.n, gl.UNSIGNED_INT, 0);
     draw(BUF.base); draw(BUF.world); draw(BUF.dyn);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    gl.uniform1f(U.uAlpha, 0.82); draw(BUF.water);
     gl.uniform1f(U.uAlpha, 0.3); draw(BUF.glass);
     gl.useProgram(progP.p); gl.uniformMatrix4fv(progP.u.uVP, false, VP); gl.uniform1f(progP.u.uScale, ch * 0.5 / Math.tan(fov / 2));
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE); draw(BUF.stars, gl.POINTS); draw(BUF.pts, gl.POINTS);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE); draw(BUF.stars, gl.POINTS); draw(BUF.wlights, gl.POINTS); draw(BUF.pts, gl.POINTS);
     gl.depthMask(true); gl.disable(gl.BLEND); gl.bindVertexArray(null);
     // labels
     const r = wrap.getBoundingClientRect();
