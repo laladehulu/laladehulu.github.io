@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v38</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v39</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1474,13 +1474,17 @@ class Sim {
     if (disabled) { u.blocking = false; u.atkHeld = !!(a & A_ATK); u.blockHeld = !!(a & A_BLOCK); return; }
     const ws = u.def.weapons;
     if ((a & A_SWAP) && ws.length > 1) { u.nextWeapon = ws[(ws.indexOf(u.weapon) + 1) % ws.length]; u.swapQ = true; }
+    // a man with only a gun turns it round to fight with it as a club (and back); turning it breaks off a reload
+    else if ((a & A_SWAP) && ws.length === 1 && u.weapon === 'rifle' && (u.st === ST_IDLE || u.st === ST_RELOAD || u.st === ST_AIM)) { u.club = !u.club; u.aiming = false; u.fireQ = 0; if (u.st !== ST_IDLE) { u.st = ST_IDLE; u.stT = 0; } this.events.push({ t: 'grip', id: u.id, club: u.club }); }
     if (wsel > 0 && wsel <= ws.length) { const w = ws[wsel - 1]; if (w !== u.weapon) { u.nextWeapon = w; u.swapQ = true; } else u.swapQ = false; }
+    if (u.swapQ && (u.st === ST_RELOAD || u.st === ST_AIM)) { u.st = ST_IDLE; u.stT = 0; u.aiming = false; } // drawing the other weapon breaks off a reload
     if (u.swapQ && u.st === ST_IDLE) { u.swapQ = false; if (u.nextWeapon && u.nextWeapon !== u.weapon) { u.st = ST_SWAP; u.stT = 0; u.blocking = false; u.aiming = false; } }
     const gun = gunOf(u.def, u.weapon);
     if (gun && this.phase === 1) {
       u.aiming = !!(a & A_AIM) && (u.st === ST_IDLE || u.st === ST_RELOAD) && !(a & A_BLOCK); u.aimHold = u.aiming && u.st === ST_IDLE ? (u.aimHold || 0) + DT : 0;
       const have = u.weapon === 'revolver' ? u.ammoR : u.ammo;
-      if (a & A_FIRE) u.fireQ = 0.45;
+      if ((a & A_RELOAD) && u.club) { u.club = false; this.events.push({ t: 'grip', id: u.id, club: false }); }
+      if ((a & A_FIRE) && !u.club) u.fireQ = 0.45;
       if (u.fireQ > 0) { u.fireQ -= DT; if (u.st === ST_IDLE) { u.fireQ = 0; if (have > 0) this.fireHeroGun(u, gun); else this.startReload(u, gun.reload, true); } }
       if ((a & A_RELOAD) && u.st === ST_IDLE && have < (gun.mag || 1)) this.startReload(u, gun.reload, true);
     } else u.aiming = false;
@@ -2065,7 +2069,7 @@ class Sim {
         else { u.mx = 0; u.mz = 0; }
         if (u.role && sq && !sq.routing && !xl) { const sd = len(u.slotX - u.x, u.slotZ - u.z); if (sd > 2.2 && d > reach) this.steerFoot(u, u.slotX, u.slotZ, def.speed); else if (d > reach && sd < 2.2) { u.mx *= 0.3; u.mz *= 0.3; } }
         const eager = u.mounted ? 0.35 : u.role === 'spear' && tgt.entT > 0 ? 0.35 : u.role === 'brush' ? 0.2 : u.role === 'shield' ? 0.05 : 0.09;
-        if (d <= (u.mounted ? reach + Math.abs(u.hspeed) * 0.4 : reach + 0.3) && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && xl !== 1 && this.rng.next() < eager) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
+        if (d <= (u.mounted ? reach + Math.abs(u.hspeed) * 0.4 : reach + 0.3) && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && xl !== 1 && this.rng.next() < eager && this.xcSpaceOk(u, tgt)) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
         if (this.xc && u.circleT > 0 && !u.mounted && u.st === ST_IDLE && !xl) { u.circleT -= DT; const sd = (u.id & 1) ? 1 : -1, nx = dx / (d || 1), nz = dz / (d || 1), keep = reach + 1.1; const rad = (d - keep) * 1.6; u.mx = nx * rad + nz * sd * 1.4; u.mz = nz * rad - nx * sd * 1.4; if (!u.blocking && this.rng.next() < 0.02) { u.blocking = true; u.blockT = 0; u.blockDir = DIR_UP; u.blockHold = 0.5; } }
         this.aiBlock(u, tgt);
       }
@@ -2296,6 +2300,7 @@ class Sim {
     if (att.weapon === 'yari') { if (f < 0.45) { q = 'jammed'; qm = 0.5; } else if (f > 0.68) { q = 'tip'; qm = 1.18; } }
     else { if (f > 0.92) { q = 'graze'; qm = 0.7; } else if (f > 0.45 && f < 0.8) { q = 'clean'; qm = 1.1; } }
     dmg *= qm; const heavy = att.heavy; if (heavy) dmg *= 1.45; if (att.xcMul) dmg *= att.xcMul;
+    if (this.xc && att.ctrl < 0 && def_.ctrl < 0) dmg *= 0.72; // line against line the killing is slower: clashes, pauses, clashes, not a blender
     if (def_.entT > 0 && att.weapon === 'yari' && !att.def.brush) { dmg *= 2.0; q = 'pinned'; }
     if (def_.openT > 0) { dmg *= 2.2; def_.openT = 0; q = 'deathblow'; }
     const behind = Math.abs(wrap(atan2(att.x - def_.x, att.z - def_.z) - def_.yaw)) > 2.0;
@@ -4276,6 +4281,12 @@ Sim.prototype.xcSpaces = function () { // spaces held on each man this tick, cou
     if (v.dead || v.wounded || v.downed || !t || t.dead || v.target !== v.spaceOf) { v.spaceOf = -1; continue; } this.spN[v.spaceOf]++; }
   return this.spN;
 };
+// a man who reaches a foe by another road (his formation slot, a push) still needs a free space on him to strike
+Sim.prototype.xcSpaceOk = function (u, tgt) {
+  if (!this.xc || u.ctrl >= 0 || u.mounted || u.champ || u.spaceOf === tgt.id) return true;
+  const N = this.xcSpaces(), n = N[tgt.id] || 0; if (n >= this.xcLim(tgt)) return false;
+  u.spaceOf = tgt.id; N[tgt.id] = n + 1; return true;
+};
 Sim.prototype.xcHold = function (u, tgt, d, nx, nz, keep, spd) { // stand off at a distance from the foe, facing him
   const e = d - keep, sp = u.def.speed * spd;
   if (e < -0.25) { const k = Math.min(1, -e); u.mx = -nx * sp * k; u.mz = -nz * sp * k; }
@@ -5116,7 +5127,8 @@ function lookGear(L, b, c, y, hatOn, part) {
 function gearFor(u) {
   if (GEAR_HOOK.fn) { const g = GEAR_HOOK.fn(u); if (g) return g; }
   const vr = u.type === 'byakkotai' ? (u.id % 2) * 4 : u.id % 6; const key = u.type + ':' + (u.role || '') + ':' + u.team + ':' + vr + ':' + (u.team === 1 ? ((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4 : 0) + (u.look ? ':L' + u.look.id : ''); let g = GEAR_CACHE.get(key); if (g) return g;
-  const imp = u.team === 0, team = imp ? 0xb3262f : 0x2f55b8, P = [];
+  // look.ming: men of the other side who are Ming soldiers all the same (the Dengzhou mutineers of 1632) wear Ming kit
+  const imp = u.team === 0 || !!(u.look && u.look.ming), team = imp ? 0xb3262f : 0x2f55b8, P = [];
   let HAT = false; const b = (f, o, s, k, r) => P.push({ m: 'b', f, o, s, k, r, hat: HAT && f === 'h' }), c = (f, o, s, k, r) => P.push({ m: 'c', f, o, s, k, r, hat: HAT && f === 'h' }), y = (f, o, s, k, r) => P.push({ m: 'y', f, o, s, k, r, hat: HAT && f === 'h' });
   const hatOn = (fn) => { HAT = true; fn(); HAT = false; };
   const seg = (a, z, t0, t1, w, d, k) => P.push({ m: 'b', f: 'seg', a, z, t0, t1, w, d, k });
@@ -6768,7 +6780,9 @@ class Renderer {
           for (const sd of [-1, 1]) { const bx = cx + ex * 0.19 * sd, by = cy + ey * 0.19 * sd, bz = cz + ez * 0.19 * sd; this.seg(f.twig, slot * 9 + (sd > 0 ? 1 : 2), bx, by, bz, bx + dx * 0.3, by + dy * 0.3, bz + dz * 0.3, 0.025, 0.025); } n = 3; } }
       for (let k = n; k < 9; k++) f.twig.setMatrixAt(slot * 9 + k, Z); }
     if (xb) { segW(f.rifle, -0.3, 0.75, 0.05, 0.07); f.barrel.setMatrixAt(slot, Z); }
-    else if (w === 'rifle') { if (u.type === 'rifle_spencer') { segW(f.rifle, -0.7, 0.45, 0.045, 0.045); segW(f.barrel, 0.45, 0.95, 0.1, 0.1); } else { segW(f.rifle, -0.3, 0.8, 0.05, 0.075); segW(f.barrel, 0.1, 1.25, 0.026, 0.026); } } else { f.rifle.setMatrixAt(slot, Z); f.barrel.setMatrixAt(slot, Z); }
+    else if (w === 'rifle') { const cl = u.club || (u.ctrl < 0 && u.st >= 1 && u.st <= 3); // clubbing: held by the barrel, the stock swung forward
+      if (u.type === 'rifle_spencer') { if (cl) { segW(f.rifle, 0.4, 1.55, 0.045, 0.045); segW(f.barrel, -0.1, 0.4, 0.1, 0.1); } else { segW(f.rifle, -0.7, 0.45, 0.045, 0.045); segW(f.barrel, 0.45, 0.95, 0.1, 0.1); } }
+      else if (cl) { segW(f.rifle, 0.35, 1.45, 0.05, 0.075); segW(f.barrel, -0.1, 1.05, 0.026, 0.026); } else { segW(f.rifle, -0.3, 0.8, 0.05, 0.075); segW(f.barrel, 0.1, 1.25, 0.026, 0.026); } } else { f.rifle.setMatrixAt(slot, Z); f.barrel.setMatrixAt(slot, Z); }
     if (w === 'revolver') segW(f.pistol, -0.25, 0.3, 0.08, 0.08); else f.pistol.setMatrixAt(slot, Z);
     if (rod > 0) { const hx2 = G[o + 15], hy2 = G[o + 16], hz2 = G[o + 17]; this.seg(f.rod, slot, hx2, hy2, hz2, hx2 - dx * 0.95, hy2 - dy * 0.95, hz2 - dz * 0.95, 0.012, 0.012); } else f.rod.setMatrixAt(slot, Z);
     if (xb) { // crossbow: limbs across the front of the stock, string drawn back to the nut
@@ -6952,6 +6966,9 @@ class Renderer {
     { const arm = hero.def.arm, K = this.vmKatana.scale; if (arm === 'guandao') K.set(1.1, 1.8, 2.2); else if (arm === 'mace') K.set(3, 0.72, 1.3); else if (arm === 'jian') K.set(0.75, 1.15, 0.6); else K.set(1, 1, 1); }
     { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * 14); const k = this.vmShieldK; tp.set(-0.42 + k * 0.15, -0.36 + k * 0.05, -0.55 - k * 0.07); this.vmShield.rotation.set(0.1 + k * 0.12, 0.5 - k * 0.3, k * 0.12); } }
     const yrole = w === 'yari' ? hero.role : null; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
+    // a three-eyed gun model added by a campaign (vmSj) replaces the musket parts every frame, whoever you now are
+    { const cl = !!hero.club && w === 'rifle'; this.vmRifle.rotation.y = cl ? Math.PI : 0; this.vmRifle.rotation.x = cl ? -0.25 : 0; this.vmRifle.position.z = cl ? -1.05 : 0; this.vmRifle.position.y = cl ? 0.05 : 0; }
+    if (this.vmSj) { const on = hero.type === 'rifle_spencer'; this.vmSj.visible = on; for (const c of this.vmRifle.children) { if (c === this.vmSj) continue; if (c === this.vmXbar) { if (on) c.visible = false; continue; } c.visible = !on; } }
     this.sleeveMat.color.setHex(torsoColor(hero));
     let target, speed = 14, two = true, cart = false, rod = false, breechOpen = 0, cylOut = 0, shake = 0;
     let camRoll = 0, camPitch = 0, camPush = 0;
@@ -7902,7 +7919,7 @@ const R = RENDER, HPI = Math.PI / 2, BANNER = R.BANNER, torsoColor = R.torsoColo
 const RG_CACHE = new Map();
 function realGear(u) {
   const vr = u.type === 'byakkotai' ? (u.id % 2) * 4 : u.id % 6; const key = u.type + ':' + (u.role || '') + ':' + u.team + ':' + vr + ':' + (u.team === 1 ? ((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4 : 0) + (u.look ? ':L' + u.look.id : ''); let g = RG_CACHE.get(key); if (g) return g;
-  const imp = u.team === 0, team = imp ? 0xb3262f : 0x2f55b8, P = [];
+  const imp = u.team === 0 || !!(u.look && u.look.ming), team = imp ? 0xb3262f : 0x2f55b8, P = [];
   let HAT = false; const b = (f, o, s, k, r) => P.push({ m: 'b', f, o, s, k, r, hat: HAT && f === 'h' }), c = (f, o, s, k, r) => P.push({ m: 'c', f, o, s, k, r, hat: HAT && f === 'h' }), y = (f, o, s, k, r) => P.push({ m: 'y', f, o, s, k, r, hat: HAT && f === 'h' });
   const hatOn = (fn) => { HAT = true; fn(); HAT = false; };
   const seg = (a, z, t0, t1, w, d, k) => P.push({ m: 'b', f: 'seg', a, z, t0, t1, w, d, k });
@@ -8284,9 +8301,8 @@ function wpnName(h, w) {
   return w;
 }
 function localHero() { const sim = state.sim; if (!sim) return null; const p = sim.players[state.localIdx]; return p ? sim.units[p.heroId] : null; }
-// a man whose only weapon is a gun (the three-eyed gun, a plain musket) turns it round with Q to fight with it as a club
-function gripToggle() { const h = localHero(); if (!h || h.dead || h.weapon !== 'rifle' || h.def.weapons.length > 1) return false; Input.bayonet = !Input.bayonet; Input.ads = false; Input.lmb = false; return true; }
-function gunMode() { const h = localHero(); return h && ((h.weapon === 'rifle' && !Input.bayonet) || h.weapon === 'revolver'); }
+// a man whose only weapon is a gun (the three-eyed gun, a plain musket) turns it round with Q/X to fight with it as a club (sim: u.club)
+function gunMode() { const h = localHero(); return h && ((h.weapon === 'rifle' && !Input.bayonet && !h.club) || h.weapon === 'revolver'); }
 document.addEventListener('keydown', (e) => {
   if (state.screen !== 'game') return;
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
@@ -8341,7 +8357,7 @@ document.addEventListener('keydown', (e) => {
     case 'Space': Input.pressed |= S.A_JUMP; e.preventDefault(); break;
     case 'KeyE': { if (typeof zheKeyE === 'function' && zheKeyE()) break; const h = localHero(); const sim = state.sim; const nearHorse = h && (h.mount >= 0 || sim.units.some(v => v.type === 'horse' && !v.dead && v.rider < 0 && Math.abs(v.x - h.x) + Math.abs(v.z - h.z) < 4)); Input.pressed |= nearHorse ? S.A_MOUNT : S.A_KICK; break; }
     case 'KeyR': if (!tapAttack(S.DIR_DOWN)) Input.pressed |= S.A_RELOAD; break;
-    case 'KeyQ': case 'KeyX': if (gripToggle()) break; Input.pressed |= S.A_SWAP; Input.ads = false; break;
+    case 'KeyQ': case 'KeyX': Input.pressed |= S.A_SWAP; Input.ads = false; break;
     case 'Digit1': Input.wsel = 1; Input.ads = false; break;
     case 'Digit2': Input.wsel = 2; Input.ads = false; break;
     case 'Digit3': Input.wsel = 3; Input.ads = false; break;
@@ -8529,7 +8545,7 @@ function lineOrder(a, b) {
 canvas.addEventListener('wheel', (e) => {
   if (state.screen !== 'game') return; e.preventDefault();
   if (Input.cmdMode) { const r = state.renderer; if (r) r.cmdCam.h = Math.max(22, Math.min(200, r.cmdCam.h * (e.deltaY > 0 ? 1.15 : 0.87))); }
-  else if (!tapAttack(e.deltaY < 0 ? S.DIR_UP : S.DIR_DOWN)) { if (!gripToggle()) { Input.pressed |= S.A_SWAP; Input.ads = false; } }
+  else if (!tapAttack(e.deltaY < 0 ? S.DIR_UP : S.DIR_DOWN)) { Input.pressed |= S.A_SWAP; Input.ads = false; }
 }, { passive: false });
 function requestLock() { try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
 document.addEventListener('pointerlockchange', () => {
@@ -8972,7 +8988,7 @@ function updateHUD(dt) {
     { let sb = document.getElementById('stam'); if (!sb) { sb = document.createElement('div'); sb.id = 'stam'; sb.innerHTML = '<i></i>'; sb.style.cssText = 'position:fixed;left:50%;bottom:86px;width:180px;height:5px;margin-left:-90px;background:rgba(0,0,0,.45);border:1px solid rgba(240,230,210,.25);border-radius:3px;overflow:hidden;pointer-events:none;transition:opacity .4s;z-index:5'; sb.firstChild.style.cssText = 'display:block;height:100%;background:#d9cfb6'; document.body.appendChild(sb); }
       const st = hero.champ ? Math.min(1, Math.max(0, (hero.sta || 0) / 100)) : 1 - Math.min(1, Math.max(0, (hero.fat || 0) / 100)); const show = !hero.dead && !Input.cmdMode && (st < 0.97 || hero.sprint);
       sb.style.opacity = show ? 1 : 0; sb.firstChild.style.width = (st * 100).toFixed(1) + '%'; sb.firstChild.style.background = hero.winded ? '#c0452e' : '#d9cfb6'; }
-    const w = hero.weapon; $('weapon').textContent = hero.dead ? 'Fallen' : w === 'rifle' ? (Input.bayonet ? (hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun · club (Q: shoot)' : 'Musket · club (Q: shoot)') : (hero.def.key === 'hero' ? (me.team === 0 ? 'Niaochong musket' : 'Heavy musket') : hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun' : 'Musket')) : w === 'revolver' ? 'Three-eyed hand cannon' : w === 'bow' ? 'Horn bow' : w === 'yari' ? 'Qiang spear' : 'Dao';
+    const w = hero.weapon; $('weapon').textContent = hero.dead ? 'Fallen' : w === 'rifle' ? (Input.bayonet || hero.club ? (hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun · club (Q: shoot)' : 'Musket · club (Q: shoot)') : (hero.def.key === 'hero' ? (me.team === 0 ? 'Niaochong musket' : 'Heavy musket') : hero.def.rifle && hero.def.rifle.mag > 1 ? 'Three-eyed gun' : 'Musket')) : w === 'revolver' ? 'Three-eyed hand cannon' : w === 'bow' ? 'Horn bow' : w === 'yari' ? 'Qiang spear' : 'Dao';
     const mounted = hero.mount >= 0 || hero.mounted;
     $('mode').textContent = hero.dead ? 'Commanding from above' : Input.cmdMode ? 'Command view' : mounted ? 'Mounted' : hero.st === S.ST_STUN ? 'Staggered' : hero.counterT > 0 ? 'Counter!' : hero.downT > 0 ? 'Knocked down' : '';
     const g = S.gunOf(hero.def, w);
@@ -11291,7 +11307,7 @@ function sjCamp(night) {
   const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: ZS.name.zh || 'You', team: 0, connected: true }];
   const camp = sjCampCfg(night); startGame({ seed, battle: 'zcamp', mode: 'campaign', mission: 'zcamp', camp, players: pl }, 0, null, 1);
   for (const u of state.sim.units) if (u.camp) { ZC.map[u.id] = u.ci; sDress(u, u.ci); } { const me = state.sim.units[state.sim.players[0].heroId]; sDress(me, sIdx(ZS.me)); me.def = Object.assign({}, me.def, { hp: me.def.hp * 1.5 }); me.hp = me.def.hp; }
-  document.body.classList.add('sjstory');
+  document.body.classList.add('sjstory'); sjVM(); setTimeout(sjVM, 400);
   MUSIC.play('menu'); MUSIC.setIntensity(0.15); AUDIO.setFire(0.6); $('army').hidden = true;
   setTimeout(() => storyCard(SJCAMPTXT[night][1], SJCAMPTXT[night][0]), 900);
 }
