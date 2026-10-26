@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v14</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v15</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -4657,7 +4657,7 @@ class Renderer {
     { const f = this.fig, z = this.tmp.zero, g = gearFor(u); const cnt = { b: 0, c: 0, y: 0 }; for (const k of ['b', 'c', 'y']) for (let i = 0; i < GEAR_K[k]; i++) f['g' + k].setMatrixAt(slot * GEAR_K[k] + i, z);
       for (const p of g.parts) { const i = cnt[p.m]++; if (i >= GEAR_K[p.m]) continue; p.idx = i; f['g' + p.m].setColorAt(slot * GEAR_K[p.m] + i, this.tmp.c.set(p.k)); }
       for (const k of ['b', 'c', 'y']) if (f['g' + k].instanceColor) f['g' + k].instanceColor.needsUpdate = true; }
-    const c = this.tmp.c; const f = this.fig; const tc = torsoColor(u), lc = legColor(u);
+    const c = this.tmp.c; const f = this.fig; const tc = (GEAR_HOOK.torso && GEAR_HOOK.torso(u)) || torsoColor(u), lc = (GEAR_HOOK.legs && GEAR_HOOK.legs(u)) || legColor(u); // an edition may recolour the body under the gear
     for (const k of ['torso', 'uarmL', 'uarmR']) f[k].setColorAt(slot, c.set(tc));
     c.set(tc).multiplyScalar(0.82); f.farmL.setColorAt(slot, c); f.farmR.setColorAt(slot, c);
     for (const k of ['thighL', 'thighR', 'shinL', 'shinR', 'hips']) f[k].setColorAt(slot, c.set(lc));
@@ -6494,25 +6494,33 @@ function realGear(u) {
     for (const [x, yy] of [[0.12, -0.22], [-0.12, -0.22], [0.12, -0.38], [-0.12, -0.38]]) b('p', [x, yy, 0.195], [0.04, 0.04, 0.02], stud); };
   const kyahanW = () => kyahan(0xe8e2d0);
   const yaopai = () => { b('p', [-0.17, -0.06, 0.16], [0.012, 0.09, 0.012], 0x2a2018); b('p', [-0.17, -0.15, 0.165], [0.075, 0.11, 0.016], 0xcbb07a); b('p', [-0.17, -0.13, 0.175], [0.04, 0.012, 0.004], 0x5a3a20); }; // 腰牌: Qi Jiguang's waist tag (name, unit, looks), the period way a Ming soldier was identified
+  // a tall cavalry banner on a long pole: the rider is small at 35 m, the flag is not
+  const tallFlag = (col, edge) => { b('c', [0, 0.72, -0.18], [0.035, 1.6, 0.035], 0x3a2a1a); b('c', [0.19, 1.2, -0.18], [0.38, 0.72, 0.018], edge); b('c', [0.19, 1.2, -0.18], [0.32, 0.64, 0.022], col); };
+  // twin back flags for the Khan's guard
+  const twinFlags = (col, edge) => { for (const sx of [-1, 1]) { b('c', [sx * 0.08, 0.55, -0.18], [0.025, 1.25, 0.025], 0x2a1e14, [0, 0, -sx * 0.12]); b('c', [sx * 0.22, 0.95, -0.18], [0.24, 0.42, 0.016], edge, [0, 0, -sx * 0.12]); b('c', [sx * 0.22, 0.95, -0.18], [0.19, 0.36, 0.02], col, [0, 0, -sx * 0.12]); } };
+  // 震天雷 bombers: a bandolier of iron thunder-crash bombs, fuses capped
+  const bombs = () => { b('c', [0, 0.02, 0.16], [0.07, 0.62, 0.012], 0x8a6a40, [0, 0, 0.62]); for (const [x, yy] of [[0.13, 0.15], [0.0, 0.03], [-0.13, -0.09]]) { b('c', [x, yy, 0.19], [0.12, 0.12, 0.1], 0x26262a); b('c', [x, yy + 0.07, 0.2], [0.025, 0.04, 0.025], 0xd8c8a0); } };
+  // 蓑衣 straw rain cape of a farmer called to arms
+  const straw = () => { b('c', [0, 0.04, -0.03], [0.58, 0.6, 0.38], 0x9a8a5a); b('p', [0, -0.16, -0.06], [0.56, 0.3, 0.36], 0x8a7a4a); b('c', [0, 0.22, 0.0], [0.5, 0.08, 0.36], 0xa8986a); };
   const bc = imp ? red : (u.type === 'shinsengumi' ? 0xd8b03c : BANNER[((u.squad >= 0 ? u.squad : u.id) * 7 + 3) % 4]);
   const trim = imp ? gold : (bc === 0xe8e4da ? 0xb0262a : bc === 0x2f4fa8 ? 0xe8e4da : 0xb0262a); // bordered banners: a contrasting edge
   if (imp) switch (u.type) {
     case 'hero': phoenixHelm(); dingjia(0x8a1a1e, gold); mirror(); b('c', [0, -0.08, -0.18], [0.62, 0.95, 0.03], 0xb02a24, [-0.06, 0, 0]); b('c', [0, 0.18, -0.17], [0.5, 0.06, 0.05], gold); break;
     case 'samurai': rattanHelm(); coat(verm, 0xe8e2d0, 0x2a2622); kyahanW(); yaopai(); b('p', [-0.24, -0.1, 0.05], [0.06, 0.4, 0.07], 0x2a1e14, [0.3, 0, -0.1]); break;
     case 'yuanyang': rattanHelm(); coat(verm, 0xe8e2d0, 0x2a2622); kyahanW(); yaopai(); if (u.role === 'lead') backflag(0xe8c25a, red); break;
-    case 'cavalry': mingKui(iron, 0x9a2222, gold); dingjia(0x9a2222, gold); mirror(); backflag(verm, gold); hoof(0x9a2222); break;
+    case 'cavalry': mingKui(iron, 0x9a2222, gold); dingjia(0x9a2222, gold); mirror(); tallFlag(verm, gold); hoof(0x9a2222); break;
     case 'ashigaru': hatOn(() => { c('h', [0, 0.13, 0], [0.66, 0.2, 0.66], 0xc8a868); y('h', [0, 0.07, 0], [0.5, 0.02, 0.5], 0x9a7a40); b('h', [0, 0.26, 0], [0.07, 0.06, 0.07], red); }); coat(verm, 0x2a2622); kyahanW(); break;
     case 'rifle_imp': gunnerKui(0x5a6168, 0x7a1a16); gunnerArmour(0xa8261e, gold); kyahanW(); yaopai(); break;
     case 'rifle_spencer': gunnerKui(0x4a5056, 0x3a2a24); gunnerArmour(0x7a2a22, 0xc9c0a8); kyahanW(); break;
     case 'jinshotai': gunnerKui(0x5a6168, 0x1c2438); gunnerArmour(0x24304a, gold); kyahanW(); break;
     case 'jigen': mingKui(0x6e757c, 0x3a3a40, brass); dingjia(0x4a2024, 0x9a9ea6, [0.15, 0.06, -0.03, -0.12]); mirror(); break;
-    case 'horokutai': mingHair(); hachimaki(red); robe(0x7a3422, 0x2a2a34); b('p', [-0.24, -0.02, 0.04], [0.14, 0.18, 0.2], 0x6a5038); y('p', [0.24, -0.02, 0.06], [0.16, 0.14, 0.16], 0x2a2a2e); b('p', [0.24, 0.07, 0.06], [0.03, 0.06, 0.03], 0xe8e2cc); y('c', [0.12, -0.02, -0.17], [0.2, 0.2, 0.2], 0x2a2a2e); break;
-    case 'ronin': if (vr % 2 === 0) hatOn(() => c('h', [0, 0.16, 0], [0.8, 0.18, 0.8], 0x9a8058)); else mingHair(); robe(torsoColor(u), 0x5a4a3a); break;
+    case 'horokutai': mingHair(); b('h', [0, 0.115, 0], [0.285, 0.045, 0.285], red); robe(0x7a3422, 0x2a2a34); bombs(); y('c', [0.12, -0.02, -0.17], [0.2, 0.2, 0.2], 0x2a2a2e); break;
+    case 'ronin': if (vr % 2 === 0) hatOn(() => c('h', [0, 0.16, 0], [0.8, 0.18, 0.8], 0x9a8058)); else { mingHair(); b('h', [0, 0.08, 0], [0.29, 0.07, 0.29], 0x2a3a5a); } robe(torsoColor(u), 0x5a4a3a); if (vr % 3 !== 1) straw(); break;
   } else switch (u.type) {
     case 'hero': jinHelm(0xc9a03a, 0xe8c040, red, 1.35); queue(); dingjia(0xe8c040, 0xa8201a, [0.15, 0.06, -0.03, -0.12]); hoof(0xe8c040); b('c', [0, -0.08, -0.18], [0.6, 0.95, 0.03], 0xa8201a, [-0.06, 0, 0]); break; // the Khan's yellow, under a red cloak
     case 'samurai': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8); hoof(bc); break;
     case 'cavalry': jinHelm(iron, bc, red); queue(); dingjia(bc, 0xc9c0a8, [0.12, -0.04]); hoof(bc); sadai(); backflag(bc); break;
-    case 'shinsengumi': jinHelm(0x8a6a2a, 0xd8b03c, 0xe8e4da, 1.2); queue(); dingjia(0xd8b03c, 0x8a2a1a, [0.15, 0.03, -0.09]); hoof(0xd8b03c); backflag(0xd8b03c, red); break;
+    case 'shinsengumi': jinHelm(0x4a4440, 0xd8b03c, red, 1.2); queue(); dingjia(0x2e2b28, 0xd8b03c, [0.15, 0.03, -0.09]); hoof(0x2e2b28); twinFlags(red, 0xd8b03c); break; // the Khan's guard: dark iron-studded armour and twin red-and-gold back flags (silhouette choice; no period source found for the details)
     case 'ashigaru': liangmao(); queue(); robe(bc, 0x26262c); hoof(bc); break;
     case 'rifle_sho': jinHelm(iron, bc, red); queue(); robe(bc, 0x26262c); hoof(bc); belts(0x6a4a30); flask(); break; // Ujen Cooha gunners: Han bannermen in helmets
     case 'archer': liangmao(); queue(); robe(0x2c3f6a, bc); hoof(0x2c3f6a); sadai(); break;
@@ -6534,6 +6542,8 @@ function realGear(u) {
   g = { parts: P, hat: hp ? { m: hp.m, s: hp.s, k: hp.k } : null }; RG_CACHE.set(key, g); return g;
 }
 R.GEAR_HOOK.fn = realGear;
+R.GEAR_HOOK.torso = (u) => u.team === 1 && u.type === 'shinsengumi' ? 0x2e2b28 : 0; // the Khan's guard in dark iron-studded coats, not banner yellow
+R.GEAR_HOOK.legs = (u) => u.team === 1 && u.type === 'shinsengumi' ? 0x26231f : 0;
 })();
 </script>
 <script>
