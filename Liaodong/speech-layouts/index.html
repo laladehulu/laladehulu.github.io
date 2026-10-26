@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v72</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v73</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6213,6 +6213,25 @@ const BR = (() => { const g = [-0.14, -0.46, 0.22], d = N3(0.3, 0.22, 0.93); con
   return { g, d, keys: [[0, g], [0.14, b], [0.22, o(-0.06, 0.08, 0)], [0.3, o(0, 0.02, -0.06)], [0.48, POUCH], [0.62, o(0, 0.06, -0.04)], [0.7, o(0, 0.02, 0.05)], [0.78, o(0.06, 0.08, 0)], [0.88, [g[0], g[1] + 0.04, g[2]]], [1, g]] }; })();
 const SP = (() => { const g = [-0.12, -0.42, 0.2], d = N3(0.3, -0.3, 0.9); const butt = add3(g, d, -0.3), out = add3(butt, d, -0.32);
   return { g, d, keys: [[0, g], [0.12, butt], [0.24, out], [0.44, POUCH], [0.6, out], [0.72, butt], [0.82, g], [0.9, [g[0], g[1] - 0.14, g[2] + 0.06]], [1, g]] }; })();
+// the three-eyed gun (三眼銃) loaded properly, one barrel after another: muzzles tipped up with the pole's foot on the ground,
+// powder poured from the flask, ball and wad from the pouch, the rammer drawn and driven home in strokes and put back,
+// the touch-hole primed from the flask; when all three are loaded the slow-match is lifted and blown on to brighten it
+const SJR = { g: [-0.02, -0.56, 0.3], d: N3(0.06, 0.9, 0.42), flask: [-0.24, -0.5, 0.14], mouth: [-0.04, 0.16, 0.22], BT: 0.88 / 3 };
+function sjReload(t, tg, KW) {
+  if (t >= 0.88) {
+    const m = clamp((t - 0.88) / 0.12, 0, 1), G = KW.guard;
+    set3(tg.wp, G.g); set3(tg.wd, G.d);
+    keyPath(tg.rh, [[0, G.g], [0.3, SJR.mouth], [0.75, SJR.mouth], [1, G.g]], m);
+    return { rod: -1, flask: 0, blow: m > 0.3 && m < 0.75 ? 1 : 0 };
+  }
+  const k = Math.min(2, Math.floor(t / SJR.BT)), s = (t - k * SJR.BT) / SJR.BT, g = SJR.g, d = SJR.d, sx = (k - 1) * 0.03;
+  set3(tg.wp, g); set3(tg.wd, d);
+  const up = (h) => [g[0] + d[0] * (0.97 + h) + sx, g[1] + d[1] * (0.97 + h), g[2] + d[2] * (0.97 + h)];
+  const at = (f, ox) => [g[0] + d[0] * f + ox, g[1] + d[1] * f, g[2] + d[2] * f];
+  const rest = at(0.1, 0), stow = at(-0.22, 0.05), pan = at(0.5, -0.07);
+  keyPath(tg.rh, [[0, rest], [0.07, SJR.flask], [0.12, up(0.12)], [0.2, up(0.1)], [0.25, POUCH], [0.31, up(0.03)], [0.34, up(0.03)], [0.38, stow], [0.44, up(0.62)], [0.48, up(0.5)], [0.53, up(0.18)], [0.57, up(0.42)], [0.61, up(0.16)], [0.65, up(0.4)], [0.69, up(0.15)], [0.74, up(0.66)], [0.79, stow], [0.84, SJR.flask], [0.88, pan], [0.94, pan], [1, rest]], s);
+  return { rod: s > 0.38 && s < 0.79 ? 0.7 : -1, flask: (s > 0.06 && s < 0.24) || (s > 0.83 && s < 0.96) ? 1 : 0, blow: 0 };
+}
 const BOW = { idleL: [0.24, -0.5, 0.18], idleD: N3(0.2, 0.95, 0.25), aimL: [0.1, 0.03, 0.56], aimD: N3(-0.06, 1, 0.04), nock: [0.06, 0.05, 0.48], cheek: [-0.06, 0.15, 0.06], relL: [0.16, -0.24, 0.42], relD: N3(0, 1, 0.15) };
 BOW.keys = [[0, [0.09, -0.24, 0.38]], [0.25, [-0.22, 0.24, -0.18]], [0.5, [-0.22, 0.42, -0.22]], [0.82, [0.09, -0.24, 0.38]], [1, [0.09, -0.24, 0.38]]];
 const RAISE_MID = { g: [-0.06, -0.12, 0.36], d: N3(0.08, 0.9, 0.45) };
@@ -6243,6 +6262,7 @@ function reloadStyle(u) {
   if (u.weapon === 'revolver') return 'revolver';
   if (u.weapon === 'bow') return u.def.bow && u.def.bow.xbow ? 'lever' : 'bow';
   const r = u.def.rifle; if (!r) return 'none';
+  if (u.type === 'rifle_spencer') return u.reloadFill ? 'sj' : 'lever'; /* the three-eyed gun: each barrel loaded from the muzzle in turn */
   if (r.mag > 1) return u.reloadFill ? 'spencer' : 'lever';
   return 'muzzle'; // every long gun of the age is a muzzle-loader
   return 'breech';
@@ -6259,11 +6279,28 @@ class Particles {
     this.posAttr = new THREE.BufferAttribute(this.pos, 3); this.colAttr = new THREE.BufferAttribute(this.col, 4); this.sizeAttr = new THREE.BufferAttribute(this.size, 1);
     this.posAttr.setUsage(THREE.DynamicDrawUsage); this.colAttr.setUsage(THREE.DynamicDrawUsage); this.sizeAttr.setUsage(THREE.DynamicDrawUsage);
     geo.setAttribute('position', this.posAttr); geo.setAttribute('pcolor', this.colAttr); geo.setAttribute('psize', this.sizeAttr);
+    this.smokey = !additive; /* smoke, dust and blood share this pool; smoke puffs are drawn as billowing, top-lit, wisping clouds */
+    this.seed = new Float32Array(max); this.age = new Float32Array(max); this.ageAttr = new THREE.BufferAttribute(this.age, 1); this.ageAttr.setUsage(THREE.DynamicDrawUsage); this.seedAttr = new THREE.BufferAttribute(this.seed, 1); this.seedAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('pseed', this.seedAttr); geo.setAttribute('page', this.ageAttr);
     geo.setDrawRange(0, 0);
+    const toon = typeof MING_STYLE !== 'undefined' && MING_STYLE ? 1 : 0;
     const mat = new THREE.ShaderMaterial({
-      uniforms: { scaleF: { value: 400 } },
-      vertexShader: 'attribute float psize; attribute vec4 pcolor; varying vec4 vC; uniform float scaleF; void main(){ vC=pcolor; vec4 mv=modelViewMatrix*vec4(position,1.0); gl_PointSize = psize*(scaleF/ max(1.0,-mv.z)); gl_Position=projectionMatrix*mv; }',
-      fragmentShader: 'varying vec4 vC; void main(){ vec2 c=gl_PointCoord-0.5; float d=length(c); float a=smoothstep(0.5,0.12,d)*vC.a; if(a<0.01) discard; gl_FragColor=vec4(vC.rgb,a); }',
+      uniforms: { scaleF: { value: 400 }, noiseT: { value: Particles.noiseTex() }, toon: { value: toon } },
+      vertexShader: 'attribute float psize; attribute vec4 pcolor; attribute float pseed; attribute float page; varying vec4 vC; varying float vS; varying float vT; uniform float scaleF; void main(){ vC=pcolor; vS=pseed; vT=page; vec4 mv=modelViewMatrix*vec4(position,1.0); gl_PointSize = psize*(scaleF/ max(1.0,-mv.z)); gl_Position=projectionMatrix*mv; }',
+      fragmentShader: additive ? 'varying vec4 vC; void main(){ vec2 c=gl_PointCoord-0.5; float d=length(c); float a=smoothstep(0.5,0.12,d)*vC.a; if(a<0.01) discard; gl_FragColor=vec4(vC.rgb,a); }'
+        : ['uniform sampler2D noiseT; uniform float toon; varying vec4 vC; varying float vS; varying float vT;',
+          'void main(){ vec2 c=gl_PointCoord-0.5;',
+          ' if(vS<0.0){ float d=length(c); float a=smoothstep(0.5,0.12,d)*vC.a; if(a<0.01) discard; gl_FragColor=vec4(vC.rgb,a); return; }',
+          /* each puff turns slowly and has its own patch of cloud noise */
+          ' float an=vS*6.2832+vT*(vS-0.5)*1.6; float cs=cos(an), sn=sin(an); vec2 r=vec2(c.x*cs-c.y*sn, c.x*sn+c.y*cs);',
+          ' vec2 uv=r*0.6+vec2(vS*7.31, vS*3.17); float n1=texture2D(noiseT,uv).r; float n2=texture2D(noiseT,uv*2.3+vec2(vT*0.2,vS)).r;',
+          ' float nz=n1*0.62+n2*0.38; float d=length(c)*2.0;',
+          /* a lumpy body that erodes into wisps as it ages, instead of a round dot fading out */
+          ' float dens=(1.0-d*d)*1.15+(nz-0.5)*(1.0+vT*0.9); float thr=0.08+vT*0.55;',
+          ' float w=toon>0.5?0.07:0.3; float a=smoothstep(thr,thr+w,dens)*vC.a; if(a<0.01) discard;',
+          /* lit from above: brighter crowns, shadowed undersides; the stylized edition bands it */
+          ' float lit=0.86+(-c.y)*0.42+(n2-0.5)*0.22; if(toon>0.5) lit=0.76+floor(clamp((lit-0.6)*3.2,0.0,2.99))*0.15;',
+          ' gl_FragColor=vec4(vC.rgb*lit,a); }'].join('\n'),
       transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
     });
     this.mat = mat;
@@ -6275,7 +6312,18 @@ class Particles {
     const i = this.n++;
     this.pos[i * 3] = x; this.pos[i * 3 + 1] = y; this.pos[i * 3 + 2] = z; this.vel[i * 3] = vx; this.vel[i * 3 + 1] = vy; this.vel[i * 3 + 2] = vz;
     this.life[i] = life; this.maxLife[i] = life; this.s0[i] = s0; this.s1[i] = s1; this.a0[i] = a0; this.drag[i] = drag; this.grav[i] = grav;
+    this.seed[i] = (grav > 0 || s1 < 0.45) ? -1 : Math.random(); this.age[i] = 0; /* blood and specks stay plain discs */
     this.cr[i] = r; this.cg[i] = g; this.cb[i] = b; this.cr1[i] = r1 === undefined ? r : r1; this.cg1[i] = g1 === undefined ? g : g1; this.cb1[i] = b1 === undefined ? b : b1;
+  }
+  static noiseTex() {
+    if (Particles._nt) return Particles._nt; const N = 128, d = new Uint8Array(N * N * 4), lat = [];
+    for (let o = 0; o < 4; o++) { const G = 4 << o, v = new Float32Array(G * G); for (let k = 0; k < G * G; k++) v[k] = Math.random(); lat.push([G, v]); }
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let s = 0, amp = 0.5, tot = 0;
+      for (const [G, v] of lat) { const fx = x / N * G, fy = y / N * G, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0, sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+        const g = (a, b) => v[((b % G) * G + (a % G))]; const n = (g(x0, y0) * (1 - sx) + g(x0 + 1, y0) * sx) * (1 - sy) + (g(x0, y0 + 1) * (1 - sx) + g(x0 + 1, y0 + 1) * sx) * sy;
+        s += n * amp; tot += amp; amp *= 0.5; }
+      const q = Math.round(s / tot * 255), k = (y * N + x) * 4; d[k] = d[k + 1] = d[k + 2] = q; d[k + 3] = 255; }
+    const t = new THREE.DataTexture(d, N, N, THREE.RGBAFormat); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true; Particles._nt = t; return t;
   }
   update(dt) {
     let i = 0;
@@ -6287,17 +6335,18 @@ class Particles {
       this.vel[i * 3] *= dr; this.vel[i * 3 + 1] = this.vel[i * 3 + 1] * dr - this.grav[i] * dt; this.vel[i * 3 + 2] *= dr;
       const wd = this.wind && this.grav[i] <= 0 ? this.wind : null; this.pos[i * 3] += (this.vel[i * 3] + (wd ? wd[0] : 0)) * dt; this.pos[i * 3 + 1] += (this.vel[i * 3 + 1] + (wd ? wd[1] : 0)) * dt; this.pos[i * 3 + 2] += (this.vel[i * 3 + 2] + (wd ? wd[2] : 0)) * dt;
       if (this.grav[i] > 0) { const g = terrainH(this.pos[i * 3], this.pos[i * 3 + 2]) + 0.03; if (this.pos[i * 3 + 1] < g) { this.pos[i * 3 + 1] = g; this.vel[i * 3 + 1] *= -0.3; this.vel[i * 3] *= 0.5; this.vel[i * 3 + 2] *= 0.5; } }
-      this.size[i] = this.s0[i] + (this.s1[i] - this.s0[i]) * t;
-      const fade = t < 0.15 ? t / 0.15 : (1 - t) / 0.85;
+      this.age[i] = t; const puff = this.smokey && this.seed[i] >= 0;
+      this.size[i] = puff ? this.s0[i] + (this.s1[i] - this.s0[i]) * (1 - (1 - t) * (1 - t) * (1 - t)) : this.s0[i] + (this.s1[i] - this.s0[i]) * t; /* smoke bursts out fast, then spreads slowly */
+      const fade = puff ? (t < 0.06 ? t / 0.06 : 1 - t * t * 0.55) : t < 0.15 ? t / 0.15 : (1 - t) / 0.85;
       this.col[i * 4] = this.cr[i] + (this.cr1[i] - this.cr[i]) * t; this.col[i * 4 + 1] = this.cg[i] + (this.cg1[i] - this.cg[i]) * t; this.col[i * 4 + 2] = this.cb[i] + (this.cb1[i] - this.cb[i]) * t; this.col[i * 4 + 3] = this.a0[i] * fade;
       i++;
     }
-    this.posAttr.needsUpdate = true; this.colAttr.needsUpdate = true; this.sizeAttr.needsUpdate = true;
+    this.posAttr.needsUpdate = true; this.colAttr.needsUpdate = true; this.sizeAttr.needsUpdate = true; this.ageAttr.needsUpdate = true; this.seedAttr.needsUpdate = true;
     this.points.geometry.setDrawRange(0, this.n);
   }
   copy(from, to) {
     for (let k = 0; k < 3; k++) { this.pos[to * 3 + k] = this.pos[from * 3 + k]; this.vel[to * 3 + k] = this.vel[from * 3 + k]; }
-    const arrs = ['life', 'maxLife', 's0', 's1', 'a0', 'drag', 'grav', 'cr', 'cg', 'cb', 'cr1', 'cg1', 'cb1'];
+    const arrs = ['life', 'maxLife', 's0', 's1', 'a0', 'drag', 'grav', 'cr', 'cg', 'cb', 'cr1', 'cg1', 'cb1', 'seed', 'age'];
     for (const a of arrs) this[a][to] = this[a][from];
   }
 }
@@ -6883,7 +6932,7 @@ class Renderer {
       blade: mk(box, PAL.steel), hilt: mk(box, 0x1e1b2a), rifle: mk(box, PAL.wood), barrel: mk(box, 0x55595e), yari: mk(box, PAL.yari), pistol: mk(box, 0x3a3a3f),
       gb: mk(RB(0.3, 6, 4), 0xffffff, GEAR_K.b), gc: mk(new THREE.ConeGeometry(0.5, 1, 10), 0xffffff, GEAR_K.c), gy: mk(new THREE.CylinderGeometry(0.5, 0.5, 1, 10), 0xffffff, GEAR_K.y),
       shield: mk(new THREE.CylinderGeometry(0.5, 0.5, 1, 16), 0xa8844a), boss: mk(new THREE.CylinderGeometry(0.5, 0.5, 1, 10), 0x8a2a20),
-      bow: mk(box, 0x5a3b1e, 2), bstring: mk(box, 0xe8e2cc, 2, false), arrow: mk(box, 0x8a6a3a, 1, false), rod: mk(box, 0x9aa0a6, 1, false), twig: mk(box, 0x6b6a3a, 9, false),
+      bow: mk(box, 0x5a3b1e, 2), bstring: mk(box, 0xe8e2cc, 2, false), arrow: mk(box, 0x8a6a3a, 1, false), rod: mk(box, 0x9aa0a6, 1, false), flask: mk(box, 0x6b4426, 1, false), twig: mk(box, 0x6b6a3a, 9, false),
     };
     this.anims = [];
     this.tg = { wp: [0, 0, 0], wd: [0, 1, 0], rh: [0, 0, 0], lh: [0, 0, 0] };
@@ -7114,10 +7163,11 @@ class Renderer {
     };
     // a gun swung as a club: the shaft's end in both fists, the heavy end (three barrels, or a musket's butt) out at the far end
     this.VM.club = {
-      idle: P(0.32, -0.46, -0.45, -0.78, 0.25, -0.2),
-      windup: [P(0.2, 0.1, -0.28, 0.5, 0.1, 0.15), P(0.66, -0.06, -0.3, -0.3, 0.3, -1.7), null, P(-0.56, -0.06, -0.3, -0.3, -0.3, 1.7)],
-      mid: [P(0.12, 0.08, -0.6, -0.65, 0.08, 0.1), P(0.15, -0.16, -0.7, -1.3, 0.1, -0.2), null, P(0.0, -0.16, -0.7, -1.3, -0.1, 0.2)],
-      release: [P(0.05, -0.62, -0.72, -2.3, 0.05, 0.05), P(-0.66, -0.32, -0.55, -1.2, -0.2, 1.6), null, P(0.7, -0.32, -0.55, -1.2, 0.2, -1.6)],
+      /* the side swings turn the shaft flat (rz = ±90°) and sweep it round with ry, so the head travels across the view, never straight out */
+      idle: P(0.28, -0.36, -0.5, -1.05, 0.25, -0.25),
+      windup: [P(0.2, 0.06, -0.3, 0.5, 0.05, 0.12), P(0.4, -0.14, -0.26, 0.35, -0.6, -1.57), null, P(-0.32, -0.14, -0.26, 0.35, 0.6, 1.57)],
+      mid: [P(0.1, 0.02, -0.45, -0.6, 0.04, 0.06), P(0.12, -0.24, -0.42, 0.15, 1.4, -1.57), null, P(0.0, -0.24, -0.42, 0.15, -1.4, 1.57)],
+      release: [P(0.06, -0.2, -0.6, -1.8, 0.02, 0.02), P(-0.32, -0.3, -0.3, 0.05, 3.4, -1.57), null, P(0.42, -0.3, -0.3, 0.05, -3.4, 1.57)],
       block: this.VM.katana.block, stun: this.VM.katana.stun,
       R: L(0, 0, 0), Lh: L(0, -0.14, 0),
     };
@@ -7522,6 +7572,7 @@ class Renderer {
       else { lean = -0.46 * bk - 0.07 * Math.abs(Math.cos(ph)) * bk; twist = -0.28 * sp * bk; roll = -0.05 * bk; } // bolt upright, pedalling hard, shoulders thrashing
     }
     let rateW = 13, rateB = 10, anchor = 'R', two = true, fkR = false, fkL = false, rod = -1, arrowVis = 0, bowDraw = 0;
+    let sjFl = 0;
     const atkSet = KW && KW.atk ? (KW.atk[u.atkDir] || KW.atk[2]) : null;
     const B = (clubbing ? BODYC : BODY)[u.atkDir] || BODY[2];
     const reloading = u.st === ST_RELOAD && u.reloadT > 0.6;
@@ -7558,6 +7609,7 @@ class Renderer {
       else if (w === 'rifle' && reloading && reloadStyle(u) !== 'lever') {
         const style = reloadStyle(u), t = clamp(stT / u.reloadT, 0, 1); anchor = 'W'; rateW = 8;
         if (style === 'muzzle') { if (t < 0.93) { set3(tg.wp, MZ.g); set3(tg.wd, MZ.d); } else { set3(tg.wp, KW.guard.g); set3(tg.wd, KW.guard.d); } keyPath(tg.rh, MZ.keys, t); set3(tg.lh, MZ.l); lean = 0.1; twist = 0.12; rod = t > 0.43 && t < 0.86 ? 1 : -1; stance = 0.3; }
+        else if (style === 'sj') { const q = sjReload(t, tg, KW); rod = q.rod; sjFl = q.flask; lean = q.blow ? 0.14 : 0.1; twist = 0.1; stance = 0.3; rateW = 10; }
         else if (style === 'spencer') { set3(tg.wp, SP.g); set3(tg.wd, SP.d); keyPath(tg.rh, SP.keys, t); lean = 0.06; }
         else { set3(tg.wp, BR.g); set3(tg.wd, BR.d); keyPath(tg.rh, BR.keys, t); lean = 0.06; twist = -0.1; }
         if (style !== 'muzzle') { for (let j = 0; j < 3; j++) tg.lh[j] = tg.wp[j] + tg.wd[j] * KW.off2; }
@@ -7842,7 +7894,8 @@ class Renderer {
       if (u.type === 'rifle_spencer') { if (cl) { segW(f.rifle, -0.15, 1.0, 0.045, 0.045); segW(f.barrel, 1.0, 1.5, 0.1, 0.1); } /* the three-eyed gun as a club: hold the end of the pole, the iron barrels are the head */ else { segW(f.rifle, -0.7, 0.45, 0.045, 0.045); segW(f.barrel, 0.45, 0.95, 0.1, 0.1); } }
       else if (cl) { segW(f.rifle, 0.35, 1.45, 0.05, 0.075); segW(f.barrel, -0.1, 1.05, 0.026, 0.026); } else { segW(f.rifle, -0.3, 0.8, 0.05, 0.075); segW(f.barrel, 0.1, 1.25, 0.026, 0.026); } } else { f.rifle.setMatrixAt(slot, Z); f.barrel.setMatrixAt(slot, Z); }
     if (w === 'revolver') segW(f.pistol, -0.25, 0.3, 0.08, 0.08); else f.pistol.setMatrixAt(slot, Z);
-    if (rod > 0) { const hx2 = G[o + 15], hy2 = G[o + 16], hz2 = G[o + 17]; this.seg(f.rod, slot, hx2, hy2, hz2, hx2 - dx * 0.95, hy2 - dy * 0.95, hz2 - dz * 0.95, 0.012, 0.012); } else f.rod.setMatrixAt(slot, Z);
+    if (rod > 0) { const hx2 = G[o + 15], hy2 = G[o + 16], hz2 = G[o + 17]; const rl = rod === 1 ? 0.95 : rod; this.seg(f.rod, slot, hx2, hy2, hz2, hx2 - dx * rl, hy2 - dy * rl, hz2 - dz * rl, 0.012, 0.012); } else f.rod.setMatrixAt(slot, Z);
+    if (sjFl > 0) { const hx2 = G[o + 15], hy2 = G[o + 16], hz2 = G[o + 17]; this.seg(f.flask, slot, hx2, hy2 + 0.02, hz2, hx2 - dz * 0.03, hy2 + 0.16, hz2 + dx * 0.03, 0.075, 0.055); } else f.flask.setMatrixAt(slot, Z);
     if (xb) { // crossbow: limbs across the front of the stock, string drawn back to the nut
       const ux2 = dz, uz2 = -dx, ul = Math.hypot(ux2, uz2) || 1; const px = ux2 / ul * 0.38, pz = uz2 / ul * 0.38; const cx = P(0.72, 0), cy = P(0.72, 1), cz = P(0.72, 2), bk = 0.08;
       this.seg(f.bow, slot * 2, cx, cy, cz, cx + px - dx * bk, cy - dy * bk, cz + pz - dz * bk, 0.035, 0.04); this.seg(f.bow, slot * 2 + 1, cx, cy, cz, cx - px - dx * bk, cy - dy * bk, cz - pz - dz * bk, 0.035, 0.04);
@@ -7928,7 +7981,7 @@ class Renderer {
     limb2(f.thighR, f.shinR, px - xx * 0.1, py - xy * 0.1, pz - xz * 0.1, p[18], p[19], p[20], 0.17, 0.14, zx * 0.06, zy * 0.06, zz * 0.06);
     this.boxB(f.hand, slot * 2, p[9], p[10], p[11], B, 0.09, 0.09, 0.1); this.boxB(f.hand, slot * 2 + 1, p[12], p[13], p[14], B, 0.09, 0.09, 0.1);
     this.boxB(f.foot, slot * 2, p[15], p[16], p[17], B, 0.11, 0.08, 0.24); this.boxB(f.foot, slot * 2 + 1, p[18], p[19], p[20], B, 0.11, 0.08, 0.24);
-    for (const k of ['blade', 'hilt', 'rifle', 'barrel', 'yari', 'pistol', 'arrow', 'rod']) f[k].setMatrixAt(slot, T.zero); for (let k = 0; k < 9; k++) f.twig.setMatrixAt(slot * 9 + k, T.zero);
+    for (const k of ['blade', 'hilt', 'rifle', 'barrel', 'yari', 'pistol', 'arrow', 'rod', 'flask']) f[k].setMatrixAt(slot, T.zero); for (let k = 0; k < 9; k++) f.twig.setMatrixAt(slot * 9 + k, T.zero);
     for (const k of ['bow', 'bstring']) { f[k].setMatrixAt(slot * 2, T.zero); f[k].setMatrixAt(slot * 2 + 1, T.zero); }
   }
   drawHorse(slot, u, x, y, z, yaw, speed, walk, dead, deadT) {
@@ -7988,6 +8041,21 @@ class Renderer {
     this.setPart(C.axle, slot, root, 0, 0.66, -0.1, 0, 0, 0, 0, 0, 0, 1, 1, 1);
   }
   // ---------- viewmodel ----------
+  // first person, loading the three-eyed gun: the muzzles tipped up before your face, one barrel at a time (powder, ball and wad,
+  // the rammer driven home in strokes, the touch-hole primed), then the gun comes down and the match is blown on
+  vmSjReload(rt, rh, lh, P) {
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    if (!this.vmFlask && this.vmRifle && this.vmRifle.parent) { const g = new THREE.Group(), lea = new THREE.MeshLambertMaterial({ color: 0x6b4426, depthTest: false }), brass = new THREE.MeshLambertMaterial({ color: 0xb8913a, depthTest: false });
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.05, 0.11), lea); b.position.z = 0.06; g.add(b); const sp = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.016, 0.05), brass); sp.position.z = -0.01; g.add(sp);
+      for (const m of [b, sp]) m.renderOrder = 999; g.visible = false; this.vmRifle.parent.add(g); this.vmFlask = g; }
+    lh.set(0, -0.03, -0.02);
+    if (rt >= 0.88) { const m = clamp((rt - 0.88) / 0.12, 0, 1); rh.set(0, -0.06, 0.14); return { target: P(0.14, -0.3, -0.36, 0.45, 0.35, 0.15), rod: false, flask: 0, blow: m > 0.2 && m < 0.8 ? 1 : 0 }; }
+    const BT = 0.88 / 3, k = Math.min(2, Math.floor(rt / BT)), s = (rt - k * BT) / BT, a = k * 2.094 + 0.5, bx = Math.cos(a) * 0.026, by = Math.sin(a) * 0.026;
+    const up = (h) => V(bx, by, -0.72 - h), rest = V(0, -0.05, 0.2), F = V(0.3, 0.0, 0.42), PO = V(0.22, -0.12, 0.5), stow = V(0.04, -0.07, 0.12), pan = V(0.07, 0.05, -0.3);
+    this.vmKey(rh, [[0, rest], [0.07, F], [0.12, up(0.1)], [0.2, up(0.08)], [0.25, PO], [0.31, up(0.02)], [0.34, up(0.02)], [0.38, stow], [0.44, up(0.6)], [0.48, up(0.46)], [0.53, up(0.12)], [0.57, up(0.38)], [0.61, up(0.1)], [0.65, up(0.36)], [0.69, up(0.1)], [0.74, up(0.62)], [0.79, stow], [0.84, F], [0.88, pan], [0.94, pan], [1, rest]], s);
+    const prime = s > 0.8 && s < 0.97;
+    return { target: prime ? P(0.08, -0.3, -0.46, 0.25, 0.25, 0.3) : P(0.04, -0.52, -0.55, 1.1, 0.08, 0), rod: s > 0.38 && s < 0.79, flask: (s > 0.06 && s < 0.24) || (s > 0.83 && s < 0.96) ? 1 : 0, blow: 0 };
+  }
   vmKey(out, keys, t) {
     let i = 0; while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
     const k0 = keys[i], k1 = keys[i + 1]; let s = clamp((t - k0[0]) / Math.max(1e-4, k1[0] - k0[0]), 0, 1); s = s * s * (3 - 2 * s);
@@ -8065,6 +8133,7 @@ class Renderer {
       if (reloading && style !== 'lever') {
         speed = 9;
         if (style === 'muzzle') { target = rt < 0.93 ? R.relMuzzle : hip; this.vmKey(rhT, R.muzzle, rt); rod = rt > 0.42 && rt < 0.88; cart = rt > 0.12 && rt < 0.3; }
+        else if (style === 'sj') { const q = this.vmSjReload(rt, rhT, lhT, P); target = q.target; rod = q.rod; this._sjFl = q.flask; this._sjBlow = q.blow; speed = 7; }
         else if (style === 'spencer') { target = rt < 0.86 ? R.relSpencer : hip; this.vmKey(rhT, R.spencer, rt); cart = rt > 0.36 && rt < 0.58; }
         else { target = rt < 0.9 ? R.relBreech : (hero.aiming ? ads : hip); this.vmKey(rhT, R.breech, rt); breechOpen = smooth(0.17, 0.24, rt) * (1 - smooth(0.73, 0.8, rt)); cart = rt > 0.45 && rt < 0.72; }
         if (cart) this.vmCart.position.copy(rhT).add(T.v.set(0, 0.03, -0.02));
@@ -8143,6 +8212,10 @@ class Renderer {
     this.vmCyl.position.x = -0.04 * cylOut;
     this.vmCart.visible = cart;
     this.vmRod.visible = rod; if (rod) { this.vmRod.position.copy(st.rh).add(T.v.set(0, 0, 0.45)); }
+    { const sjr = w === 'rifle' && !hero.club && reloading && reloadStyle(hero) === 'sj'; if (!sjr) { this._sjFl = 0; this._sjBlow = 0; }
+      if (this.vmFlask) { this.vmFlask.visible = !!this._sjFl; if (this._sjFl) this.vmFlask.position.copy(st.rh).add(T.v.set(0.0, 0.0, 0.06)); }
+      if (this.vmSj) { if (!this.vmSjMatch) this.vmSjMatch = this.vmSj.children.find(c => c.material && c.material.type === 'MeshBasicMaterial') || null;
+        const mt = this.vmSjMatch; if (mt) { const b = this._sjBlow || 0, f = 1 + b * (2.2 + 0.6 * Math.sin(this.time * 31)); mt.scale.set(f, f, f); mt.material.color.setHex(b > 0.3 ? 0xffd27a : 0xff8a3a); } } }
     // hands and arms
     this.vmHandR.position.copy(st.rh); this.vmHandL.position.copy(st.lh); this.vmHandL.visible = two;
     vm.updateMatrix();
@@ -13835,6 +13908,203 @@ function arsHint() {
   el.hidden = !show; if (show) { const A = arsSave(), n = (A && A.s.arsenal || []).length; el.innerHTML = `<kbd>I</kbd> your arsenal${n ? ' · ' + n : ''}`; }
 }
 setInterval(arsHint, 500);
+
+// ===================== 抉擇 · choices: the decisions that split the story, and what they cost =====================
+// A few times in each story campaign the game stops and makes you choose, and there is no right answer: a captured boy,
+// a wounded man on the road out, a bridge to cross or not, a prisoner, a deserter. The choice is written in the save
+// (S.ch, S.ledger) and bends what follows: a different battle, a man who is not there any more, men who remember it at
+// the fire, a dream, his empty bedroll, a letter home, and at the end a ledger of what you chose and what it cost.
+// Client side and story only (solo). A choice made in the middle of a battle travels through the input stream as a
+// debug-type command (sub 2), and the mission's own data says what each answer does, so the sim stays deterministic.
+const CH = { el: null, urg: null, live: null, zc: null, zb: null, objs: [], talkWrapped: new Set(), lines: null, fired: {}, initSent: null };
+const chL = (zh, en) => [zh, en];
+function chCtx() {
+  if (((ZB && ZB.jin) || (ZC && ZC.jin)) && typeof JS !== 'undefined' && JS) return { c: 'jin', S: JS, save: () => jSave(), R: JR };
+  if (ZS) return { c: ZS.sj ? 'sj' : 'zhe', S: ZS, save: () => zSave(), R: ZS.sj && typeof SR !== 'undefined' ? SR : ZR };
+  return null;
+}
+function chData(S) { if (!S.ch) S.ch = {}; if (!S.ledger) S.ledger = []; if (!S.chLost) S.chLost = {}; if (!S.dreamt) S.dreamt = {}; return S; }
+const chRowIn = (R, k) => R.find(r => r.k === k) || null;
+function chNm(C, k, en) {
+  if (k === C.S.me || (C.c === 'zhe' && k === 'me')) return en ? C.S.name.en : C.S.name.zh;
+  const r = chRowIn(C.R, k); return r ? (en ? r.en : r.zh) : (en ? 'a comrade' : '弟兄');
+}
+const chAlive = (C, k) => !!(C.S.alive && C.S.alive[k]);
+const chBond = (C, k, n) => { if (!C.S.bond) C.S.bond = {}; C.S.bond[k] = (C.S.bond[k] || 0) + n; };
+const chDD = (C) => (typeof ddDD === 'function' ? ddDD(C.S) : null);
+const chRep = (C, key, n) => { const D = chDD(C); if (D && D.rep) D.rep[key] = (D.rep[key] || 0) + n; };
+// a man goes out of the story because of what you chose: dead, left behind, gone over the wall, sent home
+function chLose(C, k, how, id) { if (!k) return; C.S.alive[k] = false; C.S.fate[k] = how; chData(C.S).chLost[k] = { id, how }; if (C.c === 'sj' && C.S.lost && !C.S.lost.includes(k)) C.S.lost.push(k); }
+const chGot = (C, id) => { const e = chData(C.S).ch[id]; return e ? e.o : -1; };
+
+// ---------------- the decision panel ----------------
+// spec: { id, kick, title, year, who, lines: [[zh,en]], opts: [{ q, a: [[zh,en]], fx(C), led }], timer, def, urgent, hold }
+// A full-screen pause for the deliberate ones (camp, the road): the lines come one at a time, and the answers only after
+// a moment. The urgent ones (in battle) are a small panel at the top with a burning fuse; the fight does not stop.
+function chCSS() {
+  if ($('chCss')) return; const st = document.createElement('style'); st.id = 'chCss';
+  st.textContent = `#chDec { position: fixed; inset: 0; z-index: 86; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(26,16,10,.9), rgba(4,2,2,.985)); color: #efe6d0; font-family: 'Noto Serif CJK TC', Georgia, serif; opacity: 0; transition: opacity .9s; }
+#chDec.on { opacity: 1; } #chDec .in { max-width: 700px; width: 92vw; padding: 30px 38px; }
+#chDec .k { font: 700 11px sans-serif; letter-spacing: .32em; color: #c9524a; text-transform: uppercase; margin-bottom: 10px; }
+#chDec h2 { font-size: 30px; margin: 0 0 4px; letter-spacing: .08em; } #chDec .yr { opacity: .55; font: 13px sans-serif; letter-spacing: .12em; margin-bottom: 18px; }
+#chDec .who { font: 700 14px sans-serif; color: #e0b46a; margin: 12px 0 2px; } #chDec .who small { font-weight: 400; color: #a89878; margin-left: 8px; }
+#chDec .l { opacity: 0; transform: translateY(4px); transition: opacity .8s, transform .8s; margin: 0 0 11px; } #chDec .l.on { opacity: 1; transform: none; }
+#chDec .l .zh { font-size: 18px; } #chDec .l .en { font-size: 15.5px; line-height: 1.55; opacity: .85; }
+#chDec .ops { display: flex; flex-direction: column; gap: 7px; margin-top: 20px; opacity: 0; transition: opacity 1.2s; pointer-events: none; } #chDec .ops.on { opacity: 1; pointer-events: auto; }
+#chDec .ops button { all: unset; cursor: pointer; padding: 10px 14px; border-radius: 4px; background: #1e1611; border: 1px solid #4a3a28; font: 15px sans-serif; color: #efe6d0; }
+#chDec .ops button:hover { border-color: #c9524a; background: #2a1c14; } #chDec .ops button kbd { color: #e0b46a; margin-right: 10px; font: 700 12px sans-serif; }
+#chDec .go { all: unset; cursor: pointer; margin-top: 18px; padding: 9px 20px; border-radius: 4px; background: #6a2a22; color: #fff3e4; font: 700 14px sans-serif; display: inline-block; }
+#chDec .tm, #chUrg .tm { height: 3px; background: #3a2a1c; margin-top: 14px; border-radius: 2px; overflow: hidden; } #chDec .tm i, #chUrg .tm i { display: block; height: 100%; background: linear-gradient(90deg, #e05a3a, #f0b05a); width: 100%; }
+#chUrg { position: fixed; left: 50%; top: 9%; transform: translateX(-50%); width: min(640px, 92vw); z-index: 45; background: linear-gradient(180deg, rgba(36,14,10,.94), rgba(16,8,6,.96)); border: 1px solid #a8483a; border-radius: 6px; padding: 12px 16px; color: #efe6d0; font-family: 'Noto Serif CJK TC', Georgia, serif; box-shadow: 0 8px 30px rgba(0,0,0,.6); }
+#chUrg .k { font: 700 10px sans-serif; letter-spacing: .3em; color: #f07a5a; } #chUrg .zh { font-size: 17px; margin-top: 4px; } #chUrg .en { font-size: 14px; opacity: .85; margin-bottom: 6px; }
+#chUrg .ops { display: flex; flex-direction: column; gap: 4px; } #chUrg .ops div { padding: 5px 9px; border: 1px solid #5a3a28; border-radius: 4px; font: 14px sans-serif; background: #1e1410; } #chUrg .ops kbd { color: #f0b05a; margin-right: 8px; font: 700 12px sans-serif; }
+#zheCard.dream { background: radial-gradient(ellipse at center, rgba(14,18,30,.95), rgba(2,3,8,.99)); } #zheCard.dream h2 { color: #9fb2d8; font-weight: 400; letter-spacing: .3em; } #zheCard.dream p { font-style: italic; color: #c8d0e0; }
+#zheCard .chled { font-size: 14.5px; line-height: 1.5; } #zheCard .chled div { margin: 0 0 10px; padding-left: 10px; border-left: 2px solid #6a4a2a; } #zheCard .chled b { color: #e8c27a; font-weight: 600; } #zheCard .chled i { display: block; opacity: .75; font-style: normal; } #zheCard .chled em { display: block; color: #d88a7a; font-style: normal; }
+#chPr { position: fixed; left: 50%; bottom: 23%; transform: translateX(-50%); z-index: 30; font: 14px sans-serif; color: #efe6d0; background: rgba(12,9,7,.8); border: 1px solid #5a4a32; border-radius: 4px; padding: 5px 12px; pointer-events: none; } #chPr kbd { color: #e0b46a; margin-right: 6px; font-weight: 700; }`;
+  document.head.appendChild(st);
+}
+function chDecide(spec, done) {
+  chCSS(); const C = chCtx(); if (!C) { if (done) done(-1); return; } chData(C.S);
+  if (spec.urgent) return chUrgent(spec, done);
+  if (document.pointerLockElement) document.exitPointerLock(); Input.keys = 0; if ($('pause')) $('pause').hidden = true;
+  let box = $('chDec'); if (!box) { box = document.createElement('div'); box.id = 'chDec'; document.body.appendChild(box); box.addEventListener('mousedown', (e) => e.stopPropagation()); }
+  const ln = (l) => `<div class="l"><div class="zh">${l[0]}</div><div class="en">${l[1]}</div></div>`;
+  box.innerHTML = `<div class="in"><div class="k">${spec.kick || '抉擇 · A choice'}</div><h2>${spec.title}</h2>${spec.year ? `<div class="yr">${spec.year}</div>` : ''}${spec.who ? `<div class="who">${spec.who[0]}${spec.who[1] ? `<small>${spec.who[1]}</small>` : ''}</div>` : ''}<div class="ls">${spec.lines.map(ln).join('')}</div>
+    <div class="ops">${spec.opts.map((o, i) => `<button type="button" data-i="${i}"><kbd>${i + 1}</kbd>${o.q}</button>`).join('')}</div>${spec.timer ? '<div class="tm"><i></i></div>' : ''}</div>`;
+  box.hidden = false; void box.offsetWidth; box.classList.add('on');
+  const ls = [...box.querySelectorAll('.ls .l')], ops = box.querySelector('.ops'); let step = 0, phase = 'lines', t0 = 0, raf = 0;
+  const reveal = () => { if (phase !== 'lines') return; if (step < ls.length) { ls[step++].classList.add('on'); setTimeout(reveal, step === 1 ? 700 : 1500); } else setTimeout(() => { phase = 'pick'; ops.classList.add('on'); t0 = performance.now(); if (spec.timer) tick(); }, (spec.hold || 2.2) * 1000); };
+  const tick = () => { if (phase !== 'pick') return; const f = 1 - (performance.now() - t0) / (spec.timer * 1000); const bar = box.querySelector('.tm i'); if (bar) bar.style.width = Math.max(0, f * 100) + '%'; if (f <= 0) { pick(spec.def || 0); return; } raf = requestAnimationFrame(tick); };
+  const pick = (i) => { if (phase !== 'pick') return; const o = spec.opts[i]; if (!o) return; phase = 'after'; cancelAnimationFrame(raf); AUDIO.play('ui');
+    chRecord(C, spec, i); const more = o.fx ? o.fx(C) : null; C.save();
+    const after = (o.a || []).concat(more && more.a ? more.a : []);
+    box.querySelector('.ops').outerHTML = `<div class="ls2">${after.map(ln).join('')}</div><button type="button" class="go">${spec.go || '……'}</button>`; const tm = box.querySelector('.tm'); if (tm) tm.remove();
+    const l2 = [...box.querySelectorAll('.ls2 .l')]; let j = 0; const rv = () => { if (j < l2.length) { l2[j++].classList.add('on'); setTimeout(rv, 1300); } }; rv();
+    const go = box.querySelector('.go'); go.onclick = () => close(more); };
+  const close = (more) => { if (phase !== 'after') return; phase = 'done'; box.classList.remove('on'); state.zheDlg = null; setTimeout(() => { box.hidden = true; }, 500);
+    if (more && more.beat && typeof ddBeat === 'function') { ddBeat(more.beat, () => { if (done) done(spec.picked); }); return; } if (done) done(spec.picked); };
+  box.querySelectorAll('.ops button').forEach(b => b.onclick = () => pick(+b.dataset.i));
+  // the camp's dialogue keys (1-9 answer, E/Esc closes) route here while the panel is open
+  state.zheDlg = { k: 'ch', choose: (i) => { if (phase === 'pick') pick(i); }, close: () => { if (phase === 'after') { const g = box.querySelector('.go'); if (g) g.click(); } } };
+  setTimeout(reveal, 500);
+}
+// write it down: the save remembers the answer, and the ledger what it meant
+function chRecord(C, spec, i) {
+  const S = chData(C.S); spec.picked = i; const o = spec.opts[i];
+  S.ch[spec.id] = Object.assign({ o: i, at: S.stage || '' }, spec.keep || {});
+  S.ledger = S.ledger.filter(e => e.id !== spec.id); S.ledger.push({ id: spec.id, o: i, t: spec.ltitle || spec.title, pick: o.led || o.q, at: spec.year || '' });
+}
+// ---------------- the urgent kind, in the middle of a fight ----------------
+function chUrgent(spec, done) {
+  let box = $('chUrg'); if (!box) { box = document.createElement('div'); box.id = 'chUrg'; document.body.appendChild(box); }
+  const L = spec.lines[spec.lines.length - 1];
+  box.innerHTML = `<div class="k">${spec.kick || '抉擇 · NOW'}${spec.who ? ' · ' + spec.who[0] : ''}</div><div class="zh">${L[0]}</div><div class="en">${L[1]}</div><div class="ops">${spec.opts.map((o, i) => `<div><kbd>${i + 1}</kbd>${o.q}</div>`).join('')}</div><div class="tm"><i></i></div>`;
+  box.hidden = false; const t0 = performance.now(), T = (spec.timer || 12) * 1000; let over = false; AUDIO.play('whistle', undefined, 0, 0, 0.5);
+  const fin = (i) => { if (over) return; over = true; CH.live = null; const C = chCtx(); if (C) { chRecord(C, spec, i); const o = spec.opts[i]; if (o.fx) o.fx(C); C.save(); }
+    const o = spec.opts[i]; box.innerHTML = `<div class="k">${spec.kick || '抉擇'}</div>${(o.a || []).slice(0, 2).map(l => `<div class="zh">${l[0]}</div><div class="en">${l[1]}</div>`).join('') || `<div class="en">${o.q}</div>`}`; setTimeout(() => { box.hidden = true; }, 4200); if (done) done(i); };
+  const tick = () => { if (over) return; const f = 1 - (performance.now() - t0) / T; const bar = box.querySelector('.tm i'); if (bar) bar.style.width = Math.max(0, f * 100) + '%'; if (f <= 0 || !state.sim || state.ended) { fin(spec.def || 0); return; } requestAnimationFrame(tick); };
+  CH.live = { pick: (i) => { if (i >= 0 && i < spec.opts.length) fin(i); } }; tick();
+}
+window.addEventListener('keydown', (e) => { // while an urgent choice burns, 1-3 answer it (and do not change weapons)
+  if (!CH.live || state.screen !== 'game') return; const m = /^Digit([1-9])$/.exec(e.code); if (!m) return; e.preventDefault(); e.stopImmediatePropagation(); CH.live.pick(+m[1] - 1);
+}, true);
+// the mission's answer, sent to the sim as a command: which choice (cid), which answer (opt), and a man's place k
+function chSend(cid, opt, k) { Input.cmds.push([0, 31, 2, ((cid & 255) << 8) | ((opt & 15) << 4) | (k & 15)]); }
+{ const P = SIM.Sim.prototype, _dc = P.debugCmd;
+  P.debugCmd = function (p, sub, val) {
+    if (sub !== 2) return _dc.call(this, p, sub, val);
+    if (this.players.filter(q => !q.ai).length !== 1 || p.ai || !this.mission || !this.mission.choices) return;
+    const cid = (val >> 8) & 255, opt = (val >> 4) & 15, k = val & 15, acts = (this.mission.choices[cid] || [])[opt]; if (!acts) return;
+    this.mv.chose = this.mv.chose || {}; if (this.mv.chose[cid] !== undefined) return; this.mv.chose[cid] = opt;
+    const q = this.squads[p.soldierSq];
+    for (const a0 of acts) { const a = a0.map(x => x === '$k' ? k : x);
+      if (a[0] === 'jump') this.mJump(a[1] | 0);
+      else if (a[0] === 'park') { const u = q && this.units[q.unitIds[a[1] | 0]]; if (u && !u.dead && u.ctrl < 0) { u.wounded = true; u.aided = true; u.helpedBy = -1; u.downed = false; u.noncomb = true; u.x = u.px = a[2]; u.z = u.pz = a[3]; } }
+      else this.mAct(a); }
+    this.events.push({ t: 'mchoose', cid, opt });
+  }; }
+
+// ---------------- the registry: every decision, what it shows, what it does ----------------
+const CHD = {};
+// a dream for the night after, if this answer earned one: [title, [lines]]
+function chDreamFor(C) {
+  const S = chData(C.S); for (let i = S.ledger.length - 1; i >= 0; i--) { const e = S.ledger[i], D = CHD[e.id]; if (!D || S.dreamt[e.id]) continue; const d = D.dream && D.dream(C, e.o); if (!d) continue; S.dreamt[e.id] = 1; C.save(); return d; }
+  return null;
+}
+function chDream(then) {
+  const C = chCtx(); const d = C && chDreamFor(C); if (!d) return then();
+  zCards([{ title: '夢 · A dream', year: d[0], p: d[1], btn: 'Wake →' }], () => { const b = $('zheCard'); if (b) b.classList.remove('dream'); then(); });
+  const b = $('zheCard'); if (b) b.classList.add('dream');
+}
+// the ledger at the end of a campaign: every choice, and what came of it
+function chLedgerCard(C) {
+  const S = chData(C.S); if (!S.ledger.length) return null;
+  const rows = S.ledger.map(e => { const D = CHD[e.id]; const out = D && D.end ? D.end(C, e.o) : ''; return `<div><b>${e.t}</b><i>${e.pick}</i>${out ? `<em>${out}</em>` : ''}</div>`; }).join('');
+  return { title: '簿 · What you chose', year: 'and what it cost', html: `<div class="chled">${rows}</div>` };
+}
+
+// ================= 浙兵 · the Zhejiang file =================
+// 一 · the boy at the well (camp0, before you sleep): a Jin boy caught in the well-house; fifty taels a head
+CHD.z1boy = {
+  build: (C) => ({ id: 'z1boy', title: '井房 · The well-house', ltitle: 'The boy in the well-house', year: 'The night before Abudali, April 1619', who: ['杜阿九 Du Ajiu', 'and Luo Tietou, dragging someone between them'],
+    lines: [chL('（他們從黑暗裡拖出一個孩子。十三四歲，光著一隻腳，辮子凍成了冰。）', '(Out of the dark they drag a boy. Thirteen, fourteen. One foot bare, his queue frozen stiff.)'),
+      chL('井房裡抓的，金人的探子。一顆首級，賞銀五十兩。隊長睡了——你說句話。', 'Caught him in the well-house. A Jin scout. One head, fifty taels of silver. The chief\'s asleep — you say the word.'),
+      chL('陳小六：他……他還是個孩子。', 'Chen Xiaoliu: He\'s... he\'s just a boy.'),
+      chL('方秀才：他不是兵。可記功的書辦不會問這個。', 'Fang the Scholar: He\'s no soldier. But the clerk who counts the heads won\'t ask.')],
+    opts: [
+      { q: 'Let Du take the head.', led: 'Let Du Ajiu take the boy\'s head for fifty taels.', a: [chL('（杜阿九拔出刀。你轉過身去。你還是聽見了。）', '(Du draws his knife. You turn away. You hear it anyway.)'), chL('（小六整夜沒有再說一句話。）', '(Xiaoliu doesn\'t say another word all night.)')],
+        fx: (C) => { chBond(C, 'du', 2); chBond(C, 'liu6', -2); chBond(C, 'fang', -1); chRep(C, 'cruel', 2); C.S.flags.boyHead = 1; } },
+      { q: 'Wake Chief Wu. Have him questioned.', led: 'Handed the boy to Chief Wu to be questioned.', a: [chL('方秀才替隊長問話。孩子說：西邊的山上，旗多得數不過來。都在等。', 'Fang questions him for the chief. The boy says: on the west ridge, more banners than he can count. All of them waiting.'), chL('吳老栓把話帶到劉總兵帳前。回來的時候他什麼也沒說，只把全隊的藤牌換到了西邊。', 'Chief Wu takes it to General Liu\'s tent. When he comes back he says nothing. He only moves every shield in the file to the west side.'), chL('（天亮前，書辦的人把孩子帶走了。）', '(Before dawn, the clerk\'s men come and take the boy away.)')],
+        fx: (C) => { chBond(C, 'wu', 1); chRep(C, 'disc', 1); C.S.flags.warned = 1; } },
+      { q: 'Cut him loose in the dark.', led: 'Cut the boy loose and let him run north.', a: [chL('你割斷繩子，朝北邊指了指。他看了你一眼，跑進了黑暗。', 'You cut the cord and point north. He looks at you once, and runs into the dark.'), chL('杜阿九：「五十兩。你知道他回去會說什麼？我們有多少人，在哪裡。」', 'Du: "Fifty taels. And you know what he\'ll tell them? How many we are. And where."'), chL('（天亮時書辦來查是誰放走了探子。吳老栓站出來：「我的隊，我的令。」他替你挨了二十棍，一聲沒吭。）', '(At first light the clerk comes asking who let the scout go. Chief Wu steps forward: "My file. My order." He takes twenty strokes for you, without a sound.)')],
+        fx: (C) => { chBond(C, 'liu6', 2); chBond(C, 'du', -2); chBond(C, 'wu', 2); chRep(C, 'care', 1); C.S.flags.freed = 1; const D = chDD(C); if (D) { D.grudge = D.grudge || {}; D.grudge.du = 'boy'; } } },
+    ] }),
+  dream: (C, o) => o === 0 ? ['The night after', ['You dream of the well-house. A boy\'s bare foot in the snow, and Du Ajiu counting silver by the fire, and the count never ends.', 'Fifty. Fifty. Fifty.']]
+    : o === 2 ? ['The night after', ['You dream that the boy comes back over the ridge with the banners behind him, and lifts his hand toward you.', 'You wake before you can tell whether he is pointing you out, or waving.']] : null,
+  end: (C, o) => o === 0 ? `Fifty taels. ${chAlive(C, 'du') ? 'Du Ajiu sent them home to Chunhua.' : 'Du Ajiu never spent them.'}` : o === 1 ? 'The chief knew where the banners were. Nobody above him listened. The clerk took the boy anyway.' : 'Somewhere north of the pass a boy got home. Chief Wu took twenty strokes for it, and died two days later at Abudali.',
+  talk: (C, k, o) => ({
+    liu6: o === 0 ? { q: 'Xiaoliu. About the boy...', a: [chL('……他跟我一樣大。', '...He was my age.'), chL('（他轉過身去睡了。）', '(He turns over and goes to sleep.)')] } : o === 2 ? { q: 'You think he got home?', bond: 1, a: [chL('他跑得比兔子還快。一定到家了。', 'He ran faster than a hare. He got home. He did.')] } : null,
+    du: o === 0 ? { q: 'What will you do with the silver?', a: [chL('寄給春花。……你別那樣看我。是你點的頭。', 'Send it to Chunhua. ...Don\'t look at me like that. You nodded.')] } : o === 2 ? { q: 'Still angry about the boy?', a: [chL('五十兩，你放跑了。隊長替你挨了棍子。你記著。', 'Fifty taels you let run off. And the chief took the staff for you. Remember that.')] } : null,
+    he: o === 2 ? { q: 'Chief Wu took the strokes for me.', a: [chL('他願意。他說你做得對，可規矩是規矩，總得有人挨。', 'He wanted to. He said you were right, but rules are rules, and someone had to take it.')] } : null,
+  })[k] || null,
+};
+// the Abudali variants the boy leaves behind him: warned (the shields face the ridge in time) or found (the Jin knew)
+function chMissionVariants() {
+  const M = SIM.MISSIONS, A = M.abudali; if (!A || M.abudali_w) return;
+  const cp = (o) => JSON.parse(JSON.stringify(o));
+  const W = cp(A); W.variantOf = 'abudali';
+  W.groups.hong.army = ['cavalry', 'samurai', 'samurai', 'byakkotai', 'archer'];
+  W.phases[1].say = W.phases[1].say.concat([[30, 'chief', 'Shields to the west side. The boy said the west ridge. Trust a scared boy over a rider in fine clothes.', '藤牌靠西。那孩子說的是西嶺。寧信嚇壞的孩子，也別信穿得體面的信使。']]);
+  W.phases[2].say = [[1, 'chief', 'There — the west ridge, as the boy said! Shields are already facing them. Brace!', '西嶺——跟那孩子說的一樣！藤牌已經朝西了，頂住！']].concat(W.phases[2].say.filter(s => s[1] !== 'fang'));
+  M.abudali_w = W;
+  const F = cp(A); F.variantOf = 'abudali';
+  F.groups.boy = { team: 1, name: 'Jin horsemen who knew the way', army: ['cavalry', 'byakkotai'], at: [104, -60, -PI_ / 2], reserve: true };
+  F.phases[0].waves = (F.phases[0].waves || []).concat([[44, 'boy', ['attack']]]);
+  F.phases[0].say = F.phases[0].say.concat([[45, 'lookout', 'Riders on the east slope — straight for our file! How do they know where we are?', '東坡有馬兵——直衝我們隊！他們怎麼知道我們在這兒？'], [50, 'du', 'Your boy told them. Fifty taels, I said.', '你那個孩子告訴他們的。五十兩，我說過。']]);
+  M.abudali_f = F;
+}
+const PI_ = Math.PI;
+// ---------------- the hooks into the Zhejiang flow ----------------
+{ const _sg = startGame;
+  startGame = function (msg, me, net, delay) { // the battle the save has earned
+    try { chMissionVariants(); if (msg && msg.mode === 'campaign' && ZS && !ZS.sj) {
+      if (msg.mission === 'abudali') { const o = chGot({ S: ZS }, 'z1boy'); if (o === 1) msg = Object.assign({}, msg, { mission: 'abudali_w' }); else if (o === 2) msg = Object.assign({}, msg, { mission: 'abudali_f' }); } } } catch (e) { console.warn('choices', e); }
+    return _sg(msg, me, net, delay); }; }
+{ const _s = zSleep;
+  zSleep = function () {
+    if (ZHOOK.sleep || !ZC || ZC.night >= 2) return _s();
+    const C = chCtx(); if (!C) return _s(); chData(C.S);
+    if (ZC.night === 0 && chGot(C, 'z1boy') < 0) { chDecide(CHD.z1boy.build(C), () => _s()); return; }
+    return chDream(() => _s()); }; }
+// the talk at the fire remembers: every answer can give a man something to say about it
+function chTalkAdd(D, k) {
+  const C = chCtx(); if (!C) return D; const S = chData(C.S); const add = [];
+  for (const e of S.ledger) { const R = CHD[e.id]; if (!R || !R.talk) continue; const t = R.talk(C, k, e.o); if (t) add.push(Object.assign({ chk: e.id }, t)); }
+  if (!add.length) return D; if (!D) D = { g: chL('……', '...'), t: [] }; return Object.assign({}, D, { t: add.concat(D.t || []) });
+}
+{ const _t = zTalk; zTalk = function (k, night) { return chTalkAdd(_t(k, night), k); }; }
+// test handle (headless scripts): the registry and the entry points
+window.__ch = { CHD, CH, ctx: () => chCtx(), sleep: () => zSleep(), decide: (id) => { const C = chCtx(); chDecide(CHD[id].build(C), () => { }); }, ledger: () => { const C = chCtx(); return C ? chLedgerCard(C) : null; } };
 
 })();
 </script>
