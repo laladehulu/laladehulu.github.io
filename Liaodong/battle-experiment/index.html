@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v61</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v62</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -93,6 +93,10 @@ kbd { font-family: var(--font-ui); font-size: 11px; background: var(--ink); colo
 #hitmark::before, #hitmark::after { content: ""; position: absolute; left: 50%; top: 50%; width: 24px; height: 2px; background: #fff; box-shadow: 0 0 2px #000; margin: -1px 0 0 -12px; }
 #hitmark::before { transform: rotate(45deg); } #hitmark::after { transform: rotate(-45deg); }
 #hitmark.head::before, #hitmark.head::after { background: var(--danger); }
+#hitmark.pop { animation: hmPop .22s ease-out; } #hitmark.kill { animation: hmKill .38s ease-out; }
+#hitmark.kill::before, #hitmark.kill::after { background: #ff4a3a; width: 30px; margin-left: -15px; height: 3px; }
+@keyframes hmPop { 0% { transform: scale(1.7); } 100% { transform: scale(1); } }
+@keyframes hmKill { 0% { transform: scale(2.2) rotate(12deg); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
 #speedlines { position: absolute; inset: -20%; opacity: 0; background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0) 0deg 5deg, rgba(255,255,255,.55) 5deg 5.6deg, rgba(255,255,255,0) 5.6deg 11deg, rgba(255,255,255,.3) 11deg 11.3deg); -webkit-mask: radial-gradient(circle at 50% 50%, transparent 30%, black 72%); mask: radial-gradient(circle at 50% 50%, transparent 30%, black 72%); pointer-events: none; }
 #suppress { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 35%, rgba(20,14,10,.85) 100%); }
 #vignette { position: absolute; inset: 0; box-shadow: inset 0 0 180px rgba(200,20,10,.9); opacity: 0; }
@@ -5119,6 +5123,14 @@ const AUDIO = (() => {
       case 'swish': { if (!P('swing')) return false; if (!at(vol * 0.6, 40)) return true; samp(sp, t, P('swing'), rr(0.9, 1.15), sp.gain); return true; }
       case 'thrust': { if (!P('thrust')) return false; if (!at(vol * 0.6, 40)) return true; samp(sp, t, P('thrust'), rr(0.92, 1.1), sp.gain); return true; }
       case 'flesh': { if (!P('flesh')) return false; if (!at(vol * 0.85, 60)) return true; samp(sp, t, P('flesh'), rr(0.85, 1.1), sp.gain); return true; }
+      // a landed blow: the cut (flesh sample, pitched down) with a short low body thump under it; heavier blows go lower and longer;
+      // on armour a dull metal knock rides on top
+      case 'strike': case 'strikeheavy': case 'strikearmor': { if (!P('flesh')) return false; const hv = name === 'strikeheavy'; if (!at(vol * (hv ? 1.15 : 0.95), 70)) return true;
+        samp(sp, t, P('flesh'), rr(0.72, 0.86) * (hv ? 0.85 : 1), sp.gain * 1.15); samp(sp, t + 0.012, P('flesh'), rr(1.15, 1.3), sp.gain * 0.35);
+        tone(sp, t, hv ? 0.2 : 0.12, 'sine', hv ? 95 : 120, hv ? 34 : 48, sp.gain * (hv ? 1.1 : 0.8)); noise({ ...sp, wet: 0.05 }, t, hv ? 0.1 : 0.06, 'lowpass', hv ? 700 : 1100, 0.8, sp.gain * 0.5, 0.002);
+        if (name === 'strikearmor') { if (P('ametal')) samp(sp, t + 0.004, P('ametal'), rr(0.6, 0.72), sp.gain * 0.55); if (P('clash')) samp(sp, t, P('clash'), rr(0.55, 0.65), sp.gain * 0.3); }
+        return true; }
+      case 'killcue': { const s0 = { gain: 0.32 * vol, pan: 0, wet: 0.2 }; tone(s0, t, 0.09, 'triangle', 330, 300, s0.gain); tone(s0, t + 0.07, 0.22, 'triangle', 220, 196, s0.gain * 0.9); noise(s0, t, 0.08, 'lowpass', 400, 0.7, s0.gain * 0.6, 0.003); return true; }
       case 'death': case 'scream': { if (!P('death')) return false; if (!at(vol * (name === 'death' ? 0.55 : 0.65), 70)) return true; samp(sp, t, P('death'), rr(0.9, 1.06), sp.gain); return true; }
       case 'twang': { if (!P('bow')) return false; if (!at(vol * 0.7, 60)) return true; samp(sp, t, P('bow'), rr(0.95, 1.08), sp.gain); return true; }
       case 'arrow': { if (!P('arrowfly')) return false; if (!at(vol * 0.5, 40)) return true; samp(sp, t, P('arrowfly'), rr(0.95, 1.1), sp.gain); return true; }
@@ -5174,10 +5186,10 @@ const AUDIO = (() => {
     if (name === 'cannon' || name === 'cannonhit') { boom(x, y, z, vol === undefined ? 1 : vol, name === 'cannonhit' ? 'hit' : 'fire'); if (name === 'cannonhit' && SAMPLES.count) { sampled('dirt', x, y, z, (vol || 1) * 1.6); const sp = spatial(x, y, z, (vol || 1) * 0.9, 120), d = SAMPLES.pick('debris'); if (sp && d) samp(sp, ctx.currentTime + Math.min(1, sp.dist / 343) + 0.03, d, rr(0.9, 1.1), sp.gain * 0.8); } return; }
     if (name === 'ballwhistle') { whistle(x, y, z, vol === undefined ? 1 : vol); return; }
     const now = performance.now(); if (now - lastFrame > 40) { budget = 16; lastFrame = now; }
-    if (budget-- <= 0 && name !== 'explosion' && name !== 'collapse' && name !== 'siegehit') return;
+    if (budget-- <= 0 && name !== 'explosion' && name !== 'collapse' && name !== 'siegehit' && name !== 'killcue' && !(name.startsWith('strike') && (vol || 1) > 1)) return;
     vol = vol === undefined ? 1 : vol;
     if (SAMPLES.count && sampled(name, x, y, z, vol)) return;
-    name = { flesh: 'thud', shield: 'clang', thrust: 'swish', woodhit: 'dirt', gatehit: 'thud', ram: 'thud', collapse: 'explosion', siegehit: 'explosion', horsedie: 'death', arrow: 'whiz' }[name] || name;
+    name = { strike: 'thud', strikeheavy: 'thud', strikearmor: 'clang', killcue: 'hitmark', flesh: 'thud', shield: 'clang', thrust: 'swish', woodhit: 'dirt', gatehit: 'thud', ram: 'thud', collapse: 'explosion', siegehit: 'explosion', horsedie: 'death', arrow: 'whiz' }[name] || name;
     const t0 = ctx.currentTime; let t = t0;
     const late = (sp) => { t = t0 + Math.min(1.2, sp.dist / 343); };   // sound travels at 343 m/s
     switch (name) {
@@ -7225,9 +7237,24 @@ class Renderer {
         case 'swing': { const u = units[ev.id]; if (u) AUDIO.play(u.weapon === 'yari' ? 'thrust' : 'swish', ev.x, ev.y + 1.3, ev.z, ev.id === heroId ? 1.3 : 0.9); break; }
         case 'windup': { const u = units[ev.id]; if (u && ev.id !== heroId && u.team !== this.localTeam) { const dc = Math.hypot(u.x - this.camera.position.x, u.z - this.camera.position.z); if (dc < 14) { const fx = Math.sin(u.yaw), fz = Math.cos(u.yaw); this.sparks.spawn(u.x + fx * 0.5 - Math.cos(u.yaw) * 0.3, u.y + 1.9, u.z + fz * 0.5 + Math.sin(u.yaw) * 0.3, 0, 0.3, 0, 0.18, 0.9, 0.2, 1, 0.45, 0.35, 1, 1, 0, 1, 0.2, 0.1); } } break; }
         case 'hit': {
-          if (ev.cause === 'melee' || ev.cause === 'trample') { this.blood(ev.x, ev.y, ev.z, 10, 0, 1, 0); AUDIO.play('flesh', ev.x, ev.y, ev.z, 1); }
+          { // a blow that lands has weight: the struck man is shoved and bends away, the blade bites with a thud, a little blood and grit fly
+            const vic = units[ev.id], att = ev.att >= 0 ? units[ev.att] : null, mine = ev.att === heroId && ev.id !== heroId;
+            let dx = vic && att ? vic.x - att.x : 0, dz = vic && att ? vic.z - att.z : 1; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
+            const melee = ev.cause === 'melee' || ev.cause === 'trample' || ev.cause === 'spear', shot = ev.cause === 'shot' || ev.cause === 'headshot' || ev.cause === 'arrow';
+            const heavyB = !!(att && (att.heavy || att.lunge)) || (ev.dmg || 0) >= 60, armd = !!(vic && vic.def && (vic.def.hp >= 115 || vic.type === 'hero'));
+            const k = vic && vic.def ? clamp((ev.dmg || 20) / Math.max(40, vic.def.hp * 0.5), 0.3, 1.5) * (heavyB ? 1.35 : 1) * (ev.killed ? 1.3 : 1) : 0.6;
+            if (melee) {
+              this.blood(ev.x, ev.y, ev.z, mine ? (heavyB ? 16 : 11) : 7, dx * 2.2, 1, dz * 2.2);
+              if (armd) this.burstSparks(ev.x, ev.y, ev.z, mine ? 10 : 5, 4, 1, 0.8, 0.45, 0.25, 0.07);
+              if (heavyB && vic) this.dust(vic.x, vic.y + 0.15, vic.z, 4, dx * 1.2, 0.5, dz * 1.2, 0.6, 0.5, 0.25, 0.7);
+              AUDIO.play(armd ? 'strikearmor' : heavyB ? 'strikeheavy' : 'strike', ev.x, ev.y, ev.z, mine ? 1.25 : 0.95);
+            } else if (shot && vic) { this.dust(ev.x, ev.y, ev.z, 3, dx * 0.6, 0.4, dz * 0.6, 0.25, 0.45, 0.12, 0.45); this.blood(ev.x, ev.y, ev.z, 4, dx * 2.5, 0.6, dz * 2.5); AUDIO.play('strike', ev.x, ev.y, ev.z, 0.5); }
+            if (vic && ev.id !== heroId && (melee || shot)) this.hitImpulse(ev.id, dx, dz, k * (shot ? 0.6 : 1), heavyB);
+            if (mine && melee) { this.recoil = Math.max(this.recoil, heavyB ? 0.75 : 0.45); this.recoilRoll = (Math.random() - 0.5) * (heavyB ? 1.4 : 0.8); this.shake = Math.max(this.shake, heavyB || ev.killed ? 0.35 : 0.18);
+              if (this.imp) { this.imp.fov = Math.min(9, this.imp.fov + (heavyB ? 3 : 1.2)); this.imp.vp -= heavyB ? 2.2 : 1.1; }
+              this.hitMarkPop = ev.killed ? 2 : 1; if (ev.killed) AUDIO.play('killcue', undefined, 0, 0, 0.9); } }
           if (ev.id === heroId) { this.hitFlash = 0.6; this.shake = Math.max(this.shake, 0.6); const hh = units[heroId], a = ev.att >= 0 ? units[ev.att] : null; if (hh && ev.cause !== 'fire') { const k = clamp((ev.dmg || 20) / Math.max(40, hh.def.hp * 0.45), 0.25, 1.4) * (ev.cause === 'trample' || ev.cause === 'explosion' ? 1.4 : 1); this.impact(a ? a.x : ev.x, a ? a.z : ev.z + 0.01, k, ev.cause === 'trample' || ev.cause === 'explosion'); } }
-          if (ev.att === heroId && ev.cause === 'melee') { this.hitMark = 0.3; this.hitMarkHead = false; AUDIO.play('hitmark', undefined, 0, 0, 0.8); this.hitstop = Math.max(this.hitstop, ev.killed ? 0.05 : 0.03); }
+          if (ev.att === heroId && ev.id !== heroId && (ev.cause === 'melee' || ev.cause === 'spear')) { const at0 = units[heroId], hv = !!(at0 && (at0.heavy || at0.lunge)) || (ev.dmg || 0) >= 60; this.hitMark = ev.killed ? 0.5 : 0.32; this.hitMarkHead = false; AUDIO.play('hitmark', undefined, 0, 0, 0.8); this.hitstop = Math.max(this.hitstop, ev.killed ? 0.09 : hv ? 0.075 : 0.05); }
           break;
         }
         case 'block': {
@@ -7499,6 +7526,10 @@ class Renderer {
       if (anchor === 'R') { set3(tg.rh, tg.wp); for (let j = 0; j < 3; j++) tg.lh[j] = tg.wp[j] + tg.wd[j] * KW.off2; }
     } else { fkR = true; fkL = true; }
     if (u.flinchT > 0 && !(u.hrA < 1)) { lean -= 0.3 * (u.flinchT / 0.35); }
+    if (a.hiOn) { // hit impulse (hitImpulse): critically damped springs on a shove offset and a bend away from the blow
+      const n = Math.max(1, Math.ceil(dt / 0.01)), h = dt / n; for (let i = 0; i < n; i++) { a.kbVx -= (a.kbX * 90 + a.kbVx * 19) * h; a.kbVz -= (a.kbZ * 90 + a.kbVz * 19) * h; a.kbX += a.kbVx * h; a.kbZ += a.kbVz * h; a.hbV -= (a.hb * 110 + a.hbV * 21) * h; a.hb += a.hbV * h; a.hsV -= (a.hs * 110 + a.hsV * 21) * h; a.hs += a.hsV * h; }
+      x += a.kbX; z += a.kbZ; lean += a.hb; twist += a.hs * 0.7; roll += a.hs * 0.45;
+      if (Math.abs(a.kbX) + Math.abs(a.kbZ) + Math.abs(a.hb) + Math.abs(a.hs) + Math.abs(a.kbVx) + Math.abs(a.hbV) < 0.002) a.hiOn = false; }
     if (u.champ) { // acrobatics: low dodges, a tucked leap, a coiled spin, a long lunge
       if (u.dodgeT > 0) { const k = Math.sin(clamp(u.dodgeT / 0.34, 0, 1) * PI); lean += (u.dodgeFwd ? 0.45 : -0.2) * k; crouch += 0.22 * k; twist += 0.25 * k * (u.dodgeX * Math.cos(yaw) - u.dodgeZ * Math.sin(yaw) > 0 ? -1 : 1) * (u.dodgeFwd ? 0 : 1); rateB = 24; }
       if (u.airborne) { crouch += u.plunge ? 0.05 : 0.18; lean += u.plunge ? 0.35 : 0.08; rateB = 18; }
@@ -7663,15 +7694,18 @@ class Renderer {
     if (lie && lie.k > 0.01) this.lieArms(lie, J, C, pel, toRoot, ik);
     // ---------- to world ----------
     const dp = wdp !== null ? wdp : down ? (u.downed && u.crawling ? 1.22 + Math.sin((this.time || 0) * 5 + u.id) * 0.07 : u.downed ? -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1) : -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4))) : (u.camp && a.cl ? (a.cTilt || 0) * a.cl : 0), cP = Math.cos(dp), sP = Math.sin(dp); // a downed man is propped on an elbow or half-sitting, and rises as he is hauled up
-    const oy = wdp !== null ? woy : down ? 0.15 : 0;
+    const oy0 = wdp !== null ? woy : down ? 0.15 : 0;
+    // the spring rig (anim.js): every joint travels to its new place instead of popping there
+    const AS = typeof ANIM !== 'undefined' && ANIM.on && !this.studio ? ANIM.rig(this, u, a, legs, J, C, pel, pz, dp, oy0, dt, x, z) : null;
+    const oy = AS ? AS[3] : oy0, cPs = AS ? Math.cos(AS[2]) : cP, sPs = AS ? Math.sin(AS[2]) : sP, pelS = AS ? AS[0] : pel, pzS = AS ? AS[1] : pz;
     const vsc = u.look && u.look.h ? u.look.h : (u.type === 'byakkotai' ? 0.9 : 1) * (u.champ ? S.HCLASS[u.hclass | 0].scale : u.type === 'hero' ? 1.04 : 0.88 + uhash(u.id, 7) * 0.24); // men come in all sizes: about 12% either way
-    const Wp = (lx, ly, lz, out, o) => { lx *= vsc; ly *= vsc; lz *= vsc; const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = x + lx * cy + z2 * sy; out[o + 1] = y + oy + y2; out[o + 2] = z - lx * sy + z2 * cy; };
-    const Wd = (lx, ly, lz, out, o) => { const y2 = ly * cP - lz * sP, z2 = ly * sP + lz * cP; out[o] = lx * cy + z2 * sy; out[o + 1] = y2; out[o + 2] = -lx * sy + z2 * cy; };
+    const Wp = (lx, ly, lz, out, o) => { lx *= vsc; ly *= vsc; lz *= vsc; const y2 = ly * cPs - lz * sPs, z2 = ly * sPs + lz * cPs; out[o] = x + lx * cy + z2 * sy; out[o + 1] = y + oy + y2; out[o + 2] = z - lx * sy + z2 * cy; };
+    const Wd = (lx, ly, lz, out, o) => { const y2 = ly * cPs - lz * sPs, z2 = ly * sPs + lz * cPs; out[o] = lx * cy + z2 * sy; out[o + 1] = y2; out[o + 2] = -lx * sy + z2 * cy; };
     const G = this._G || (this._G = new Float64Array(96));
-    for (let i = 0; i < 18; i += 3) Wp(legs[i], legs[i + 1] + pel, legs[i + 2] + pz, G, i);
+    for (let i = 0; i < 18; i += 3) Wp(legs[i], legs[i + 1] + pelS, legs[i + 2] + pzS, G, i);
     for (let i = 0; i < 30; i += 3) { if (i === 21) Wd(J[21], J[22], J[23], G, 18 + i); else Wp(J[i], J[i + 1], J[i + 2], G, 18 + i); }
     const CB = this._CB || (this._CB = new Float64Array(9)); Wd(C[0], C[1], C[2], CB, 0); Wd(C[3], C[4], C[5], CB, 3); Wd(C[6], C[7], C[8], CB, 6);
-    Wp(0, pel - 0.02, pz, G, 60);
+    Wp(0, pelS - 0.02, pzS, G, 60);
     if (u.camp) this.campPropDraw(u, a, G);
     this._sx = CB[0]; this._sy = CB[1]; this._sz = CB[2];
     if (vsc !== 1) for (let i = 0; i < 9; i++) CB[i] *= vsc;
@@ -7889,6 +7923,14 @@ class Renderer {
     this.hitstop = Math.max(this.hitstop || 0, heavy ? 0.07 : 0.035 * k);
     if (heavy || k > 0.9) { AUDIO.shellshock(Math.min(0.75, 0.3 * k)); this.shake = Math.max(this.shake, 0.9 * k); }
     AUDIO.play('thud', undefined, 0, 0, 0.5 + 0.6 * k);
+  }
+  // a blow on another man: an additive shove (m/s into a spring) and a bend (rad/s), consumed in drawFigure; an animation rig
+  // can read a.kbX/a.kbZ (shove offset), a.hb (bend back, rad, negative = away from the front) and a.hs (twist/side bend) instead
+  hitImpulse(id, dx, dz, k, heavy) {
+    const u = this.sim.units[id]; if (!u || u.type === 'horse') return; const a = this.anim(id); if (!a.hiOn) { a.kbX = a.kbZ = a.kbVx = a.kbVz = a.hb = a.hbV = a.hs = a.hsV = 0; } a.hiOn = true;
+    const sp = (heavy ? 3.2 : 2.0) * k; a.kbVx += dx * sp; a.kbVz += dz * sp;
+    const fwd = dx * Math.sin(u.yaw) + dz * Math.cos(u.yaw), side = dx * -Math.cos(u.yaw) + dz * Math.sin(u.yaw); // the blow's direction in his own frame
+    a.hbV += (fwd >= 0 ? 1 : -1) * Math.abs(fwd) * (heavy ? 9 : 6) * k - 2 * k; a.hsV += side * (heavy ? 8 : 5.5) * k;
   }
   impStep(dt) { // critically-damped-ish springs, sub-stepped so a long frame can't explode them
     const I = this.imp, n = Math.max(1, Math.ceil(dt / 0.008)), h = dt / n;
@@ -8614,6 +8656,84 @@ Renderer.prototype.pkFrame = function (sim) {
   for (const [id, g] of M) if (!seen.has(id)) { this.scene.remove(g); g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); M.delete(id); }
 };
 return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear, roundBox, uhash };
+})();
+</script>
+<script>
+// ===================== ANIM: a spring rig over the figure's pose =====================
+// drawFigure works out where every joint *should* be this frame (root-local: legs, arms, weapon, chest frame, pelvis,
+// the lie/fall pitch). Many of those targets change abruptly: a new attack phase, block on and off, a weapon swap, the
+// run cycle starting or stopping, arms switching between swinging free and holding a grip. Set directly, each change
+// is a pop. Here every target drives a critically damped spring (exact closed form, stable at any frame rate), so the
+// body always travels to a new pose instead of jumping to it. Bone lengths are put back after the springs, a weapon
+// held in the hand stays in the hand, and the trunk leans with the root's acceleration. Near figures only: far ones
+// (and anyone not drawn for a moment) snap, so it costs nothing at range.
+// Render-only: it never touches the sim, so lockstep is unaffected.
+const ANIM = (function () {
+  const N = 70; // 18 legs + 30 joints + 9 chest axes + pel, pz, dp, oy (+ spares)
+  const OL = 0, OJ = 18, OC = 48, OP = 57;
+  const W = new Float64Array(N);
+  // stiffness (rad/s) per scalar: the trunk and the fall are slower, hands and feet quick
+  (function () {
+    for (let i = 0; i < 18; i++) W[OL + i] = 42;
+    const jw = [22, 26, 30, 22, 26, 30, 30, 24, 18, 16]; // shL elL handL shR elR handR grip dir chest head
+    for (let k = 0; k < 10; k++) for (let q = 0; q < 3; q++) W[OJ + k * 3 + q] = jw[k];
+    for (let i = 0; i < 9; i++) W[OC + i] = 18;
+    W[OP] = 26; W[OP + 1] = 24; W[OP + 2] = 11; W[OP + 3] = 11;
+  })();
+  const T = new Float64Array(N), Lt = new Float64Array(8);
+  const st = { on: true, near: 45, drawn: 0, sprung: 0 };
+  function spring(S, V, i, t, w, dt) { const x = S[i] - t, v = V[i], e = Math.exp(-w * dt), g = v + w * x; S[i] = (x + g * dt) * e + t; V[i] = (v - w * g * dt) * e; }
+  function d3(A, i, B, j) { return Math.hypot(A[i] - B[j], A[i + 1] - B[j + 1], A[i + 2] - B[j + 2]); }
+  // put B (at j) back at distance L from A (at i) along its current direction
+  function keep(A, i, B, j, L) { const dx = B[j] - A[i], dy = B[j + 1] - A[i + 1], dz = B[j + 2] - A[i + 2], l = Math.hypot(dx, dy, dz) || 1e-6, k = L / l; B[j] = A[i] + dx * k; B[j + 1] = A[i + 1] + dy * k; B[j + 2] = A[i + 2] + dz * k; }
+  // r: renderer, u: unit, a: its anim state; legs/J/C are edited in place; returns [pel, pz, dp, oy]
+  function rig(r, u, a, legs, J, C, pel, pz, dp, oy, dt, x, z) {
+    const out = a.smOut || (a.smOut = new Float64Array(4));
+    st.drawn++;
+    const cam = r.camera ? r.camera.position : null, far = cam ? Math.hypot(x - cam.x, z - cam.z) > st.near : false;
+    // gather the targets
+    for (let i = 0; i < 18; i++) T[OL + i] = legs[i];
+    for (let i = 0; i < 30; i++) T[OJ + i] = J[i];
+    for (let i = 0; i < 9; i++) T[OC + i] = C[i];
+    T[OP] = pel; T[OP + 1] = pz; T[OP + 2] = dp; T[OP + 3] = oy;
+    // inertia: the trunk leans into a start and back from a stop (rotated about the pelvis, upper body only)
+    if (!(u.mounted || u.mount >= 0) && !u.dead && !(a.dw > 0)) {
+      const vx = (u.x - u.px) * 30, vz = (u.z - u.pz) * 30, cy = Math.cos(u.yaw), sy = Math.sin(u.yaw), fwd = vx * sy + vz * cy;
+      if (a.smV0 === undefined) a.smV0 = fwd; const acc = (fwd - a.smV0) / Math.max(dt, 1e-3); a.smV0 += (fwd - a.smV0) * Math.min(1, dt * 6);
+      a.smAcc = (a.smAcc || 0) + ((Math.abs(fwd) > 12 ? 0 : acc) - (a.smAcc || 0)) * Math.min(1, dt * 5);
+      const th = Math.max(-0.16, Math.min(0.16, (a.smAcc || 0) * 0.018));
+      if (Math.abs(th) > 0.002) { const c = Math.cos(th), s = Math.sin(th);
+        const rot = (o) => { const yy = T[o + 1] - pel, zz = T[o + 2] - pz; T[o + 1] = pel + yy * c - zz * s; T[o + 2] = pz + yy * s + zz * c; };
+        const rotv = (o) => { const yy = T[o + 1], zz = T[o + 2]; T[o + 1] = yy * c - zz * s; T[o + 2] = yy * s + zz * c; };
+        for (let k = 0; k < 10; k++) { if (k === 7) rotv(OJ + 21); else rot(OJ + k * 3); } rotv(OC); rotv(OC + 3); rotv(OC + 6); } }
+    // segment lengths to keep (from the targets: they come out of the IK/FK at the right lengths)
+    Lt[0] = d3(T, OJ, T, OJ + 3); Lt[1] = d3(T, OJ + 3, T, OJ + 6); Lt[2] = d3(T, OJ + 9, T, OJ + 12); Lt[3] = d3(T, OJ + 12, T, OJ + 15);
+    Lt[4] = d3(T, OL, T, OL + 3); Lt[5] = d3(T, OL + 3, T, OL + 6); Lt[6] = d3(T, OL + 9, T, OL + 12); Lt[7] = d3(T, OL + 12, T, OL + 15);
+    const gripR = d3(T, OJ + 18, T, OJ + 15) < 1e-4, gripL = !gripR && d3(T, OJ + 18, T, OJ + 6) < 1e-4;
+    let S = a.smS, V = a.smV; const now = r.time || 0;
+    const snap = far || !S || now - (a.smT || -9) > 0.3 || dt <= 0;
+    if (!S) { S = a.smS = new Float64Array(N); V = a.smV = new Float64Array(N); }
+    a.smT = now; a.smDead = u.dead;
+    if (snap) { for (let i = 0; i < N; i++) { S[i] = T[i]; V[i] = 0; } }
+    else { st.sprung++; const h = Math.min(dt, 0.05); for (let i = 0; i < 61; i++) spring(S, V, i, T[i], W[i], h); }
+    // write back, with the constraints restored
+    for (let i = 0; i < 18; i++) legs[i] = S[OL + i];
+    for (let i = 0; i < 30; i++) J[i] = S[OJ + i];
+    for (let i = 0; i < 9; i++) C[i] = S[OC + i];
+    if (!snap) {
+      keep(J, 0, J, 3, Lt[0]); keep(J, 3, J, 6, Lt[1]); keep(J, 9, J, 12, Lt[2]); keep(J, 12, J, 15, Lt[3]);
+      keep(legs, 0, legs, 3, Lt[4]); keep(legs, 3, legs, 6, Lt[5]); keep(legs, 9, legs, 12, Lt[6]); keep(legs, 12, legs, 15, Lt[7]);
+      if (gripR) { J[18] = J[15]; J[19] = J[16]; J[20] = J[17]; } else if (gripL) { J[18] = J[6]; J[19] = J[7]; J[20] = J[8]; }
+      { const l = Math.hypot(J[21], J[22], J[23]) || 1; J[21] /= l; J[22] /= l; J[23] /= l; }
+      // chest frame back to orthonormal: Y, then X against it, Z = X × Y
+      let l = Math.hypot(C[3], C[4], C[5]) || 1; C[3] /= l; C[4] /= l; C[5] /= l;
+      const dxy = C[0] * C[3] + C[1] * C[4] + C[2] * C[5]; C[0] -= C[3] * dxy; C[1] -= C[4] * dxy; C[2] -= C[5] * dxy; l = Math.hypot(C[0], C[1], C[2]) || 1; C[0] /= l; C[1] /= l; C[2] /= l;
+      C[6] = C[1] * C[5] - C[2] * C[4]; C[7] = C[2] * C[3] - C[0] * C[5]; C[8] = C[0] * C[4] - C[1] * C[3];
+    }
+    out[0] = S[OP]; out[1] = S[OP + 1]; out[2] = S[OP + 2]; out[3] = S[OP + 3];
+    return out;
+  }
+  return { rig, st, get on() { return st.on; }, set on(v) { st.on = !!v; } };
 })();
 </script>
 <script>
@@ -10231,6 +10351,7 @@ function updateHUD(dt) {
   $('suppress').style.opacity = Input.cmdMode ? 0 : Math.min(0.85, r.suppress);
   $('speedlines').style.opacity = (r.speedLines > 0.01 && !Input.cmdMode) ? r.speedLines : 0;
   const hm = $('hitmark'); hm.style.opacity = r.hitMark > 0 ? Math.min(1, r.hitMark * 4) : 0; hm.classList.toggle('head', r.hitMarkHead);
+  if (r.hitMarkPop) { hm.classList.remove('pop', 'kill'); void hm.offsetWidth; hm.classList.add(r.hitMarkPop === 2 ? 'kill' : 'pop'); r.hitMarkPop = 0; }
   const alive = hero && !hero.dead;
   if (alive && !Input.cmdMode) {
     const gun = gunMode(); const cur = Input.currentDir();
