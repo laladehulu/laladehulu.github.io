@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v47</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v48</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1126,11 +1126,12 @@ class Sim {
     }
     return n;
   }
-  zoneSpeed(x, z) {
+  zoneSpeed(x, z, dx, dz) { // dx,dz: the way he is going; slopes slow you climbing them, not running down them
     let s = 1; const zs = this.zones; for (let i = 0; i < zs.length; i++) { const q = zs[i]; if (x > q.x - q.hw && x < q.x + q.hw && z > q.z - q.hd && z < q.z + q.hd) { s = q.speed; break; } }
     const w = waterAt(x, z); if (w === 1) s *= 0.3; else if (w === 2) s *= 0.6;
     const gx = terrainH(x + 0.8, z) - terrainH(x - 0.8, z), gz = terrainH(x, z + 0.8) - terrainH(x, z - 0.8); const g = Math.sqrt(gx * gx + gz * gz) / 1.6;
-    if (g > 0.22) s *= 1 - clamp((g - 0.22) * 0.9, 0, 0.62);
+    if (dx === undefined) { if (g > 0.22) s *= 1 - clamp((g - 0.22) * 0.9, 0, 0.62); }
+    else { const up = (gx * dx + gz * dz) / (1.6 * (len(dx, dz) || 1)); if (up > 0.22) s *= 1 - clamp((up - 0.22) * 0.9, 0, 0.62); else if (up < -0.6) s *= 0.85; }
     return s;
   }
   // ---------- setup ----------
@@ -1551,7 +1552,7 @@ class Sim {
     if (keys & KEY_D) { mx += rx; mz += rz; } if (keys & KEY_A) { mx -= rx; mz -= rz; }
     const l = len(mx, mz);
     if (l > 0) {
-      let sp = u.def.speed * this.zoneSpeed(u.x, u.z);
+      let sp = u.def.speed * this.zoneSpeed(u.x, u.z, mx, mz);
       if ((keys & KEY_S) && !(keys & KEY_W)) sp *= 0.65;
       if (u.st === ST_WINDUP || u.st === ST_RELEASE) sp *= 0.7; else if (u.st === ST_STUN) sp = 0;
       if (u.blocking) sp *= 0.85; if (u.aiming) sp *= 0.5; if (u.st === ST_RELOAD) sp *= 0.8;
@@ -1572,7 +1573,7 @@ class Sim {
   }
   horseControl(body, keys, disabled, integrated) {
     const yaw = integrated ? body.hyaw : body.yaw;
-    let sp = body.hspeed; const zs = this.zoneSpeed(body.x, body.z);
+    let sp = body.hspeed; const zs = this.zoneSpeed(body.x, body.z, sin(yaw), cos(yaw));
     if (!disabled && (keys & KEY_W)) sp += 5 * DT;
     else if (!disabled && (keys & KEY_S)) sp -= 7 * DT;
     else { if (sp > 0) sp = Math.max(0, sp - 2 * DT); else if (sp < 0) sp = Math.min(0, sp + 3 * DT); }
@@ -1942,7 +1943,7 @@ class Sim {
     { const wp = this.navPoint(u, gx, gz); if (wp) { gx = wp[0]; gz = wp[1]; } }
     const dx = gx - u.x, dz = gz - u.z, d = len(dx, dz);
     if (d < 0.01) { u.mx = 0; u.mz = 0; return u.yaw; }
-    const sp = Math.min(speed * this.zoneSpeed(u.x, u.z), d * 3); u.mx = dx / d * sp; u.mz = dz / d * sp; return atan2(dx, dz);
+    const sp = Math.min(speed * this.zoneSpeed(u.x, u.z, dx, dz), d * 3); u.mx = dx / d * sp; u.mz = dz / d * sp; return atan2(dx, dz);
   }
   cavSteer(u, gx, gz, desired, keep) { // keep: hold the pace through a turn (a wheel at the gallop) instead of reining in
     desired *= this.fatMul(u);
@@ -1952,7 +1953,7 @@ class Sim {
     const diff = wrap(ang - u.hyaw); const rate = (2.6 - 1.7 * Math.abs(u.hspeed) / 9) * DT;
     if (diff > rate) u.hyaw = wrap(u.hyaw + rate); else if (diff < -rate) u.hyaw = wrap(u.hyaw - rate); else u.hyaw = ang;
     if (Math.abs(diff) > 1.2) desired = Math.min(desired, keep ? 6.5 : 2.5);
-    desired *= this.zoneSpeed(u.x, u.z);
+    desired *= this.zoneSpeed(u.x, u.z, dx, dz);
     if (u.hspeed < desired) u.hspeed = Math.min(desired, u.hspeed + 6 * DT); else u.hspeed = Math.max(desired, u.hspeed - 8 * DT);
     u.mx = sin(u.hyaw) * u.hspeed; u.mz = cos(u.hyaw) * u.hspeed;
     return ang;
@@ -2036,7 +2037,7 @@ class Sim {
     if (found) { dx = u.x - ex; dz = u.z - ez; } else { dx = 0; dz = u.team === 0 ? -1 : 1; }
     const l = len(dx, dz) || 1; dx /= l; dz /= l;
     const homeZ = this.homeZ ? (this.homeZ[u.team] > u.z ? 1 : -1) : (u.team === 0 ? -1 : 1); dz = dz * 0.6 + homeZ * 0.6; dx *= 0.6; const l2 = len(dx, dz) || 1; dx /= l2; dz /= l2;
-    const sp = u.def.speed * 1.12 * this.zoneSpeed(u.x, u.z);
+    const sp = u.def.speed * 1.12 * this.zoneSpeed(u.x, u.z, dx, dz);
     if (u.mounted) this.cavSteer(u, u.x + dx * 20, u.z + dz * 20, u.def.speed); else { u.mx = dx * sp; u.mz = dz * sp; }
     u.target = -1; u.blocking = false; u.aiming = false;
     if (u.st === ST_AIM || u.st === ST_WINDUP) { u.st = ST_IDLE; u.stT = 0; }
@@ -9940,8 +9941,9 @@ function frame(now) {
   const sim = state.sim, ls = state.ls, net = state.net;
   // game speed (solo only): more fixed-length ticks per frame; capped so a slow machine just runs slower
   const spd = state.net ? 1 : (state.speed || 1), maxS = Math.min(48, Math.max(2, Math.ceil(6 * spd)));
-  state.acc += dt * spd; let steps = 0;
+  state.acc += dt * spd; let steps = 0; const tStep = performance.now();
   while (state.acc >= DT && steps < maxS) {
+    if (spd > 1 && steps >= 2 && performance.now() - tStep > 14) { state.acc = 0; break; } // fast-forward never starves the frame: a slow machine just gets less speed
     if (!stepOnce()) { state.acc = Math.min(state.acc, DT); state.stalled = true; state.stallT += dt; break; }
     state.stalled = false; state.stallT = 0;
     state.acc -= DT; steps++;
