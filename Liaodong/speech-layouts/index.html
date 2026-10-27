@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v89</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v90</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -7176,8 +7176,30 @@ class Renderer {
     this.tracerMesh.frustumCulled = false; this.tracerMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(this.tracerMesh);
     for (let i = 0; i < TR; i++) { this.tracerMesh.setMatrixAt(i, this.tmp.zero); this.tracerMesh.setColorAt(i, this.tmp.c.set(0)); this.tracers.push({ life: 0, max: 1, from: new THREE.Vector3(), to: new THREE.Vector3() }); }
     const DN = 300; this.decalN = DN; this.decalNext = 0;
-    const circ = new THREE.CircleGeometry(1, 10); circ.rotateX(-HPI);
-    this.decals = new THREE.InstancedMesh(circ, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }), DN);
+    // ground marks (blood, scorch, shot holes): a quad shaded into an irregular splash with satellite drops; blood spreads
+    // into a pool over a few seconds, dries darker at its rim and keeps a faint wet sheen in the middle
+    const circ = new THREE.PlaneGeometry(2, 2); circ.rotateX(-HPI);
+    const dB = new Float32Array(DN), dK = new Float32Array(DN), dC = new Float32Array(DN * 3);
+    circ.setAttribute('aBirth', new THREE.InstancedBufferAttribute(dB, 1)); circ.setAttribute('aKind', new THREE.InstancedBufferAttribute(dK, 1)); circ.setAttribute('aCol', new THREE.InstancedBufferAttribute(dC, 3));
+    this.decalU = { uT: { value: 0 } };
+    const dm = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, uniforms: this.decalU,
+      vertexShader: 'attribute float aBirth; attribute float aKind; attribute vec3 aCol; uniform float uT; varying vec2 vU; varying vec3 vC; varying float vS; varying float vA; varying float vK; void main(){ vU = uv; vC = aCol; vK = aKind; vA = uT - aBirth; vec4 w = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); vS = fract(sin(dot(w.xz, vec2(12.9898, 78.233))) * 43758.5453); gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }',
+      fragmentShader: ['uniform float uT; varying vec2 vU; varying vec3 vC; varying float vS; varying float vA; varying float vK;',
+        'float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+        'float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }',
+        'void main(){ vec2 q = vU * 2.0 - 1.0; float blood = step(0.5, vK);',
+        ' float g = blood > 0.5 ? clamp(0.3 + vA / 3.5, 0.3, 1.0) : 1.0; g = sqrt(g);',
+        ' vec2 o = vec2(vS * 17.0, vS * 31.0); float n = vn(q * 2.6 + o) * 0.62 + vn(q * 6.3 + o.yx) * 0.38;',
+        ' float r = length(q) / (g * 0.82); float edge = 0.62 + (n - 0.5) * 0.55;',
+        ' float a = 1.0 - smoothstep(edge - 0.035, edge + 0.02, r);',
+        ' float drops = 0.0; for (int i = 0; i < 6; i++) { float fi = float(i); float an = (vS + fi * 0.618) * 6.2832; float dd = (0.62 + 0.3 * fract(vS * 7.0 + fi * 0.37)) * g; float rr = (0.035 + 0.06 * fract(vS * 13.0 + fi * 0.71)) * g; vec2 c = vec2(cos(an), sin(an)) * dd; drops = max(drops, 1.0 - smoothstep(rr * 0.75, rr, length(q - c))); }',
+        ' a = max(a, drops * blood); if (a < 0.01) discard;',
+        ' float rim = smoothstep(edge - 0.2, edge, r) * (1.0 - drops * 0.5);',
+        ' vec3 col = vC * mix(1.0, 0.55, rim * blood) * (0.9 + 0.2 * vn(q * 9.0 + o));',
+        ' float wet = blood * (1.0 - smoothstep(0.0, 0.5, r)) * clamp(1.0 - vA / 60.0, 0.0, 1.0); col += vec3(0.16, 0.09, 0.09) * wet * smoothstep(0.55, 0.8, vn(q * 4.0 + o + 3.0));',
+        ' gl_FragColor = vec4(col, a * (blood > 0.5 ? 0.9 : 0.75)); }'].join('\n') });
+    this.decals = new THREE.InstancedMesh(circ, dm, DN); this.decalA = { dB, dK, dC };
+    this.decals.onBeforeRender = () => { this.decalU.uT.value = this.time || 0; };
     this.decals.frustumCulled = false; this.decals.instanceMatrix.setUsage(THREE.DynamicDrawUsage); for (let i = 0; i < DN; i++) { this.decals.setMatrixAt(i, this.tmp.zero); this.decals.setColorAt(i, this.tmp.c.set(0x2a2218)); } this.scene.add(this.decals);
     this.buildTrails();
     this.hitstop = 0; this.speedLines = 0; this.speedLinesT = 0;
@@ -7333,7 +7355,8 @@ class Renderer {
   decal(x, y, z, size, col) {
     const i = this.decalNext; this.decalNext = (this.decalNext + 1) % this.decalN;
     this.tmp.m.compose(this.tmp.v.set(x, y + 0.03, z), this.tmp.q.setFromEuler(this.tmp.e.set(0, rnd(0, 6.28), 0)), this.tmp.v2.set(size, 1, size * rnd(0.8, 1.2)));
-    this.decals.setMatrixAt(i, this.tmp.m); this.decals.setColorAt(i, this.tmp.c.set(col)); this.decals.instanceMatrix.needsUpdate = true; this.decals.instanceColor.needsUpdate = true;
+    this.decals.setMatrixAt(i, this.tmp.m); this.decals.instanceMatrix.needsUpdate = true;
+    { const A = this.decalA, c = this.tmp.c.set(col), g = this.decals.geometry; A.dB[i] = this.time || 0; A.dK[i] = (c.r > c.g * 2 && c.r > 0.15) ? 1 : 0; A.dC[i * 3] = c.r; A.dC[i * 3 + 1] = c.g; A.dC[i * 3 + 2] = c.b; g.attributes.aBirth.needsUpdate = true; g.attributes.aKind.needsUpdate = true; g.attributes.aCol.needsUpdate = true; } /* blood (reddish) spreads and dries; scorch and holes don't */
   }
   puffSmoke(x, y, z, n, vx, vy, vz, spread, life, s0, s1, shade, alpha) {
     for (let i = 0; i < n; i++) {
