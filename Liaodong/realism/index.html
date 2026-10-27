@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v109</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v110</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1740,7 +1740,7 @@ class Sim {
       if (hero && !hero.dead) { // hysteresis: the company re-forms only when its leader has actually marched somewhere, not when he turns his head or shuffles about
         if (sq.fAx === undefined || len(hero.x - sq.fAx, hero.z - sq.fAz) > 40) { sq.fAx = hero.x; sq.fAz = hero.z; sq.fH = hero.yaw; sq.tx = hero.x - sin(hero.yaw) * 9; sq.tz = hero.z - cos(hero.yaw) * 9; sq.facing = hero.yaw; }
         const mv = len(hero.x - sq.fAx, hero.z - sq.fAz);
-        if (mv > 7) { const hd = atan2(hero.x - sq.fAx, hero.z - sq.fAz); const turn = Math.abs(wrap(hd - sq.fH)); if (turn < 1.2 || mv > 12) sq.fH = hd; sq.fAx = hero.x; sq.fAz = hero.z;
+        if (mv > ((hero.speedNow || 0) > 4.6 ? 3 : 7)) { const hd = atan2(hero.x - sq.fAx, hero.z - sq.fAz); /* a running leader is followed closely, a walking one with hysteresis */ const turn = Math.abs(wrap(hd - sq.fH)); if (turn < 1.2 || mv > 12) sq.fH = hd; sq.fAx = hero.x; sq.fAz = hero.z;
           sq.tx = hero.x - sin(sq.fH) * 9; sq.tz = hero.z - cos(sq.fH) * 9; sq.facing = sq.fH; }
         else if (len(sq.tx - hero.x, sq.tz - hero.z) > 22) { sq.tx = hero.x - sin(sq.fH) * 9; sq.tz = hero.z - cos(sq.fH) * 9; } }
       else sq.order = ORD_HOLD;
@@ -2220,7 +2220,7 @@ class Sim {
       if (d > 1.5) { this.cavSteer(u, u.slotX, u.slotZ, Math.min(u.def.speed, d * 1.2)); return u.hyaw; }
       this.cavSteer(u, u.x, u.z, 0); u.hyaw = sq.facing; return sq.facing;
     }
-    if (d > 0.45) return this.steerFoot(u, u.slotX, u.slotZ, u.def.speed);
+    if (d > 0.45) return this.steerFoot(u, u.slotX, u.slotZ, u.def.speed * (sq.order === ORD_FOLLOW && d > 2.5 ? 1.45 : 1)); /* a man left behind his leader runs for his place (the pace cap below keeps it to the leader's own speed) */
     u.mx = 0; u.mz = 0; return sq.facing;
   }
   horseIdle(u) {
@@ -4239,7 +4239,7 @@ Sim.prototype.paceMove = function (u) {
     const e = len((u.x - sq.pcx) - (u.slotX - sq.psx), (u.z - sq.pcz) - (u.slotZ - sq.psz));
     cap = order === ORD_FOLLOW ? (sd > 12 ? base : sd > 5 ? base * PACE_JOG : base * PACE_WALK) : sd > 35 ? base * PACE_JOG : base * PACE_WALK; // following his leader he keeps the leader's pace; otherwise the company marches
     const lp = order === ORD_FOLLOW && sq.owner >= 0 ? this.players[sq.owner] : this.players.find(p => !p.ai && p.soldierSq === sq.id); // your own file in a story keeps your pace too
-    if (lp) { const L = this.units[lp.heroId]; if (L && !L.dead) { const lv = len(L.x - L.px, L.z - L.pz) / DT; if (lv > 0.5) cap = Math.max(cap, Math.min(base * 1.15, lv * 1.05)); } } // when you run, your men run with you
+    if (lp) { const L = this.units[lp.heroId]; if (L && !L.dead) { const lv = Math.max(L.speedNow || 0, len(L.x - L.px, L.z - L.pz) / DT); /* speedNow: the leader may not have moved yet this tick */ if (lv > 0.5) cap = Math.max(cap, Math.min(base * 1.5, lv * 1.08 + (sd > 4 ? 1.2 : sd > 2 ? 0.5 : 0))); } } // when you run, your men run with you: a sprinting leader is matched at the sprint, and a man who has fallen behind runs harder to close up
     const away = tgt && m > 0.01 && ((tgt.x - u.x) * u.mx + (tgt.z - u.z) * u.mz) < -0.3 * td * m; // falling back from the enemy: no strolling
     if (away && td < 40 && sd > 3) cap = base;
     else if (td < 30 && order !== ORD_FOLLOW) cap = base * PACE_WALK; // advancing to contact: the line walks in step
@@ -11955,7 +11955,8 @@ function missionEvent(ev) {
   if (ev.t === 'mphase' && M.camp) return;
   if (ev.t === 'mphase' && M.soldier) { const P = M.phases[ev.ph] || {}; banner(ev.title.split(' · ').slice(1).join(' · ') || ev.title, P.goal || (ev.text || '').split(/(?<=[.!?])\s/)[0], 5); if (ev.ph) MUSIC.accent('phase'); return; }
   if (ev.t === 'msay' && M.soldier && typeof zheSay === 'function' && zheSay(ev)) return;
-  if (ev.t === 'mphase') { const first = ev.ph === 0; storyCard(first ? `${M.brief}<br><br><b>${ev.title}.</b> ${ev.text}` : ev.text, first ? `${M.title} · ${M.year}` : ev.title); if (!first) { banner(ev.title.split(' · ')[1] || ev.title, 'New orders', 3); MUSIC.accent('phase'); } }
+  if (ev.t === 'mphase') { const first = ev.ph === 0; if (first) storyCard(`${M.brief}<br><br><b>${ev.title}.</b> ${ev.text}`, `${M.title} · ${M.year}`);
+    else { const P = M.phases[ev.ph] || {}; const short = P.goal || (ev.text || '').split(/(?<=[.!?])\s/)[0]; banner(ev.title.split(' · ').slice(1).join(' · ') || ev.title, short, 4.5); if (ev.text && ev.text !== short) feed(ev.text, true); MUSIC.accent('phase'); } } /* in the fight a new phase is a short order on the banner, not a card of text; the rest goes to the feed */
   else if (ev.t === 'msay') radio(ev.who, ev.text);
   else if (ev.t === 'mwave') { if (ev.team !== me.team) feed(`Enemy reinforcements: ${ev.name}`); else feed(`${ev.name} joins the battle`, true); }
   else if (ev.t === 'mofficer') { banner(`敵將${ev.wounded ? '負傷' : '討取'} · ${ev.zh || ''}`, `${ev.name} ${ev.wounded ? 'is wounded and carried off' : 'is slain'}`, 4); MUSIC.accent('breach'); }
@@ -12037,7 +12038,7 @@ function depBuild() {
   document.body.appendChild(d); DEP.el = d;
   d.addEventListener('mousedown', (e) => e.stopPropagation());
   $('depGo').onclick = () => depGo();
-  $('depMap').onclick = (e) => { const r = e.target.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * 300 - 150, z = 150 - (e.clientY - r.top) / r.height * 300; const sps = state.sim.deploySpawns(state.sim.players[state.localIdx].team, state.localIdx); let b = -1, bd = 14; sps.forEach((s, i) => { const dd = Math.hypot(s.x - x, s.z - z); if (dd < bd && !s.blocked) { bd = dd; b = i; } }); if (b >= 0) { DEP.si = b; DEP.key = ''; } };
+  $('depMap').onclick = (e) => { const r = e.target.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * 300 - 150, z = 150 - (e.clientY - r.top) / r.height * 300; const sps = state.sim.deploySpawns(state.sim.players[state.localIdx].team, state.localIdx); let b = -1, bd = 14; sps.forEach((s, i) => { const dd = Math.hypot(s.x - x, s.z - z); if (dd < bd && !s.blocked) { bd = dd; b = i; } }); if (b >= 0) { DEP.si = b; DEP.key = ''; depRender(); } }; /* every change redraws at once: the picker used to wait for the next 0.4 s tick, which read as a dead click */
 }
 function depOpen(on) {
   if (!DEP.el) depBuild(); DEP.open = on; DEP.el.hidden = !on; DEP.key = ''; document.body.classList.toggle('deploying', on); if (state.renderer) state.renderer.omHide = on;
@@ -12063,10 +12064,10 @@ function depRender() {
     $('depSub').textContent = alive ? 'Change your soldier or where you fight. Your current man goes back to his company.' : 'You have fallen. Choose a soldier and where to rejoin the fight.';
     $('depGrid').innerHTML = types.map((t, i) => { const off = lockType && t.type !== lockType; const on = lockType ? t.type === lockType : i === DEP.ti;
       return `<div class="card${on ? ' on' : ''}${off ? ' off' : ''}" data-i="${i}"><div class="por" data-t="${t.key}"><b>${i + 1}</b><i>${t.n ? t.n + ' men' : t.reserve ? 'in reserve · join nearest' : 'none left · join nearest'}</i></div><div class="nm">${t.name}<small>${t.jp || ''}</small></div><div class="eq">${depEquip(t.def).map(x => `<span>${x}</span>`).join('')}</div></div>`; }).join('');
-    for (const el of $('depGrid').querySelectorAll('.card')) el.onclick = () => { const i = +el.dataset.i; if (lockType) { const j = sim.mode === 'campaign' ? sps.findIndex(s => s.type === types[i].type && !s.blocked) : -1; DEP.si = j >= 0 ? j : 0; } DEP.ti = i; DEP.key = ''; };
+    for (const el of $('depGrid').querySelectorAll('.card')) el.onclick = () => { const i = +el.dataset.i; if (lockType) { const j = sim.mode === 'campaign' ? sps.findIndex(s => s.type === types[i].type && !s.blocked) : -1; DEP.si = j >= 0 ? j : 0; } DEP.ti = i; DEP.key = ''; depRender(); };
     for (const el of $('depGrid').querySelectorAll('.por')) { const url = depPortrait(el.dataset.t); if (url) el.style.backgroundImage = `url(${url})`; }
     $('depSp').innerHTML = sps.map((s, i) => `<button class="${i === DEP.si ? 'on' : ''}${s.blocked ? ' bl' : ''}" data-i="${i}"><span>${s.kind === 'hq' ? '⛺ ' : s.kind === 'zone' ? '⚑ ' : '◆ '}${s.name}</span><em>${s.blocked ? 'contested' : s.kind === 'sq' ? 'join company' : s.kind === 'hq' ? 'camp' : 'objective'}</em></button>`).join('');
-    for (const el of $('depSp').querySelectorAll('button')) el.onclick = () => { const i = +el.dataset.i; if (!sps[i].blocked) { DEP.si = i; DEP.key = ''; } };
+    for (const el of $('depSp').querySelectorAll('button')) el.onclick = () => { const i = +el.dataset.i; if (!sps[i].blocked) { DEP.si = i; DEP.key = ''; depRender(); } };
   }
   if (sim.mode === 'campaign') $('depTk').textContent = 'Co-op · rejoin the fight in one of your companies'; else { const A = sim.mission.attacker; $('depTk').textContent = `${me.team === A ? 'Attacking' : 'Defending'} · Sector ${Math.min(sim.sector + 1, sim.mission.sectors.length)}/${sim.mission.sectors.length} · Manpower ${Math.max(0, sim.tickets | 0)}`; }
   // map
@@ -12083,7 +12084,7 @@ function depGo() {
 }
 function depKey(c, e) {
   if (c === 'Space' || c === 'Enter') { e.preventDefault(); depGo(); return true; }
-  if (/^Digit[1-9]$/.test(c)) { DEP.ti = +c.slice(5) - 1; DEP.key = ''; const sps = state.sim.deploySpawns(state.sim.players[state.localIdx].team, state.localIdx), sp = sps[DEP.si], ty = state.sim.deployTypes(state.sim.players[state.localIdx].team, state.localIdx)[DEP.ti]; if (sp && sp.kind === 'sq' && ty && sp.type !== ty.type) { const j = state.sim.mode === 'campaign' ? sps.findIndex(s => s.type === ty.type && !s.blocked) : -1; DEP.si = j >= 0 ? j : 0; } return true; }
+  if (/^Digit[1-9]$/.test(c)) { DEP.ti = +c.slice(5) - 1; DEP.key = ''; const sps = state.sim.deploySpawns(state.sim.players[state.localIdx].team, state.localIdx), sp = sps[DEP.si], ty = state.sim.deployTypes(state.sim.players[state.localIdx].team, state.localIdx)[DEP.ti]; if (sp && sp.kind === 'sq' && ty && sp.type !== ty.type) { const j = state.sim.mode === 'campaign' ? sps.findIndex(s => s.type === ty.type && !s.blocked) : -1; DEP.si = j >= 0 ? j : 0; } depRender(); return true; }
   if (c === 'Escape' || c === 'KeyP') { const h = localHero(); if (h && !h.dead) { depOpen(false); requestLock(); } else if (state.sim.mode === 'campaign') { DEP.dismissed = true; depOpen(false); } return true; }
   return true;
 }
