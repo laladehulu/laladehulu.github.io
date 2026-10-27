@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v91</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v92</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2006,6 +2006,7 @@ class Sim {
   gunRange(def, w, u) { const g = gunOf(def, w); return g ? g.range * this.rangeMul * (u ? 1 + clamp(u.y * 0.02, 0, 0.3) : 1) : 0; }
   findTarget(u, sq) {
     if (this.phase === 0) return -1;
+    if (this.tick < (u.losLock || 0) && u.target >= 0) { const t = this.units[u.target]; if (t && !t.dead && !t.inactive) return t.id; } /* he found a man he can see: keep him for a couple of seconds rather than flicking back to one behind the wall */
     if (u.mounted && u.ctrl < 0 && u.target >= 0 && (u.cv === 1 || u.cv === 2 || u.cv === 3)) { const t = this.units[u.target]; if (t && !t.dead && !t.inactive && !(t.downed && this.story) && len(t.x - u.x, t.z - u.z) < 70) return t.id; } /* mid-pass a horseman keeps his man: riding on beyond him and wheeling back is part of the charge, not losing him */
     const order = sq ? sq.order : ORD_HOLD, def = u.def;
     const ranged = isGun(def, u.weapon) && !this.dry(u); const gr = ranged ? this.gunRange(def, u.weapon, u) : 0;
@@ -2109,11 +2110,11 @@ class Sim {
         wantYaw = ang;
         const range = this.gunRange(def, u.weapon, u);
         if (d <= range && (sq ? sq.fire : true)) {
-          let inPlace = true; if (!def.skirmish) { if (u.mounted) this.cavSteer(u, u.x, u.z, 0); else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z, sd = len(sdx, sdz); if (sq && order !== ORD_CHARGE && sd > 1.3 && u.st === ST_IDLE) { this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.8); inPlace = false; } else { u.mx = 0; u.mz = 0; } } }
+          let inPlace = true; if (this.tick < (u.rampT || 0) && u.st === ST_IDLE && this.sg && TERR.swall && !this.overParapet(u)) { this.toRampart(u); inPlace = false; } else if (!def.skirmish) { if (u.mounted) this.cavSteer(u, u.x, u.z, 0); else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z, sd = len(sdx, sdz); if (sq && order !== ORD_CHARGE && sd > 1.3 && u.st === ST_IDLE) { this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.8); inPlace = false; } else { u.mx = 0; u.mz = 0; } } }
           else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z; if (len(sdx, sdz) > 0.6) this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.7); else { u.mx = 0; u.mz = 0; } }
           if (!u.mounted && (u.mx !== 0 || u.mz !== 0)) { const my = atan2(u.mx, u.mz), off = Math.abs(wrap(my - ang)), turner = (u.id * 37) % 10 < 7; if (off > 1.9 && len(u.slotX - u.x, u.slotZ - u.z) > (turner ? 1.2 : 4)) wantYaw = my; else if (off > 1.6) { u.mx *= 0.5; u.mz *= 0.5; } } // a long way back to his place: turn and walk it, don't skate backward; a step or two back is a slow backpedal
           if (inPlace && u.st === ST_IDLE && u.ammo > 0 && !this.losClear(u, tgt)) { /* a wall or a house in the way: shoot at someone he CAN see (any enemy in range, not only his company's mark); only a man on open ground with nobody in sight walks to find a shot */
-            const alt = this.losTarget(u, range); if (alt) { u.target = alt.id; } else if (this.sg && TERR.swall && u.team === this.sg.D && u.z > TERR.swall.z0 - 0.5) { this.toRampart(u); inPlace = false; } /* a defender with nothing to shoot at goes up on the rampart, whatever his company's place */ else if (!this.onWallTop(u)) { this.steerFoot(u, tgt.x, tgt.z, def.speed * 0.75); inPlace = false; } else inPlace = false; }
+            const alt = this.losTarget(u, range); if (alt) { u.target = alt.id; u.losLock = this.tick + 60; } else if (this.sg && TERR.swall && u.team === this.sg.D && u.z > TERR.swall.z0 - 0.5) { u.rampT = this.tick + 120; this.toRampart(u); inPlace = false; } /* a defender with nothing to shoot at goes up on the rampart, whatever his company's place */ else if (!this.onWallTop(u)) { this.steerFoot(u, tgt.x, tgt.z, def.speed * 0.75); inPlace = false; } else inPlace = false; }
           if (inPlace && u.st === ST_IDLE && u.ammo > 0 && u.flinchT <= 0 && Math.abs(wrap(ang - u.yaw)) < 0.7) {
             u.st = ST_AIM; u.stT = 0; u.aimTarget = tgt.id; u.blocking = false;
             const g0 = gunOf(def, u.weapon); const aimT = Math.round((g0 ? g0.aim : 0.8) * 30);
@@ -10927,17 +10928,19 @@ const SG_LINES = {
   engine: [['車毀了！', "We've lost an engine!"], ['砸爛了！', 'Smashed it!']],
   slip: [['冰上滑！抓緊！', 'The ice — hold on!'], null],
 };
-function sgShout(key, att) { if (typeof SPEECH === 'undefined') return; const L = SG_LINES[key]; const line = L && L[att ? 0 : 1]; if (!line) return; const sim = state.sim, me = sim.players[state.localIdx], h = localHero(); if (!h) return;
-  let best = -1, bd = 30; for (const u of sim.teamAlive[me.team]) { if (u.id === h.id || u.type === 'horse' || u.def.ai === 'cannon') continue; const d = Math.hypot(u.x - h.x, u.z - h.z); if (d < bd) { bd = d; best = u.id; } }
+function sgShout(key, att, ev) { if (typeof SPEECH === 'undefined') return; const L = SG_LINES[key]; const line = L && L[att ? 0 : 1]; if (!line) return; const sim = state.sim, me = sim.players[state.localIdx], h = localHero(); if (!h) return;
+  /* the shout comes from a man who is THERE, where it is happening, and only if you are near enough to hear it: nobody calls "drop the stones" while no stones fall near him */
+  const ex = ev && ev.x !== undefined ? ev.x : h.x, ez = ev && ev.z !== undefined ? ev.z : h.z; if (Math.hypot(ex - h.x, ez - h.z) > 45) return;
+  let best = -1, bd = 14; for (const u of sim.teamAlive[me.team]) { if (u.id === h.id || u.type === 'horse' || u.def.ai === 'cannon') continue; const d = Math.hypot(u.x - ex, u.z - ez); if (d < bd) { bd = d; best = u.id; } }
   if (best >= 0) SPEECH.say(best, line[0], line[1], { prio: 2, loud: true, shout: true, cool: 3 }); }
 function siegeEvent(ev) {
   const sim = state.sim, sg = sim.sg; if (!sg) return; const me = sim.players[state.localIdx]; const att = me.team === sg.A;
-  if (ev.t === 'sgladder') { sgShout(ev.up ? 'ladderUp' : 'ladderDown', att); if (ev.up && !att) toast('A ladder is up! Get to the top of it and press E to throw it down'); }
-  else if (ev.t === 'sgoil') sgShout('oil', att); else if (ev.t === 'sgstone') sgShout('stone', att); else if (ev.t === 'sgdock') { sgShout('dock', att); toast(att ? 'The siege tower is against the wall — its bridge is down' : 'A siege tower has reached the wall!'); }
-  else if (ev.t === 'sgbreach') { sgShout('breach', att); toast(att ? 'THE GATE IS BROKEN!' : 'The gate has fallen!'); MUSIC.accent('breach'); }
-  else if (ev.t === 'sghole') { sgShout('hole', att); toast(att ? 'The sappers are through the wall!' : 'They have chiselled through the wall!'); }
-  else if (ev.t === 'sgsaltpeter') sgShout('saltpeter', att); else if (ev.t === 'sgfill') sgShout('fill', att); else if (ev.t === 'sgengine') { sgShout('engine', att); feed(`${{ ram: 'The covered ram', tower: 'A siege tower', cart: 'A shield cart' }[ev.kind] || 'An engine'} is destroyed`, !att); }
-  else if (ev.t === 'sgslip') sgShout('slip', att);
+  if (ev.t === 'sgladder') { sgShout(ev.up ? 'ladderUp' : 'ladderDown', att, ev); if (ev.up && !att) toast('A ladder is up! Get to the top of it and press E to throw it down'); }
+  else if (ev.t === 'sgoil') sgShout('oil', att, ev); else if (ev.t === 'sgstone') sgShout('stone', att, ev); else if (ev.t === 'sgdock') { sgShout('dock', att, ev); toast(att ? 'The siege tower is against the wall — its bridge is down' : 'A siege tower has reached the wall!'); }
+  else if (ev.t === 'sgbreach') { sgShout('breach', att, ev); toast(att ? 'THE GATE IS BROKEN!' : 'The gate has fallen!'); MUSIC.accent('breach'); }
+  else if (ev.t === 'sghole') { sgShout('hole', att, ev); toast(att ? 'The sappers are through the wall!' : 'They have chiselled through the wall!'); }
+  else if (ev.t === 'sgsaltpeter') sgShout('saltpeter', att, ev); else if (ev.t === 'sgfill') sgShout('fill', att, ev); else if (ev.t === 'sgengine') { sgShout('engine', att, ev); feed(`${{ ram: 'The covered ram', tower: 'A siege tower', cart: 'A shield cart' }[ev.kind] || 'An engine'} is destroyed`, !att); }
+  else if (ev.t === 'sgslip') sgShout('slip', att, ev);
   else if (ev.t === 'sgman') { const h = localHero(); if (h && ev.id === h.id) toast(ev.on ? `Manning the ${ev.kind === 'gun' ? 'gun' : 'bed crossbow'}: aim with the mouse, left click to fire, E to leave it` : 'You leave the emplacement'); }
 }
 function siegeHUD(dt) {
