@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v76</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v77</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6949,14 +6949,20 @@ class Renderer {
     const units = this.sim.units;
     for (let i = 0; i < units.length; i++) this.colorFigure(i, units[i]);
   }
+  // campaign wear: cloth faded by sun and rain, dulled with smoke and grime, the legs caked with mud; every man a little different
+  grime(c, u, k, mud) {
+    const sty = typeof MING_STYLE !== 'undefined' && MING_STYLE, h = uhash(u.id, 31 + k), h2 = uhash(u.id, 47 + k), hsl = this._hsl || (this._hsl = {});
+    c.getHSL(hsl); c.setHSL(hsl.h, hsl.s * (sty ? 0.72 : 0.58) * (0.85 + 0.25 * h), hsl.l * (0.84 + 0.12 * h2));
+    const M = this._mud || (this._mud = new THREE.Color(0x4f4436)); c.lerp(M, (sty ? 0.08 : 0.14) + 0.1 * h + (mud || 0)); return c;
+  }
   colorFigure(slot, u) {
     { const f = this.fig, z = this.tmp.zero, g = gearFor(u); const cnt = { b: 0, c: 0, y: 0 }; for (const k of ['b', 'c', 'y']) for (let i = 0; i < GEAR_K[k]; i++) f['g' + k].setMatrixAt(slot * GEAR_K[k] + i, z);
-      for (const p of g.parts) { const i = cnt[p.m]++; if (i >= GEAR_K[p.m]) continue; p.idx = i; f['g' + p.m].setColorAt(slot * GEAR_K[p.m] + i, this.tmp.c.set(p.k)); }
+      for (const p of g.parts) { const i = cnt[p.m]++; if (i >= GEAR_K[p.m]) continue; p.idx = i; f['g' + p.m].setColorAt(slot * GEAR_K[p.m] + i, this.grime(this.tmp.c.set(p.k), u, i % 5, 0)); }
       for (const k of ['b', 'c', 'y']) if (f['g' + k].instanceColor) f['g' + k].instanceColor.needsUpdate = true; }
     const c = this.tmp.c; const f = this.fig; const tc = (GEAR_HOOK.torso && GEAR_HOOK.torso(u)) || torsoColor(u), lc = (GEAR_HOOK.legs && GEAR_HOOK.legs(u)) || legColor(u); // an edition may recolour the body under the gear
-    for (const k of ['torso', 'uarmL', 'uarmR']) f[k].setColorAt(slot, c.set(tc));
-    c.set(tc).multiplyScalar(0.82); f.farmL.setColorAt(slot, c); f.farmR.setColorAt(slot, c);
-    for (const k of ['thighL', 'thighR', 'shinL', 'shinR', 'hips']) f[k].setColorAt(slot, c.set(lc));
+    for (const k of ['torso', 'uarmL', 'uarmR']) f[k].setColorAt(slot, this.grime(c.set(tc), u, 0, 0));
+    this.grime(c.set(tc), u, 1, 0.04).multiplyScalar(0.82); f.farmL.setColorAt(slot, c); f.farmR.setColorAt(slot, c);
+    for (const k of ['thighL', 'thighR', 'hips']) f[k].setColorAt(slot, this.grime(c.set(lc), u, 2, 0.06)); for (const k of ['shinL', 'shinR']) f[k].setColorAt(slot, this.grime(c.set(lc), u, 3, 0.22)); /* mud to the knee */
     { const t = uhash(u.id, 3); c.setRGB(0.9 - t * 0.14, 0.76 - t * 0.16, 0.6 - t * 0.17); if (u.type === 'byakkotai') c.setRGB(0.92, 0.79, 0.66); if (u.look && u.look.skin) c.set(u.look.skin); f.head.setColorAt(slot, c); f.hand.setColorAt(slot * 2, c); f.hand.setColorAt(slot * 2 + 1, c); }
     if (u.type === 'hero') f.kabuto.setColorAt(slot, c.set(PAL.gold));
     f.hilt.setColorAt(slot, c.set(u.weapon === 'yari' ? 0xc8281e : 0x5a1a1a)); f.pistol.setColorAt(slot, c.set(0x5a4a2a)); f.barrel.setColorAt(slot, c.set(u.type === 'rifle_spencer' ? 0x3a3a3a : 0x55595e));
