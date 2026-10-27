@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v86</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v87</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2111,7 +2111,8 @@ class Sim {
           let inPlace = true; if (!def.skirmish) { if (u.mounted) this.cavSteer(u, u.x, u.z, 0); else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z, sd = len(sdx, sdz); if (sq && order !== ORD_CHARGE && sd > 1.3 && u.st === ST_IDLE) { this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.8); inPlace = false; } else { u.mx = 0; u.mz = 0; } } }
           else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z; if (len(sdx, sdz) > 0.6) this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.7); else { u.mx = 0; u.mz = 0; } }
           if (!u.mounted && (u.mx !== 0 || u.mz !== 0)) { const my = atan2(u.mx, u.mz), off = Math.abs(wrap(my - ang)), turner = (u.id * 37) % 10 < 7; if (off > 1.9 && len(u.slotX - u.x, u.slotZ - u.z) > (turner ? 1.2 : 4)) wantYaw = my; else if (off > 1.6) { u.mx *= 0.5; u.mz *= 0.5; } } // a long way back to his place: turn and walk it, don't skate backward; a step or two back is a slow backpedal
-          if (inPlace && u.st === ST_IDLE && u.ammo > 0 && !this.losClear(u, tgt)) { this.steerFoot(u, tgt.x, tgt.z, def.speed * 0.75); inPlace = false; } /* a wall or a house in the way: no shot; go round and find one */
+          if (inPlace && u.st === ST_IDLE && u.ammo > 0 && !this.losClear(u, tgt)) { /* a wall or a house in the way: shoot at someone he CAN see (any enemy in range, not only his company's mark); only a man on open ground with nobody in sight walks to find a shot */
+            const alt = this.losTarget(u, range); if (alt) { u.target = alt.id; } else if (this.sg && TERR.swall && u.team === this.sg.D && u.z > TERR.swall.z0 - 0.5) { this.toRampart(u); inPlace = false; } /* a defender with nothing to shoot at goes up on the rampart, whatever his company's place */ else if (!this.onWallTop(u)) { this.steerFoot(u, tgt.x, tgt.z, def.speed * 0.75); inPlace = false; } else inPlace = false; }
           if (inPlace && u.st === ST_IDLE && u.ammo > 0 && u.flinchT <= 0 && Math.abs(wrap(ang - u.yaw)) < 0.7) {
             u.st = ST_AIM; u.stT = 0; u.aimTarget = tgt.id; u.blocking = false;
             const g0 = gunOf(def, u.weapon); const aimT = Math.round((g0 ? g0.aim : 0.8) * 30);
@@ -2250,14 +2251,16 @@ class Sim {
           const sqv = u.squad >= 0 ? this.squads[u.squad] : null;
           if (sqv && sqv.volleyAt === u.volleyOf && sqv.volleyShout !== sqv.volleyAt) { sqv.volleyShout = sqv.volleyAt; let n = 0; for (const id of sqv.unitIds) { const m = this.units[id]; if (!m.dead && m.st === ST_AIM) n++; } this.events.push({ t: 'volley', sq: sqv.id, x: sqv.cx, y: terrainH(sqv.cx, sqv.cz) + 1.5, z: sqv.cz, n, bow: u.weapon === 'bow' }); }
           const tgt = this.units[u.aimTarget];
-          if (tgt && !tgt.dead) {
+          if (tgt && !tgt.dead && u.ctrl < 0 && u.weapon !== 'bow' && !this.losClear(u, tgt)) { /* at the moment of firing his man is hidden: switch to one in sight and fire next, or hold the shot */
+            const alt = this.losTarget(u, this.gunRange(u.def, u.weapon, u)); if (alt) { u.aimTarget = alt.id; u.target = alt.id; u.yaw = atan2(alt.x - u.x, alt.z - u.z); } else { u.st = ST_IDLE; u.stT = 0; } }
+          else if (tgt && !tgt.dead) {
             if (u.weapon === 'bow') this.fireArrow(u, tgt);
             else {
               const dx = tgt.x - u.x, dz = tgt.z - u.z, d = len(dx, dz);
               const th = tgt.downT > 0 ? 0.35 : tgt.mounted || tgt.mount >= 0 ? 1.9 : 1.05;
               const sh = u.mounted ? 2.3 : 1.55;
               const dy = (tgt.y + th) - (u.y + sh);
-              const yaw = u.yaw + clamp(wrap(atan2(dx, dz) - u.yaw), -0.05, 0.05), pitch = atan2(dy, d);
+              const yaw = atan2(dx, dz), pitch = atan2(dy, d); u.yaw = yaw; /* he has had the whole aim to lay the gun on his man: the ball goes where he pointed it (plus the scatter below), not where his feet happened to face */
               // smoothbores scatter: the farther the target, the wider the cone (and nobody aims well at a man who is running)
               let spread = (g.spread + (tgt.speedNow > 1 ? 0.008 : 0)) * (1.35 + d / 55) * (tgt.ctrl >= 0 ? 1.2 : 1); if (tgt.def.skirmish) spread += 0.02; if (u.squad >= 0) spread *= 1 - (this.squads[u.squad].stars || 0) * 0.08;
               const aimed = this.abActive(u, 'aimed'); if (aimed) spread *= 0.5;
@@ -2520,6 +2523,20 @@ class Sim {
       prev = t;
     }
     return -1;
+  }
+  // a defender inside the walls with nothing in sight goes up the nearest ramp and takes a place along the rampart
+  toRampart(u) {
+    const W = TERR.swall, sp = u.def.speed; let rx = W.ramps[0], bd = 1e9; for (const r of W.ramps) { const d = Math.abs(r - u.x); if (d < bd) { bd = d; rx = r; } }
+    const onTop = u.z <= W.z1 + 0.6 && u.y > terrainH(u.x, u.z) - 0.5 && u.y > W.h - 1.5 + (TERR.base || 0) * 0;
+    if (onTop) { const post = clamp(rx + ((u.id % 9) - 4) * 2.6, -HALF + 6, HALF - 6), px = Math.abs(post) < W.gate + 1.5 ? (post < 0 ? -W.gate - 1.5 : W.gate + 1.5) : post; this.steerFoot(u, px, (W.z0 + W.z1) / 2 + 0.6, sp * 0.8); return; }
+    if (Math.abs(u.x - rx) > 2.2 && u.z > W.z1 + 0.5) { this.steerFoot(u, rx, W.z1 + 15.5, sp); return; } // to the foot of the ramp
+    this.steerFoot(u, rx, W.z1 - 1.5, sp); // up it
+  }
+  onWallTop(u) { return u.y - terrainH(u.x, u.z) > 2.2 || (this.overParapet && this.overParapet(u)); }
+  losTarget(u, range) { // the nearest enemies in range, checked in order for a clear line (a few each time, to keep it cheap)
+    const n = this.gatherNear(u.x, u.z, range); const cand = [];
+    for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v.dead || v.inactive || v.team === u.team || v.type === 'horse' || (v.downed && this.story)) continue; const d = len(v.x - u.x, v.z - u.z); if (d > range) continue; cand.push([d, v]); }
+    cand.sort((a, b) => a[0] - b[0] || a[1].id - b[1].id); for (let i = 0; i < Math.min(6, cand.length); i++) if (this.losClear(u, cand[i][1])) return cand[i][1]; return null;
   }
   // can he see (and shoot) his man? walls, houses, rocks and stockades block it; trees only partly hide, so they don't
   losClear(u, t) {
@@ -7148,7 +7165,7 @@ class Renderer {
     if (this.flags.instanceColor) this.flags.instanceColor.needsUpdate = true;
   }
   buildFX() {
-    this.smoke = new Particles(this.scene, this.lowfx ? 5000 : 9000, false); if (this.off && this.off.has('smoke')) this.smoke.points.visible = false; this.smoke.wind = [0.55, 0.04, 0.25]; this.suppress = 0;
+    this.smoke = new Particles(this.scene, this.lowfx ? 5000 : 9000, false); if (this.off && this.off.has('smoke')) this.smoke.points.visible = false; this.smoke.wind = [0.55, 0.42, 0.25]; /* warm smoke rises as it drifts */ this.suppress = 0;
     this.sparks = new Particles(this.scene, 2500, true);
     const TR = 260; this.tracerN = TR; this.tracers = []; this.tracerNext = 0;
     this.tracerMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), TR);
@@ -7316,8 +7333,9 @@ class Renderer {
   }
   puffSmoke(x, y, z, n, vx, vy, vz, spread, life, s0, s1, shade, alpha) {
     for (let i = 0; i < n; i++) {
-      const sh = shade + rnd(-0.08, 0.08);
-      this.smoke.spawn(x + rnd(-0.2, 0.2), y + rnd(-0.2, 0.2), z + rnd(-0.2, 0.2), vx + rnd(-spread, spread), vy + rnd(-spread, spread) * 0.6 + 0.4, vz + rnd(-spread, spread), life * rnd(0.7, 1.3), s0, s1 * rnd(0.8, 1.4), sh, sh, sh * 1.02, alpha, 0.9, -0.08, sh + 0.1, sh + 0.1, sh + 0.12);
+      /* black-powder smoke: a dense off-white-to-grey cloud with a faint sulphur-yellow cast, darker in the thick core, thinning to a pale blue-grey haze */
+      const sh = Math.min(0.9, shade) - rnd(0, 0.16);
+      this.smoke.spawn(x + rnd(-0.2, 0.2), y + rnd(-0.2, 0.2), z + rnd(-0.2, 0.2), vx + rnd(-spread, spread), vy + rnd(-spread, spread) * 0.6 + 0.5, vz + rnd(-spread, spread), life * rnd(0.7, 1.3), s0, s1 * rnd(0.8, 1.4), sh, sh * 0.97, sh * 0.88, alpha, 0.9, -0.08, sh + 0.08, sh + 0.09, sh + 0.12);
     }
   }
   burstSparks(x, y, z, n, speed, r, g, b, life, size) {
