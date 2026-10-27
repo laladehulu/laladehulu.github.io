@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v78</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v79</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -5951,7 +5951,7 @@ function legColor(u) {
 // part: m = mesh kind ('b' box, 'c' cone, 'y' cylinder); f = frame (c chest, h head, p pelvis, sl/sr shoulders, or seg:[jointA, jointB, t0, t1]);
 // o = offset in the frame's axes, s = size, r = local euler, k = colour
 const GJ = { hipL: 0, kneeL: 3, footL: 6, hipR: 9, kneeR: 12, footR: 15, shL: 18, elL: 21, haL: 24, shR: 27, elR: 30, haR: 33 };
-const GEAR_K = { b: 40, c: 4, y: 5 };
+const GEAR_K = { b: 50, c: 4, y: 5 }; /* raised from 40 for faces: eyes with lids, ears, face shapes */
 const uhash = (id, k) => (((id + 1) * 2654435761 + (k || 0) * 40503) >>> 0) % 1000 / 1000;
 const GEAR_CACHE = new Map();
 // hit reaction envelope: snaps in over 70 ms (ease-out), holds while he reels, eases back out over 0.25 s after the stun ends
@@ -5967,6 +5967,21 @@ const HR_POSE = [
   [-0.1, 0.12, 0, 0.03, 0.3, -0.06, -0.08, 0.1, -0.2] // 5 guard driven back
 ];
 const GEAR_HOOK = { fn: null }; // an edition may supply its own uniforms (the realism edition does)
+// eyes that read as eyes without staring: a small warm off-white almond, a large soft dark-brown iris (no glint, no ring), and the
+// heavy upper lid line of an East Asian eye drawn over its top; the outer corner lifts or droops a little with the man's temper
+function faceEyes(b, fz, o) {
+  o = o || {}; const SK = -1, SD = -2, sh = o.shape | 0; /* skin-toned parts take each man's own skin colour */
+  /* the shape of the face, so men can be told apart: ears; a broad square jaw, a narrow pointed chin, high cheekbones or a heavy brow ridge */
+  b('h', [0.158, -0.02, 0.0], [0.03, 0.075, 0.055], SD); b('h', [-0.158, -0.02, 0.0], [0.03, 0.075, 0.055], SD);
+  if (sh === 1) b('h', [0, -0.052, fz + 0.01], [0.058, 0.032, 0.022], SD); /* a broad flat nose */
+  else if (sh === 2) b('h', [0, -0.155, 0.075], [0.11, 0.05, 0.11], SK);
+  else if (sh === 3) { b('h', [0.095, -0.035, fz - 0.006], [0.065, 0.03, 0.02], SD); b('h', [-0.095, -0.035, fz - 0.006], [0.065, 0.03, 0.02], SD); }
+  else if (sh === 4) b('h', [0, 0.03, fz - 0.008], [0.25, 0.03, 0.02], SD); const ew = o.young ? 0.052 : 0.048, eh = o.young ? 0.03 : 0.025, tilt = o.tilt || 0.06, ink = 0x1a1410, sc = 0xe2d6c2, iris = o.iris || 0x2a1a12;
+  for (const sx of [1, -1]) { if (o.patch && sx < 0) continue;
+    b('h', [0.058 * sx, 0.0, fz - 0.002], [ew, eh, 0.01], sc, [0, 0, -tilt * sx]);
+    b('h', [0.058 * sx - 0.003 * sx, -0.002, fz + 0.002], [0.024, o.young ? 0.026 : 0.022, 0.01], iris);
+    b('h', [0.058 * sx, eh * 0.5, fz + 0.004], [ew + 0.008, o.lid || 0.011, 0.012], ink, [0, 0, -tilt * sx]); }
+}
 // ---- the named men of the story file: each his own face and headgear (u.look is set by the story module; render-only) ----
 function lookGear(L, b, c, y, hatOn, part) {
   const ink = 0x1a1410, hair = L.hair || 0x201a16, bh = L.grey ? 0x8a8680 : hair, fz = 0.146, red = 0xc8281e, gold = 0xd8b03c;
@@ -5981,8 +5996,8 @@ function lookGear(L, b, c, y, hatOn, part) {
     default: { const tall = L.hat === 'rattanTall' ? 1.35 : 1; c('h', [0, 0.17 * tall, 0], [0.4, 0.2 * tall, 0.4], 0xb8964e); y('h', [0, 0.07, 0], [0.4, 0.045, 0.4], 0x8a6a30); b('h', [0, 0.27 * tall + 0.03, 0], [0.07, L.plume ? 0.12 : 0.05, 0.07], L.plume || red); if (L.band) y('h', [0, 0.11, 0], [0.37, 0.035, 0.37], L.band); }
   } });
   if (part === 'face') {
-    const ew = L.young ? 0.04 : 0.045, eh = L.young ? 0.028 : 0.02;
-    b('h', [0.058, 0.0, fz], [ew, eh, 0.012], ink); if (L.patch) { b('h', [-0.058, 0.004, fz + 0.004], [0.075, 0.065, 0.016], 0x111111); b('h', [0, 0.03, fz - 0.004], [0.3, 0.016, 0.012], 0x111111, [0, 0, -0.32]); } else b('h', [-0.058, 0.0, fz], [ew, eh, 0.012], ink);
+    faceEyes(b, fz, { young: L.young, patch: L.patch, tilt: L.brows === 'sad' ? -0.06 : L.brows === 'knit' || L.brows === 'thick' ? 0.07 : 0.02, lid: L.grey ? 0.014 : 0.011, shape: L.shape !== undefined ? L.shape : (String(L.id || '').split('').reduce((a, ch) => a + ch.charCodeAt(0), 0) % 5) });
+    if (L.patch) { b('h', [-0.058, 0.004, fz + 0.004], [0.075, 0.065, 0.016], 0x111111); b('h', [0, 0.03, fz - 0.004], [0.3, 0.016, 0.012], 0x111111, [0, 0, -0.32]); }
     const BR = { thick: [0.08, 0.028, 0.06, 0.035], thin: [0.06, 0.012, 0.1, 0.04], knit: [0.075, 0.022, 0.32, 0.03], high: [0.065, 0.016, -0.18, 0.055], sad: [0.065, 0.018, -0.3, 0.035] }[L.brows || 'thin'] || [0.065, 0.016, 0.12, 0.035];
     b('h', [0.06, BR[3], fz], [BR[0], BR[1], 0.014], bh, [0, 0, -BR[2]]); b('h', [-0.06, BR[3], fz], [BR[0], BR[1], 0.014], bh, [0, 0, BR[2]]);
     b('h', [0, -0.045, fz + 0.006], [L.bigNose ? 0.045 : 0.03, L.bigNose ? 0.06 : 0.05, 0.022], 0xd2aa84);
@@ -6107,7 +6122,7 @@ function gearFor(u) {
   if (u.look) lookGear(u.look, b, c, y, hatOn, 'face');
   else if (u.type !== 'horse' && !u.def.cannon && !u.def.gun) {
     const ink = 0x1a1410, hair = 0x201a16, fz = 0.146;
-    b('h', [0.058, 0.0, fz], [0.045, 0.02, 0.012], ink); b('h', [-0.058, 0.0, fz], [0.045, 0.02, 0.012], ink);
+    faceEyes(b, fz, { tilt: [0.02, 0.06, -0.02, 0.05, -0.05, 0.03][vr], shape: (vr + u.team * 2) % 5 });
     const bt = vr === 5 ? 0.12 : 0; b('h', [0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, -0.12 - bt]); b('h', [-0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, 0.12 + bt]);
     b('h', [0, -0.045, fz + 0.006], [0.03, 0.05, 0.02], 0xd2aa84); // nose
     b('h', [0, -0.085, fz], [0.06, 0.012, 0.012], 0x6a3a30);
@@ -6973,15 +6988,16 @@ class Renderer {
     c.getHSL(hsl); c.setHSL(hsl.h, hsl.s * (sty ? 0.72 : 0.58) * (0.85 + 0.25 * h), hsl.l * (0.84 + 0.12 * h2));
     const M = this._mud || (this._mud = new THREE.Color(0x4f4436)); c.lerp(M, (sty ? 0.08 : 0.14) + 0.1 * h + (mud || 0)); return c;
   }
+  skinOf(u, c) { const t = uhash(u.id, 3); c.setRGB(0.9 - t * 0.14, 0.76 - t * 0.16, 0.6 - t * 0.17); if (u.type === 'byakkotai') c.setRGB(0.92, 0.79, 0.66); if (u.look && u.look.skin) c.set(u.look.skin); return c; }
   colorFigure(slot, u) {
     { const f = this.fig, z = this.tmp.zero, g = gearFor(u); const cnt = { b: 0, c: 0, y: 0 }; for (const k of ['b', 'c', 'y']) for (let i = 0; i < GEAR_K[k]; i++) f['g' + k].setMatrixAt(slot * GEAR_K[k] + i, z);
-      for (const p of g.parts) { const i = cnt[p.m]++; if (i >= GEAR_K[p.m]) continue; p.idx = i; f['g' + p.m].setColorAt(slot * GEAR_K[p.m] + i, this.grime(this.tmp.c.set(p.k), u, i % 5, 0)); }
+      for (const p of g.parts) { const i = cnt[p.m]++; if (i >= GEAR_K[p.m]) continue; p.idx = i; f['g' + p.m].setColorAt(slot * GEAR_K[p.m] + i, p.k < 0 ? this.skinOf(u, this.tmp.c).multiplyScalar(p.k === -1 ? 1 : 0.9) : p.f === 'h' && !p.hat ? this.tmp.c.set(p.k) : this.grime(this.tmp.c.set(p.k), u, i % 5, 0)); }
       for (const k of ['b', 'c', 'y']) if (f['g' + k].instanceColor) f['g' + k].instanceColor.needsUpdate = true; }
     const c = this.tmp.c; const f = this.fig; const tc = (GEAR_HOOK.torso && GEAR_HOOK.torso(u)) || torsoColor(u), lc = (GEAR_HOOK.legs && GEAR_HOOK.legs(u)) || legColor(u); // an edition may recolour the body under the gear
     for (const k of ['torso', 'uarmL', 'uarmR']) f[k].setColorAt(slot, this.grime(c.set(tc), u, 0, 0));
     this.grime(c.set(tc), u, 1, 0.04).multiplyScalar(0.82); f.farmL.setColorAt(slot, c); f.farmR.setColorAt(slot, c);
     for (const k of ['thighL', 'thighR', 'hips']) f[k].setColorAt(slot, this.grime(c.set(lc), u, 2, 0.06)); for (const k of ['shinL', 'shinR']) f[k].setColorAt(slot, this.grime(c.set(lc), u, 3, 0.22)); /* mud to the knee */
-    { const t = uhash(u.id, 3); c.setRGB(0.9 - t * 0.14, 0.76 - t * 0.16, 0.6 - t * 0.17); if (u.type === 'byakkotai') c.setRGB(0.92, 0.79, 0.66); if (u.look && u.look.skin) c.set(u.look.skin); f.head.setColorAt(slot, c); f.hand.setColorAt(slot * 2, c); f.hand.setColorAt(slot * 2 + 1, c); }
+    { this.skinOf(u, c); f.head.setColorAt(slot, c); f.hand.setColorAt(slot * 2, c); f.hand.setColorAt(slot * 2 + 1, c); }
     if (u.type === 'hero') f.kabuto.setColorAt(slot, c.set(PAL.gold));
     f.hilt.setColorAt(slot, c.set(u.weapon === 'yari' ? 0xc8281e : 0x5a1a1a)); f.pistol.setColorAt(slot, c.set(0x5a4a2a)); f.barrel.setColorAt(slot, c.set(u.type === 'rifle_spencer' ? 0x3a3a3a : 0x55595e));
     for (const k of ['torso', 'hips', 'uarmL', 'uarmR', 'farmL', 'farmR', 'thighL', 'thighR', 'shinL', 'shinR', 'head', 'kabuto', 'hand', 'hilt', 'pistol', 'barrel']) f[k].instanceColor.needsUpdate = true;
@@ -8860,7 +8876,7 @@ Renderer.prototype.pkFrame = function (sim) {
     if (!g) { g = make(p.k); const y = terrainH(p.x, p.z); g.position.set(p.x, y + 0.01, p.z); g.rotation.y = (p.id * 2.399) % 6.283; g.rotation.z = ((p.id * 0.37) % 0.3) - 0.15; this.scene.add(g); M.set(p.id, g); } }
   for (const [id, g] of M) if (!seen.has(id)) { this.scene.remove(g); g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); M.delete(id); }
 };
-return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear, roundBox, uhash };
+return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear, faceEyes, roundBox, uhash };
 })();
 </script>
 <script>
@@ -9681,7 +9697,7 @@ function realGear(u) {
   if (u.look) R.lookGear(u.look, b, c, y, hatOn, 'face');
   else if (u.type !== 'horse' && !u.def.cannon && !u.def.gun) {
     const ink = 0x1a1410, hair = 0x201a16, fz = 0.146;
-    b('h', [0.058, 0.0, fz], [0.045, 0.02, 0.012], ink); b('h', [-0.058, 0.0, fz], [0.045, 0.02, 0.012], ink);
+    R.faceEyes(b, fz, { tilt: [0.02, 0.06, -0.02, 0.05, -0.05, 0.03][vr], shape: (vr + u.team * 2) % 5 });
     const bt = vr === 5 ? 0.12 : 0; b('h', [0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, -0.12 - bt]); b('h', [-0.06, 0.035, fz], [0.065, 0.016, 0.014], hair, [0, 0, 0.12 + bt]);
     b('h', [0, -0.045, fz + 0.006], [0.03, 0.05, 0.02], 0xd2aa84); // nose
     b('h', [0, -0.085, fz], [0.06, 0.012, 0.012], 0x6a3a30);
@@ -11299,7 +11315,7 @@ const SPEECH = (() => {
     add(grp, G.torso, tc, 0, 0, 0, 0.5, 0.64, 0.3); add(head, G.head, skinC, 0, 0, 0, 0.28, 0.3, 0.28);
     for (const sx of [-1, 1]) add(grp, G.limb, tc, sx * 0.29, 0.08, 0, 0.13, 0.36, 0.14, [0, 0, sx * 0.12]);
     const FR = { c: [grp, 0, 0, 0], h: [head, 0, 0, 0], sl: [grp, 0.2, 0.22, 0], sr: [grp, -0.2, 0.22, 0] };
-    for (const p of RENDER.gearFor(u).parts) { const F = FR[p.f]; if (!F || !G[p.m]) continue; add(F[0], G[p.m], p.k, F[1] + p.o[0], F[2] + p.o[1], F[3] + p.o[2], p.s[0], p.s[1], p.s[2], p.r); }
+    for (const p of RENDER.gearFor(u).parts) { const F = FR[p.f]; if (!F || !G[p.m]) continue; add(F[0], G[p.m], p.k < 0 ? skinC.clone().multiplyScalar(p.k === -1 ? 1 : 0.9) : p.k, F[1] + p.o[0], F[2] + p.o[1], F[3] + p.o[2], p.s[0], p.s[1], p.s[2], p.r); }
     grp.visible = false; BUST.scene.add(grp);
     b = { grp, head, seed: u.id * 1.7 }; BUST.cache.set(key, b);
     if (BUST.cache.size > 40) { const k0 = BUST.cache.keys().next().value; const o = BUST.cache.get(k0); BUST.scene.remove(o.grp); BUST.cache.delete(k0); }
