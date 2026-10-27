@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v120</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v121</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -494,6 +494,10 @@ body.zgrid #comms { top: 158px; }
           <div><span>Melee: cut (hold for a heavy blow). Each press within a breath continues the chain; the sim picks the side from where the man stands</span><kbd>LMB</kbd></div>
           <div><span>Melee: chop / thrust — thrown into any chain</span>wheel ↑ / wheel ↓ or <kbd>R</kbd></div>
           <div><span>Block (tap just before a hit to parry)</span><kbd>RMB</kbd></div>
+          <div><span>藤牌 shield: guard up and strike — the shield goes in first and opens him</span><kbd>RMB</kbd>+<kbd>LMB</kbd></div>
+          <div><span>長槍 spear: stand still with the guard up — the point is set, and a man who runs onto it is run through</span><kbd>RMB</kbd></div>
+          <div><span>狼筅 wolf-brush: hold the swing — a heavy sweep drives back the whole front for the spears behind</span>hold <kbd>LMB</kbd></div>
+          <div><span>鎲鈀 trident: a block catches his blade and holds it a moment · 斬馬刀: an overhead brings a horse down</span>—</div>
           <div><span>Feint</span><kbd>RMB</kbd> during windup</div>
           <div><span>Sprint (drains stamina)</span>hold <kbd>Shift</kbd></div>
           <div><span>Sidestep left / right (dodge)</span>double-tap <kbd>A</kbd> / <kbd>D</kbd></div>
@@ -1640,6 +1644,7 @@ class Sim {
     if (this.xc && !this.noChargeAtk && !u.champ && u.ctrlActive && atkPressed && u.sprint && u.flinchT <= 0 && u.st === ST_IDLE && !u.mounted && u.mount < 0 && !u.airborne && !(u.weapon === 'rifle' && !u.club) && u.weapon !== 'bow' && u.weapon !== 'revolver') {
       u.blocking = false; this.startWindup(u, u.weapon === 'yari' ? DIR_DOWN : DIR_UP); u.chg = 1; this.events.push({ t: 'chargeatk', id: u.id, x: u.x, y: u.y, z: u.z });
       u.atkHeld = atk; u.blockHeld = blk; return; }
+    if (this.xc && atkPressed && blk && u.def.shield && u.blocking && u.flinchT <= 0 && (u.st === ST_IDLE || u.st === ST_RECOVER) && this.wpnShove(u)) { u.atkHeld = atk; u.blockHeld = blk; return; } /* 藤牌: guard up and strike = the shield goes in first */
     if (atkPressed && u.flinchT <= 0 && (u.st === ST_IDLE || (u.st === ST_RECOVER && u.stT > u.def.recover * (this.xc && u.cbN > 0 ? 0.42 : 0.6)))) {
       u.blocking = false; if (u.champ) { const chain = this.tick - (u.lastSwing || -999) < 40; u.combo = chain ? (u.combo || 0) + 1 : 0; u.lastSwing = this.tick; u.sta -= 6 + u.combo * 3; u.staT = 0; } this.startWindup(u, this.comboDir(u, u.weapon === 'rifle' && u.club ? ad : weaponDir(u.weapon, ad)));
     } else if (blk && u.st !== ST_WINDUP && u.st !== ST_RELEASE && u.st !== ST_KICK && u.st !== ST_SWAP && (u.flinchT <= 0 || (u.ctrlActive && u.flinchT < 0.3)) && (u.st === ST_IDLE || u.st === ST_RECOVER || u.st === ST_RELOAD)) { /* a player can get his guard back up while still shaken from a blow */
@@ -1648,7 +1653,7 @@ class Sim {
     } else if (!blk) u.blocking = false;
     u.atkHeld = atk; u.blockHeld = blk;
   }
-  startWindup(u, dir) { if (u.hrT > 0) return; u.wMul = 1;
+  startWindup(u, dir) { if (u.hrT > 0 || u.trapT > 0) return; u.wMul = 1; /* his blade is caught in a trident's prongs */
     if (u.def.brush && dir === DIR_UP) dir = (u.windupId & 1) ? DIR_LEFT : DIR_RIGHT; /* the wolf-brush pokes and sweeps side to side; it is never chopped down overhead */
     /* a gun swung as a club is never thrust: the stab becomes an overhead smash (the player) or a smash and side swings in turn (AI) */
     if (u.weapon === 'rifle' && (u.club || u.ctrl < 0) && dir !== DIR_UP && dir !== DIR_LEFT && dir !== DIR_RIGHT) dir = u.ctrl >= 0 ? DIR_UP : [DIR_UP, DIR_RIGHT, DIR_LEFT][u.windupId % 3];
@@ -1670,7 +1675,7 @@ class Sim {
       if ((keys & KEY_S) && !(keys & KEY_W)) sp *= 0.65;
       if ((u.st === ST_WINDUP || u.st === ST_RELEASE) && !u.chg) sp *= this.xc && u.st === ST_RELEASE && (keys & KEY_W) ? 1 : 0.7; else if (u.st === ST_STUN) sp = 0; /* xc: a cut thrown while stepping forward keeps the step - the step and the cut are one movement, as for the AI */
       if (u.drawT > 0) sp *= 0.55; // a drawn bow: you walk, you don't run
-      if (u.blocking) sp *= 0.85; if (u.aiming) sp *= 0.5; if (u.st === ST_RELOAD) sp *= 0.8;
+      if (u.blocking) sp *= (this.xc && u.def.shield) ? 1 : 0.85; /* 藤牌: a man walks on behind his shield at his own pace (紀效新書 藤牌 — the shield goes forward, it does not wait) */ if (u.aiming) sp *= 0.5; if (u.st === ST_RELOAD) sp *= 0.8;
       // sprint: hold Shift while moving forward; burns stamina, and a winded man must get his breath back
       if (u.champ) { if (u.sta < 4) u.winded = true; else if (u.sta > 30) u.winded = false; } else { if ((u.fat || 0) >= 96) u.winded = true; else if ((u.fat || 0) < 55) u.winded = false; }
       u.sprint = !!(keys & KEY_SPRINT) && !!(keys & KEY_W) && !(keys & KEY_S) && !u.winded && !u.blocking && !u.aiming && ((u.st !== ST_WINDUP && u.st !== ST_RELEASE) || u.chg) && u.st !== ST_RELOAD && u.st !== ST_STUN;
@@ -2153,7 +2158,7 @@ class Sim {
     if (this.xc && w !== 'yari' && w !== 'rifle' && w !== 'bow' && w !== 'revolver') { const n = this.gatherNear(u.x, u.z, 2.2); for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.team !== u.team || v.type === 'horse') continue; const rel = Math.abs(wrap(atan2(v.x - u.x, v.z - u.z) - u.yaw)); if (rel > 0.35 && rel < 1.4 && len(v.x - u.x, v.z - u.z) < 1.9) return r < 0.55 ? DIR_DOWN : DIR_UP; } }
     if (w === 'yari') return r < 0.6 ? DIR_DOWN : DIR_UP;
     if (w === 'rifle' || w === 'bow' || w === 'revolver') return DIR_DOWN;
-    if (u.def.overhead) return r < u.def.overhead ? DIR_UP : (r < 0.85 ? DIR_RIGHT : DIR_LEFT);
+    if (u.def.overhead) { if (this.xc && u.target >= 0) { const t0 = this.units[u.target]; if (t0 && (t0.mounted || t0.type === 'horse')) return DIR_UP; } return r < u.def.overhead ? DIR_UP : (r < 0.85 ? DIR_RIGHT : DIR_LEFT); } /* the horse-cutter waits for the horse and takes it overhead */
     return r < 0.3 ? DIR_UP : r < 0.55 ? DIR_RIGHT : r < 0.8 ? DIR_LEFT : DIR_DOWN;
   }
   aiBlock(u, a) {
@@ -2269,10 +2274,14 @@ class Sim {
           this.steerFoot(u, gx, gz, sp); }
         else if (!this.spearKeep(u, tgt, d, reach)) { u.mx = 0; u.mz = 0; }
         if (u.role && sq && !sq.routing && !xl && !yy) { const sd = len(u.slotX - u.x, u.slotZ - u.z); if (sd > 2.2 && d > reach) this.steerFoot(u, u.slotX, u.slotZ, def.speed); else if (d > reach && sd < 2.2) { u.mx *= 0.3; u.mz *= 0.3; } }
-        const eager = u.mounted ? 0.35 : u.role === 'spear' && tgt.entT > 0 ? 0.35 : u.role === 'brush' ? 0.2 : u.role === 'shield' ? 0.05 : 0.09;
+        const eager = u.mounted ? 0.35 : (this.xc && u.def.overhead && (tgt.mounted || tgt.type === 'horse')) ? 0.5 : u.role === 'spear' && tgt.entT > 0 ? 0.35 : u.role === 'brush' ? 0.2 : u.role === 'shield' ? 0.05 : 0.09; /* the horse-cutter does not hesitate when the horse is on him */
         if (d <= (u.mounted ? reach + Math.abs(u.hspeed) * 0.4 : reach + 0.3) && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && xl !== 1 && !yy && !(reach >= 3 && !u.mounted && d < reach * 0.45) /* too close for the point: back off first */ && u.xcM !== this.tick && this.rng.next() < eager && this.xcSpaceOk(u, tgt)) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
         if (this.xc && u.circleT > 0 && !u.mounted && u.st === ST_IDLE && !xl && !yy) { u.circleT -= DT; const sd = (u.id & 1) ? 1 : -1, nx = dx / (d || 1), nz = dz / (d || 1), keep = reach + 1.1; const rad = (d - keep) * 1.6; u.mx = nx * rad + nz * sd * 1.4; u.mz = nz * rad - nx * sd * 1.4; if (!u.blocking && this.rng.next() < 0.02) { u.blocking = true; u.blockT = 0; u.blockDir = DIR_UP; u.blockHold = 0.5; } }
         this.aiBlock(u, tgt);
+        if (this.xc && !u.mounted && u.st === ST_IDLE && u.flinchT <= 0 && !(u.hrT > 0)) { const K = this.wpnKind(u); /* each arm reaches for the thing it is good at */
+          if (K === 'shield' && u.blocking && d < reach * 0.8 && !(u.shoveCd > this.tick) && this.rng.next() < 0.09) this.wpnShove(u);
+          else if (K === 'spear' && !u.blocking && d < reach + 2.5 && (tgt.sprint || tgt.chg || tgt.speedNow > 5 || tgt.mounted) && this.rng.next() < 0.3) { u.blocking = true; u.blockT = 0; u.blockDir = DIR_DOWN; u.blockHold = 1.1; u.mx = 0; u.mz = 0; } /* set the point against a man coming on fast */
+          else if (K === 'brush' && d < reach && this.rng.next() < 0.05) { let n2 = 0; const g = this.gatherNear(u.x, u.z, reach); for (let i = 0; i < g; i++) { const v = this.units[this.nearBuf[i]]; if (v !== u && !v.dead && v.team !== u.team && v.type !== 'horse' && len(v.x - u.x, v.z - u.z) < reach) n2++; } if (n2 >= 2 && this.xcToken(u, tgt)) { this.startWindup(u, DIR_LEFT); u.heavy = true; u.aiHeavy = true; } } }
       }
     } else {
       if (u.mounted) u.cv = 0;
@@ -2356,7 +2365,8 @@ class Sim {
       }
       case ST_RELEASE:
         u.stT += DT;
-        if (!u.swingHit && u.stT <= RELEASE_T) { if (this.xc && !u.champ && !u.mounted && u.mount < 0) this.sweepHit(u); else this.tryMeleeHit(u); }
+        if (!u.swingHit && u.stT <= RELEASE_T) { if (this.xc && u.def.brush && u.heavy && !u.champ) { if (u.stT > RELEASE_T * 0.45) { u.swingHit = true; this.wpnSweep(u); } } /* 狼筅: the heavy swing is a sweep of the whole front, not a cut */
+          else if (this.xc && !u.champ && !u.mounted && u.mount < 0) this.sweepHit(u); else this.tryMeleeHit(u); }
         if (u.stT >= RELEASE_T) { u.st = ST_RECOVER; u.stT = 0; u.cbE = this.tick; }
         break;
       case ST_RECOVER: u.stT += DT; if (u.stT >= def.recover * (u.chg ? 1.35 : 1)) { u.st = ST_IDLE; u.stT = 0; } break;
@@ -2429,6 +2439,8 @@ class Sim {
         break;
     }
     if (u.blocking) u.blockT += DT;
+    if (this.xc && u.blocking && u.weapon === 'yari' && !u.def.brush && !u.mounted && u.def.reach >= 2.8 && u.speedNow < 0.8 && u.blockT > 0.25) { if (!(u.setT > 0)) u.setHit = []; u.setT = 0.25; this.wpnSetThink(u); } /* the point is set while he stands with it */
+    else if (!(u.blocking && u.weapon === 'yari')) u.setHit = null;
   }
   afterShot(u, g) {
     if (!u.champ && u.type !== 'hero') u.shots = Math.max(0, u.shots - 1);
@@ -2508,6 +2520,7 @@ class Sim {
     if (att.weapon === 'yari') { if (f < 0.45) { q = 'jammed'; qm = 0.5; } else if (f > 0.68) { q = 'tip'; qm = 1.18; } }
     else { if (f > 0.92) { q = 'graze'; qm = 0.7; } else if (f > 0.45 && f < 0.8) { q = 'clean'; qm = 1.1; } }
     dmg *= qm; const heavy = att.heavy; if (heavy) dmg *= 1.45; if (att.xcMul) dmg *= att.xcMul;
+    if (this.xc && att.weapon === 'rifle' && att.club && dir === DIR_UP) { this.posture(def_, 46, att); dmg *= 0.85; } /* the gun swung by the barrel is a mace: it breaks a guard rather than cutting */
     if (this.xc && att.ctrl < 0 && def_.ctrl < 0) dmg *= 0.72; // line against line the killing is slower: clashes, pauses, clashes, not a blender
     if (def_.entT > 0 && att.weapon === 'yari' && !att.def.brush) { dmg *= 2.0; q = 'pinned'; }
     if (def_.openT > 0) { dmg *= 2.2; def_.openT = 0; q = 'deathblow'; }
@@ -2525,11 +2538,16 @@ class Sim {
       if (heavy && !def_.def.shield) { // a heavy blow crushes an ordinary guard: half comes through and the defender reels
         this.posture(def_, dmg * 1.4, att); def_.blocking = false; def_.flinchT = 0.45; this.events.push({ t: 'guardcrush', x: hx, y: hy, z: hz, by: def_.id, att: att.id });
         this.applyDamage(def_, dmg * 0.5, att.id, nx * 2.5, 0, nz * 2.5, 'melee', hx, hy, hz); att.heavy = false; return; }
+      if (this.xc && (def_.def.trident || def_.role === 'trident' || def_.kitRole === 'trident') && !att.mounted && att.type !== 'horse') { att.trapT = Math.max(att.trapT || 0, 0.75); this.events.push({ t: 'trap', id: att.id, by: def_.id, x: hx, y: hy, z: hz }); } /* 鎲鈀: the prongs take the blade and hold it a moment */
       att.st = ST_STUN; att.stT = 0; att.stunDur = 0.35; if (this.xc && att.ctrl >= 0 && (att.spamR || 0) > 3) { att.stunDur = 0.6; def_.counterT = Math.max(def_.counterT || 0, 0.6); } this.posture(def_, dmg * (heavy ? 1.6 : 1) * (def_.def.shield ? 0.6 : 1) * (att.def.posture || 1), att); this.posture(att, 6, def_);
       if (att.def.crush) this.applyDamage(def_, dmg * att.def.crush * (def_.def.shield ? 0.6 : 1), att.id, nx * 1.2, 0, nz * 1.2, 'melee', hx, hy, hz);
       if (this.xc) this.hitReact(def_, att, 'block', heavy, true);
       this.events.push({ t: 'block', x: hx, y: hy, z: hz, perfect: false, by: def_.id, att: att.id, shield: !!def_.def.shield }); att.heavy = false; return;
     }
+    if (this.xc && att.def.overhead && dir === DIR_UP && !att.mounted && att.mount < 0 && (def_.mounted || def_.type === 'horse')) { /* 斬馬刀: the horse-cutter is for the horse - one blow at the legs brings it down with its man */
+      const hs = def_.type === 'horse' ? def_ : def_.mount >= 0 ? this.units[def_.mount] : null;
+      if (hs && hs.type === 'horse') { hs.hspeed = 0; const rd = hs.rider >= 0 ? this.units[hs.rider] : null; this.applyDamage(hs, 200, att.id, nx * 2, 0, nz * 2, 'melee', hx, hy, hz); if (rd && !rd.dead) { rd.downT = Math.max(rd.downT || 0, 1.6); this.posture(rd, 60, att); } this.events.push({ t: 'horsedown', id: hs.id, by: att.id, x: hs.x, y: hs.y, z: hs.z }); }
+      else if (def_.mounted) { dmg *= 2.2; def_.hspeed = 0; def_.downT = Math.max(def_.downT || 0, 1.4); def_.st = ST_IDLE; def_.stT = 0; this.posture(def_, 70, att); this.events.push({ t: 'horsedown', id: def_.id, by: att.id, x: def_.x, y: def_.y, z: def_.z }); } }
     if ((def_.mounted || def_.type === 'horse' || def_.mount >= 0) && !(att.mounted || att.mount >= 0)) { const hs = def_.type === 'horse' ? def_ : def_.mounted ? def_ : this.units[def_.mount]; const fast = hs && Math.abs(hs.hspeed) > 5; dmg *= fast ? 0.95 : 1.4; if (hs) hs.hspeed *= fast ? 0.85 : 0.35; } // a galloping horseman is a glancing target; a halted one is cut down
     def_.lastAttacker = att.id;
     const kb = (dir === DIR_UP ? 2.2 : 1.6) * (heavy ? 1.8 : 1) * (att.chg ? 1.6 : 1) * (this.xc && att.ctrl >= 0 && !this.players[att.ctrl].ai && !def_.champ ? 0.8 : 1); /* your own cut does not shove him out of your reach: the chain that follows must still find him */
@@ -2953,6 +2971,7 @@ class Sim {
     for (let i = this.pickups.length - 1; i >= 0; i--) { const q = this.pickups[i]; if (this.tick > q.t) { this.pickups.splice(i, 1); continue; } if (!u.dead && len(q.x - u.x, q.z - u.z) < 1.8) { u.hp = Math.min(u.def.hp, u.hp + 260); u.sta = 100; this.pickups.splice(i, 1); this.events.push({ t: 'pickup', id: u.id, x: q.x, z: q.z }); } }
     if (u.ironT > 0) { u.ironT -= DT; u.downT = 0; if (u.st === ST_STUN) { u.st = ST_IDLE; u.stT = 0; } }
     if (u.braceT > 0) { u.braceT -= DT; this.braceThink(u); }
+    if (u.trapT > 0) u.trapT -= DT; if (u.setT > 0) u.setT -= DT;
     if (u.castT > 0) { u.castT -= DT; if (u.castT <= 0) this.castExec(u, u.castK); }
     if (u.ctrl >= 0 && this.players[u.ctrl].aiChamp) this.champAI(u);
   }
@@ -5177,6 +5196,56 @@ Sim.prototype.comboDir = function (u, ad) {
   this.events.push({ t: 'combo', id: u.id, key, zh: CB_NAME[key], n: idx + 1, of: steps.length, step: st, heavy: !!u.cbHeavy });
   if (u.cbHeavy) this.events.push({ t: 'heavy', id: u.id });
   return dir;
+};
+// ---- what each weapon is for (xc editions). Every arm has one thing it does that no other arm does, and a man of either side
+// does it: the shield shoves, the spear is set against a rush, the wolf-brush sweeps the front clear, the trident catches a blade,
+// the horse-cutter brings a horse down, a gun swung by the barrel breaks a guard. (紀效新書 卷四 藤牌/狼筅/長槍/鎲鈀的用法)
+Sim.prototype.wpnKind = function (u) {
+  if (!this.xc || u.type === 'horse' || u.def.ai === 'cannon' || u.champ) return '';
+  const r = u.kitRole !== undefined ? u.kitRole : u.role;
+  if (u.def.brush || r === 'brush') return 'brush';
+  if (u.def.trident || r === 'trident') return 'trident';
+  if (u.weapon === 'rifle' && u.club) return 'club';
+  if (u.def.shield) return 'shield';
+  if (u.weapon === 'yari') return 'spear';
+  if (u.def.overhead) return 'cutter';
+  return '';
+};
+// 藤牌 the shield shove: block and strike together and the shield goes in first, throwing him off his feet and open for the dao
+Sim.prototype.wpnShove = function (u) {
+  if (u.shoveCd > this.tick) return false; u.shoveCd = this.tick + 45;
+  const n = this.gatherNear(u.x, u.z, u.def.reach + 0.4); let hit = false;
+  for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.team === u.team || v.type === 'horse' || v.downed) continue;
+    const dx = v.x - u.x, dz = v.z - u.z, d = len(dx, dz); if (d > u.def.reach * 0.75 + v.def.r) continue; if (Math.abs(wrap(atan2(dx, dz) - u.yaw)) > 0.8) continue;
+    const m = 1 / (v.mass || 1), nx = dx / (d || 1), nz = dz / (d || 1); v.vx += nx * 7 * m; v.vz += nz * 7 * m;
+    this.posture(v, 34, u); v.blocking = false; v.openT = Math.max(v.openT || 0, 0.8); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; }
+    this.events.push({ t: 'shove', id: v.id, by: u.id, x: (u.x + v.x) / 2, y: u.y + 1.2, z: (u.z + v.z) / 2 }); hit = true; break; }
+  if (hit) { u.blocking = false; u.st = ST_RECOVER; u.stT = 0; }
+  return hit;
+};
+// 長槍 setting the point: a spearman who stands still with his guard up plants the butt; a man who runs onto it is run through by his own weight
+Sim.prototype.wpnSetThink = function (u) {
+  if (this.tick % 3) return; const R = u.def.reach + 0.3, n = this.gatherNear(u.x, u.z, R + 1.5);
+  for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.team === u.team || v.downed) continue;
+    const dx = v.x - u.x, dz = v.z - u.z, d = len(dx, dz); if (d > R + v.def.r) continue; if (Math.abs(wrap(atan2(dx, dz) - u.yaw)) > 0.7) continue;
+    const closing = (u.x - v.x) * (v.mx + v.vx) + (u.z - v.z) * (v.mz + v.vz); const fast = v.speedNow > 5 || v.sprint || v.chg || (v.mounted && Math.abs(v.hspeed) > 5);
+    if (closing <= 0 || !fast) continue; if (!u.setHit) u.setHit = []; if (u.setHit.indexOf(v.id) >= 0) continue; u.setHit.push(v.id);
+    const nx = dx / (d || 1), nz = dz / (d || 1), horse = v.mounted || v.type === 'horse';
+    this.applyDamage(horse ? (v.mounted ? this.units[v.mount] || v : v) : v, horse ? 150 : 90, u.id, nx * 3, 0.6, nz * 3, 'spear', u.x + nx * R, u.y + 1.2, u.z + nz * R);
+    if (!horse) { v.downT = Math.max(v.downT || 0, 1.1); v.st = ST_IDLE; v.stT = 0; v.chg = 0; }
+    this.events.push({ t: 'spearwall', x: v.x, y: v.y + 1.2, z: v.z, by: u.id, att: v.id }); }
+};
+// 狼筅 sweeping the front: the brush is not swung to kill - a heavy sweep drives back everyone in front and leaves them open
+// for the spears of the file behind (the brush man holds the front, 紀效新書: 狼筅以禦, 長槍以殺)
+Sim.prototype.wpnSweep = function (u) {
+  const R = u.def.reach, n = this.gatherNear(u.x, u.z, R + 1), hit = [];
+  for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v === u || v.dead || v.team === u.team || v.type === 'horse') continue;
+    const dx = v.x - u.x, dz = v.z - u.z, d = len(dx, dz); if (d > R + v.def.r) continue; if (Math.abs(wrap(atan2(dx, dz) - u.yaw)) > 1.15) continue;
+    const m = 1 / (v.mass || 1), nx = dx / (d || 1), nz = dz / (d || 1); v.vx += nx * 5.5 * m; v.vz += nz * 5.5 * m;
+    this.posture(v, 26, u); v.openT = Math.max(v.openT || 0, 1.1); v.blocking = false; if (v.st === ST_WINDUP) { v.st = ST_IDLE; v.stT = 0; }
+    if (this.hitReact) this.hitReact(v, u, 'cut', true, true); hit.push(v.id); }
+  if (hit.length) this.events.push({ t: 'brushsweep', id: u.id, n: hit.length, x: u.x, y: u.y + 1.3, z: u.z });
+  return hit.length;
 };
 // ---- measure (xc, AI blades only): a swordsman does not walk up into a man's face and stand there. He stops a pace
 // outside his own reach, shuffles, and when he goes he goes with the cut: the step in and the blow are one movement, the
@@ -8515,6 +8584,15 @@ class Renderer {
           if (ev.id === heroId) { this.shake = Math.max(this.shake, 0.9); this.hitQ = { text: 'GUARD BROKEN', t: 1.2, c: '#ff5a4a' }; } break; }
         case 'guardcrush': { this.burstSparks(ev.x, ev.y, ev.z, 20, 7, 1, 0.6, 0.3, 0.5, 0.1); AUDIO.play('clang', ev.x, ev.y, ev.z, 1.5); AUDIO.play('thud', ev.x, ev.y, ev.z, 1);
           if (ev.att === heroId) { this.hitstop = Math.max(this.hitstop, 0.07); this.shake = Math.max(this.shake, 0.45); this.hitQ = { text: 'GUARD CRUSHED', t: 1, c: '#ffb04a' }; } if (ev.by === heroId) { this.shake = Math.max(this.shake, 0.8); this.hitQ = { text: 'Heavy blow — parry it, don\'t block', t: 1.6, c: '#ff5a4a' }; } break; }
+        case 'shove': { AUDIO.play('shield', ev.x, ev.y, ev.z, 1.3); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.1); this.dust(ev.x, ev.y - 0.6, ev.z, 8, 0, 0.8, 0, 1.4, 0.8, 0.3, 1.2);
+          if (ev.by === heroId) { this.hitQ = { text: '牌 SHIELD SHOVE — he is open', t: 1.1, c: '#ffd36a' }; this.shake = Math.max(this.shake, 0.3); if (this.imp) this.imp.vx -= 2.2; }
+          else if (ev.id === heroId) { this.shake = Math.max(this.shake, 0.6); this.hitQ = { text: 'SHOVED BACK', t: 0.9, c: '#ff9a7a' }; } break; }
+        case 'brushsweep': { const u = units[ev.id]; AUDIO.play('swish', ev.x, ev.y, ev.z, 1.5); AUDIO.play('entangle', ev.x, ev.y, ev.z, 1); if (u) for (let i = 0; i < 14; i++) { const a2 = u.yaw - 1.1 + i / 13 * 2.2; this.dust(u.x + Math.sin(a2) * 3.2, u.y + 0.4, u.z + Math.cos(a2) * 3.2, 1, Math.sin(a2) * 2, 0.5, Math.cos(a2) * 2, 0.8, 0.5, 0.2, 0.9); }
+          if (ev.id === heroId) this.hitQ = { text: `狼筅 SWEPT THE FRONT — ${ev.n} driven back`, t: 1.2, c: '#9fe07a' }; break; }
+        case 'trap': { AUDIO.play('clang', ev.x, ev.y, ev.z, 1.4); this.burstSparks(ev.x, ev.y, ev.z, 14, 5, 1, 0.9, 0.6, 0.35, 0.09);
+          if (ev.by === heroId) this.hitQ = { text: '鎲鈀 CAUGHT HIS BLADE — strike', t: 1.2, c: '#ffd36a' }; else if (ev.id === heroId) this.hitQ = { text: 'YOUR BLADE IS CAUGHT', t: 1, c: '#ff5a4a' }; break; }
+        case 'horsedown': { AUDIO.play('horsedie', ev.x, ev.y + 1, ev.z, 1.1); AUDIO.play('bodythump', ev.x, ev.y, ev.z, 1.4); this.dust(ev.x, ev.y + 0.2, ev.z, 16, 0, 1.2, 0, 2.2, 1.2, 0.4, 1.6);
+          if (ev.by === heroId) { this.hitQ = { text: '斬馬 THE HORSE GOES DOWN', t: 1.4, c: '#ffd36a' }; this.shake = Math.max(this.shake, 0.5); } break; }
         case 'entangle': { this.dust(ev.x, ev.y, ev.z, 5, 0, 0.6, 0, 0.6, 0.4, 0.1, 0.5); if (ev.id === heroId) this.hitQ = { text: 'SNARED by wolf-brush — dodge out', t: 1.2, c: '#9fe07a' }; break; }
         case 'combo': { if (ev.id === heroId && (!this.hitQ || this.hitQ.t < 0.3)) this.hitQ = { text: `${ev.zh} ${ev.n}/${ev.of}${ev.heavy ? ' · 重' : ''}`, t: 0.55, c: ev.heavy ? '#ffd36a' : '#e8d8a8' }; break; }
         case 'hitq': { if (ev.att === heroId) { const T = { clean: ['CLEAN', '#fff'], tip: ['TIP — perfect measure', '#9fe0ff'], jammed: ['JAMMED — too close for a spear', '#ff9a7a'], graze: ['GRAZE — step in', '#ccc'], pinned: ['PINNED', '#9fe07a'], deathblow: ['致命 DEATHBLOW', '#ffd36a'] }[ev.q] || ['HIT', '#fff'];
