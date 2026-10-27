@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v105</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v106</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -926,6 +926,7 @@ class Sim {
     this.cfg = cfg; this.seed = cfg.seed | 0; this.rng = new RNG(this.seed);
     this.scen = cfg.mode === 'heroes' ? (SCEN[cfg.scen] || SCEN.ningyuan) : null; this.heroMode = !!this.scen;
     this.battle = cfg.mode === 'campaign' ? (MISSIONS[cfg.mission] || MISSIONS.taizhou).battle : cfg.mode === 'assault' ? (OPS[cfg.op] || OPS.liaoyang).battle : this.scen ? this.scen.battle : cfg.mode === 'story' ? STORY[clamp(cfg.chapter | 0, 0, STORY.length - 1)].battle : BATTLES[cfg.battle] ? cfg.battle : 'field'; this.bdef = BATTLES[this.battle];
+    this.diff = clamp(cfg.diff === undefined ? 1 : cfg.diff | 0, 0, 3); /* 0 recruit · 1 soldier · 2 veteran · 3 lone banner */
     this.solo = (cfg.players || []).length === 1; this.xc = XCOMBAT || !!cfg.xcombat; this.noRout = true; // nobody routs: squads fight on (and beaten mission groups withdraw by script)
     this.mode = MODES[cfg.mode] ? cfg.mode : 'standard'; this.chaos = this.mode === 'chaos'; this.real = this.mode === 'soldier' || this.mode === 'assault'; this.lethal = this.mode === 'soldier';
     this.mission = this.mode === 'campaign' ? (MISSIONS[cfg.mission] || MISSIONS.taizhou) : this.mode === 'assault' ? (OPS[cfg.op] || OPS.liaoyang) : null;
@@ -3947,7 +3948,12 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     M.def.forEach((d, i) => mk('d' + i, { team: D, name: 'Garrison ' + (i + 1), army: d[0], at: [d[1], d[2], A === 1 ? PI : 0], reserve: i >= M.sectors[0].length + 0 && false }));
     (M.defRes || []).forEach((d, i) => mk('r' + i, { team: D, name: 'Reserve ' + (i + 1), army: d[0], at: [d[1], d[2], A === 1 ? PI : 0], reserve: true, sector: d[3] }));
     M.att.concat(M.att, M.att).forEach((a, i) => mk('a' + i, { team: A, name: AI_NAMES[A][i % 5], army: a, at: [M.attAt[0] + ((i % 3) - 1) * 40, M.attAt[1], M.attAt[2]], reserve: i >= 3 }));
-  } else for (const gid in M.groups) mk(gid, M.groups[gid]);
+  } else { // difficulty (co-op): 0 recruit, 1 soldier, 2 veteran, 3 lone banner — no AI companies on your side, only what the players bring
+    const D = this.diff, need = new Set(); for (const P of M.phases || []) { const walk = (o) => { if (!o) return; if (o.arrive) need.add(o.arrive); if (o.officer) need.add(o.officer); (o.all || []).forEach(walk); }; walk(P.obj); }
+    if (M.soldier) need.add(M.soldier.group);
+    for (const gid in M.groups) { const G = M.groups[gid];
+      if (D >= 3 && !M.soldier && G.team === M.side && !need.has(gid) && !G.escort) continue;
+      if (D >= 2 && G.team !== M.side && G.army.length >= 3 && !G.n) mk(gid, Object.assign({}, G, { army: G.army.concat([G.army[0]]) })); else mk(gid, G); } }
   for (const p of this.players) if (p.ai) { const g = this.mg[p.gid], G = g.G; this.placeArmy({ player: p, army: p.army }, G.team, G.at[0], G.at[1], G.at[2]);
     const lab = G.team === 1 && M.labels; if (lab) for (const id of p.squads) { const q = this.squads[id], L = lab[q.type]; if (!L) continue; const nd = Object.assign({}, q.def, { name: L[0], jp: L[1] }); q.def = nd; for (const uid of q.unitIds) { const u = this.units[uid]; u.def = Object.assign({}, u.def, { name: L[0], jp: L[1] }); } }
     const h = this.units[p.heroId]; if (h && G.officer) { h.def = Object.assign({}, h.def, { hp: h.def.hp * G.officer, name: G.name, dmg: h.def.dmg.map(x => x * 1.4) }); h.hp = h.def.hp; h.officer = true; }
@@ -3958,7 +3964,8 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     for (const u of this.units) { if (u.type === 'horse' || u.def.ai === 'cannon' || u.team === M.side) continue; u.def = u.type === 'hero' ? tune(u.def, 0.75, 0.5) : tune(u.def, 0.85, 0.85); u.hp = u.def.hp; } }
   if (!ass && !M.soldier) { // campaign balance: the enemy rank and file are a little softer, your allies a little harder (officers excepted)
     const cache = new Map(); const tune = (d, k, m) => { const key = d; if (!cache.has(key)) cache.set(key, new Map()); const c = cache.get(key); if (!c.has(k)) c.set(k, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return c.get(k); };
-    for (const u of this.units) { if (u.type === 'horse' || u.officer || u.def.ai === 'cannon') continue; const foe = u.team !== M.side; u.def = foe ? tune(u.def, 0.82, 0.82) : tune(u.def, 1.12, 1.05); u.hp = u.def.hp; } }
+    const FK = [0.68, 0.82, 0.95, 1.0][this.diff], AK = [1.25, 1.12, 1.0, 1.0][this.diff];
+    for (const u of this.units) { if (u.type === 'horse' || u.officer || u.def.ai === 'cannon') continue; const foe = u.team !== M.side; u.def = foe ? tune(u.def, FK, FK) : tune(u.def, AK, AK > 1.1 ? 1.05 : 1); u.hp = u.def.hp; } }
   if (!this.heroMode) for (const p of this.players) { if (!p.ai) continue; const h = this.units[p.heroId]; if (!h || h.type !== 'hero' || h.team === M.side || (p.gid !== undefined && this.mg[p.gid] && this.mg[p.gid].G.wound)) continue; /* (a general the story needs wounded, not dead, keeps his) an enemy general is a man: a tough one, not a boss (hero-sized health is for hero mode only) */
     const hp = h.officer ? 240 : 120; if (h.def.hp > hp) { h.def = Object.assign({}, h.def, { hp }); h.hp = hp; } }
   if (M.siege && (ass || M.soldier)) { if (!ass) this.sector = 0; this.siegeInit(); if (!ass) this.sg.emp = this.sg.emp.filter(e => e.team === this.sg.D); } // a story chapter on the walls uses the siege engines too (the Jin of 1626 had no field guns)
@@ -3973,7 +3980,7 @@ Sim.prototype.setupMission = function (teams, aiPl) {
       if (c.wkit && c.wkit.length && p.heroId >= 0) this.kitGive(this.units[p.heroId], c.wkit); });
     this.story = true; // your file: hardened Yiwu men, and the story's heart
   } else if (!ass) {
-    humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; const t = roleType(c.role, M.side); p.team = M.side; p.army = humans.length === 1 ? [t, M.soloExtra || 'ashigaru'] : [t];
+    humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; const t = roleType(c.role, M.side); p.team = M.side; p.army = humans.length === 1 || this.diff >= 3 ? [t, M.soloExtra || 'ashigaru'] : [t]; /* the lone banner: two companies each, and no one else */
       const s = M.start; const px = s[0] + (i - (humans.length - 1) / 2) * 26; this.placeArmy({ player: p, army: p.army }, M.side, px, s[1], s[2]); p.auto = false; p.ready = true;
       for (const id of p.squads) this.squads[id].order = ORD_FOLLOW;
       p.spareIds = []; for (let k = 0; k < 2; k++) { const q = this.createSquad(t, M.side, -1, clamp(px + (k - 0.5) * 16, -HALF + 6, HALF - 6), clamp(s[1] - sin(s[2] + PI / 2) * 0 - cos(s[2]) * 22, -HALF + 6, HALF - 6), s[2]); q.inactive = true; for (const uid of q.unitIds) this.units[uid].inactive = true; p.spareIds.push(q.id); } p.spare = 2;
@@ -3993,7 +4000,7 @@ Sim.prototype.mDir = function (gid, dir) {
   else p.directive = { kind: DIR_ATTACK, x: 0, z: 0, by: -1 };
 };
 Sim.prototype.mRelease = function (gid) {
-  const g = this.mg[gid]; if (!g || g.released) return; g.released = true; const p = this.players[g.p]; p.inactive = false;
+  const g = this.mg[gid]; if (!g || g.released) return; g.released = true; g.relPh = this.mv ? this.mv.ph : 0; const p = this.players[g.p]; p.inactive = false;
   for (const id of p.squads) { const q = this.squads[id]; q.inactive = false; for (const uid of q.unitIds) this.units[uid].inactive = false; }
   for (const uid of [p.heroId, p.horseId]) if (uid >= 0) this.units[uid].inactive = false;
   if (!this.mission.groups || !this.mission.groups[gid] || !this.mission.groups[gid].dir) p.directive = { kind: DIR_ATTACK, x: 0, z: 0, by: -1 };
@@ -4443,12 +4450,12 @@ Sim.prototype.mObj = function (o, el) {
   if (o.all) { let ok = 1; for (const s of o.all) { const r = this.mObj(s, el); if (r < 0) return -1; if (r === 0) ok = 0; } if (ok && o.keep === undefined && !o.reach) return 1; if (!ok) return 0; }
   if (o.keep) { const z = this.missionZone(o.keep); if (z && z.owner === 1 - this.mission.side) return -1; }
   if (o.reach) { const z = this.missionZone(o.reach); if (!(z && this.humansIn(z))) return 0; }
-  if (o.hold) { const z = this.missionZone(o.hold); const k = 'hold:' + o.hold; if (z.n0 > 0 && z.n1 === 0) this.mv[k] = (this.mv[k] || 0) + 0.5; if ((this.mv[k] || 0) < o.t) return 0; }
+  if (o.hold) { const z = this.missionZone(o.hold); const k = 'hold:' + o.hold; if (z.n0 > 0 && z.n1 === 0) this.mv[k] = (this.mv[k] || 0) + 0.5; if ((this.mv[k] || 0) < Math.min(o.t, 12)) return 0; } /* take it and clear it: no long hold-outs */
   if (o.capture) { for (const k of o.capture) { const z = this.missionZone(k); if (z.owner !== this.mission.side) return 0; } }
   if (o.defeat) { for (const gid of o.defeat) { const g = this.mg[gid]; if (!g || (!g.released && !g.broken)) return 0; if (!g.broken && this.mGroupFrac(gid) > 1 - (o.frac || 0.8)) return 0; } for (const gid of o.defeat) this.mBreak(gid); }
   if (o.officer) { const g = this.mg[o.officer]; if (!g || !g.released) return 0; const h = this.units[this.players[g.p].heroId]; const wound = g.G.wound; if (h && !h.dead && !(wound && h.hp < h.def.hp * wound)) return 0; if (!g.broken) { this.events.push({ t: 'mofficer', name: g.G.name, zh: g.G.zh || '', gid: o.officer, wounded: !!(h && !h.dead) }); this.mBreak(o.officer); } }
   if (o.arrive) { const z = this.missionZone(o.zone), p = this.players[this.mg[o.arrive].p]; let n = 0, a = 0; for (const id of p.squads) { const q = this.squads[id]; if (!q.alive) continue; a++; if (len(q.cx - z.x, q.cz - z.z) < z.r + 8) n++; } if (a === 0) return -1; if (n < a) return 0; }
-  if (o.survive) { if (el < o.survive) return 0; }
+  if (o.survive) { if (el < o.survive && !this.mQuietDone(el)) return 0; } /* 'hold out' only while there is something to hold against */
   if (o.never) return 0;
   if (o.extract) { const z = this.missionZone(o.extract); let ok = false; for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead && len(h.x - z.x, h.z - z.z) < z.r + 1) ok = true; } if (!ok) return 0;
     // you are out: wait (up to 20 s) for the men of your file who are still on their feet and coming
@@ -4456,12 +4463,33 @@ Sim.prototype.mObj = function (o, el) {
     if (this.tick - this.mv.exT < 30 * 20) { for (const u of this.units) { if (!u.zfile || u.dead || u.downed || u.ctrl >= 0) continue; if (u.wounded && u.helpedBy < 0) continue; if (len(u.x - z.x, u.z - z.z) > z.r + 10) return 0; } } }
   return 1;
 };
+// No waiting with nothing to fight: a phase that says 'hold on for N seconds' ends as soon as its fight is over. A threat is an
+// enemy group that is in the field and unbroken, not standing on a post of its own, with a fifth of its men or more, and either
+// sent in during this phase or with men within ninety paces of a player. While all is quiet, the phase's scripted beats (waves,
+// events) are brought forward instead of waited for; once none are left the phase is done.
+Sim.prototype.mThreat = function () {
+  const M = this.mission, mv = this.mv; const hs = []; for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead) hs.push(h); }
+  for (const gid in this.mg) { const g = this.mg[gid]; if (g.G.team === M.side || !g.released || g.broken || g.G.stay) continue; if (this.mGroupFrac(gid) < 0.2) continue;
+    if (g.relPh === mv.ph) return true; const p = this.players[g.p];
+    for (const id of p.squads) for (const uid of this.squads[id].unitIds) { const u = this.units[uid]; if (u.dead || u.inactive) continue; for (const h of hs) if (len(u.x - h.x, u.z - h.z) < 90) return true; } }
+  return false;
+};
+Sim.prototype.mQuietDone = function (el) {
+  const mv = this.mv, P = this.mission.phases[mv.ph]; if (el < 5) return false;
+  for (const [t] of (P.waves || []).concat(P.at || [])) if (t > el) return false; /* beats still to come (brought forward in missionThink) */
+  return mv.quietPh === mv.ph && this.tick - mv.quietT >= 30 * 3;
+};
 Sim.prototype.missionThink = function () {
   const M = this.mission; if (this.mwin !== undefined) return; if (this.mode === 'assault') return this.assaultThink();
   if (M.beacon && this.beaconTick) { this.beaconTick(); if (this.mwin !== undefined) return; }
   const mv = this.mv;
   if (mv.ph < 0) { mv.ph = 0; mv.t0 = this.tick; this.mStart(); }
   if (M.soldier && this.tick % 15 === 0) this.aidPost();
+  const P0 = M.phases[mv.ph]; if (P0 && !M.camp && this.mode !== 'assault') { // quiet: bring the next scripted beat forward (never in a timed phase)
+    if (this.mThreat()) mv.quietPh = -1; else if (mv.quietPh !== mv.ph) { mv.quietPh = mv.ph; mv.quietT = this.tick; }
+    const el0 = (this.tick - mv.t0) / 30;
+    if (!P0.limit && mv.quietPh === mv.ph && this.tick - mv.quietT >= 30 * 3 && el0 >= 5 && P0.obj && JSON.stringify(P0.obj).indexOf('survive') >= 0) { let nx = 1e9; for (const [t] of (P0.waves || []).concat(P0.at || [])) if (t > el0 && t < nx) nx = t;
+      if (nx < 1e9) { mv.t0 -= Math.round((nx - el0) * 30); for (const sy of P0.say || []) if (sy[0] < nx - 0.5) mv.said[mv.ph + ':' + sy[0]] = 1; mv.quietT = this.tick; } } }
   const P = M.phases[mv.ph], el = (this.tick - mv.t0) / 30;
   for (const [t, gid, dir] of P.waves || []) { const k = mv.ph + ':' + gid; if (!mv.waves[k] && el >= t) { mv.waves[k] = 1; this.mRelease(gid); if (dir) this.mDir(gid, dir); } }
   for (const [t, a] of P.at || []) { const k = mv.ph + ':at:' + t; if (!mv.ats[k] && el >= t) { mv.ats[k] = 1; this.mAct(a); } }
@@ -5083,6 +5111,146 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, BUDGET, TICK, DT, H
   KEY_W, KEY_S, KEY_A, KEY_D, A_ATK, A_BLOCK, A_FIRE, A_AIM, A_KICK, A_MOUNT, A_JUMP, A_SWAP, A_RELOAD, A_CMD, A_RALLY, A_READY, A_THROW, A_DUEL, AIM_RAISE, A_AB1, A_AB2, A_AB3, A_ULT, A_DODGE, A_DASHL, A_DASHR, A_GRIP, KEY_SPRINT, ORD_SPAWN, ORD_CLASS, HCLASS, HAB, SCEN, BOMBS, FURY_MAX, SROLE, ARMS, RANGED, MISSIONS, OPS,
   DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT, ST_IDLE, ST_WINDUP, ST_RELEASE, ST_RECOVER, ST_STUN, ST_RELOAD, ST_AIM, ST_SWAP, ST_KICK, ST_BURST,
   ORD_WAVE, ORD_MOVE, ORD_CHARGE, ORD_HOLD, ORD_FOLLOW, ORD_FORM, ORD_FIRE, ORD_CONTROL, ORD_AUTO, ORD_ABILITY, ORD_NAVAL, ORD_DIRECTIVE, DIR_ATTACK, DIR_HOLD, DIR_SUPPORT, DIR_FLANK, AI_NAMES, MODES, SCORE_WIN, FIRE_CS, abilityOf, ABILITY, FORM_LINE, FORM_COLUMN, FORM_WEDGE, FORM_LOOSE, RELEASE_T, KICK_T, SWAP_T };
+})();
+</script>
+<script>
+// ===================== co-op missions: raids, ambushes, the front line, a sortie by night =====================
+// Every phase is something to do — get there, break them, burn it, kill him, get out — never a clock to sit out.
+// Sources: 《明史》毛文龍傳 (鎮江, 1621), 東江塘報 on the raids against Jin grain trains, 《明史》袁崇煥傳 and 《崇禎長編》 on
+// 寧錦 (1627), 《清太宗實錄》天聰五年 on the siege of 大凌河 (1631: Zu Dashou's sorties against the siege lines and guns).
+(function () { if (typeof SIM === 'undefined') return; const PI = Math.PI;
+  const house = (x, z, hw, hd) => [x, z, hw, hd, 3.4, 'house'], pal = (x0, x1, z) => { const o = []; for (let x = x0; x < x1; x += 3) o.push([x + 1.5, z, 1.5, 0.5, 1.6, 'palisade']); return o; };
+  Object.assign(SIM.MISSIONS, {
+  // ----- 1621: Mao Wenlong takes Zhenjiang by night with two hundred men -----
+  zhenjiang: {
+    title: '鎮江夜襲 · The night raid on Zhenjiang', year: 'Summer 1621', battle: 'toba', side: 0, soloExtra: 'samurai',
+    bdef: { name: 'Zhenjiang', jp: '鎮江', when: 'Summer 1621', biome: 'night', fog: 0.35 },
+    brief: 'Liaodong has fallen. Mao Wenlong slips across the Yalu by night with a few hundred men to Zhenjiang, where the townsmen have promised to rise. Take the bridge quietly, get the gate open, seize the Jin commander Tong Yangzhen, fire the granary, and be gone before the banners ride in.',
+    start: [-78, -118, 0],
+    zones: [{ key: 'bridge', x: -78, z: -14, r: 10, name: 'The west bridge' }, { key: 'gate', x: 0, z: 52, r: 8, name: 'The town gate' }, { key: 'yamen', x: 0, z: 86, r: 9, name: 'The yamen' }, { key: 'granary', x: 34, z: 92, r: 8, name: 'The granary' }, { key: 'boats', x: -78, z: -88, r: 14, name: 'The boats' }],
+    forts: [house(-22, 64, 4, 3), house(22, 64, 4, 3), house(-24, 82, 3.5, 3), house(-6, 100, 3, 3), house(34, 104, 4, 3), house(48, 86, 3, 3.5), [0, 92, 5, 3.5, 4, 'hall'], [34, 92, 3, 3, 3, 'house']].concat(pal(-44, -4, 48), pal(4, 44, 48)),
+    groups: {
+      mao: { team: 0, name: 'Mao Wenlong', zh: '毛文龍', army: ['samurai', 'rifle_imp'], at: [-90, -122, 0], dir: ['support'], officer: 2 },
+      rising: { team: 0, name: 'The townsmen of Zhenjiang', zh: '鎮江民', army: ['ronin', 'ronin'], at: [0, 72, PI], reserve: true, dir: ['hold', 0, 56], escort: true },
+      watch: { team: 1, name: 'Sentries on the bridge', army: ['samurai', 'archer'], at: [-78, 10, PI], dir: ['hold', -78, 4], n: 12 },
+      garrison: { team: 1, name: 'The Zhenjiang garrison', army: ['samurai', 'samurai', 'archer'], at: [10, 96, PI], reserve: true },
+      tong: { team: 1, name: 'Tong Yangzhen', zh: '佟養真', officer: 3, army: ['samurai', 'samurai'], at: [0, 90, PI], reserve: true, stay: true, dir: ['hold', 0, 88] },
+      relief: { team: 1, name: 'Jin horse from Kuandian', zh: '寬甸騎', army: ['cavalry', 'cavalry', 'cavalry'], at: [100, 138, PI], reserve: true },
+      relief2: { team: 1, name: 'More horse', army: ['cavalry', 'byakkotai'], at: [138, -40, -PI / 2], reserve: true },
+    },
+    phases: [
+      { title: 'I · 夜渡 · The bridge', text: 'Across the river in the dark. The bridge sentries are half asleep: take them before they can raise the town.', show: ['bridge'],
+        start: [['calm', 'watch', 6]], obj: { all: [{ reach: 'bridge' }, { defeat: ['watch'], frac: 0.7 }] },
+        say: [[2, 'Mao Wenlong', 'No match lit until they see us. Knives and spears first.'], [14, 'Scout', 'Two fires on the bridge. Six, maybe eight men.']] },
+      { title: 'II · 開門 · The gate', text: 'The townsmen are rising inside. Get to the gate and in before the garrison is awake.', show: ['gate'], hide: ['bridge'],
+        start: [['release', 'rising'], ['dir', 'mao', 'hold', 0, 40]], obj: { reach: 'gate' }, at: [[20, ['release', 'garrison']], [21, ['dir', 'garrison', 'hold', 0, 58]]],
+        say: [[3, 'Scout', 'Torches in the streets — the townsmen are up! The gate is opening!'], [22, 'Townsman', 'The bannermen are coming out of the barracks!']] },
+      { title: 'III · 佟養真 · Tong Yangzhen', text: 'The Jin commander is in the yamen. Take him.', show: ['yamen'], hide: ['gate'],
+        start: [['release', 'tong'], ['dir', 'mao', 'hold', 0, 80]], obj: { officer: 'tong' },
+        say: [[2, 'Mao Wenlong', 'Tong Yangzhen, the Liaodong Han who opened Fushun to them. The court wants him. Alive or not.']] },
+      { title: 'IV · 焚倉 · The granary', text: 'Fire the granary, so the banners have nothing to eat when they come back.', show: ['granary'], hide: ['yamen'],
+        obj: { reach: 'granary' }, done: [['explode', 34, 92, 4, 30, 0], ['say', 'Scout', 'It burns! The whole granary!']] },
+      { title: 'V · 回船 · The boats', text: 'Jin horse are coming down from Kuandian. Back over the bridge to the boats.', show: ['boats'], hide: ['granary'],
+        start: [['dir', 'mao', 'hold', -78, -80], ['dir', 'rising', 'hold', -70, -84]], obj: { extract: 'boats' }, limit: 330, fail: 'The Jin horse caught you before the river.',
+        waves: [[6, 'relief', ['hold', -40, 20]], [40, 'relief2', ['hold', -60, -60]]],
+        say: [[7, 'Scout', 'Horsemen on the north road! Hundreds!'], [42, 'Scout', 'More of them along the south bank — they want to cut us off from the boats!']] },
+    ],
+    win: 'Zhenjiang was taken in a night. The Jin answered by killing the people of the towns along the Yalu, and Mao Wenlong went out to the islands to begin twenty years of raids.',
+  },
+  // ----- 1623: a Jin grain train ambushed in the hills (the Eastern River raids) -----
+  grainroad: {
+    title: '劫糧 · The grain road', year: 'Autumn 1623', battle: 'abudali', side: 0, soloExtra: 'rifle_imp',
+    bdef: { name: 'The Haizhou road', jp: '海州道', when: 'Autumn 1623', biome: 'autumn', fog: 0.2 },
+    brief: 'Mao Wenlong\'s Eastern River men raid out of the islands and the Korean border hills. A Jin grain train is coming down the valley to Haizhou. Lie on the slopes, let the escort into the narrows, break it, burn the carts, and fight your way back to the boats.',
+    start: [30, -96, 0],
+    zones: [{ key: 'slope', x: 26, z: -30, r: 10, name: 'The east slope' }, { key: 'carts', x: 0, z: -44, r: 9, name: 'The grain carts' }, { key: 'south', x: 0, z: -132, r: 14, name: 'The way to the boats' }],
+    forts: [[-4, -44, 2, 0.6, 1.4, 'mantlet'], [4, -40, 2, 0.6, 1.4, 'mantlet'], [0, -50, 2, 0.6, 1.4, 'mantlet']],
+    groups: {
+      chen: { team: 0, name: 'Chen Jisheng\'s raiders', zh: '陳繼盛', army: ['rifle_imp', 'samurai'], at: [-30, -96, 0], dir: ['hold', -26, -36] },
+      escort: { team: 1, name: 'The grain escort', army: ['samurai', 'archer', 'samurai'], at: [0, 138, PI], dir: ['hold', 0, -40] },
+      rear: { team: 1, name: 'The rearguard', army: ['cavalry', 'samurai'], at: [0, 138, PI], reserve: true },
+      relief: { team: 1, name: 'Bordered Blue horse from Haizhou', zh: '鑲藍旗', army: ['cavalry', 'cavalry', 'byakkotai'], at: [-138, -60, PI / 2], reserve: true },
+      chief: { team: 1, name: 'Their captain, Nikan', zh: '尼堪', officer: 3, army: ['cavalry', 'samurai'], at: [0, 138, PI], reserve: true },
+    },
+    phases: [
+      { title: 'I · 埋伏 · Lie in wait', text: 'Up the east slope before the escort comes into the narrows.', show: ['slope'],
+        start: [['calm', 'escort', 6]], obj: { reach: 'slope' },
+        say: [[3, 'Chen Jisheng', 'They come down this valley every ten days. They have stopped looking up.']] },
+      { title: 'II · 截 · Into the narrows', text: 'The escort is in the narrows. Break it.', hide: ['slope'],
+        start: [['calm', 'escort', 60], ['dir', 'escort', 'attack'], ['dir', 'chen', 'hold', -6, -40]], obj: { defeat: ['escort'], frac: 0.7 },
+        waves: [[25, 'rear', ['hold', 0, -36]]], say: [[1, 'Chen Jisheng', 'Now! Into them from both slopes!'], [26, 'Scout', 'Horse at the back of the column, coming up!']] },
+      { title: 'III · 焚 · Burn the grain', text: 'Get to the carts and fire them.', show: ['carts'],
+        obj: { reach: 'carts' }, done: [['explode', 0, -44, 4, 30, 0], ['say', 'Scout', 'Burn, you bastards. Eat ash this winter.']] },
+      { title: 'IV · 援 · Their relief', text: 'Their horse is coming up the valley from Haizhou. Kill their captain and they will break.', hide: ['carts'],
+        start: [['release', 'relief'], ['dir', 'relief', 'hold', -10, -50], ['release', 'chief'], ['dir', 'chief', 'hold', 0, -40]], obj: { officer: 'chief' }, limit: 300, fail: 'They rode you down in the valley.',
+        say: [[2, 'Scout', 'Banners in the valley mouth! It\'s the Bordered Blue!'], [6, 'Chen Jisheng', 'The one with the red plume. Kill him and the rest go home.']] },
+      { title: 'V · 退 · To the boats', text: 'Back down the valley to the boats before more come.', show: ['south'],
+        start: [['dir', 'chen', 'hold', 0, -126]], obj: { extract: 'south' }, limit: 240, fail: 'More banners closed the valley.' },
+    ],
+    win: 'The grain train burned in the narrows. Raids like it kept the Jin looking over their shoulders for a decade — and the Jin killed Korean and Han villagers for every one.',
+  },
+  // ----- 1627: the front line before Jinzhou -----
+  jinzhou: {
+    title: '寧錦 · The lines before Jinzhou', year: 'Summer 1627', battle: 'bonari', side: 0, soloExtra: 'ashigaru',
+    bdef: { name: 'Before Jinzhou', jp: '錦州', when: 'Summer 1627', biome: 'summer', fog: 0.12 },
+    brief: 'Hong Taiji has thrown up earthworks around Jinzhou and is battering at its walls. Yuan Chonghuan sends a column out from Ningyuan to break the siege lines. Go over the first line, throw back their counter-charge, take the second line, and drive them from their camp.',
+    start: [0, -112, 0],
+    zones: [{ key: 'line1', x: 0, z: 34, r: 14, name: 'The first line', owner: 1 }, { key: 'line2', x: 0, z: 66, r: 14, name: 'The second line', owner: 1 }, { key: 'camp', x: 0, z: 112, r: 16, name: 'The Jin camp', owner: 1, rate: 0.7 }],
+    groups: {
+      man: { team: 0, name: 'Man Gui', zh: '滿桂', army: ['cavalry', 'samurai', 'rifle_imp'], at: [-40, -112, 0], dir: ['hold', -30, 20], officer: 2 },
+      zu: { team: 0, name: 'Zu Dashou', zh: '祖大壽', army: ['ashigaru', 'samurai', 'rifle_imp'], at: [40, -112, 0], dir: ['hold', 30, 20], officer: 2 },
+      wall1: { team: 1, name: 'The first line', army: ['archer', 'samurai', 'archer'], at: [0, 40, PI], stay: true, dir: ['hold', 0, 38] },
+      wall2: { team: 1, name: 'The second line', army: ['archer', 'samurai', 'samurai'], at: [0, 72, PI], stay: true, dir: ['hold', 0, 70] },
+      counter: { team: 1, name: 'Mongol horse', zh: '蒙古騎', army: ['cavalry', 'byakkotai', 'cavalry'], at: [-138, 50, PI / 2], reserve: true },
+      camp: { team: 1, name: 'The camp guard', army: ['samurai', 'samurai', 'archer'], at: [0, 120, PI], stay: true, dir: ['hold', 0, 114] },
+      beile: { team: 1, name: 'Amin', zh: '阿敏', officer: 3.5, army: ['shinsengumi', 'samurai'], at: [0, 136, PI], reserve: true },
+    },
+    phases: [
+      { title: 'I · 一線 · The first line', text: 'Over the first earthwork. Muskets keep their heads down; the rest go over together.', show: ['line1'],
+        start: [['dir', 'man', 'hold', -20, 30], ['dir', 'zu', 'hold', 20, 30]], obj: { capture: ['line1'] },
+        say: [[2, 'Zu Dashou', 'At Ningyuan we sat behind walls. Today we go to them.'], [20, 'Scout', 'Archers on the bank — get your shields up!']] },
+      { title: 'II · 反衝 · The counter-charge', text: 'Mongol horse coming round the flank. Face left and break them.', start: [['release', 'counter'], ['dir', 'counter', 'hold', -10, 30]],
+        obj: { defeat: ['counter'], frac: 0.65 }, say: [[2, 'Scout', 'Horse on the left flank, out of the gully!'], [5, 'Man Gui', 'Pikes to the left! Let them come onto the points!']] },
+      { title: 'III · 二線 · The second line', text: 'On to the second earthwork before they can man it properly.', show: ['line2'], hide: ['line1'],
+        start: [['dir', 'man', 'hold', -18, 62], ['dir', 'zu', 'hold', 18, 62]], obj: { capture: ['line2'] } },
+      { title: 'IV · 營 · The camp', text: 'Their camp is behind the lines. Take it, and bring down Amin\'s banner.', show: ['camp'], hide: ['line2'],
+        start: [['release', 'beile'], ['dir', 'man', 'hold', -10, 108], ['dir', 'zu', 'hold', 10, 108]], obj: { all: [{ capture: ['camp'] }, { officer: 'beile' }] },
+        say: [[3, 'Scout', 'That banner — Amin himself!']] },
+    ],
+    win: 'The siege lines broke. At Ningyuan and Jinzhou in 1627 Hong Taiji was thrown back from the walls, and went home.',
+  },
+  // ----- 1631: a sortie by night from Dalinghe against the siege guns -----
+  dalinghe: {
+    title: '大凌河 · The sortie', year: 'Autumn 1631', battle: 'hakodate', side: 0, soloExtra: 'samurai',
+    bdef: { name: 'Dalinghe', jp: '大凌河', when: 'Autumn 1631', biome: 'night', fog: 0.3 },
+    brief: 'Zu Dashou is besieged in the half-built fort of Dalinghe. Hong Taiji has dug a ditch around it and brought up red cannon cast that year in Shenyang. Go out by the south gate in the dark, cross their trench, spike the guns, and get back inside before the banners close in.',
+    start: [0, 70, PI],
+    zones: [{ key: 'gate', x: 0, z: 44, r: 8, name: 'The south gate' }, { key: 'trench', x: 0, z: 14, r: 12, name: 'The siege trench' }, { key: 'guns', x: 0, z: -18, r: 9, name: 'The red cannon' }, { key: 'fort', x: 0, z: 72, r: 12, name: 'Inside the fort' }],
+    forts: pal(-46, -6, 20).concat(pal(6, 46, 20)),
+    groups: {
+      zu: { team: 0, name: 'Zu Dashou', zh: '祖大壽', army: ['samurai', 'rifle_imp'], at: [12, 76, PI], dir: ['support'], officer: 2 },
+      trench: { team: 1, name: 'The trench guard', army: ['samurai', 'archer', 'samurai'], at: [0, 10, PI], stay: true, dir: ['hold', 0, 12] },
+      guns: { team: 1, name: 'The red cannon (Ujen Cooha)', zh: '烏真超哈', army: ['cannon4', 'cannon4', 'rifle_sho'], at: [0, -22, PI], stay: true, dir: ['hold', 0, -20] },
+      hong: { team: 1, name: 'Hong Taiji\'s guard', zh: '皇太極', army: ['samurai', 'cavalry', 'samurai', 'archer'], at: [0, -138, 0], reserve: true },
+      left: { team: 1, name: 'Plain Yellow horse', army: ['cavalry', 'cavalry'], at: [-138, 20, PI / 2], reserve: true },
+    },
+    labels: { cannon4: ['Red cannon (Ujen Cooha)', '紅衣砲'] },
+    phases: [
+      { title: 'I · 出城 · Out of the gate', text: 'Out by the south gate in the dark. No match lit.', show: ['gate'], obj: { reach: 'gate' },
+        say: [[3, 'Zu Dashou', 'We eat horses now. In a month we eat worse. Those guns go tonight or the wall goes tomorrow.']] },
+      { title: 'II · 壕 · The trench', text: 'Over their trench and through the guard before they wake the camp.', show: ['trench'], hide: ['gate'],
+        start: [['calm', 'trench', 8]], obj: { defeat: ['trench'], frac: 0.7 },
+        say: [[2, 'Scout', 'Sentries by the fires. They\'re cooking.']] },
+      { title: 'III · 砲 · The guns', text: 'Get to the red cannon and break them.', show: ['guns'], hide: ['trench'],
+        obj: { all: [{ reach: 'guns' }, { defeat: ['guns'], frac: 0.5 }] }, done: [['explode', 0, -20, 5, 45, 0], ['say', 'Scout', 'Their powder! It\'s gone up!']],
+        at: [[18, ['release', 'left']], [19, ['dir', 'left', 'hold', -10, 0]]], say: [[2, 'Zu Dashou', 'Spike them! Hammer the nails into the vents!'], [20, 'Scout', 'Horse along the trench! The camp is awake!']] },
+      { title: 'IV · 回城 · Back inside', text: 'The whole siege camp is awake. Back to the fort.', show: ['fort'], hide: ['guns'],
+        start: [['dir', 'zu', 'hold', 0, 72]], obj: { extract: 'fort' }, limit: 300, fail: 'They cut you off from the gate.',
+        waves: [[4, 'hong', ['hold', 0, 30]]], say: [[5, 'Scout', 'The yellow banners! Hong Taiji\'s own guard!']] },
+    ],
+    win: 'The guns were broken. It bought Dalinghe a few more weeks. In the tenth month, after the people inside had eaten the dead, Zu Dashou surrendered.',
+  },
+  });
 })();
 </script>
 <script>
@@ -10385,7 +10553,7 @@ $('btnSolo').onclick = () => {
   const cfg = myCfg(); const seed = (Math.random() * 0x7fffffff) | 0;
   state.lowfx = $('lowfxIn').checked; state.fog = false;
   if (state.mode === 'story') { const c = campFor(state.faction, state.chapter); if (c) { cfg.veterans = c.veterans; cfg.recruits = state.recruits.slice(); } }
-  startGame({ seed, battle: state.battle, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op, players: [{ ...cfg, connected: true }] }, 0, null, 1);
+  startGame({ seed, battle: state.battle, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op, diff: diffPref(), players: [{ ...cfg, connected: true }] }, 0, null, 1);
 };
 $('btnHost').onclick = () => {
   if (!Net.available()) { $('menuMsg').textContent = 'Multiplayer is not available in this viewer. Open the downloaded .html file in a desktop browser to host.'; return; }
@@ -10430,8 +10598,9 @@ $('btnStart').onclick = () => {
   const players = net.players.slice().sort((a, b) => a.idx - b.idx).map(p => ({ name: p.cfg ? p.cfg.name : 'Player', team: p.cfg ? p.cfg.team : 0, army: p.cfg ? p.cfg.army : [], mounted: p.cfg ? !!p.cfg.mounted : false, hclass: p.cfg ? p.cfg.hclass | 0 : 0, role: p.cfg ? p.cfg.role : 'musket', command: p.cfg ? p.cfg.command | 0 : 0, arms: p.cfg ? p.cfg.arms : null, kit: p.cfg ? p.cfg.kit : undefined, connected: p.connected }));
   let maxRtt = 0; for (const p of net.players) if (p.connected && p.rtt) maxRtt = Math.max(maxRtt, p.rtt);
   const delay = Math.max(3, Math.min(12, Math.ceil(maxRtt / 2 / 33.3) + 2));
-  net.start({ t: 'start', seed: (Math.random() * 0x7fffffff) | 0, players, delay, battle: state.battle, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op });
+  net.start({ t: 'start', seed: (Math.random() * 0x7fffffff) | 0, players, delay, diff: diffPref(), battle: state.battle, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op });
 };
+function diffPref() { try { const v = localStorage.getItem('mingDiff'); return v === null ? 1 : Math.max(0, Math.min(3, +v | 0)); } catch (e) { return 1; } }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
 // ---------- input ----------
@@ -10894,7 +11063,8 @@ function startGame(msg, me, net, delay) {
   // a story battle: the weapons you chose from your arsenal come with you (solo; the choice rides in the config)
   if (!net && msg.mode === 'campaign' && typeof arsKitFor === 'function' && S.MISSIONS[msg.mission] && S.MISSIONS[msg.mission].soldier) { const wk = arsKitFor(msg.mission); if (wk && msg.players[me | 0]) msg = Object.assign({}, msg, { players: msg.players.map((p, i) => i === (me | 0) ? Object.assign({}, p, { wkit: wk }) : p) }); }
   if (msg.mode === 'siege') msg = Object.assign({}, msg, { mode: 'assault', op: S.OPS[msg.op] && S.OPS[msg.op].siege ? msg.op : 'ningyuan_siege' }); // the Siege menu mode is an assault operation fought over a walled town
-  const cfg = { seed: msg.seed, battle: msg.battle || 'field', mode: msg.mode || 'standard', chapter: msg.chapter | 0, scen: msg.scen || 'ningyuan', players: msg.players.map(p => ({ name: p.name, team: p.team, army: p.army, mounted: p.mounted, hclass: p.hclass | 0, veterans: p.veterans, recruits: p.recruits, role: p.role, kit: p.kit, wkit: p.wkit, command: p.command | 0, arms: p.arms || null })) };
+  if (msg.diff === undefined && msg.mode === 'campaign') msg = Object.assign({}, msg, { diff: diffPref() }); /* story chapters started from their own menus take the difficulty you last chose */
+  const cfg = { seed: msg.seed, battle: msg.battle || 'field', mode: msg.mode || 'standard', diff: msg.diff, chapter: msg.chapter | 0, scen: msg.scen || 'ningyuan', players: msg.players.map(p => ({ name: p.name, team: p.team, army: p.army, mounted: p.mounted, hclass: p.hclass | 0, veterans: p.veterans, recruits: p.recruits, role: p.role, kit: p.kit, wkit: p.wkit, command: p.command | 0, arms: p.arms || null })) };
   if (msg.soldier) cfg.soldier = msg.soldier; if (msg.mission) cfg.mission = msg.mission; if (msg.op) cfg.op = msg.op; if (msg.camp) cfg.camp = msg.camp;
   msg.players.forEach((p, i) => { if (p.yyRole) cfg.players[i].yyRole = p.yyRole; });
   state.localIdx = me; state.delay = delay; state.peerNames = msg.players.map(p => p.name);
@@ -11700,12 +11870,21 @@ const CAREER = (() => {
 CAREER.init(); renderMenu();
 
 // ===== Co-op campaign & Assault: menus and HUD =====
+// difficulty: chosen once, kept in this browser, carried by the host's start message so every player fights the same battle
+const DIFFS = [['新兵', 'Recruit', 'Softer enemies; your allies hit harder.'], ['兵', 'Soldier', 'As the battles were fought.'], ['老兵', 'Veteran', 'Full-strength enemies with an extra company in each large group.'], ['孤旗', 'Lone banner', 'Veteran, and no AI companies on your side in co-op: only the players and their own men.']];
+function diffUI(host, id) {
+  if (!host) return; let el = $(id); if (!el) { el = document.createElement('div'); el.id = id; el.className = 'diffrow'; host.parentNode.insertBefore(el, host);
+    if (!$('diffCss')) { const st = document.createElement('style'); st.id = 'diffCss'; st.textContent = '.diffrow { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; } .diffrow > span { font: 700 11px sans-serif; letter-spacing: .14em; text-transform: uppercase; opacity: .7; margin-right: 6px; } .diffrow button { padding: 5px 10px; border: 1px solid #8a7a5a; background: transparent; color: inherit; font: 13px Georgia, serif; cursor: pointer; } .diffrow button.on { background: #8a2a1e; color: #f4ead6; border-color: #8a2a1e; } .diffrow small { flex-basis: 100%; opacity: .75; font: 12px sans-serif; }'; document.head.appendChild(st); } }
+  const cur = diffPref(); el.innerHTML = '<span>Difficulty</span>' + DIFFS.map((d, i) => `<button type="button" class="${i === cur ? 'on' : ''}" data-d="${i}">${d[0]} ${d[1]}</button>`).join('') + `<small>${DIFFS[cur][2]}</small>`;
+  el.querySelectorAll('button').forEach(b => b.onclick = () => { try { localStorage.setItem('mingDiff', b.dataset.d); } catch (e) { } AUDIO.init(); AUDIO.play('ui'); diffUI(host, id); if ($('diffRowStory') && id !== 'diffRowStory') diffUI($('zheCta'), 'diffRowStory'); if ($('diffRowMis') && id !== 'diffRowMis') diffUI($('missionList'), 'diffRowMis'); });
+}
 function renderMissions() {
   const sgm = state.mode === 'siege', as = state.mode === 'assault' || sgm; const L = as ? S.OPS : S.MISSIONS;
   if (as && (!L[state.op] || !!L[state.op].siege !== sgm)) state.op = Object.keys(L).find(k => !L[k].hidden && !!L[k].siege === sgm);
   const cur = as ? state.op : state.mission;
   $('missionHead').textContent = as ? 'Operation' : 'Mission';
   $('missionList').innerHTML = Object.keys(L).filter(k => !L[k].hidden && (!as || !!L[k].siege === sgm)).map(k => { const M = L[k]; return `<button type="button" class="chap${k === cur ? ' on' : ''}" data-k="${k}"><b>${M.title}</b><small>${M.year} · ${M.brief}</small></button>`; }).join('');
+  if (!as) diffUI($('missionList'), 'diffRowMis'); else if ($('diffRowMis')) $('diffRowMis').remove();
   $('missionList').querySelectorAll('button').forEach(b => b.onclick = () => { if (as) state.op = b.dataset.k; else state.mission = b.dataset.k; AUDIO.init(); AUDIO.play('ui'); renderMissions(); });
   const side = as ? state.faction : 0; const list = side === 1 ? ROLE_INFO_JIN : ROLE_INFO; if (!list.some(r => r[0] === state.role)) state.role = list[0][0];
   $('mroleList').innerHTML = list.map(r => `<button type="button" class="chap${r[0] === state.role ? ' on' : ''}" data-r="${r[0]}"><b>${r[1]} · ${r[2]}</b><small>${r[3]}</small></button>`).join('');
@@ -15582,6 +15761,9 @@ const SJ2ZONE = { battleZ: 'south', battleY: 'wall', battleK: 'ridge' };
     return _s(scene); }; }
 // Han Qi must be on the rolls for Luanzhou and Lengkou: if no place was empty for him, he joins as the eleventh man
 { const _r = sjRefill; sjRefill = function (ch) { _r(ch); if (ch === 3 && !ZS.team.includes('sj_n7') && !ZS.fate.sj_n7) { ZS.team.push('sj_n7'); ZS.alive.sj_n7 = true; ZS.newMen.push('sj_n7'); } }; }
+
+// the difficulty row above the story campaigns (the same choice the co-op missions use)
+if (typeof diffUI === 'function' && $('zheCta')) diffUI($('zheCta'), 'diffRowStory');
 
 })();
 </script>
