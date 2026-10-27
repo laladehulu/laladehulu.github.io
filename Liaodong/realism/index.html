@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v99</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v100</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1556,6 +1556,11 @@ class Sim {
     if (u.champ && atkPressed && u.airborne && !u.plunge && u.flinchT <= 0) { u.plunge = true; u.vy = Math.min(u.vy, -6); u.st = ST_WINDUP; u.stT = 0; u.atkDir = DIR_UP; this.events.push({ t: 'plunge', id: u.id }); u.atkHeld = atk; u.blockHeld = blk; return; }
     if (u.champ && atkPressed && u.dodgeT > 0 && u.dodgeFwd && u.sta >= 10) { u.sta -= 10; u.staT = 0; u.lunge = true; u.blocking = false; u.st = ST_WINDUP; u.stT = 0; u.atkDir = DIR_DOWN; u.windupId++; u.swingHit = false; this.release(u); u.dodgeT = Math.max(u.dodgeT, 0.18); this.events.push({ t: 'lunge', id: u.id, x: u.x, y: u.y, z: u.z }); u.atkHeld = atk; u.blockHeld = blk; return; }
     if (u.champ && atkPressed && u.sta < 8) { if (!u.tiredT || u.tiredT <= 0) { u.tiredT = 0.8; this.events.push({ t: 'tired', id: u.id }); } u.atkHeld = atk; u.blockHeld = blk; return; }
+    // a charging blow: press (and hold) attack while sprinting and you keep running into the swing; let go, or close on a man, and it
+    // lands with your whole weight behind it (a longer reach, a heavier blow, and he is thrown back off his feet)
+    if (this.xc && !this.noChargeAtk && !u.champ && u.ctrlActive && atkPressed && u.sprint && u.flinchT <= 0 && u.st === ST_IDLE && !u.mounted && u.mount < 0 && !u.airborne && !(u.weapon === 'rifle' && !u.club) && u.weapon !== 'bow' && u.weapon !== 'revolver') {
+      u.blocking = false; this.startWindup(u, u.weapon === 'yari' ? DIR_DOWN : DIR_UP); u.chg = 1; this.events.push({ t: 'chargeatk', id: u.id, x: u.x, y: u.y, z: u.z });
+      u.atkHeld = atk; u.blockHeld = blk; return; }
     if (atkPressed && u.flinchT <= 0 && (u.st === ST_IDLE || (u.st === ST_RECOVER && u.stT > u.def.recover * 0.6))) {
       u.blocking = false; if (u.champ) { const chain = this.tick - (u.lastSwing || -999) < 40; u.combo = chain ? (u.combo || 0) + 1 : 0; u.lastSwing = this.tick; u.sta -= 6 + u.combo * 3; u.staT = 0; } this.startWindup(u, u.weapon === 'rifle' && u.club ? ad : weaponDir(u.weapon, ad));
     } else if (blk && u.st !== ST_WINDUP && u.st !== ST_RELEASE && u.st !== ST_KICK && u.st !== ST_SWAP && (u.flinchT <= 0 || (u.ctrlActive && u.flinchT < 0.3)) && (u.st === ST_IDLE || u.st === ST_RECOVER || u.st === ST_RELOAD)) { /* a player can get his guard back up while still shaken from a blow */
@@ -1583,12 +1588,12 @@ class Sim {
     if (l > 0) {
       let sp = u.def.speed * this.zoneSpeed(u.x, u.z, mx, mz);
       if ((keys & KEY_S) && !(keys & KEY_W)) sp *= 0.65;
-      if (u.st === ST_WINDUP || u.st === ST_RELEASE) sp *= 0.7; else if (u.st === ST_STUN) sp = 0;
+      if ((u.st === ST_WINDUP || u.st === ST_RELEASE) && !u.chg) sp *= 0.7; else if (u.st === ST_STUN) sp = 0;
       if (u.drawT > 0) sp *= 0.55; // a drawn bow: you walk, you don't run
       if (u.blocking) sp *= 0.85; if (u.aiming) sp *= 0.5; if (u.st === ST_RELOAD) sp *= 0.8;
       // sprint: hold Shift while moving forward; burns stamina, and a winded man must get his breath back
       if (u.champ) { if (u.sta < 4) u.winded = true; else if (u.sta > 30) u.winded = false; } else { if ((u.fat || 0) >= 96) u.winded = true; else if ((u.fat || 0) < 55) u.winded = false; }
-      u.sprint = !!(keys & KEY_SPRINT) && !!(keys & KEY_W) && !(keys & KEY_S) && !u.winded && !u.blocking && !u.aiming && u.st !== ST_WINDUP && u.st !== ST_RELEASE && u.st !== ST_RELOAD && u.st !== ST_STUN;
+      u.sprint = !!(keys & KEY_SPRINT) && !!(keys & KEY_W) && !(keys & KEY_S) && !u.winded && !u.blocking && !u.aiming && ((u.st !== ST_WINDUP && u.st !== ST_RELEASE) || u.chg) && u.st !== ST_RELOAD && u.st !== ST_STUN;
       if (u.sprint) { sp *= 1.42; if (u.champ) { u.sta -= 14 * DT; u.staT = 0; } else u.fat = Math.min(100, (u.fat || 0) + 17 * DT); }
       u.mx = mx / l * sp; u.mz = mz / l * sp;
     } else { u.mx = 0; u.mz = 0; u.sprint = false; }
@@ -2234,11 +2239,15 @@ class Sim {
   }
   // ---------- combat state machine ----------
   updateCombatState(u) {
-    const def = u.def;
+    const def = u.def; if (u.chg && u.st !== ST_WINDUP && u.st !== ST_RELEASE && u.st !== ST_RECOVER) { u.chg = 0; u.lunge = false; }
     switch (u.st) {
       case ST_WINDUP: {
         u.stT += DT; if (!u.heavy && u.stT > 0.55 && u.weapon !== 'rifle') { u.heavy = true; this.events.push({ t: 'heavy', id: u.id }); }
-        if (u.ctrlActive) {
+        if (u.ctrlActive && u.chg) { /* the charge: release on letting go, on closing with a foe in front, or when the run runs out */
+          const R = u.def.reach + 1.2; let near = false; const fx = sin(u.yaw), fz = cos(u.yaw);
+          if (u.stT > 0.2) for (const v of this.units) { if (v.dead || v.team === u.team || v.type === 'horse') continue; const dx = v.x - u.x, dz = v.z - u.z; if (dx * dx + dz * dz < R * R && dx * fx + dz * fz > 0.5) { near = true; break; } }
+          if ((!u.atkHeld && u.stT >= 0.22) || near || u.stT > 1.4 || !u.sprint && u.stT > 0.3) { u.heavy = u.stT > 0.3 || near; u.lunge = true; u.vx += fx * 2.6; u.vz += fz * 2.6; this.release(u); }
+        } else if (u.ctrlActive) {
           const minW = (u.counterT > 0 ? 0.08 : 0.28) * (u.champ && u.sta < 15 ? 1.7 : 1);
           if (!u.atkHeld) u.relQ = true;
           if (u.relQ && u.stT >= minW) this.release(u);
@@ -2251,7 +2260,7 @@ class Sim {
         if (!u.swingHit && u.stT <= RELEASE_T) { if (this.xc && !u.champ && !u.mounted && u.mount < 0) this.sweepHit(u); else this.tryMeleeHit(u); }
         if (u.stT >= RELEASE_T) { u.st = ST_RECOVER; u.stT = 0; }
         break;
-      case ST_RECOVER: u.stT += DT; if (u.stT >= def.recover) { u.st = ST_IDLE; u.stT = 0; } break;
+      case ST_RECOVER: u.stT += DT; if (u.stT >= def.recover * (u.chg ? 1.35 : 1)) { u.st = ST_IDLE; u.stT = 0; } break;
       case ST_STUN: u.stT += DT; u.blocking = false; if (u.stT >= u.stunDur) { u.st = ST_IDLE; u.stT = 0; } break;
       case ST_RELOAD: {
         u.stT += DT;
@@ -2423,10 +2432,10 @@ class Sim {
     }
     if ((def_.mounted || def_.type === 'horse' || def_.mount >= 0) && !(att.mounted || att.mount >= 0)) { const hs = def_.type === 'horse' ? def_ : def_.mounted ? def_ : this.units[def_.mount]; const fast = hs && Math.abs(hs.hspeed) > 5; dmg *= fast ? 0.95 : 1.4; if (hs) hs.hspeed *= fast ? 0.85 : 0.35; } // a galloping horseman is a glancing target; a halted one is cut down
     def_.lastAttacker = att.id;
-    const kb = (dir === DIR_UP ? 2.2 : 1.6) * (heavy ? 1.8 : 1);
+    const kb = (dir === DIR_UP ? 2.2 : 1.6) * (heavy ? 1.8 : 1) * (att.chg ? 1.6 : 1);
     if (att.def.brush && def_.type !== 'horse') this.brushCatch(def_, att, nx, nz, false, hx, hy, hz);
     this.posture(def_, dmg * (heavy ? 0.9 : 0.45) * (att.def.posture || 1), att);
-    this.applyDamage(def_, dmg, att.id, nx * kb, heavy ? 1.2 : 0, nz * kb, 'melee', hx, hy, hz);
+    this.applyDamage(def_, dmg, att.id, nx * kb, heavy ? 1.2 : 0, nz * kb, 'melee', hx, hy, hz); if (att.chg && !def_.dead && def_.type !== 'horse' && !def_.mounted && def_.mount < 0) { def_.downT = Math.max(def_.downT || 0, heavy ? 0.9 : 0.5); att.vx *= 0.3; att.vz *= 0.3; }
     if (!def_.dead && !att.def.brush && !(def_.entT > 0)) { if (this.xc) this.hitReact(def_, att, dir === DIR_DOWN || att.weapon === 'yari' ? 'thrust' : 'cut', heavy, false); else { def_.flinchT = heavy ? 0.6 : 0.35; if (def_.st === ST_WINDUP || def_.st === ST_AIM) { def_.st = ST_IDLE; def_.stT = 0; } } }
     if (att.ctrl >= 0 || def_.ctrl >= 0) this.events.push({ t: 'hitq', att: att.id, def: def_.id, q, heavy, x: hx, y: hy, z: hz });
     att.heavy = false;
@@ -5326,7 +5335,7 @@ const AUDIO = (() => {
     if (name === 'cannon' || name === 'cannonhit') { boom(x, y, z, vol === undefined ? 1 : vol, name === 'cannonhit' ? 'hit' : 'fire'); if (name === 'cannonhit' && SAMPLES.count) { sampled('dirt', x, y, z, (vol || 1) * 1.6); const sp = spatial(x, y, z, (vol || 1) * 0.9, 120), d = SAMPLES.pick('debris'); if (sp && d) samp(sp, ctx.currentTime + Math.min(1, sp.dist / 343) + 0.03, d, rr(0.9, 1.1), sp.gain * 0.8); } return; }
     if (name === 'ballwhistle') { whistle(x, y, z, vol === undefined ? 1 : vol); return; }
     const now = performance.now(); if (now - lastFrame > 40) { budget = 16; lastFrame = now; }
-    if (budget-- <= 0 && name !== 'explosion' && name !== 'collapse' && name !== 'siegehit' && name !== 'killcue' && !(name.startsWith('strike') && (vol || 1) > 1)) return;
+    if (budget-- <= 0 && name !== 'explosion' && name !== 'collapse' && name !== 'siegehit' && name !== 'killcue' && name !== 'bodythump' && !((name.startsWith('strike') || name === 'thud') && (vol || 1) > 1)) return;
     vol = vol === undefined ? 1 : vol;
     if (SAMPLES.count && sampled(name, x, y, z, vol)) return;
     name = { strike: 'thud', strikeheavy: 'thud', strikearmor: 'clang', killcue: 'hitmark', flesh: 'thud', shield: 'clang', thrust: 'swish', woodhit: 'dirt', gatehit: 'thud', ram: 'thud', collapse: 'explosion', siegehit: 'explosion', horsedie: 'death', arrow: 'whiz' }[name] || name;
@@ -5348,6 +5357,8 @@ const AUDIO = (() => {
       case 'explosion': { const sp = spatial(x, y, z, vol * 1.5, 600); if (!sp) return; late(sp); const f = noise(sp, t, 1.6, 'lowpass', 1500, 0.5, sp.gain, 0.008); f.frequency.exponentialRampToValueAtTime(110, t + 1.2); tone(sp, t, 0.9, 'sine', 55, 24, sp.gain * 1.3); noise(sp, t, 0.12, 'bandpass', 2500, 1, sp.gain * 0.5, 0.002); noise({ ...sp, wet: 1 }, t + 0.1, 3, 'lowpass', 300, 0.5, sp.gain * 0.5, 0.1); for (let i = 0; i < 5; i++) noise(sp, t + 0.25 + Math.random() * 0.9, 0.05, 'bandpass', 1800, 1.5, sp.gain * 0.12, 0.002); break; }
       case 'clang': { const sp = spatial(x, y, z, vol * 0.7, 80); if (!sp) return; tone(sp, t, 0.28, 'sine', 2150, 2100, sp.gain * 0.5); tone(sp, t, 0.22, 'sine', 3100, 3050, sp.gain * 0.3); tone(sp, t, 0.3, 'triangle', 1230, 1200, sp.gain * 0.25); noise(sp, t, 0.03, 'highpass', 3000, 0.7, sp.gain * 0.5, 0.002); break; }
       case 'swish': { const sp = spatial(x, y, z, vol * 0.45, 40); if (!sp) return; const f = noise(sp, t, 0.16, 'bandpass', 700, 1.2, sp.gain, 0.05); f.frequency.exponentialRampToValueAtTime(2600, t + 0.14); break; }
+      case 'bodythump': { const sp = spatial(x, y, z, vol, 40); if (!sp) return; /* the weight of a blow landing on a body: a deep punch felt more than heard */
+        tone(sp, t, 0.16, 'sine', 78, 34, sp.gain * 1.1); noise(sp, t, 0.07, 'lowpass', 260, 0.9, sp.gain * 0.9, 0.002); tone(sp, t, 0.05, 'triangle', 160, 60, sp.gain * 0.35); break; }
       case 'thud': { const sp = spatial(x, y, z, vol * 0.8, 60); if (!sp) return; noise(sp, t, 0.12, 'lowpass', 420, 0.7, sp.gain, 0.003); tone(sp, t, 0.1, 'sine', 90, 45, sp.gain * 0.7); break; }
       case 'ricochet': { const sp = spatial(x, y, z, vol * 0.5, 90); if (!sp) return; tone(sp, t, 0.25, 'sine', 3200, 900, sp.gain * 0.35); noise(sp, t, 0.05, 'highpass', 2500, 0.7, sp.gain * 0.4, 0.002); break; }
       case 'dirt': { const sp = spatial(x, y, z, vol * 0.5, 70); if (!sp) return; noise(sp, t, 0.08, 'lowpass', 900, 0.7, sp.gain, 0.003); break; }
@@ -7631,7 +7642,7 @@ class Renderer {
               if (armd) this.burstSparks(ev.x, ev.y, ev.z, mine ? 10 : 5, 4, 1, 0.8, 0.45, 0.25, 0.07);
               /* hit mist, dust and red sparks on the struck man removed (user: no green/red particles on fallen men) */
               AUDIO.play(armd ? 'strikearmor' : heavyB ? 'strikeheavy' : 'strike', ev.x, ev.y, ev.z, mine ? 1.25 : 0.95);
-              if (!armd) AUDIO.play('flesh', ev.x, ev.y, ev.z, mine ? 1.1 : 0.7); if (mine && (heavyB || ev.killed)) AUDIO.play('thud', ev.x, ev.y, ev.z, 0.9); /* layered: the steel, the meat, the weight */
+              if (!armd) AUDIO.play('flesh', ev.x, ev.y, ev.z, mine ? 1.3 : 0.8); { const me2 = ev.id === heroId; AUDIO.play('thud', ev.x, ev.y, ev.z, mine ? (heavyB || ev.killed ? 2.2 : 1.7) : me2 ? 1.6 : 0.75); if (mine || me2) AUDIO.play('bodythump', ev.x, ev.y - 0.4, ev.z, mine ? (heavyB || ev.killed ? 1.6 : 1.25) : 1.1); } /* layered: the steel, the meat, the weight */
             } else if (shot && vic) { this.dust(ev.x, ev.y, ev.z, 3, dx * 0.6, 0.4, dz * 0.6, 0.25, 0.45, 0.12, 0.45); this.blood(ev.x, ev.y, ev.z, 4, dx * 2.5, 0.6, dz * 2.5); AUDIO.play('strike', ev.x, ev.y, ev.z, 0.5); }
             if (vic && ev.id !== heroId && (melee || shot)) this.hitImpulse(ev.id, dx, dz, k * (shot ? 0.6 : 1), heavyB);
             if (melee && att && ev.cause !== 'trample') { const aa = this.anim(att.id); aa.dragT = armd ? 0.07 : heavyB || ev.killed ? 0.16 : 0.11; if (mine) { this.swDrag = aa.dragT + 0.02; this.bladeBlood = Math.min(1, (this.bladeBlood || 0) + (ev.killed ? 0.4 : 0.22)); } }
@@ -7659,6 +7670,7 @@ class Renderer {
             this.hitQ = { text: (ev.heavy ? 'HEAVY · ' : '') + T[0], t: 0.9, c: T[1] }; this.hitstop = Math.max(this.hitstop, ev.heavy || ev.q === 'deathblow' ? 0.09 : ev.q === 'tip' ? 0.05 : 0.03); if (ev.heavy || ev.q === 'deathblow') this.shake = Math.max(this.shake, 0.45); }
           /* hit mist, dust and red sparks on the struck man removed (user: no green/red particles on fallen men) */ break; }
         case 'obstruct': { AUDIO.play('thud', ev.x, ev.y, ev.z, 0.8); if (ev.id === heroId) { this.hitQ = { text: 'BLADE CAUGHT on a comrade — stab (R) in formation', t: 1.4, c: '#e0b070' }; this.shake = Math.max(this.shake, 0.3); } break; }
+        case 'chargeatk': { const me3 = ev.id === heroId; AUDIO.play('kiai', ev.x, ev.y + 1.5, ev.z, me3 ? 1.1 : 0.7); this.dust(ev.x, ev.y + 0.1, ev.z, 6, 0, 1, 0, 1.2, 0.7, 0.3, 1.1); if (me3) { this.chgK = 1; this.shake = Math.max(this.shake, 0.25); } break; }
         case 'kickhit': { this.dust(ev.x, ev.y, ev.z, 4, 0, 1, 0, 1, 0.5, 0.2, 0.6); AUDIO.play('thud', ev.x, ev.y, ev.z, 1); break; }
         case 'trample': { this.dust(ev.x, ev.y + 0.2, ev.z, 10, 0, 2, 0, 2, 1, 0.4, 1.6); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.2); break; }
         case 'land': { this.dust(ev.x, ev.y + 0.1, ev.z, 8, 0, 1.5, 0, 1.8, 0.9, 0.4, 1.4); AUDIO.play('thud', ev.x, ev.y, ev.z, 0.7); break; }
@@ -8507,11 +8519,18 @@ class Renderer {
     if (!this.omPts) { const N = this.sim.units.length; const g = new THREE.BufferGeometry(); this.omPos = new Float32Array(N * 3); g.setAttribute('position', new THREE.BufferAttribute(this.omPos, 3)); g.setDrawRange(0, 0);
       const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'); c.translate(32, 32); c.beginPath(); c.moveTo(0, 26); c.lineTo(15, 2); c.lineTo(0, -14); c.lineTo(-15, 2); c.closePath(); c.fillStyle = 'rgba(6,20,10,.6)'; c.lineWidth = 7; c.strokeStyle = 'rgba(6,20,10,.6)'; c.stroke(); c.fillStyle = '#6fe08a'; c.fill();
       const tex = new THREE.CanvasTexture(cv); this.omPts = new THREE.Points(g, new THREE.PointsMaterial({ map: tex, size: 1.25, sizeAttenuation: true, transparent: true, depthWrite: false, alphaTest: 0.08, fog: false })); this.omPts.frustumCulled = false; this.omPts.renderOrder = 5; this.scene.add(this.omPts); this.omSpr = []; this.omTex = {}; }
-    if (!fp) { this.omPts.visible = false; for (const sp of this.omSpr) sp.visible = false; return null; }
-    this.omN = 0; const P = this.omPos, self = this; return { push(x, y, z) { const k = self.omN++ * 3; if (k + 2 < P.length) { P[k] = x; P[k + 1] = y; P[k + 2] = z; } } };
+    if (!this.ofPts) { // the same lozenge in blue over the men of a fellow player on your side
+      const N = this.sim.units.length; const g = new THREE.BufferGeometry(); this.ofPos = new Float32Array(N * 3); g.setAttribute('position', new THREE.BufferAttribute(this.ofPos, 3)); g.setDrawRange(0, 0);
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'); c.translate(32, 32); c.beginPath(); c.moveTo(0, 26); c.lineTo(15, 2); c.lineTo(0, -14); c.lineTo(-15, 2); c.closePath(); c.lineWidth = 7; c.strokeStyle = 'rgba(6,14,26,.6)'; c.stroke(); c.fillStyle = '#6fc4ef'; c.fill();
+      this.ofPts = new THREE.Points(g, new THREE.PointsMaterial({ map: new THREE.CanvasTexture(cv), size: 1.1, sizeAttenuation: true, transparent: true, depthWrite: false, alphaTest: 0.08, fog: false })); this.ofPts.frustumCulled = false; this.ofPts.renderOrder = 5; this.scene.add(this.ofPts); }
+    if (!fp) { this.omPts.visible = false; this.ofPts.visible = false; for (const sp of this.omSpr) sp.visible = false; return null; }
+    this.omN = 0; this.ofN = 0; const P = this.omPos, F = this.ofPos, self = this;
+    const me = this.sim.players[this.localIdx]; this.friendOwner = this.sim.players.map((p, i) => i !== this.localIdx && p && !p.ai && me && p.team === me.team);
+    return { push(x, y, z) { const k = self.omN++ * 3; if (k + 2 < P.length) { P[k] = x; P[k + 1] = y; P[k + 2] = z; } }, pushF(x, y, z) { const k = self.ofN++ * 3; if (k + 2 < F.length) { F[k] = x; F[k + 1] = y; F[k + 2] = z; } } };
   }
   ownMarkEnd(om, capt, view) {
     if (!om) return; const g = this.omPts.geometry; g.setDrawRange(0, this.omN); g.attributes.position.needsUpdate = true; this.omPts.visible = this.omN > 0;
+    { const g2 = this.ofPts.geometry; g2.setDrawRange(0, this.ofN); g2.attributes.position.needsUpdate = true; this.ofPts.visible = this.ofN > 0; }
     const own = this.sim.players[this.localIdx].squads, sel = view.fpSel || []; let n = 0;
     for (let k = 0; k < own.length; k++) { const id = own[k], c = capt[id]; if (!c) continue; const on = sel.includes(id); const key = (k + 1) + (on ? 's' : '');
       let tex = this.omTex[key]; if (!tex) { const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64; const x = cv.getContext('2d'); x.fillStyle = on ? '#c8f5d0' : 'rgba(8,26,14,.78)'; x.strokeStyle = '#6fe08a'; x.lineWidth = 5; x.beginPath(); x.arc(32, 32, 25, 0, 7); x.fill(); x.stroke(); x.fillStyle = on ? '#0c3a1a' : '#a8f5b8'; x.font = 'bold 32px Georgia,serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(k + 1), 32, 34); tex = this.omTex[key] = new THREE.CanvasTexture(cv); }
@@ -8554,7 +8573,8 @@ class Renderer {
         cam.position.x -= rx0 * S2.x; cam.position.z -= rz0 * S2.x; cam.position.y -= S2.d; T.v.x -= rx0 * S2.x; T.v.z -= rz0 * S2.x; T.v.y -= S2.d;
         const cy0 = Math.cos(S2.y), sy0 = Math.sin(S2.y), vx0 = T.v.x - cam.position.x, vz0 = T.v.z - cam.position.z; T.v.x = cam.position.x + vx0 * cy0 + vz0 * sy0; T.v.z = cam.position.z - vx0 * sy0 + vz0 * cy0; }
       cam.lookAt(T.v); this.dodgeRoll = (this.dodgeRoll || 0) * Math.exp(-dt * 7); cam.rotateZ(this.recoilRoll * 0.03 + (hero.downT > 0 ? 0.6 : 0) + this.camRoll + this.dodgeRoll + (this.slideRoll || 0) + IM.r + flin * 0.03); cam.rotateX(this.camPitch); cam.translateZ(-this.camPush);
-      this.fov += (this.fovTarget - this.fov) * (1 - Math.exp(-dt * 14));
+      this.chgK = Math.max(0, (this.chgK || 0) - dt * 1.4); if (hero.chg && hero.st === ST_WINDUP) this.chgK = Math.max(this.chgK, 0.8); /* the charge: the view stretches as you run into the blow */
+      this.fov += (this.fovTarget + this.chgK * 7 - this.fov) * (1 - Math.exp(-dt * 14));
       { const f = this.fov - IM.fov; if (Math.abs(cam.fov - f) > 0.05) { cam.fov = f; cam.updateProjectionMatrix(); } const vk = Math.min(1, Math.tan(cam.fov * PI / 360) / Math.tan(64 * PI / 360)); this.vmFov.scale.set(vk, vk, 1); }
       this._jolt = IM.jolt + flin * 0.5; this._joltR = IM.r;
       this.updateViewmodel(hero, alpha, dt, clamp(hero.speedNow / 3.5, 0, 1), mounted);
@@ -8610,7 +8630,7 @@ class Renderer {
       const u = units[i];
       if (u.dead || u.inactive) continue;
       const x = lerp(u.px, u.x, alpha), y = lerp(u.py, u.y, alpha), z = lerp(u.pz, u.z, alpha);
-      if (om && u.squad >= 0 && i !== heroId && u.type !== 'horse' && !u.downed && !u.wounded && !(u.downT > 0)) { const q = sim.squads[u.squad]; if (q && (q.owner === this.localIdx || (q.id === sim.players[this.localIdx].soldierSq && sim.mission && sim.mission.soldier))) { const top = y + (u.mounted ? 3.15 : 2.55) * (u.look && u.look.h ? u.look.h : 1); om.push(x, top, z); if (capt[u.squad] === undefined) capt[u.squad] = [x, top, z]; } }
+      if (om && u.squad >= 0 && i !== heroId && u.type !== 'horse' && !u.downed && !u.wounded && !(u.downT > 0)) { const q = sim.squads[u.squad]; if (q && q.owner !== this.localIdx && this.friendOwner[q.owner] && sim.units[sim.players[q.owner].heroId] !== u) om.pushF(x, y + (u.mounted ? 3.15 : 2.55) * (u.look && u.look.h ? u.look.h : 1), z); if (q && (q.owner === this.localIdx || (q.id === sim.players[this.localIdx].soldierSq && sim.mission && sim.mission.soldier))) { const top = y + (u.mounted ? 3.15 : 2.55) * (u.look && u.look.h ? u.look.h : 1); om.push(x, top, z); if (capt[u.squad] === undefined) capt[u.squad] = [x, top, z]; } }
       const far = (x - cx) * (x - cx) + (z - cz) * (z - cz) > 330 * 330;
       if (this.fog && u.team !== this.localTeam && !this.seen[i]) { if (this.wasSeen[i]) { this.wasSeen[i] = 0; this.hideFigure(i); const hs = this.horseSlot.get(u.id); if (hs !== undefined) this.hideHorse(hs); const cs = this.cannonSlot.get(u.id); if (cs !== undefined) for (const k in this.cannon) this.cannon[k].setMatrixAt(cs, T.zero); } continue; }
       if (this.fog) this.wasSeen[i] = 1;
@@ -10008,6 +10028,7 @@ P.amStart = function (u, k, t) {
   this.events.push(M.big ? { t: 'amtele', id: u.id, k, at: u.amTgt, x: u.x, y: u.y + 1.5, z: u.z } : { t: 'windup', id: u.id, dir: u.atkDir });
 };
 // a press during a move is remembered and becomes the next move of the chain (as in Dark Souls)
+P.noChargeAtk = true; /* the move set has its own running leap and lunge */
 const baseMC = P.meleeControl;
 P.meleeControl = function (u, a, ad, bd) {
   if (u.amK && usesMoves(u) && (a & S.A_ATK) && !u.atkHeld) { u.amQ = ad; u.amQt = this.tick; }
@@ -11155,7 +11176,7 @@ function updateHUD(dt) {
       else if (hero.st === S.ST_RELOAD && hero.reloadT > 0.6) { $('ammoFill').style.width = (hero.stT / hero.reloadT * 100).toFixed(1) + '%'; $('ammoText').textContent = mag > 1 ? `Reloading… ${have}/${mag}` : 'Reloading…'; }
       else { $('ammoFill').style.width = (have / mag * 100).toFixed(0) + '%'; $('ammoText').textContent = mag > 1 ? `${'●'.repeat(have)}${'○'.repeat(mag - have)}${have === 0 ? ' · R reload · X club' : ''}` : (have > 0 ? 'Loaded' : 'Empty · R reload' + (hero.def.weapons.length > 1 ? '' : ' · X club')); }
     } else { $('ammoFill').style.width = (hero.st === S.ST_WINDUP ? Math.min(1, (hero.stT) / 0.28) * 100 : hero.blocking ? 100 : 0).toFixed(0) + '%'; $('ammoText').textContent = hero.st === S.ST_WINDUP ? `Winding up: ${DIRN[hero.atkDir]}` : hero.blocking ? `Blocking ${BLKN[hero.blockDir]}` : hero.st === S.ST_RECOVER ? 'Recovering' : ''; }
-    $('dirText').textContent = (!hero.dead && !Input.cmdMode && !gunMode()) ? (hero.weapon === 'yari' ? 'LMB thrust · wheel↑ slam · RMB block · double-tap A/D slide' : 'LMB slash · hold heavy · wheel↑ overhead · R stab · RMB block · double-tap A/D slide') : (me.rallyT > 0 ? `rally in ${Math.ceil(me.rallyT / 30)}s` : 'V · rally');
+    $('dirText').textContent = (!hero.dead && !Input.cmdMode && !gunMode()) ? (hero.weapon === 'yari' ? 'LMB thrust · Shift+W+LMB charge · wheel↑ slam · RMB block · double-tap A/D slide' : 'LMB slash · hold heavy · Shift+W+LMB charge · wheel↑ overhead · R stab · RMB block · double-tap A/D slide') : (me.rallyT > 0 ? `rally in ${Math.ceil(me.rallyT / 30)}s` : 'V · rally');
     empHUD(hero);
     { const fu = $('fury'); const full = me.fury >= S.FURY_MAX; fu.style.setProperty('--f', (me.fury / S.FURY_MAX * 100).toFixed(0) + '%'); fu.classList.toggle('full', full); fu.classList.toggle('on', hero.frenzyT > 0); fu.querySelector('span').textContent = hero.frenzyT > 0 ? `VALOR ${Math.ceil(hero.frenzyT)}s` : full ? 'Valor ready · V' : 'Fury'; $('bombs').textContent = `雷 ${'●'.repeat(me.bombs)}${'○'.repeat(S.BOMBS - me.bombs)} · 4`; }
   }
