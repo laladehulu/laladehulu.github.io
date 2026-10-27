@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v83</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v84</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6501,7 +6501,8 @@ class Renderer {
     this.biome = BIOMES[sim.bdef.biome] || BIOMES.autumn; if (sim.rain) this.biome = Object.assign({}, this.biome, STORM); const fogK = 1 - 0.55 * sim.bdef.fog;
     this.lowfx = !!(window.__boshin && window.__boshin.state && window.__boshin.state.lowfx);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !this.lowfx, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(this.lowfx ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+    this.safari = typeof navigator !== 'undefined' && /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent); /* Safari's WebGL is slower: native pixels, smaller shadow map */
+    this.renderer.setPixelRatio(this.lowfx || this.safari ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.shadowMap.enabled = !this.lowfx; this.renderer.shadowMap.type = THREE.BasicShadowMap;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(this.biome.fog);
@@ -6540,7 +6541,7 @@ class Renderer {
   buildLights() {
     this.hemi = new THREE.HemisphereLight(this.biome.hemi[0], this.biome.hemi[1], 0.65); this.scene.add(this.hemi); this.lightFlash = 0;
     const sun = new THREE.DirectionalLight(this.biome.sun[0], this.biome.sun[1]); this.sunDir = new THREE.Vector3(-70, 48, 85).normalize(); sun.position.copy(this.sunDir).multiplyScalar(150); sun.castShadow = true;
-    sun.shadow.mapSize.set(this.lowfx ? 512 : 2048, this.lowfx ? 512 : 2048); const sc = sun.shadow.camera; sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 10; sc.far = 400; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.09; sun.shadow.radius = 2;
+    sun.shadow.mapSize.set(this.lowfx ? 512 : this.safari ? 1024 : 2048, this.lowfx ? 512 : this.safari ? 1024 : 2048); const sc = sun.shadow.camera; sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 10; sc.far = 400; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.09; sun.shadow.radius = 2;
     this.sun = sun; this.scene.add(sun); this.scene.add(sun.target);
   }
   buildSky() {
@@ -7006,6 +7007,27 @@ class Renderer {
     f.hilt.setColorAt(slot, c.set(u.weapon === 'yari' ? 0xc8281e : 0x5a1a1a)); f.pistol.setColorAt(slot, c.set(0x5a4a2a)); f.barrel.setColorAt(slot, c.set(u.type === 'rifle_spencer' ? 0x3a3a3a : 0x55595e));
     for (const k of ['torso', 'hips', 'uarmL', 'uarmR', 'farmL', 'farmR', 'thighL', 'thighR', 'shinL', 'shinR', 'head', 'kabuto', 'hand', 'hilt', 'pistol', 'barrel']) f[k].instanceColor.needsUpdate = true;
   }
+  // realism: men and horses throw no shadow-map shade (the ink wash there is for houses, walls, trees and rocks, which
+  // never move); each throws instead a single drop of ink laid on the ground along the sun: a soft, pale wash with the
+  // ink pooled a little darker at its rim and densest at his feet. It glides with him, with no grain to crawl.
+  inkInit() {
+    const N = 700, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-0.5, 0, 0, 0.5, 0, 0, 0.5, 0, 1, -0.5, 0, 1], 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2)); g.setIndex([0, 2, 1, 0, 3, 2]);
+    const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, fog: false,
+      uniforms: { ink: { value: new THREE.Color(0x0e1014) }, op: { value: 0.78 } },
+      vertexShader: 'varying vec2 vU; varying float vD; void main(){ vU = uv; vec4 mv = modelViewMatrix * instanceMatrix * vec4(position, 1.0); vD = -mv.z; gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform vec3 ink; uniform float op; varying vec2 vU; varying float vD; void main(){ vec2 q = vec2((vU.x - 0.5) * 2.0, vU.y * 2.0 - 1.0); float r = length(q); if (r > 1.0) discard;\n float body = 1.0 - smoothstep(0.45, 1.0, r), rim = smoothstep(0.62, 0.9, r) * (1.0 - smoothstep(0.9, 1.0, r)), feet = 1.0 - vU.y * 0.45;\n float a = min(1.0, body * feet + rim * 0.4) * op * clamp(1.0 - (vD - 50.0) / 40.0, 0.0, 1.0); gl_FragColor = vec4(ink, a); }' });
+    const mesh = new THREE.InstancedMesh(g, m, N); mesh.frustumCulled = false; mesh.renderOrder = 2; mesh.count = 0; this.scene.add(mesh);
+    this.inkB = { mesh, N, n: 0, M: new THREE.Matrix4(), X: new THREE.Vector3(), Y: new THREE.Vector3(), Z: new THREE.Vector3() };
+    for (const k in this.fig) this.fig[k].castShadow = false; if (this.horse) for (const k in this.horse) this.horse[k].castShadow = false;
+  }
+  inkPush(x, y, z, h, w, mounted) {
+    const B = this.inkB; if (B.n >= B.N) return; const cp = this.camera.position; if ((x - cp.x) * (x - cp.x) + (z - cp.z) * (z - cp.z) > 90 * 90) return;
+    const sd = this.sunDir; if (!sd || sd.y <= 0.05) return; const hl = Math.hypot(sd.x, sd.z) || 1, dx = -sd.x / hl, dz = -sd.z / hl, L = Math.min(9, h / (sd.y / hl)) + 0.4;
+    const gy = terrainH(x, z), tx = x + dx * L, tz = z + dz * L, ty = terrainH(tx, tz);
+    B.Z.set(dx * L, ty - gy, dz * L); B.X.set(dz * w * 2, 0, -dx * w * 2); B.Y.set(0, 1, 0);
+    B.M.makeBasis(B.X, B.Y, B.Z); B.M.setPosition(x - dx * 0.35, gy + 0.04, z - dz * 0.35); B.mesh.setMatrixAt(B.n++, B.M);
+  }
+  inkEnd() { const B = this.inkB; B.mesh.count = B.n; B.mesh.instanceMatrix.needsUpdate = true; B.n = 0; }
   hideFigure(slot) { const z = this.tmp.zero; for (const k in this.fig) { const m = this.fig[k], n = m.userData.mult; for (let j = 0; j < n; j++) m.setMatrixAt(slot * n + j, z); } }
   anim(id) {
     let a = this.anims[id];
@@ -8397,6 +8419,7 @@ class Renderer {
     const heroId = hero ? hero.id : -1;
     const cx = cam.position.x, cz = cam.position.z;
     const om = this.ownMarkStart(fp); const capt = {};
+    if (!this.inkB && typeof window !== 'undefined' && window.MING_REAL && !window.MING_STYLE && this.fig && !this.lowfx) this.inkInit();
     for (let i = 0; i < units.length; i++) {
       if (this.studio && i === this.studio.id) { const S0 = this.studio; this.drawFigure(i, S0.u, S0.x, S0.y, S0.z, S0.yaw, 1, false); continue; } // portrait studio: one man posed alone, high above the field
       const u = units[i];
@@ -8412,7 +8435,9 @@ class Renderer {
       if (u.mounted) { const hs = this.horseSlot.get(u.id); this.drawHorse(hs, u, x, y, z, lerpA(u.phyaw, u.hyaw, alpha), u.speedNow, u.walk, false, 0); }
       const sy = u.champ && u.spinT > 0 ? yaw + (1 - clamp(u.spinT / 0.55, 0, 1)) * PI * 2 : yaw;
       this.drawFigure(i, u, x, y, z, sy, alpha, far || (fp && i === heroId && (this.tp || 0) < 0.3));
+      if (this.inkB) this.inkPush(x, y, z, u.mounted ? 2.5 : 1.75, u.mounted ? 0.95 : 0.62, u.mounted || u.mount >= 0);
     }
+    if (this.inkB) this.inkEnd();
     this.ownMarkEnd(om, capt, view);
     // dead horses
     for (let i = this.deadHorses.length - 1; i >= 0; i--) {
@@ -9159,9 +9184,9 @@ const ANIM = (function () {
     this.sun.shadow.radius = 2; this.sun.shadow.bias = -0.0005; this.sun.shadow.normalBias = 0.05;
     // performance: plain PCF shadows from a smaller map, redrawn every other frame; render scale set by the quality level (F7)
     // soft PCF: shadow edges on walls and boards blend instead of stair-stepping
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; const q = realQ(); this.sun.shadow.mapSize.set(q === 2 ? 2048 : 1536, q === 2 ? 2048 : 1536); if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; const q = realQ(); { const ms = this.safari ? 1024 : q === 2 ? 2048 : 1536; this.sun.shadow.mapSize.set(ms, ms); } if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
     this.renderer.shadowMap.enabled = q > 0; this.renderer.shadowMap.autoUpdate = q === 2; this.shadowTick = 0;
-    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * Math.min(window.devicePixelRatio || 1, 1.25)); this.resize();
+    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * (this.safari ? 1 : Math.min(window.devicePixelRatio || 1, 1.25))); this.resize();
     // the air itself: dust and smoke thicken with distance
     sc.fog = new THREE.FogExp2(new THREE.Color(L.haze), this.sim.rain ? 0.0105 : this.biome.snow ? 0.0085 : 0.0072); this.realFog = sc.fog; sc.background = new THREE.Color(L.hazeFar);
     // the ink-print set dressing goes: no dragon, no auspicious clouds; mountains become hazy silhouettes
@@ -9447,7 +9472,7 @@ const ANIM = (function () {
     this.sun.shadow.radius = 1; this.sun.shadow.bias = -0.0005; this.sun.shadow.normalBias = 0.05;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; this.sun.shadow.mapSize.set(q === 2 ? 2048 : 1536, q === 2 ? 2048 : 1536); if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
     this.renderer.shadowMap.enabled = q > 0; this.renderer.shadowMap.autoUpdate = q === 2; this.shadowTick = 0;
-    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * Math.min(window.devicePixelRatio || 1, 1.25)); this.resize();
+    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * (this.safari ? 1 : Math.min(window.devicePixelRatio || 1, 1.25))); this.resize();
     // restrained fog: linear, far away, the horizon colour (render.js eases near/far by view mode from fogBase)
     const fogC = C(L.fog); sc.fog = new THREE.Fog(fogC, 70, 330); this.fogBase = [this.biome.night ? 30 : 70, this.biome.night ? 170 : this.sim.rain ? 230 : 330]; this.realFog = null; sc.background = C(L.hor);
     if (this.dragon) { for (const k of ['body', 'fins', 'belly']) this.dragon[k].visible = false; this.dragon.head.visible = false; this.dragon.pearl.visible = false; this.dragon = null; }
