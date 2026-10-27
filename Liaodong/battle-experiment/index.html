@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v94</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v95</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -7298,7 +7298,7 @@ class Renderer {
     this.VM = {
       katana: {
         idle: P(0.3, -0.33, -0.55, -1.0, 0.3, 0.2),
-        windup: [P(0.25, 0.22, -0.35, 0.75, 0.15, 0.2), P(0.7, -0.1, -0.4, -0.5, 0.2, -1.5), P(0.32, -0.3, -0.18, -1.5, 0.1, 0), P(-0.5, -0.05, -0.4, -0.5, -0.2, 1.5)],
+        windup: [P(0.44, 0.1, -0.24, 0.75, 0.15, 0.55), P(0.78, -0.12, -0.36, -0.5, 0.2, -1.5), /* the overhead cut is raised over the right shoulder, not in front of the face */ P(0.32, -0.3, -0.18, -1.5, 0.1, 0), P(-0.5, -0.05, -0.4, -0.5, -0.2, 1.5)],
         mid: [P(0.15, 0.12, -0.72, -0.7, 0.12, 0.15), P(0.12, -0.2, -0.82, -1.35, 0.1, -0.1), P(0.22, -0.28, -0.7, -1.55, 0.05, 0), P(0.05, -0.2, -0.82, -1.35, -0.1, 0.1)],
         release: [P(0.05, -0.55, -0.85, -2.2, 0.1, 0.1), P(-0.55, -0.35, -0.7, -1.3, 0, 1.3), P(0.15, -0.26, -1.15, -1.57, 0, 0), P(0.7, -0.35, -0.7, -1.3, 0, -1.3)],
         block: [P(0.0, 0.1, -0.68, -0.2, 0, 1.45), P(0.38, -0.22, -0.6, -0.3, 0, -0.15), P(0.1, -0.44, -0.62, 0.2, 0, 1.5), P(-0.3, -0.22, -0.6, -0.3, 0, 0.15)],
@@ -7319,9 +7319,10 @@ class Renderer {
     this.VM.club = {
       /* the side swings turn the shaft flat (rz = ±90°) and sweep it round with ry, so the head travels across the view, never straight out */
       idle: P(0.28, -0.36, -0.5, -1.05, 0.25, -0.25),
-      windup: [P(0.2, 0.06, -0.3, 0.5, 0.05, 0.12), P(0.4, -0.14, -0.26, 0.35, -0.6, -1.57), null, P(-0.32, -0.14, -0.26, 0.35, 0.6, 1.57)],
-      mid: [P(0.1, 0.02, -0.45, -0.6, 0.04, 0.06), P(0.12, -0.24, -0.42, 0.15, 1.4, -1.57), null, P(0.0, -0.24, -0.42, 0.15, -1.4, 1.57)],
-      release: [P(0.06, -0.2, -0.6, -1.8, 0.02, 0.02), P(-0.32, -0.3, -0.3, 0.05, 3.4, -1.57), null, P(0.42, -0.3, -0.3, 0.05, -3.4, 1.57)],
+      /* the overhead smash is carried by the arms and body: the fists go up and back over the head, then the whole shaft comes down and forward through a long arc, the wrists stay locked */
+      windup: [P(0.42, 0.14, -0.1, 0.95, 0.05, 0.5), P(0.4, -0.14, -0.26, 0.35, -0.6, -1.57), null, P(-0.32, -0.14, -0.26, 0.35, 0.6, 1.57)],
+      mid: [P(0.24, 0.1, -0.5, -0.2, 0.04, 0.2), P(0.12, -0.24, -0.42, 0.15, 1.4, -1.57), null, P(0.0, -0.24, -0.42, 0.15, -1.4, 1.57)],
+      release: [P(0.06, -0.42, -0.72, -1.15, 0.02, 0.02), P(-0.32, -0.3, -0.3, 0.05, 3.4, -1.57), null, P(0.42, -0.3, -0.3, 0.05, -3.4, 1.57)],
       block: this.VM.katana.block, stun: this.VM.katana.stun,
       R: L(0, 0, 0), Lh: L(0, -0.14, 0),
     };
@@ -7975,13 +7976,13 @@ class Renderer {
     const dirRoot = (v, out, o) => { out[o] = C[0] * v[0] + C[3] * v[1] + C[6] * v[2]; out[o + 1] = C[1] * v[0] + C[4] * v[1] + C[7] * v[2]; out[o + 2] = C[2] * v[0] + C[5] * v[1] + C[8] * v[2]; };
     const J = this._J || (this._J = new Float64Array(60));
     // J layout: 0 shoulderL, 3 elbowL, 6 handL, 9 shoulderR, 12 elbowR, 15 handR, 18 weapon grip, 21 weapon dir, 24 chest centre, 27 head
-    toRoot([0.2, 0, 0], J, 0); toRoot([-0.2, 0, 0], J, 9);
+    toRoot([0.255, 0, 0], J, 0); toRoot([-0.255, 0, 0], J, 9); /* shoulders out at the edge of the torso, so the arms hang clear of the body */
     toRoot([0, -0.22, 0], J, 24); toRoot([0, 0.25, 0.01], J, 27);
     const ik = (so, ho, tx, ty, tz, side) => {
       const sx = J[so], sy2 = J[so + 1], sz = J[so + 2]; let dx = (tx - sx) * ARM_REACH, dy = (ty - sy2) * ARM_REACH, dz = (tz - sz) * ARM_REACH; let d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-4; dx /= d; dy /= d; dz /= d;
       const A1 = ARM_U, A2 = ARM_F; d = clamp(d, 0.08, A1 + A2 - 0.002);
       const ca = (A1 * A1 + d * d - A2 * A2) / (2 * A1 * d), sa = Math.sqrt(Math.max(0, 1 - ca * ca));
-      let px = C[0] * side * 0.7 - C[3] * 1 - C[6] * 0.35, py = C[1] * side * 0.7 - C[4] - C[7] * 0.35, pz2 = C[2] * side * 0.7 - C[5] - C[8] * 0.35;
+      let px = C[0] * side * 1.0 - C[3] * 1 - C[6] * 0.35, py = C[1] * side * 1.0 - C[4] - C[7] * 0.35, pz2 = C[2] * side * 1.0 - C[5] - C[8] * 0.35; /* elbows bend out, away from the ribs */
       const dp = px * dx + py * dy + pz2 * dz; px -= dx * dp; py -= dy * dp; pz2 -= dz * dp; const pl = Math.sqrt(px * px + py * py + pz2 * pz2) || 1; px /= pl; py /= pl; pz2 /= pl;
       J[ho - 3] = sx + A1 * (dx * ca + px * sa); J[ho - 2] = sy2 + A1 * (dy * ca + py * sa); J[ho - 1] = sz + A1 * (dz * ca + pz2 * sa);
       J[ho] = sx + dx * d; J[ho + 1] = sy2 + dy * d; J[ho + 2] = sz + dz * d;
@@ -8155,8 +8156,8 @@ class Renderer {
     hatM(f.jingasa, false); hatM(f.kabuto, false); hatM(f.cap, false); hatM(f.kepi, false); hatM(f.band, false);
     { const cmx = (cx + px) / 2 + yx * 0.04, cmy = (cy + py) / 2 + yy * 0.04, cmz = (cz + pz) / 2 + yz * 0.04; this.drawGear(slot, u, { c: [cmx, cmy, cmz, B], h: [p[0], p[1], p[2], B], p: [px, py, pz, B], sl: [cx + xx * 0.2, cy + xy * 0.2, cz + xz * 0.2, B], sr: [cx - xx * 0.2, cy - xy * 0.2, cz - xz * 0.2, B] }, this.ragJoints(rag, xx, xy, xz, cx, cy, cz, px, py, pz), B, rag.hatOff, true); }
     const limb2 = (m1, m2, ax, ay, az, bx, by, bz, w1, w2, bendx, bendy, bendz) => { const mx = (ax + bx) / 2 + bendx, my = (ay + by) / 2 + bendy, mz = (az + bz) / 2 + bendz; this.seg(m1, slot, ax, ay, az, mx, my, mz, w1, w1); this.seg(m2, slot, mx, my, mz, bx, by, bz, w2, w2); };
-    limb2(f.uarmL, f.farmL, cx + xx * 0.2, cy + xy * 0.2, cz + xz * 0.2, p[9], p[10], p[11], 0.13, 0.11, -yx * 0.05, -yy * 0.05, -yz * 0.05);
-    limb2(f.uarmR, f.farmR, cx - xx * 0.2, cy - xy * 0.2, cz - xz * 0.2, p[12], p[13], p[14], 0.13, 0.11, -yx * 0.05, -yy * 0.05, -yz * 0.05);
+    limb2(f.uarmL, f.farmL, cx + xx * 0.255, cy + xy * 0.255, cz + xz * 0.255, p[9], p[10], p[11], 0.13, 0.11, -yx * 0.05, -yy * 0.05, -yz * 0.05);
+    limb2(f.uarmR, f.farmR, cx - xx * 0.255, cy - xy * 0.255, cz - xz * 0.255, p[12], p[13], p[14], 0.13, 0.11, -yx * 0.05, -yy * 0.05, -yz * 0.05);
     limb2(f.thighL, f.shinL, px + xx * 0.1, py + xy * 0.1, pz + xz * 0.1, p[15], p[16], p[17], 0.17, 0.14, zx * 0.06, zy * 0.06, zz * 0.06);
     limb2(f.thighR, f.shinR, px - xx * 0.1, py - xy * 0.1, pz - xz * 0.1, p[18], p[19], p[20], 0.17, 0.14, zx * 0.06, zy * 0.06, zz * 0.06);
     this.boxB(f.hand, slot * 2, p[9], p[10], p[11], B, 0.09, 0.09, 0.1); this.boxB(f.hand, slot * 2 + 1, p[12], p[13], p[14], B, 0.09, 0.09, 0.1);
@@ -8335,12 +8336,13 @@ class Renderer {
       rhT.copy(K.R); lhT.copy(K.Lh);
       const d = hero.atkDir; const W = K.windup[d] || K.windup[2] || K.idle, M = K.mid[d] || K.mid[2] || W, R = K.release[d] || K.release[2] || K.idle;
       const side = d === DIR_RIGHT ? 1 : d === DIR_LEFT ? -1 : 0;
-      if (hero.st === ST_WINDUP) { target = W; speed = 13; camRoll = side * 0.025; camPitch = d === DIR_UP ? 0.025 : 0; }
+      if (hero.st === ST_WINDUP) { target = W; speed = 13; camRoll = side * 0.06; camPitch = d === DIR_UP ? 0.08 : 0; this._swYaw = side * 0.1; this._swShift = side * 0.07; this._swDrop = 0; } /* the body winds up with the weapon: the view turns and leans into the side it comes from */
       else if (hero.st === ST_RELEASE) {
         const t = clamp(stT / RELEASE_T, 0, 1), e = t * t * (3 - 2 * t), u = 1 - e;
         const q = (k) => u * u * W[k] + 2 * u * e * M[k] + e * e * R[k];
         target = P(q('px'), q('py'), q('pz'), q('rx'), q('ry'), q('rz')); speed = 60;
-        camRoll = side * lerp(0.025, -0.04, e); camPitch = d === DIR_UP ? lerp(0.025, -0.05, e) : d === DIR_DOWN ? -0.01 : 0; camPush = (d === DIR_DOWN ? 0.16 : 0.07) * Math.sin(t * PI);
+        camRoll = side * lerp(0.06, -0.08, e); camPitch = d === DIR_UP ? lerp(0.08, -0.13, e) : d === DIR_DOWN ? -0.02 : 0; camPush = (d === DIR_DOWN ? 0.3 : d === DIR_UP ? 0.16 : 0.12) * Math.sin(t * PI);
+        this._swYaw = side * lerp(0.1, -0.15, e); this._swShift = side * lerp(0.07, -0.1, e); this._swDrop = (d === DIR_UP ? 0.12 : 0.05) * Math.sin(t * PI); /* and the whole body follows the cut through: shoulders turn, weight drops onto the front foot */
       }
       else if (hero.st === ST_RECOVER) {
         const t = clamp(stT / Math.max(0.1, hero.def.recover), 0, 1);
@@ -8463,6 +8465,11 @@ class Renderer {
         if (this.tp > 0.01) { const k = this.tp * this.tp * (3 - 2 * this.tp); const back = 4.6 * k, up = 1.1 * k, side = 0.9 * k; const fx = Math.sin(yaw), fz = Math.cos(yaw);
           cam.position.set(cam.position.x - fx * back - fz * side, cam.position.y + up, cam.position.z - fz * back + fx * side); T.v.y -= 0.4 * k; T.v.x = lerp(T.v.x, hx + fx * 3, k); T.v.z = lerp(T.v.z, hz + fz * 3, k); T.v.y = lerp(T.v.y, hy + 1.4, k); } }
       this.empCam(hero, yaw, pitch, dt, T.v);
+      { const meleeSw = hero.st === ST_WINDUP || hero.st === ST_RELEASE; const k = 1 - Math.exp(-dt * (hero.st === ST_RELEASE ? 22 : 9)); const S2 = this._sw || (this._sw = { y: 0, x: 0, d: 0 });
+        S2.y += ((meleeSw ? this._swYaw || 0 : 0) - S2.y) * k; S2.x += ((meleeSw ? this._swShift || 0 : 0) - S2.x) * k; S2.d += ((meleeSw ? this._swDrop || 0 : 0) - S2.d) * k;
+        if (!meleeSw) { this._swYaw = 0; this._swShift = 0; this._swDrop = 0; } const rx0 = Math.cos(view.yaw), rz0 = -Math.sin(view.yaw);
+        cam.position.x -= rx0 * S2.x; cam.position.z -= rz0 * S2.x; cam.position.y -= S2.d; T.v.x -= rx0 * S2.x; T.v.z -= rz0 * S2.x; T.v.y -= S2.d;
+        const cy0 = Math.cos(S2.y), sy0 = Math.sin(S2.y), vx0 = T.v.x - cam.position.x, vz0 = T.v.z - cam.position.z; T.v.x = cam.position.x + vx0 * cy0 + vz0 * sy0; T.v.z = cam.position.z - vx0 * sy0 + vz0 * cy0; }
       cam.lookAt(T.v); this.dodgeRoll = (this.dodgeRoll || 0) * Math.exp(-dt * 7); cam.rotateZ(this.recoilRoll * 0.03 + (hero.downT > 0 ? 0.6 : 0) + this.camRoll + this.dodgeRoll + (this.slideRoll || 0) + IM.r + flin * 0.03); cam.rotateX(this.camPitch); cam.translateZ(-this.camPush);
       this.fov += (this.fovTarget - this.fov) * (1 - Math.exp(-dt * 14));
       { const f = this.fov - IM.fov; if (Math.abs(cam.fov - f) > 0.05) { cam.fov = f; cam.updateProjectionMatrix(); } const vk = Math.min(1, Math.tan(cam.fov * PI / 360) / Math.tan(64 * PI / 360)); this.vmFov.scale.set(vk, vk, 1); }
@@ -9154,7 +9161,7 @@ const ANIM = (function () {
     for (let f = 0; f < 2; f++) { const side = f ? -1 : 1, hx = x + side * 0.1 * cy * vsc, hz = z - side * 0.1 * sy * vsc, gy = tH(F.px[f], F.pz[f]) + hy[f];
       FT[f * 3 + 1] = gy; if (F.t[f] >= 0) continue;
       const dh = Math.hypot(F.px[f] - hx, F.pz[f] - hz), L = (LT + LS) * 0.985 * vsc; const top = gy + Math.sqrt(Math.max(0, L * L - dh * dh)); const pmax = (top - y) / vsc; if (pmax < pelOut) pelOut = pmax; }
-    pelOut = Math.max(pelOut, pel - 0.32);
+    pelOut = Math.max(pelOut, pel - 0.14); /* the hips sink only a little onto a planted foot: deeper and the bent thigh folds up into the coat */
     // solve the legs to the feet (root-local, relative to the pelvis), and blend with the cycle by the near weight
     const w = a.fpW * (1 - runW);
     for (let f = 0; f < 2; f++) { const o = f * 9, side = f ? -1 : 1, dX = (F.px[f] - x) / vsc, dZ = (F.pz[f] - z) / vsc;
