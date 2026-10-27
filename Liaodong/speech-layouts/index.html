@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v92</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v93</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6477,6 +6477,10 @@ class Ragdoll {
         if (p[i * 3 + 1] < gh) { p[i * 3 + 1] = gh; q[i * 3] = p[i * 3] - (p[i * 3] - q[i * 3]) * 0.4; q[i * 3 + 2] = p[i * 3 + 2] - (p[i * 3 + 2] - q[i * 3 + 2]) * 0.4; }
       }
     }
+    // a dead man goes all the way down: after the first moment the trunk and head are drawn on to the ground, so a body never
+    // stays propped on its knees or folded upright like a statue (knees and feet slide out from under it)
+    if (this.age > 0.45) { const k = Math.min(1, (this.age - 0.45) * 1.6) * dt * 9; for (const i of [0, 1, 2]) { const gh = terrainH(p[i * 3], p[i * 3 + 2]) + (i === 0 ? 0.14 : 0.12); const over = p[i * 3 + 1] - gh; if (over > 0.05) p[i * 3 + 1] -= over * k; }
+      for (const i of [5, 6]) { const gh = terrainH(p[i * 3], p[i * 3 + 2]) + 0.1; if (p[i * 3 + 1] < gh + 0.02) { const vx = p[i * 3] - q[i * 3], vz = p[i * 3 + 2] - q[i * 3 + 2]; q[i * 3] = p[i * 3] - vx * 0.9; q[i * 3 + 2] = p[i * 3 + 2] - vz * 0.9; } } }
     if (moving < 0.004) this.settle += dt; else this.settle = 0;
     if (this.settle > 2 || this.age > 20) { const sink = (this.settle > 2 ? (this.settle - 2) : 0) * 0.08 + (this.age > 20 ? (this.age - 20) * 0.1 : 0); for (let i = 0; i < 7; i++) { p[i * 3 + 1] -= sink * dt * 2; q[i * 3 + 1] -= sink * dt * 2; } if (sink > 1.4) this.active = false; }
   }
@@ -7091,11 +7095,17 @@ class Renderer {
     this.tmp.m.set(sx * w, yx * L, zx * d, (ax + bx) / 2, sy * w, yy * L, zy * d, (ay + by) / 2, sz * w, yz * L, zz * d, (az + bz) / 2, 0, 0, 0, 1);
     mesh.setMatrixAt(idx, this.tmp.m);
   }
-  drawGear(slot, u, fr, G, B, noHat) {
+  // the dead man's joints for the gear that hangs on his limbs (robe flaps, leggings): hips at the pelvis, knees between hip and foot
+  ragJoints(rag, xx, xy, xz, cx, cy, cz, px, py, pz) { const p = rag.p, G = this._RG || (this._RG = new Float64Array(36));
+    const put = (o, x, y, z) => { G[o] = x; G[o + 1] = y; G[o + 2] = z; };
+    for (const [h, k, f, sd, fi] of [[0, 3, 6, 1, 15], [9, 12, 15, -1, 18]]) { const hx = px + xx * 0.1 * sd, hy = py + xy * 0.1 * sd, hz = pz + xz * 0.1 * sd; put(h, hx, hy, hz); put(f, p[fi], p[fi + 1], p[fi + 2]); put(k, (hx + p[fi]) / 2, (hy + p[fi + 1]) / 2 + 0.04, (hz + p[fi + 2]) / 2); }
+    for (const [s0, e, hn, sd, hi] of [[18, 21, 24, 1, 9], [27, 30, 33, -1, 12]]) { const sx = cx + xx * 0.2 * sd, sy = cy + xy * 0.2 * sd, sz = cz + xz * 0.2 * sd; put(s0, sx, sy, sz); put(hn, p[hi], p[hi + 1], p[hi + 2]); put(e, (sx + p[hi]) / 2, (sy + p[hi + 1]) / 2, (sz + p[hi + 2]) / 2); }
+    return G; }
+  drawGear(slot, u, fr, G, B, noHat, dead) {
     const f = this.fig, T = this.tmp, g = gearFor(u);
     for (const p of g.parts) {
       if (p.idx === undefined) continue; const mesh = f['g' + p.m], idx = slot * GEAR_K[p.m] + p.idx;
-      if (noHat && p.hat) { mesh.setMatrixAt(idx, T.zero); continue; }
+      if ((noHat && p.hat) || (dead && p.f !== 'seg' && Math.max(p.s[0], p.s[1], p.s[2]) > 0.85)) { mesh.setMatrixAt(idx, T.zero); continue; } /* a fallen man's banner pole and other long kit don't stand up out of the body */
       if (p.f === 'seg') { if (!G) { mesh.setMatrixAt(idx, T.zero); continue; } const a = GJ[p.a], z = GJ[p.z]; const ax = G[a] + (G[z] - G[a]) * p.t0, ay = G[a + 1] + (G[z + 1] - G[a + 1]) * p.t0, az = G[a + 2] + (G[z + 2] - G[a + 2]) * p.t0; const bx = G[a] + (G[z] - G[a]) * p.t1, by = G[a + 1] + (G[z + 1] - G[a + 1]) * p.t1, bz = G[a + 2] + (G[z + 2] - G[a + 2]) * p.t1; this.seg(mesh, idx, ax, ay, az, bx, by, bz, p.w, p.d); continue; }
       const F = fr[p.f]; if (!F) { mesh.setMatrixAt(idx, T.zero); continue; }
       // cloth and plates that hang from a joint follow the limb under them (no knee through the skirt, no arm through the pauldron)
@@ -8088,6 +8098,7 @@ class Renderer {
       const lx = G[o + 6], ly = G[o + 7], lz = G[o + 8], fx2 = Math.sin(u.yaw), fz2 = Math.cos(u.yaw);
       this.seg(f.shield, slot, lx + fx2 * 0.06, ly, lz + fz2 * 0.06, lx + fx2 * 0.13, ly, lz + fz2 * 0.13, 0.8, 0.8); this.seg(f.boss, slot, lx + fx2 * 0.12, ly, lz + fz2 * 0.12, lx + fx2 * 0.17, ly, lz + fz2 * 0.17, 0.2, 0.2);
     } else { f.shield.setMatrixAt(slot, Z); f.boss.setMatrixAt(slot, Z); }
+    if (lie && lie.kind !== 'sleep' && a.dw > 0.6) { for (const k of ['blade', 'hilt', 'rifle', 'barrel', 'yari', 'pistol', 'arrow', 'rod', 'flask']) f[k].setMatrixAt(slot, Z); for (const k of ['bow', 'bstring']) { f[k].setMatrixAt(slot * 2, Z); f[k].setMatrixAt(slot * 2 + 1, Z); } for (let k = 0; k < 9; k++) f.twig.setMatrixAt(slot * 9 + k, Z); } /* a man down has let go of his weapon: it lies where it fell, it does not stand up out of him */
     // blade trail while the cut is moving
     if (melee && (u.st === ST_RELEASE || (u.st === ST_RECOVER && stT < 0.06))) {
       const cx = this.camera.position.x - x, cz = this.camera.position.z - z;
@@ -8142,7 +8153,7 @@ class Renderer {
     this.boxB(f.head, slot, p[0], p[1], p[2], B, 0.26, 0.28, 0.26);
     const hat = u.def.hat; const hatM = (mesh, on, oy, s1, s2, s3) => { if (!on) { mesh.setMatrixAt(slot, T.zero); return; } this.boxB(mesh, slot, p[0] + yx * oy, p[1] + yy * oy, p[2] + yz * oy, B, s1, s2, s3); };
     hatM(f.jingasa, false); hatM(f.kabuto, false); hatM(f.cap, false); hatM(f.kepi, false); hatM(f.band, false);
-    { const cmx = (cx + px) / 2 + yx * 0.04, cmy = (cy + py) / 2 + yy * 0.04, cmz = (cz + pz) / 2 + yz * 0.04; this.drawGear(slot, u, { c: [cmx, cmy, cmz, B], h: [p[0], p[1], p[2], B], p: [px, py, pz, B], sl: [cx + xx * 0.2, cy + xy * 0.2, cz + xz * 0.2, B], sr: [cx - xx * 0.2, cy - xy * 0.2, cz - xz * 0.2, B] }, null, B, rag.hatOff); }
+    { const cmx = (cx + px) / 2 + yx * 0.04, cmy = (cy + py) / 2 + yy * 0.04, cmz = (cz + pz) / 2 + yz * 0.04; this.drawGear(slot, u, { c: [cmx, cmy, cmz, B], h: [p[0], p[1], p[2], B], p: [px, py, pz, B], sl: [cx + xx * 0.2, cy + xy * 0.2, cz + xz * 0.2, B], sr: [cx - xx * 0.2, cy - xy * 0.2, cz - xz * 0.2, B] }, this.ragJoints(rag, xx, xy, xz, cx, cy, cz, px, py, pz), B, rag.hatOff, true); }
     const limb2 = (m1, m2, ax, ay, az, bx, by, bz, w1, w2, bendx, bendy, bendz) => { const mx = (ax + bx) / 2 + bendx, my = (ay + by) / 2 + bendy, mz = (az + bz) / 2 + bendz; this.seg(m1, slot, ax, ay, az, mx, my, mz, w1, w1); this.seg(m2, slot, mx, my, mz, bx, by, bz, w2, w2); };
     limb2(f.uarmL, f.farmL, cx + xx * 0.2, cy + xy * 0.2, cz + xz * 0.2, p[9], p[10], p[11], 0.13, 0.11, -yx * 0.05, -yy * 0.05, -yz * 0.05);
     limb2(f.uarmR, f.farmR, cx - xx * 0.2, cy - xy * 0.2, cz - xz * 0.2, p[12], p[13], p[14], 0.13, 0.11, -yx * 0.05, -yy * 0.05, -yz * 0.05);
@@ -8532,6 +8543,9 @@ class Renderer {
     for (const [id, v] of this.cannonRecoil) { const nv = v - dt; if (nv <= 0) this.cannonRecoil.delete(id); else this.cannonRecoil.set(id, nv); }
     // ragdolls
     const sub = Math.min(dt, 0.05);
+    { const A = this.ragdolls.filter(r => r.active && r.age < 6); // bodies don't pass through each other into a heap: they slide aside and lie side by side
+      for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) { const a = A[i].p, b = A[j].p; const dx = b[6] - a[6], dz = b[8] - a[8], d2 = dx * dx + dz * dz; if (d2 > 0.64 || d2 < 1e-6) continue; const d = Math.sqrt(d2), push = (0.8 - d) * 0.5 * Math.min(1, sub * 20) / d;
+        const qa = A[i].q, qb = A[j].q; for (let k = 0; k < 7; k++) { const ex = dx * push * 0.5, ez = dz * push * 0.5; a[k * 3] -= ex; a[k * 3 + 2] -= ez; qa[k * 3] -= ex; qa[k * 3 + 2] -= ez; b[k * 3] += ex; b[k * 3 + 2] += ez; qb[k * 3] += ex; qb[k * 3 + 2] += ez; } } }
     for (const rag of this.ragdolls) {
       if (!rag.active) continue;
       rag.step(sub * 0.5); rag.step(sub * 0.5);
