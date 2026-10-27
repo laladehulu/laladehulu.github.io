@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v80</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v81</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -9022,7 +9022,8 @@ const ANIM = (function () {
       hy[f] = Math.sin(F.t[f] * Math.PI) * (spd > 0.3 ? lift : 0.05);
       if (F.t[f] >= 1) { F.t[f] = -1; hy[f] = 0; } }
     // arms swing with the legs: lock the cycle phase to the stepping foot (left leg forward at ph = pi/2)
-    if (spd > 0.4 && a.fpLast !== undefined) { const f = a.fpLast, tt = F.t[f] >= 0 ? F.t[f] : 1, want = (f ? Math.PI / 2 : -Math.PI / 2) + tt * Math.PI;
+    const runW = sm(Math.min(1, Math.max(0, (spd - 2.4) / 1.8))); /* at a run the old stride cycle drives the legs (it reads better at speed); the feet plant at a walk, standing and turning */
+    if (spd > 0.4 && runW < 0.5 && a.fpLast !== undefined) { const f = a.fpLast, tt = F.t[f] >= 0 ? F.t[f] : 1, want = (f ? Math.PI / 2 : -Math.PI / 2) + tt * Math.PI;
       let dph = (want - a.ph) % (2 * Math.PI); if (dph > Math.PI) dph -= 2 * Math.PI; if (dph < -Math.PI) dph += 2 * Math.PI; a.ph += dph * Math.min(1, dt * 8); }
     // the hips ride on the planted feet: as high as the cycle wants, no higher than a down foot allows
     let pelOut = pel;
@@ -9031,7 +9032,7 @@ const ANIM = (function () {
       const dh = Math.hypot(F.px[f] - hx, F.pz[f] - hz), L = (LT + LS) * 0.985 * vsc; const top = gy + Math.sqrt(Math.max(0, L * L - dh * dh)); const pmax = (top - y) / vsc; if (pmax < pelOut) pelOut = pmax; }
     pelOut = Math.max(pelOut, pel - 0.32);
     // solve the legs to the feet (root-local, relative to the pelvis), and blend with the cycle by the near weight
-    const w = a.fpW;
+    const w = a.fpW * (1 - runW);
     for (let f = 0; f < 2; f++) { const o = f * 9, side = f ? -1 : 1, dX = (F.px[f] - x) / vsc, dZ = (F.pz[f] - z) / vsc;
       const lx = dX * cy - dZ * sy, lz = dX * sy + dZ * cy - pz, ly = (FT[f * 3 + 1] - y) / vsc - pelOut;
       legIK(IL, 0, side, lx, ly, lz); for (let i = 0; i < 9; i++) legs[o + i] = legs[o + i] + (IL[i] - legs[o + i]) * w; }
