@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v118</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v119</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -314,6 +314,8 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 .shop { display: grid; gap: 6px; } .shop button { text-align: left; } .shop button small { display: block; color: var(--ink2); font-weight: 400; }
 #armsRow select { font: inherit; padding: 6px 8px; background: var(--paper2, #dcd2bc); border: 1px solid #b9ab88; color: var(--ink); max-width: 100%; }
 #hitdir { position: fixed; left: 50%; top: 50%; width: 240px; height: 240px; margin: -120px 0 0 -120px; pointer-events: none; opacity: 0; z-index: 22; transition: opacity .2s; }
+#lens { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 21; overflow: hidden; }
+#lens i { position: absolute; border-radius: 50% 50% 45% 55%; background: radial-gradient(circle at 40% 35%, rgba(150,10,14,.85), rgba(90,4,8,.7) 60%, rgba(60,0,4,0) 100%); filter: blur(.6px); transform: translate(-50%, -50%); }
 #dangers { position: fixed; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 22; }
 #dangers i { position: absolute; left: -45px; top: -12px; width: 90px; height: 24px; border-top: 4px solid rgba(255,196,90,.9); border-radius: 50% 50% 0 0; filter: drop-shadow(0 0 3px rgba(0,0,0,.8)); opacity: 0; transform-origin: 50% 50%; }
 #dangers i.th { width: 26px; left: -13px; border-radius: 0; border-top: none; border-left: 13px solid transparent; border-right: 13px solid transparent; border-bottom: 16px solid rgba(255,196,90,.9); height: 0; top: -8px; }
@@ -559,7 +561,7 @@ body.zgrid #comms { top: 158px; }
     </div>
   </div>
   <div id="hud" hidden>
-    <div id="speedlines"></div><div id="suppress"></div><div id="fpmarks"></div><div id="hitdir"><i></i></div><div id="dangers"></div><div id="mobj" hidden></div><div id="radio" hidden><b></b><span></span></div><div id="banner" hidden></div><div id="hitby"></div><div id="vignette"></div><div id="parry"></div>
+    <div id="speedlines"></div><div id="suppress"></div><div id="fpmarks"></div><div id="hitdir"><i></i></div><div id="dangers"></div><div id="lens"></div><div id="mobj" hidden></div><div id="radio" hidden><b></b><span></span></div><div id="banner" hidden></div><div id="hitby"></div><div id="vignette"></div><div id="parry"></div>
     <div id="crosshair"><div class="dot"></div><div class="arr up"></div><div class="arr down"></div><div class="arr left"></div><div class="arr right"></div></div>
     <div id="hitmark"></div>
     <div class="hudbox" id="netbox"></div>
@@ -8440,7 +8442,7 @@ class Renderer {
             if (melee && att && ev.cause !== 'trample') { const aa = this.anim(att.id); aa.dragT = (armd ? 0.07 : heavyB || ev.killed ? 0.16 : 0.11) * (mine && this.sim.xc ? 1.4 : 1); if (mine) { this.swDrag = aa.dragT + 0.02; this.bladeBlood = Math.min(1, (this.bladeBlood || 0) + (ev.killed ? 0.4 : 0.22)); } }
             if (mine && melee) { const xf = this.sim.xc ? 1.5 : 1; this.recoil = Math.max(this.recoil, (heavyB ? 0.75 : 0.45) * xf); this.recoilRoll = (Math.random() - 0.5) * (heavyB ? 1.4 : 0.8) * xf; this.shake = Math.max(this.shake, (heavyB || ev.killed ? 0.35 : 0.18) * xf);
               if (this.imp) { this.imp.fov = Math.min(9, this.imp.fov + (heavyB ? 3 : 1.2) * xf); this.imp.vp -= (heavyB ? 2.2 : 1.1) * xf; if (this.sim.xc) { this.imp.vx -= heavyB || ev.killed ? 2.4 : 1.4; this.imp.vr += (Math.random() - 0.5) * 6; } } /* xc: the weight of the cut goes through your shoulders: a lurch into the blow and a tilt */
-              this.hitMarkPop = ev.killed ? 2 : 1; if (ev.killed) AUDIO.play('killcue', undefined, 0, 0, 0.9); if (this.sim.xc && AUDIO.punch) AUDIO.punch(ev.killed ? 1 : heavyB ? 0.8 : 0.55); } }
+              this.hitMarkPop = ev.killed ? 2 : 1; if (ev.killed) AUDIO.play('killcue', undefined, 0, 0, 0.9); if (this.sim.xc && AUDIO.punch) AUDIO.punch(ev.killed ? 1 : heavyB ? 0.8 : 0.55); if (this.sim.xc && !armd) { const cp = this.camera.position; if (Math.hypot(ev.x - cp.x, ev.z - cp.z) < 2.4) this.lensBlood = (this.lensBlood || 0) + (ev.killed ? 4 : heavyB ? 3 : 2); } } } /* a cut that opens a man at arm's length throws a few drops on your eyes */
           if (ev.id === heroId) { this.hitFlash = 0.6; this.shake = Math.max(this.shake, 0.6); const hh = units[heroId], a = ev.att >= 0 ? units[ev.att] : null; if (hh && ev.cause !== 'fire') { const k = clamp((ev.dmg || 20) / Math.max(40, hh.def.hp * 0.45), 0.25, 1.4) * (ev.cause === 'trample' || ev.cause === 'explosion' ? 1.4 : 1); this.impact(a ? a.x : ev.x, a ? a.z : ev.z + 0.01, k, ev.cause === 'trample' || ev.cause === 'explosion'); } }
           if (ev.att === heroId && ev.id !== heroId && (ev.cause === 'melee' || ev.cause === 'spear')) { const at0 = units[heroId], hv = !!(at0 && (at0.heavy || at0.lunge)) || (ev.dmg || 0) >= 60; this.hitMark = ev.killed ? 0.5 : 0.32; this.hitMarkHead = false; AUDIO.play('hitmark', undefined, 0, 0, 0.8); this.hitstop = Math.max(this.hitstop, ev.killed ? 0.035 : hv ? 0.03 : 0); }
           break;
@@ -11118,6 +11120,13 @@ function dangerHUD(hero, sim) {
       const ang = (-(Math.atan2(dx, dz) - Input.yaw)) * 180 / Math.PI, r = 150 - 85 * prog; el.style.transform = `rotate(${ang}deg) translateY(${-r}px)`; el.style.opacity = Math.min(1, 0.35 + prog * 0.9); } }
   for (let i = k; i < DG.pool.length; i++) DG.pool[i].style.opacity = 0;
 }
+// blood on the lens: a few drops from a cut at arm's length, sliding a little and fading over a couple of seconds (never more than a dozen)
+const LENS = { drops: [] };
+function lensHUD(r, dt) {
+  const box = $('lens'); if (!box) return;
+  if (r && r.lensBlood > 0) { const n = Math.min(r.lensBlood, 12 - LENS.drops.length); r.lensBlood = 0; for (let i = 0; i < n; i++) { const el = document.createElement('i'); const s = 6 + Math.random() * 16; el.style.width = s + 'px'; el.style.height = s * (0.8 + Math.random() * 0.6) + 'px'; const d = { el, x: 20 + Math.random() * 60, y: 15 + Math.random() * 65, t: 2 + Math.random() * 1.6, v: 2 + Math.random() * 6, s }; box.appendChild(el); LENS.drops.push(d); } }
+  for (let i = LENS.drops.length - 1; i >= 0; i--) { const d = LENS.drops[i]; d.t -= dt; d.y += d.v * dt * 0.4; d.el.style.left = d.x + '%'; d.el.style.top = d.y + '%'; d.el.style.opacity = Math.min(1, d.t * 0.8); if (d.t <= 0) { d.el.remove(); LENS.drops.splice(i, 1); } }
+}
 function storyCard(text, title) { const el = $('storycard'); el.innerHTML = (title ? `<b>${title}</b>` : '') + `<span>${text}</span>`; el.classList.add('show'); clearTimeout(state.storyT); state.storyT = setTimeout(() => el.classList.remove('show'), Math.min(14000, 3500 + text.length * 55)); }
 function heroHUD() {
   const sim = state.sim; if (!sim || !sim.heroMode) return; state.hhT = (state.hhT || 0) - 1; if (state.hhT > 0) return; state.hhT = 6;
@@ -12009,7 +12018,7 @@ function updateHUD(dt) {
   if (hero && !hero.dead && !Input.cmdMode && sim.phase === 1) { // a horseman bearing down on you: warn in time to dodge or brace
     state.cavT = (state.cavT || 0) - dt; if (state.cavT <= 0) { for (const v of sim.teamAlive[1 - hero.team]) { if (!v.mounted || Math.abs(v.hspeed || 0) < 5.5) continue; const dx = hero.x - v.x, dz = hero.z - v.z, d = Math.hypot(dx, dz); if (d > 28 || d < 3) continue; if ((dx * Math.sin(v.yaw) + dz * Math.cos(v.yaw)) / d < 0.9) continue;
         state.cavT = 5; state.hitDir = { ang: Math.atan2(v.x - hero.x, v.z - hero.z), t: 2 }; state.renderer.hitQ = { text: hero.weapon === 'yari' ? '騎! Horse charging — brace your spear (hold RMB)' : '騎! Horse charging — slide aside (double-tap A or D)', t: 2.2, c: '#ffcf7a' }; AUDIO.play('neigh', v.x, v.y, v.z, 1.2); break; } } }
-  dangerHUD(hero, sim);
+  dangerHUD(hero, sim); lensHUD(r, dt);
   { const hd = state.hitDir; if (hd && hd.t > 0 && hero) { hd.t -= dt; $('hitdir').style.opacity = Math.min(1, hd.t); $('hitdir').style.transform = `rotate(${(-(hd.ang - Input.yaw)) * 180 / Math.PI}deg)`; } else $('hitdir').style.opacity = 0;
     const hb = state.hitBy; if (hb && hb.t > 0) { hb.t -= dt; $('hitby').textContent = hb.text; $('hitby').style.opacity = Math.min(1, hb.t); } else $('hitby').style.opacity = 0; }
   if (sim.real && typeof soldierHUD === 'function') soldierHUD(dt); else { $('fallen').hidden = true; }
