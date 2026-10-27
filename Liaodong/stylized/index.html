@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v102</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v103</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -8603,8 +8603,20 @@ class Renderer {
       this.fov += (this.fovTarget - this.fov) * (1 - Math.exp(-dt * 10)); if (Math.abs(cam.fov - this.fov) > 0.05) { cam.fov = this.fov; cam.updateProjectionMatrix(); }
       const c = this.cmdCam; const gy = terrainH(c.x, c.z);
       const back = c.h * 0.62; camYaw = c.yaw;
+      const rag = view.mode === 'death' && hero ? this.ragdolls.find(r => r.active && r.unit === hero) : null;
+      if (rag) { // your own death in first person: the eye rides the falling head; the gaze sags from where you were looking toward
+        // where the body takes it (the sky if you go over backwards, the earth if you pitch forward), the world tilts and greys out
+        const P = rag.p, k = clamp(view.deathK || 0, 0, 1), D = this.dcam || (this.dcam = { yaw: view.yaw, pitch: view.pitch, roll: 0, id: -1 });
+        if (D.id !== hero.id) { D.id = hero.id; D.yaw = view.yaw; D.pitch = view.pitch; D.roll = 0; D.side = uhash(hero.id, 5) < 0.5 ? -1 : 1; }
+        const hx = P[0], hy = P[1], hz = P[2], fx = Math.sin(D.yaw), fz = Math.cos(D.yaw); const ux = P[0] - P[3], uy = P[1] - P[4], uz = P[2] - P[5], ul = Math.hypot(ux, uy, uz) || 1;
+        const lean = (ux * fx + uz * fz) / ul; const tgtP = lean > 0.15 ? -1.2 : lean < -0.15 ? 1.1 : -0.35; const e = 1 - Math.exp(-dt * 2.2);
+        D.pitch += (tgtP - D.pitch) * e; D.roll += (D.side * 0.9 * Math.min(1, k * 2) - D.roll) * e;
+        cam.position.set(hx + fx * 0.08, Math.max(hy + 0.04, terrainH(hx, hz) + 0.18), hz + fz * 0.08); const cp = Math.cos(D.pitch);
+        cam.lookAt(T.v.set(cam.position.x + Math.sin(D.yaw) * cp, cam.position.y + Math.sin(D.pitch), cam.position.z + Math.cos(D.yaw) * cp)); cam.rotateZ(D.roll);
+        this.fovTarget = 64 - k * 10; camYaw = D.yaw;
+      } else {
       cam.position.set(c.x - Math.sin(c.yaw) * back, gy + c.h, c.z - Math.cos(c.yaw) * back);
-      cam.lookAt(T.v.set(c.x, gy, c.z));
+      cam.lookAt(T.v.set(c.x, gy, c.z)); }
       if (this.cine) { const C = this.cine; cam.position.set(C.pos[0], C.pos[1], C.pos[2]); cam.lookAt(T.v.set(C.look[0], C.look[1], C.look[2])); if (C.fov && Math.abs(cam.fov - C.fov) > 0.05) { cam.fov = this.fov = C.fov; cam.updateProjectionMatrix(); } } // cinematic camera (trailers)
     }
     // commanders see through the murk: push the fog out in the command view
@@ -10266,7 +10278,7 @@ function heroHUD() {
   const keys = ['Z', 'X', 'C', 'V'];
   const sta = Math.max(0, h.sta === undefined ? 100 : h.sta); const sb = $('stamina'); sb.style.setProperty('--s', sta.toFixed(0) + '%'); sb.classList.toggle('low', sta < 25); sb.classList.toggle('full', sta >= 99.5); sb.hidden = h.dead;
   const HC = S.HCLASS[h.hclass | 0]; const HCOUNTER = HC.abil.map(a => a.ctr);
-  { const pk = $('herosel'); const show = h.dead || state.pickOpen; pk.hidden = !show; if (show) { const nc = me.nextClass >= 0 ? me.nextClass : h.hclass | 0; const html = `<h4>${h.dead ? 'Choose who rides out next' : 'Change champion (only at your spawn, or on your next return)'}</h4>` + S.HCLASS.map((c, i) => `<div class="hc${i === nc ? ' on' : ''}"><kbd>${i + 1}</kbd><b>${c.name} <span>${c.jp}</span></b><small>${c.desc}</small><em>${c.abil.map(a => a.name).join(' · ')}</em></div>`).join(''); if (pk.dataset.h !== html) { pk.innerHTML = html; pk.dataset.h = html; } } }
+  { const pk = $('herosel'); const show = (h.dead && !state.dying) || state.pickOpen; pk.hidden = !show; if (show) { const nc = me.nextClass >= 0 ? me.nextClass : h.hclass | 0; const html = `<h4>${h.dead ? 'Choose who rides out next' : 'Change champion (only at your spawn, or on your next return)'}</h4>` + S.HCLASS.map((c, i) => `<div class="hc${i === nc ? ' on' : ''}"><kbd>${i + 1}</kbd><b>${c.name} <span>${c.jp}</span></b><small>${c.desc}</small><em>${c.abil.map(a => a.name).join(' · ')}</em></div>`).join(''); if (pk.dataset.h !== html) { pk.innerHTML = html; pk.dataset.h = html; } } }
   const ab = S.HCLASS[h.hclass | 0].abil.map((a, i) => { const cd = Math.max(0, h.cd[i]); return `<div class="ab${cd > 0 ? '' : ' ready'}${(i === 2 && h.guardT > 0) || (i === 1 && h.dashT > 0) ? ' on' : ''}" title="${HCOUNTER[i]}"><kbd>${keys[i]}</kbd><b>${a.name}</b><i style="--p:${(cd / a.cd * 100).toFixed(0)}%"></i><small>${cd > 0 ? Math.ceil(cd) + 's' : HCOUNTER[i]}</small></div>`; }).join('') + `<div class="ab${me.fury >= S.FURY_MAX ? ' ready' : ''}"><kbd>G</kbd><b>Valor</b><i style="--p:${(100 - me.fury).toFixed(0)}%"></i><small>${me.fury >= S.FURY_MAX ? 'READY' : 'fury ' + Math.round(me.fury) + '%'}</small></div>`;
   if ($('abil').dataset.h !== ab) { $('abil').innerHTML = ab; $('abil').dataset.h = ab; }
   const g = sim.gate, ph = sim.hphase; const t = Math.max(0, Math.ceil((sim.scen.limit - sim.tick) / 30));
@@ -11138,7 +11150,7 @@ function updateHUD(dt) {
     const fl = r.hitFlash > 0 || r.imp.blur > 0.02 ? Math.min(1, r.hitFlash * 1.6 + r.imp.blur * 0.4) : 0; $('vignette').style.opacity = Math.max(fl, Math.min(1, low * 0.85 + pulse));
     // near fainting (below about a third): the colour all but goes, the view swims in and out of focus and closes in
     const fa = Math.max(0, (hp0 - 0.65) / 0.35), swim = fa > 0 ? fa * (0.55 + 0.45 * Math.sin(performance.now() / 900)) : 0;
-    const cv = $('c'); if (cv) { const k = Math.round(low * 100) / 100, f = k > 0.01 ? `saturate(${Math.max(0.08, 1 - k * 0.7 - fa * 0.25).toFixed(2)}) brightness(${(1 - k * 0.25 - pulse * 0.25 - fa * 0.12).toFixed(2)}) contrast(${(1 + k * 0.12).toFixed(2)})${swim > 0.02 ? ` blur(${(swim * 3.2).toFixed(1)}px)` : ''}` : ''; if (cv._f !== f) { cv.style.filter = f; cv._f = f; } }
+    const cv = $('c'); if (cv && !state.dying) { const k = Math.round(low * 100) / 100, f = k > 0.01 ? `saturate(${Math.max(0.08, 1 - k * 0.7 - fa * 0.25).toFixed(2)}) brightness(${(1 - k * 0.25 - pulse * 0.25 - fa * 0.12).toFixed(2)}) contrast(${(1 + k * 0.12).toFixed(2)})${swim > 0.02 ? ` blur(${(swim * 3.2).toFixed(1)}px)` : ''}` : ''; if (cv._f !== f) { cv.style.filter = f; cv._f = f; } }
     { let t = document.getElementById('faintv'); if (!t) { t = document.createElement('div'); t.id = 'faintv'; t.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:6;background:radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,.92) 85%)'; document.body.appendChild(t); }
       const o = (fa * (0.75 + 0.25 * Math.sin(performance.now() / 700))).toFixed(2); if (t._o !== o) { t.style.opacity = o; t._o = o; } } } $('vignette').style.transform = r.imp.blur > 0.02 ? `scale(${1 + r.imp.blur * 0.06})` : '';
   $('parry').style.opacity = r.parryFlash > 0 ? r.parryFlash : 0;
@@ -11282,6 +11294,7 @@ function predictHero(ls) {
   }
   const P = R.pred || (R.pred = { x: 0, z: 0 }); const a = 1 - Math.exp(-(state.dtF || 0.016) * 30); P.x += (ox - P.x) * a; P.z += (oz - P.z) * a;
 }
+const DEATH_MS = 3800;
 function frame(now) {
   requestAnimationFrame(frame);
   let dt = Math.min(0.1, (now - state.last) / 1000 || 0); state.last = now;
@@ -11303,12 +11316,16 @@ function frame(now) {
   }
   if (steps >= maxS) state.acc = 0;
   const hero = localHero();
-  if (hero && hero.dead && !Input.cmdMode && !state.ended && state.sim.mode !== 'assault') { toggleCmd(true); toast(state.sim.heroMode ? 'You have fallen. You will return in a few moments' : 'You have fallen'); }
+  // your own death, seen through your own eyes: a few seconds of the fall before the command view or the soldier picker
+  if (hero && hero.dead) { if (state.deadId !== hero.id) { state.deadId = hero.id; state.deathAt = now; state.deathCam = !Input.cmdMode && !state.ended; if (state.deathCam && AUDIO.shellshock) AUDIO.shellshock(0.75); } } else state.deadId = -1;
+  const dying = !!(hero && hero.dead && state.deathCam && !state.ended && now - state.deathAt < DEATH_MS); state.dying = dying;
+  { const cv = state.renderer && state.renderer.renderer && state.renderer.renderer.domElement; if (cv) { const k = dying ? Math.min(1, (now - state.deathAt) / DEATH_MS) : 0; const f = k > 0 ? `grayscale(${Math.min(1, k * 1.6).toFixed(2)}) brightness(${(1 - Math.max(0, k - 0.45) * 1.5).toFixed(2)}) contrast(${(1 + k * 0.15).toFixed(2)})` : ''; if (dying) { if (cv._f !== f) { cv.style.filter = f; cv._f = f; } state.deathFilt = true; } else if (state.deathFilt) { cv.style.filter = ''; cv._f = ''; state.deathFilt = false; } } }
+  if (hero && hero.dead && !dying && !Input.cmdMode && !state.ended && state.sim.mode !== 'assault') { toggleCmd(true); toast(state.sim.heroMode ? 'You have fallen. You will return in a few moments' : 'You have fallen'); }
   if (hero && !hero.dead && Input.cmdMode && (state.sim.heroMode || state.sim.mode === 'assault') && !state.ended && !(typeof DEP !== 'undefined' && DEP.open)) toggleCmd(false);
   if (hero && hero.id !== state.lastHeroId) { state.lastHeroId = hero.id; }
   cmdCamUpdate(dt);
   if (typeof SPEECH !== 'undefined' && SPEECH.pump) SPEECH.pump(dt); // speaker faces are drawn before the frame, never over it
-  state.renderer.render(state.acc / DT, dt, { mode: Input.cmdMode || !hero || hero.dead ? 'cmd' : 'fp', yaw: Input.yaw, pitch: Input.pitch, selected: (Input.orderMode || state.zHeld) ? state.fpSel : state.selected, fpSel: state.fpSel, ghost: Drag.active ? Drag.ghost : state.fpGhost, ghostLine: Drag.active ? Drag.line : null });
+  state.renderer.render(state.acc / DT, dt, { mode: dying ? 'death' : Input.cmdMode || !hero || hero.dead ? 'cmd' : 'fp', deathK: dying ? (now - state.deathAt) / DEATH_MS : 0, yaw: Input.yaw, pitch: Input.pitch, selected: (Input.orderMode || state.zHeld) ? state.fpSel : state.selected, fpSel: state.fpSel, ghost: Drag.active ? Drag.ghost : state.fpGhost, ghostLine: Drag.active ? Drag.line : null });
   if (Input.orderMode || state.zHeld) { state.ordT = (state.ordT || 0) - dt; if (state.ordT <= 0) { state.ordT = 0.08; const lay = fpLayout(); state.fpGhost = lay ? lay.ghost : null; if (Input.orderMode) renderOrderMenu(); } }
   updateHUD(dt); storyTick(); heroHUD(); if (typeof SPEECH !== 'undefined') SPEECH.frame(dt); if (typeof zheHUD === 'function') zheHUD(dt);
 }
@@ -11376,7 +11393,7 @@ function soldierEvent(ev) {
 }
 function soldierHUD(dt) {
   if (!SOLD) return; const sim = state.sim, me = sim.players[state.localIdx], h = sim.units[me.heroId];
-  const dead = !h || h.dead; $('fallen').hidden = !dead || state.ended || sim.phase !== 1;
+  const dead = !h || h.dead; $('fallen').hidden = !dead || state.ended || sim.phase !== 1 || !!state.dying;
   if (dead && me.respawnAt) $('fallenT').textContent = `Next wave in ${Math.max(0, Math.ceil((me.respawnAt - sim.tick) / 30))} s`;
   if (SOLD.cueT > 0) { SOLD.cueT -= dt; $('drill').style.opacity = Math.min(1, SOLD.cueT * 1.5); }
   $('suppress').style.opacity = Math.min(0.85, (state.renderer.suppress || 0) * 0.9);
@@ -11807,7 +11824,7 @@ function depKey(c, e) {
 }
 function depHUD(dt) {
   const sim = state.sim; if (!sim || (sim.mode !== 'assault' && sim.mode !== 'campaign') || (sim.mission && (sim.mission.soldier || sim.mission.camp)) || state.ended || sim.mwin !== undefined) { if (DEP.open) depOpen(false); return; }
-  const h = localHero(); if (h && !h.dead) DEP.dismissed = false; else if (!DEP.open && !DEP.dismissed && sim.phase === 1) depOpen(true);
+  const h = localHero(); if (h && !h.dead) DEP.dismissed = false; else if (!DEP.open && !DEP.dismissed && sim.phase === 1 && !state.dying) depOpen(true);
   if (DEP.open) { $('fallen').hidden = true; DEP.t -= dt; if (DEP.t <= 0) { DEP.t = 0.4; depRender(); } }
 }
 
