@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v84</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v85</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1092,10 +1092,10 @@ class Sim {
     }
     if (has('paddies')) {
       let made = 0, guard = 0;
-      while (made < 14 && guard++ < 400) {
-        const x = r.range(-80, 150), z = r.range(-90, 90); const hw = r.range(12, 20), hd = r.range(8, 13);
+      while (made < 18 && guard++ < 400) { /* small flooded plots between dikes: a few paces of mud to wade, not a swamp */
+        const x = r.range(-80, 150), z = r.range(-90, 90); const hw = r.range(6, 10), hd = r.range(4, 7);
         if (!clear(x, z, Math.max(hw, hd) + 3)) continue;
-        this.zones.push({ x, z, hw, hd, speed: 0.45 }); keep.push({ x, z, r: Math.max(hw, hd) + 3 }); made++;
+        this.zones.push({ x, z, hw, hd, speed: 0.62 }); keep.push({ x, z, r: Math.max(hw, hd) + 3 }); made++;
       }
     }
     // cover: wooden mantlets (pavises) around objectives and across the middle of the field
@@ -2472,6 +2472,7 @@ class Sim {
     if (u.squad >= 0) { const sq = this.squads[u.squad]; if (sq.unitIds[0] === u.id && sq.aliveCount > 1) { if (!sq.def.fearless) sq.morale = Math.max(0, sq.morale - 25); this.events.push({ t: 'captain', sq: sq.id }); } }
     if (u.type === 'hero') { for (let i = 0; i < this.players.length; i++) { const p = this.players[i]; if (p.commanderId === u.id) { for (let k = 0; k < p.squads.length; k++) { const sq = this.squads[p.squads[k]]; if (sq.alive && !sq.def.fearless) sq.morale = Math.max(0, sq.morale - 30); } this.events.push({ t: 'commanderdown', p: p.idx }); } } }
     if (this.mode === 'assault' && u.team === this.mission.attacker && u.type !== 'horse') this.tickets = Math.max(0, this.tickets - 1);
+    if (cause === 'arrow') { ix *= 0.15; iz *= 0.15; iy = Math.min(iy, 0.3); } /* an arrow drops a man where he stands: he folds, he is not thrown */
     this.events.push({ t: 'death', id: u.id, ix, iy, iz, cause, killer: killerId });
     if (u.def.ai === 'cannon') this.explode(u.x, u.y + 0.6, u.z, u.team, u.id, 4.5, 90);
   }
@@ -3882,6 +3883,8 @@ Sim.prototype.setupMission = function (teams, aiPl) {
   if (!ass && !M.soldier) { // campaign balance: the enemy rank and file are a little softer, your allies a little harder (officers excepted)
     const cache = new Map(); const tune = (d, k, m) => { const key = d; if (!cache.has(key)) cache.set(key, new Map()); const c = cache.get(key); if (!c.has(k)) c.set(k, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return c.get(k); };
     for (const u of this.units) { if (u.type === 'horse' || u.officer || u.def.ai === 'cannon') continue; const foe = u.team !== M.side; u.def = foe ? tune(u.def, 0.82, 0.82) : tune(u.def, 1.12, 1.05); u.hp = u.def.hp; } }
+  if (!this.heroMode) for (const p of this.players) { if (!p.ai) continue; const h = this.units[p.heroId]; if (!h || h.type !== 'hero' || h.team === M.side || (p.gid !== undefined && this.mg[p.gid] && this.mg[p.gid].G.wound)) continue; /* (a general the story needs wounded, not dead, keeps his) an enemy general is a man: a tough one, not a boss (hero-sized health is for hero mode only) */
+    const hp = h.officer ? 240 : 120; if (h.def.hp > hp) { h.def = Object.assign({}, h.def, { hp }); h.hp = hp; } }
   if (M.siege && (ass || M.soldier)) { if (!ass) this.sector = 0; this.siegeInit(); if (!ass) this.sg.emp = this.sg.emp.filter(e => e.team === this.sg.D); } // a story chapter on the walls uses the siege engines too (the Jin of 1626 had no field guns)
   if (ass) { let n = 0; for (const u of this.units) if (u.team === M.attacker && u.type !== 'horse' && u.type !== 'hero') n++; this.tickets = M.tickets || Math.round(n * 0.8);
     this.assaultCap();  for (const o of this.objectives) o.rate *= 0.6; this.sector = 0; M.sectors[0].forEach(k => this.missionZone(k).hidden = false); this.assaultDirs(); this.mv.ph = 0; }
@@ -6382,7 +6385,7 @@ class Particles {
       const wd = this.wind && this.grav[i] <= 0 ? this.wind : null; this.pos[i * 3] += (this.vel[i * 3] + (wd ? wd[0] : 0)) * dt; this.pos[i * 3 + 1] += (this.vel[i * 3 + 1] + (wd ? wd[1] : 0)) * dt; this.pos[i * 3 + 2] += (this.vel[i * 3 + 2] + (wd ? wd[2] : 0)) * dt;
       if (this.grav[i] > 0) { const g = terrainH(this.pos[i * 3], this.pos[i * 3 + 2]) + 0.03; if (this.pos[i * 3 + 1] < g) { this.pos[i * 3 + 1] = g; this.vel[i * 3 + 1] *= -0.3; this.vel[i * 3] *= 0.5; this.vel[i * 3 + 2] *= 0.5; } }
       this.age[i] = t; const puff = this.smokey && this.seed[i] >= 0;
-      this.size[i] = puff ? this.s0[i] + (this.s1[i] - this.s0[i]) * (1 - (1 - t) * (1 - t) * (1 - t)) : this.s0[i] + (this.s1[i] - this.s0[i]) * t; /* smoke bursts out fast, then spreads slowly */
+      this.size[i] = puff ? this.s0[i] + (this.s1[i] - this.s0[i]) * Math.sqrt(t) * 0.9 : this.s0[i] + (this.s1[i] - this.s0[i]) * t; /* smoke bursts out fast, then spreads slowly */
       const fade = puff ? (t < 0.06 ? t / 0.06 : 1 - t * t * 0.55) : t < 0.15 ? t / 0.15 : (1 - t) / 0.85;
       this.col[i * 4] = this.cr[i] + (this.cr1[i] - this.cr[i]) * t; this.col[i * 4 + 1] = this.cg[i] + (this.cg1[i] - this.cg[i]) * t; this.col[i * 4 + 2] = this.cb[i] + (this.cb1[i] - this.cb[i]) * t; this.col[i * 4 + 3] = this.a0[i] * fade;
       i++;
@@ -6458,13 +6461,14 @@ const INK_SHIFT = { value: new THREE.Vector2() };
 // the shoulder by ARM_REACH, so swings, thrusts and gestures sweep wider arcs and read from further away
 const ARM_U = 0.345, ARM_F = 0.335, ARM_REACH = 1.12;
 (function inkShadows() {
-  const REAL = typeof window !== 'undefined' && window.MING_REAL;
+  const REAL = typeof window !== 'undefined' && window.MING_REAL, STYLE = typeof window !== 'undefined' && window.MING_STYLE;
   const C = THREE.ShaderChunk; let src = C.shadowmap_pars_fragment; if (!src || src.indexOf('getShadowBase') >= 0) return;
   const sig = 'float getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord )';
   if (src.indexOf(sig) < 0) return;
   src = src.replace(sig, 'float getShadowBase( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord )');
   const ink = `
-	#define REAL_SHADOW ${REAL ? 'true' : 'false'}
+	#define REAL_SHADOW ${REAL && STYLE ? 'true' : 'false'}
+	#define INK_TAPS ${REAL ? 6 : 12}
 	uniform vec2 inkShift;
 	float inkH( vec2 p ) { return fract( sin( dot( p, vec2( 127.1, 311.7 ) ) ) * 43758.5453 ); }
 	float inkV( vec2 p ) { vec2 i = floor( p ), f = fract( p ); f = f * f * ( 3.0 - 2.0 * f ); return mix( mix( inkH( i ), inkH( i + vec2( 1.0, 0.0 ) ), f.x ), mix( inkH( i + vec2( 0.0, 1.0 ) ), inkH( i + vec2( 1.0, 1.0 ) ), f.x ), f.y ); }
@@ -6480,9 +6484,9 @@ const ARM_U = 0.345, ARM_F = 0.335, ARM_REACH = 1.12;
 		// low-frequency wander only (features ~1-3 m): nothing finer than a few pixels, so nothing to shimmer
 		vec2 warp = ( vec2( inkF( w * 55.0 ), inkF( w * 55.0 + 19.3 ) ) - 0.5 ) * ( 2.0 / 140.0 );
 		float s = 0.0;
-		for ( int i = 0; i < 12; i ++ ) { float fi = float( i ); float a = fi * 2.39996; float r = sqrt( ( fi + 0.5 ) / 12.0 ) * ( 1.25 / 140.0 );
+		for ( int i = 0; i < INK_TAPS; i ++ ) { float fi = float( i ); float a = fi * 2.39996; float r = sqrt( ( fi + 0.5 ) / float( INK_TAPS ) ) * ( 1.25 / 140.0 );
 			s += getShadowBase( shadowMap, shadowMapSize, shadowBias, shadowRadius, shadowCoord + vec4( warp + vec2( cos( a ), sin( a ) ) * r, 0.0, 0.0 ) ); }
-		s /= 12.0;
+		s /= float( INK_TAPS );
 		// a wet wash: soft bloom, a little darker where the ink pools at the rim, paler and patchy inside
 		s = smoothstep( 0.05, 0.95, s + ( inkF( w * 90.0 ) - 0.5 ) * 0.35 );
 		float rim = s * ( 1.0 - s ) * 4.0; s -= rim * 0.2;
@@ -6502,7 +6506,11 @@ class Renderer {
     this.lowfx = !!(window.__boshin && window.__boshin.state && window.__boshin.state.lowfx);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !this.lowfx, powerPreference: 'high-performance' });
     this.safari = typeof navigator !== 'undefined' && /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent); /* Safari's WebGL is slower: native pixels, smaller shadow map */
-    this.renderer.setPixelRatio(this.lowfx || this.safari ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+    this.renderer.setPixelRatio(this.lowfx ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+    /* lag hunting: ?off=feet,rig,smoke,gear,shadows,faces in the address turns those off (e.g. .../realism/?off=feet) */
+    { const m = (typeof location !== 'undefined' && location.search.match(/[?&]off=([a-z,]+)/)) || null; this.off = new Set(m ? m[1].split(',') : []);
+      if (typeof ANIM !== 'undefined') { if (this.off.has('feet')) ANIM.fpOn = false; if (this.off.has('rig')) ANIM.on = false; }
+      if (this.off.has('shadows')) this.renderer.shadowMap.enabled = false; }
     this.renderer.shadowMap.enabled = !this.lowfx; this.renderer.shadowMap.type = THREE.BasicShadowMap;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(this.biome.fog);
@@ -6541,7 +6549,7 @@ class Renderer {
   buildLights() {
     this.hemi = new THREE.HemisphereLight(this.biome.hemi[0], this.biome.hemi[1], 0.65); this.scene.add(this.hemi); this.lightFlash = 0;
     const sun = new THREE.DirectionalLight(this.biome.sun[0], this.biome.sun[1]); this.sunDir = new THREE.Vector3(-70, 48, 85).normalize(); sun.position.copy(this.sunDir).multiplyScalar(150); sun.castShadow = true;
-    sun.shadow.mapSize.set(this.lowfx ? 512 : this.safari ? 1024 : 2048, this.lowfx ? 512 : this.safari ? 1024 : 2048); const sc = sun.shadow.camera; sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 10; sc.far = 400; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.09; sun.shadow.radius = 2;
+    sun.shadow.mapSize.set(this.lowfx ? 512 : 2048, this.lowfx ? 512 : 2048); const sc = sun.shadow.camera; sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 10; sc.far = 400; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.09; sun.shadow.radius = 2;
     this.sun = sun; this.scene.add(sun); this.scene.add(sun.target);
   }
   buildSky() {
@@ -6981,6 +6989,7 @@ class Renderer {
       shield: mk(new THREE.CylinderGeometry(0.5, 0.5, 1, 16), 0xa8844a), boss: mk(new THREE.CylinderGeometry(0.5, 0.5, 1, 10), 0x8a2a20),
       bow: mk(box, 0x5a3b1e, 2), bstring: mk(box, 0xe8e2cc, 2, false), arrow: mk(box, 0x8a6a3a, 1, false), rod: mk(box, 0x9aa0a6, 1, false), flask: mk(box, 0xc9a25a, 1, false), twig: mk(box, 0x6b6a3a, 9, false),
     };
+    if (this.off && this.off.has('gear')) for (const k of ['gb', 'gc', 'gy']) if (this.fig[k]) this.fig[k].visible = false;
     this.anims = [];
     this.tg = { wp: [0, 0, 0], wd: [0, 1, 0], rh: [0, 0, 0], lh: [0, 0, 0] };
     this.fdt = 1 / 60;
@@ -7125,7 +7134,7 @@ class Renderer {
     if (this.flags.instanceColor) this.flags.instanceColor.needsUpdate = true;
   }
   buildFX() {
-    this.smoke = new Particles(this.scene, this.lowfx ? 5000 : 9000, false); this.smoke.wind = [0.55, 0.04, 0.25]; this.suppress = 0;
+    this.smoke = new Particles(this.scene, this.lowfx ? 5000 : 9000, false); if (this.off && this.off.has('smoke')) this.smoke.points.visible = false; this.smoke.wind = [0.55, 0.04, 0.25]; this.suppress = 0;
     this.sparks = new Particles(this.scene, 2500, true);
     const TR = 260; this.tracerN = TR; this.tracers = []; this.tracerNext = 0;
     this.tracerMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), TR);
@@ -7396,10 +7405,15 @@ class Renderer {
           if (ev.shooter >= 0 && this.reveal) this.reveal[ev.shooter] = this.time + 3;
           if (ev.shooter >= 0 && ev.weapon !== 'gatling') this.anim(ev.shooter).recoil = 1;
           const f = ev.from, to = ev.to, d = ev.dir; const isMe = ev.shooter === heroId;
-          const mx = f[0] + d[0] * 0.9, my = f[1] + d[1] * 0.9 - 0.1, mz = f[2] + d[2] * 0.9;
+          let mx = f[0] + d[0] * 0.9, my = f[1] + d[1] * 0.9 - 0.1, mz = f[2] + d[2] * 0.9;
+          { const fpv = isMe && (this.tp || 0) < 0.3, am = ev.shooter >= 0 ? this.anims[ev.shooter] : null;
+            if (fpv) { const c = this.camera, fw = this.tmp.v.set(0, 0, -1).applyQuaternion(c.quaternion), up = this.tmp.v2.set(0, 1, 0).applyQuaternion(c.quaternion), rt = this.tmp.v3.set(1, 0, 0).applyQuaternion(c.quaternion), ads = units[heroId] && units[heroId].aiming;
+              mx = c.position.x + fw.x * 1.0 + up.x * (ads ? -0.06 : -0.16) + rt.x * (ads ? 0 : 0.12); my = c.position.y + fw.y * 1.0 + up.y * (ads ? -0.06 : -0.16) + rt.y * (ads ? 0 : 0.12); mz = c.position.z + fw.z * 1.0 + up.z * (ads ? -0.06 : -0.16) + rt.z * (ads ? 0 : 0.12); }
+            else if (am && am.muz && this.time - (am.muzT || -9) < 0.25) { mx = am.muz[0]; my = am.muz[1]; mz = am.muz[2]; } } /* the ball, flash and smoke leave the muzzle, not his eye */
           this.tracer([mx, my, mz], to, ev.weapon === 'gatling' ? 2.2 : isMe ? 1.2 : 1);
           if (ev.weapon === 'gatling') { for (let k = 1; k <= 8; k++) { const s2 = k / 9; this.smoke.spawn(f[0] + (to[0] - f[0]) * s2 + rnd(-0.3, 0.3), f[1] + (to[1] - f[1]) * s2 + 0.3 + rnd(-0.2, 0.2), f[2] + (to[2] - f[2]) * s2 + rnd(-0.3, 0.3), 0, 0.3, 0, 2.5 + s2 * 2, 0.3, 1.6, 0.8, 0.78, 0.74, 0.45, 0.8, -0.05); } this.burstSparks(to[0], to[1], to[2], 10, 5, 1, 0.6, 0.2, 0.4, 0.1); AUDIO.play('rocket', f[0], f[1], f[2], 1); }
-          this.flash(mx, my, mz, isMe ? 1.6 : 1.2, 0.07);
+          this.flash(mx, my, mz, isMe ? 3.0 : 2.4, 0.09); this.flash(mx + d[0] * 0.35, my + d[1] * 0.35, mz + d[2] * 0.35, isMe ? 1.6 : 1.3, 0.06); /* a hot white core and a tongue of flame out of the bore */
+          for (let k = 0; k < (isMe ? 14 : 9); k++) { const sp = rnd(5, 14); this.sparks.spawn(mx, my, mz, d[0] * sp + rnd(-1.2, 1.2), d[1] * sp + rnd(-0.8, 1.2), d[2] * sp + rnd(-1.2, 1.2), rnd(0.06, 0.16), rnd(0.12, 0.3), 0.04, 1, 0.8, 0.35, 1, 0.9, 2, 1, 0.35, 0.08); }
           this.puffSmoke(mx, my, mz, (ev.weapon === 'gatling' ? 3 : ev.weapon === 'revolver' ? 5 : isMe ? 14 : 9) * (this.sim.real ? 2 : 1), d[0] * 4, d[1] * 4, d[2] * 4, 1.1, ev.weapon === 'gatling' ? 4 : 9, 0.6, 3.6, 0.86, 0.5);
           if (ev.weapon !== 'gatling') this.puffSmoke(mx + d[0] * 2.5, my - 0.3, mz + d[2] * 2.5, 4, d[0] * 1.2, 0.2, d[2] * 1.2, 0.5, 14, 2.2, 5.5, 0.9, 0.32);
           if (ev.weapon !== 'gatling') AUDIO.play('shot', f[0], f[1], f[2], isMe ? (ev.weapon === 'revolver' ? 1.1 : 1.4) : 1);
@@ -7977,7 +7991,8 @@ class Renderer {
     if (xb) { segW(f.rifle, -0.3, 0.75, 0.05, 0.07); f.barrel.setMatrixAt(slot, Z); }
     else if (w === 'rifle') { const cl = u.club || (u.ctrl < 0 && u.st >= 1 && u.st <= 3); // clubbing: held by the barrel, the stock swung forward
       if (u.type === 'rifle_spencer') { if (cl) { segW(f.rifle, -0.15, 1.0, 0.045, 0.045); segW(f.barrel, 1.0, 1.5, 0.1, 0.1); } /* the three-eyed gun as a club: hold the end of the pole, the iron barrels are the head */ else { segW(f.rifle, -0.7, 0.45, 0.045, 0.045); segW(f.barrel, 0.45, 0.95, 0.1, 0.1); } }
-      else if (cl) { segW(f.rifle, 0.35, 1.45, 0.05, 0.075); segW(f.barrel, -0.1, 1.05, 0.026, 0.026); } else { segW(f.rifle, -0.3, 0.8, 0.05, 0.075); segW(f.barrel, 0.1, 1.25, 0.026, 0.026); } } else { f.rifle.setMatrixAt(slot, Z); f.barrel.setMatrixAt(slot, Z); }
+      else if (cl) { segW(f.rifle, 0.35, 1.45, 0.05, 0.075); segW(f.barrel, -0.1, 1.05, 0.026, 0.026); } else { segW(f.rifle, -0.3, 0.8, 0.05, 0.075); segW(f.barrel, 0.1, 1.25, 0.026, 0.026); }
+      if (!cl) { const mL = u.type === 'rifle_spencer' ? 0.95 : 1.25; a.muz = [P(mL, 0), P(mL, 1), P(mL, 2)]; a.muzT = this.time; } } /* where the muzzle really is, for the shot's flash, smoke and ball */ else { f.rifle.setMatrixAt(slot, Z); f.barrel.setMatrixAt(slot, Z); }
     if (w === 'revolver') segW(f.pistol, -0.25, 0.3, 0.08, 0.08); else f.pistol.setMatrixAt(slot, Z);
     if (rod > 0) { const hx2 = G[o + 15], hy2 = G[o + 16], hz2 = G[o + 17]; const rl = rod === 1 ? 0.95 : rod; this.seg(f.rod, slot, hx2, hy2, hz2, hx2 - dx * rl, hy2 - dy * rl, hz2 - dz * rl, rod === 1 ? 0.012 : 0.022, rod === 1 ? 0.012 : 0.022); } else f.rod.setMatrixAt(slot, Z);
     if (sjFl > 0) { const hx2 = G[o + 15], hy2 = G[o + 16], hz2 = G[o + 17]; this.seg(f.flask, slot, hx2, hy2 + 0.02, hz2, hx2 - dz * 0.03, hy2 + 0.19, hz2 + dx * 0.03, 0.1, 0.075); } else f.flask.setMatrixAt(slot, Z);
@@ -8997,7 +9012,7 @@ const ANIM = (function () {
   // whatever foot is down, so the bob, the drop on a long stride and the lower hips on a slope come from the feet.
   // In a fighting stance the ideal spots are the stance's own feet, so a lunge steps into the blow and a turn on the
   // spot is a few small pivot steps. Render-only; near figures only (far ones keep the cycle).
-  const FP = { on: true, near: 40 }, LT = 0.46, LS = 0.46;
+  const FP = { on: true, near: 24 }, LT = 0.46, LS = 0.46;
   const FT = new Float64Array(6), IL = new Float64Array(9);
   function legIK(out, o, side, tx, ty, tz) { // hip at (side*0.1, 0, 0) root-local; out gets hip, knee, foot
     const hx = side * 0.1; let dx = tx - hx, dy = ty, dz = tz; let d = Math.hypot(dx, dy, dz) || 1e-4;
@@ -9184,9 +9199,9 @@ const ANIM = (function () {
     this.sun.shadow.radius = 2; this.sun.shadow.bias = -0.0005; this.sun.shadow.normalBias = 0.05;
     // performance: plain PCF shadows from a smaller map, redrawn every other frame; render scale set by the quality level (F7)
     // soft PCF: shadow edges on walls and boards blend instead of stair-stepping
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; const q = realQ(); { const ms = this.safari ? 1024 : q === 2 ? 2048 : 1536; this.sun.shadow.mapSize.set(ms, ms); } if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; const q = realQ(); this.sun.shadow.mapSize.set(q === 2 ? 2048 : 1536, q === 2 ? 2048 : 1536); if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
     this.renderer.shadowMap.enabled = q > 0; this.renderer.shadowMap.autoUpdate = q === 2; this.shadowTick = 0;
-    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * (this.safari ? 1 : Math.min(window.devicePixelRatio || 1, 1.25))); this.resize();
+    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * Math.min(window.devicePixelRatio || 1, 1.25)); this.resize();
     // the air itself: dust and smoke thicken with distance
     sc.fog = new THREE.FogExp2(new THREE.Color(L.haze), this.sim.rain ? 0.0105 : this.biome.snow ? 0.0085 : 0.0072); this.realFog = sc.fog; sc.background = new THREE.Color(L.hazeFar);
     // the ink-print set dressing goes: no dragon, no auspicious clouds; mountains become hazy silhouettes
@@ -9472,7 +9487,7 @@ const ANIM = (function () {
     this.sun.shadow.radius = 1; this.sun.shadow.bias = -0.0005; this.sun.shadow.normalBias = 0.05;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; this.sun.shadow.mapSize.set(q === 2 ? 2048 : 1536, q === 2 ? 2048 : 1536); if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
     this.renderer.shadowMap.enabled = q > 0; this.renderer.shadowMap.autoUpdate = q === 2; this.shadowTick = 0;
-    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * (this.safari ? 1 : Math.min(window.devicePixelRatio || 1, 1.25))); this.resize();
+    this.renderer.setPixelRatio([0.7, 0.85, 1][q] * Math.min(window.devicePixelRatio || 1, 1.25)); this.resize();
     // restrained fog: linear, far away, the horizon colour (render.js eases near/far by view mode from fogBase)
     const fogC = C(L.fog); sc.fog = new THREE.Fog(fogC, 70, 330); this.fogBase = [this.biome.night ? 30 : 70, this.biome.night ? 170 : this.sim.rain ? 230 : 330]; this.realFog = null; sc.background = C(L.hor);
     if (this.dragon) { for (const k of ['body', 'fins', 'belly']) this.dragon[k].visible = false; this.dragon.head.visible = false; this.dragon.pearl.visible = false; this.dragon = null; }
