@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v111</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v112</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -314,6 +314,10 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 .shop { display: grid; gap: 6px; } .shop button { text-align: left; } .shop button small { display: block; color: var(--ink2); font-weight: 400; }
 #armsRow select { font: inherit; padding: 6px 8px; background: var(--paper2, #dcd2bc); border: 1px solid #b9ab88; color: var(--ink); max-width: 100%; }
 #hitdir { position: fixed; left: 50%; top: 50%; width: 240px; height: 240px; margin: -120px 0 0 -120px; pointer-events: none; opacity: 0; z-index: 22; transition: opacity .2s; }
+#dangers { position: fixed; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 22; }
+#dangers i { position: absolute; left: -45px; top: -12px; width: 90px; height: 24px; border-top: 4px solid rgba(255,196,90,.9); border-radius: 50% 50% 0 0; filter: drop-shadow(0 0 3px rgba(0,0,0,.8)); opacity: 0; transform-origin: 50% 50%; }
+#dangers i.th { width: 26px; left: -13px; border-radius: 0; border-top: none; border-left: 13px solid transparent; border-right: 13px solid transparent; border-bottom: 16px solid rgba(255,196,90,.9); height: 0; top: -8px; }
+#dangers i.now { border-top-color: #fff; border-bottom-color: #fff; filter: drop-shadow(0 0 6px rgba(255,220,160,.9)); }
 #hitdir i { position: absolute; left: 50%; top: 0; width: 90px; height: 24px; margin-left: -45px; border-top: 5px solid rgba(225,40,28,.95); border-radius: 50% 50% 0 0; filter: drop-shadow(0 0 4px rgba(0,0,0,.8)); }
 #hitby { position: fixed; left: 50%; top: 62%; transform: translateX(-50%); font: 600 13px sans-serif; color: #f0c6b8; text-shadow: 0 1px 3px #000; pointer-events: none; z-index: 22; opacity: 0; transition: opacity .3s; white-space: nowrap; }
 #mobj { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); top: 120px; width: min(300px, 70vw); background: rgba(16,13,10,.72); border-left: 3px solid #c23a44; color: #efe6d0; padding: 10px 12px; font-size: 13px; line-height: 1.4; z-index: 18; pointer-events: none; }
@@ -555,7 +559,7 @@ body.zgrid #comms { top: 158px; }
     </div>
   </div>
   <div id="hud" hidden>
-    <div id="speedlines"></div><div id="suppress"></div><div id="fpmarks"></div><div id="hitdir"><i></i></div><div id="mobj" hidden></div><div id="radio" hidden><b></b><span></span></div><div id="banner" hidden></div><div id="hitby"></div><div id="vignette"></div><div id="parry"></div>
+    <div id="speedlines"></div><div id="suppress"></div><div id="fpmarks"></div><div id="hitdir"><i></i></div><div id="dangers"></div><div id="mobj" hidden></div><div id="radio" hidden><b></b><span></span></div><div id="banner" hidden></div><div id="hitby"></div><div id="vignette"></div><div id="parry"></div>
     <div id="crosshair"><div class="dot"></div><div class="arr up"></div><div class="arr down"></div><div class="arr left"></div><div class="arr right"></div></div>
     <div id="hitmark"></div>
     <div class="hudbox" id="netbox"></div>
@@ -4586,9 +4590,9 @@ Sim.prototype.defKey = function (di) { const M = this.mission; let k = 0; for (c
 Sim.prototype.assaultThink = function () {
   const M = this.mission, A = M.attacker; const keys = M.sectors[this.sector];
   // manpower: every attacking man who falls costs a ticket; reserves march on while tickets last and the line is thin
-  let act = 0; for (const u of this.teamAlive[A]) if (!u.inactive && u.type !== 'horse' && u.def.ai !== 'cannon') act++;
+  let act = 0, rngN = 0; for (const u of this.teamAlive[A]) if (!u.inactive && u.type !== 'horse' && u.def.ai !== 'cannon') { act += u.def.ai === 'ranged' ? 0.35 : 1; if (u.def.ai === 'ranged') rngN++; } act = Math.round(act); /* archers and gunners stand back and seldom fall: counted at a third, so a standing archery company cannot fill the field and starve the assault of fresh men */
   const CAP = M.cap || 64;
-  if (act + Math.round(CAP / 3) <= CAP && this.tickets > 0) { const next = Object.keys(this.mg).find(g => this.mg[g].G.team === A && !this.mg[g].released); if (next) { this.mRelease(next); this.assaultDirs(); } }
+  if (act + Math.round(CAP / 3) <= CAP && this.tickets > 0) { const next = Object.keys(this.mg).find(g => this.mg[g].G.team === A && !this.mg[g].released); if (next) { this.mRelease(next); if (rngN >= CAP * 0.4) { const p = this.players[this.mg[next].p]; for (const id of p.squads) { const q = this.squads[id]; if (q.def.ai !== 'ranged') continue; for (const uid of q.unitIds) { const u = this.units[uid]; if (u.dead) continue; u.dead = true; u.hp = 0; u.inactive = true; u.trimmed = true; this.total[u.team]--; } q.count = 0; q.aliveCount = 0; q.alive = false; } } /* enough bows on the field already: this wave comes as blades only */ this.assaultDirs(); } }
   // the manpower pool is bigger than the field: fallen attackers come back up the road as fresh men while tickets last
   let revivable = false;
   if (this.tickets > 0 && this.tick % 45 === 0) { let room = Math.min(CAP - act, this.tickets), k = 0;
@@ -10564,6 +10568,21 @@ function renderStory() { setTimeout(renderChest, 0);
   box.innerHTML = STORY_TEXT.map((c, i) => { const ch = S.STORY[i]; const me = (side === 0 ? ch.ming : ch.jin)[0][0]; const lock = i > open;
     return `<button type="button" class="chapter${state.chapter === i ? ' on' : ''}${lock ? ' locked' : ''}" data-c="${i}" ${lock ? 'disabled' : ''}><span class="cn">${i + 1}. ${c.title}<small>${c.year}</small></span><span class="cw">You are ${me}</span><span class="cd">${lock ? 'Win the previous chapter to unlock.' : c.intro[side]}</span></button>`; }).join('');
 }
+// the strike cue (no text): for every man winding up a blow on you within reach, a mark at his bearing closes on the
+// crosshair as his wind-up runs - an arc for a cut, a point for a thrust - and turns white at the moment to parry.
+// The mark's distance from the centre is the time left: it reaches the inner ring as the blade comes.
+const DG = { pool: [], n: 0 };
+function dangerHUD(hero, sim) {
+  const box = $('dangers'); if (!box) return; let k = 0;
+  if (hero && !hero.dead && !Input.cmdMode && sim.phase === 1) {
+    for (const v of sim.teamAlive[1 - hero.team]) { if (v.st !== S.ST_WINDUP || v.mounted || v.type === 'horse') continue; const dx = v.x - hero.x, dz = v.z - hero.z, d = Math.hypot(dx, dz); if (d > v.def.reach + 1.6) continue;
+      const rel = ((Math.atan2(dx, dz) - v.yaw + 3 * Math.PI) % (2 * Math.PI)) - Math.PI; if (Math.abs(rel) > 1.3 && v.target !== hero.id) continue; /* he must be facing you, or on you */
+      const W = (v.ctrl >= 0 && !(sim.players[v.ctrl] && sim.players[v.ctrl].ai) ? 0.3 : v.def.windup * (v.aiHeavy ? 1.9 : 1) * (v.wMul || 1)); const prog = Math.min(1, v.stT / Math.max(0.1, W));
+      let el = DG.pool[k]; if (!el) { el = document.createElement('i'); box.appendChild(el); DG.pool[k] = el; } k++;
+      const thrust = v.atkDir === S.DIR_DOWN || v.weapon === 'yari'; el.className = (thrust ? 'th' : '') + (prog > 0.72 ? ' now' : '');
+      const ang = (-(Math.atan2(dx, dz) - Input.yaw)) * 180 / Math.PI, r = 150 - 85 * prog; el.style.transform = `rotate(${ang}deg) translateY(${-r}px)`; el.style.opacity = Math.min(1, 0.35 + prog * 0.9); } }
+  for (let i = k; i < DG.pool.length; i++) DG.pool[i].style.opacity = 0;
+}
 function storyCard(text, title) { const el = $('storycard'); el.innerHTML = (title ? `<b>${title}</b>` : '') + `<span>${text}</span>`; el.classList.add('show'); clearTimeout(state.storyT); state.storyT = setTimeout(() => el.classList.remove('show'), Math.min(14000, 3500 + text.length * 55)); }
 function heroHUD() {
   const sim = state.sim; if (!sim || !sim.heroMode) return; state.hhT = (state.hhT || 0) - 1; if (state.hhT > 0) return; state.hhT = 6;
@@ -11455,6 +11474,7 @@ function updateHUD(dt) {
   if (hero && !hero.dead && !Input.cmdMode && sim.phase === 1) { // a horseman bearing down on you: warn in time to dodge or brace
     state.cavT = (state.cavT || 0) - dt; if (state.cavT <= 0) { for (const v of sim.teamAlive[1 - hero.team]) { if (!v.mounted || Math.abs(v.hspeed || 0) < 5.5) continue; const dx = hero.x - v.x, dz = hero.z - v.z, d = Math.hypot(dx, dz); if (d > 28 || d < 3) continue; if ((dx * Math.sin(v.yaw) + dz * Math.cos(v.yaw)) / d < 0.9) continue;
         state.cavT = 5; state.hitDir = { ang: Math.atan2(v.x - hero.x, v.z - hero.z), t: 2 }; state.renderer.hitQ = { text: hero.weapon === 'yari' ? '騎! Horse charging — brace your spear (hold RMB)' : '騎! Horse charging — slide aside (double-tap A or D)', t: 2.2, c: '#ffcf7a' }; AUDIO.play('neigh', v.x, v.y, v.z, 1.2); break; } } }
+  dangerHUD(hero, sim);
   { const hd = state.hitDir; if (hd && hd.t > 0 && hero) { hd.t -= dt; $('hitdir').style.opacity = Math.min(1, hd.t); $('hitdir').style.transform = `rotate(${(-(hd.ang - Input.yaw)) * 180 / Math.PI}deg)`; } else $('hitdir').style.opacity = 0;
     const hb = state.hitBy; if (hb && hb.t > 0) { hb.t -= dt; $('hitby').textContent = hb.text; $('hitby').style.opacity = Math.min(1, hb.t); } else $('hitby').style.opacity = 0; }
   if (sim.real && typeof soldierHUD === 'function') soldierHUD(dt); else { $('fallen').hidden = true; }
