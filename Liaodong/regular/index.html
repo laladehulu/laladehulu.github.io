@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v107</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v108</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -490,7 +490,7 @@ body.zgrid #comms { top: 158px; }
           <div><span>Block (tap just before a hit to parry)</span><kbd>RMB</kbd></div>
           <div><span>Feint</span><kbd>RMB</kbd> during windup</div>
           <div><span>Sprint (drains stamina)</span>hold <kbd>Shift</kbd></div>
-          <div><span>Slide left / right / back (dodge)</span>double-tap <kbd>A</kbd> / <kbd>D</kbd> / <kbd>S</kbd></div>
+          <div><span>Sidestep left / right (dodge)</span>double-tap <kbd>A</kbd> / <kbd>D</kbd></div>
           <div><span>Switch weapon</span><kbd>Q</kbd> (or wheel while holding a gun or bow)</div><div><span>Gun: club / shoot</span><kbd>X</kbd></div>
           <div><span>Gun / bow: fire / aim (toggle) / reload</span><kbd>LMB</kbd> / <kbd>RMB</kbd> / <kbd>R</kbd></div>
           <div><span>Mount or dismount (near a horse) · otherwise kick</span><kbd>E</kbd></div>
@@ -1591,9 +1591,10 @@ class Sim {
     /* (was swallowed by a comment long ago; left off so combat tuning is unchanged) if (this.xc && u.ctrl < 0 && u.target >= 0) { const t = this.units[u.target]; if (t && t.ctrl >= 0 && !this.players[t.ctrl].ai) u.wMul = 1.3; } */
     if (this.xc && u.ctrl >= 0 && !u.champ) { // mashing: each swing in quick succession costs arm; past three in a breath the windups slow and telegraph
       u.spamR = Math.max(0, (u.spamR || 0) - (this.tick - (u.spamTk || 0)) / 45) + 1; u.spamTk = this.tick; u.wMul *= 1 + clamp(u.spamR - 3, 0, 4) * 0.12; }
+    if (this.xc && u.ctrl < 0 && !u.champ) u.wMul *= 0.82 + this.rng.next() * 0.42; /* no two cuts come at the same beat: the wind-up runs a little short or a little long */
     u.heavy = false; u.aiHeavy = u.ctrl < 0 && !u.ctrlActive && this.rng.next() < (u.def.overhead ? 0.4 : 0.18); u.st = ST_WINDUP; u.stT = 0; u.atkDir = dir; u.relQ = false; u.windupId++; u.swingHit = false; u.blocking = false; u.aiming = false; this.events.push({ t: 'windup', id: u.id, dir }); }
   footControl(u, keys, a, disabled) {
-    if (!u.champ && u.dodgeT > 0) { const k = u.dodgeT / 0.32, sp = (this.real ? 10.5 : 12.5) * (0.55 + 0.75 * k); u.mx = u.dodgeX * sp; u.mz = u.dodgeZ * sp; return; } // a low slide: fast off the mark, bleeding speed // mid-dash: the body is committed
+    if (!u.champ && u.dodgeT > 0) { const k = u.dodgeT / 0.32, sp = (this.real ? 4.6 : 5.4) * (0.55 + 0.75 * k); u.mx = u.dodgeX * sp; u.mz = u.dodgeZ * sp; return; } // a sidestep of a pace and a half (about 1.4 m), fast off the mark, bleeding speed; mid-step the body is committed
     if (disabled || u.airborne) { u.mx = 0; u.mz = 0; return; }
     const fx = sin(u.yaw), fz = cos(u.yaw), rx = -cos(u.yaw), rz = sin(u.yaw);
     let mx = 0, mz = 0;
@@ -1603,7 +1604,7 @@ class Sim {
     if (l > 0) {
       let sp = u.def.speed * this.zoneSpeed(u.x, u.z, mx, mz);
       if ((keys & KEY_S) && !(keys & KEY_W)) sp *= 0.65;
-      if ((u.st === ST_WINDUP || u.st === ST_RELEASE) && !u.chg) sp *= 0.7; else if (u.st === ST_STUN) sp = 0;
+      if ((u.st === ST_WINDUP || u.st === ST_RELEASE) && !u.chg) sp *= this.xc && u.st === ST_RELEASE && (keys & KEY_W) ? 1 : 0.7; else if (u.st === ST_STUN) sp = 0; /* xc: a cut thrown while stepping forward keeps the step - the step and the cut are one movement, as for the AI */
       if (u.drawT > 0) sp *= 0.55; // a drawn bow: you walk, you don't run
       if (u.blocking) sp *= 0.85; if (u.aiming) sp *= 0.5; if (u.st === ST_RELOAD) sp *= 0.8;
       // sprint: hold Shift while moving forward; burns stamina, and a winded man must get his breath back
@@ -1614,8 +1615,8 @@ class Sim {
     } else { u.mx = 0; u.mz = 0; u.sprint = false; }
     if ((a & (A_DASHL | A_DASHR)) && !u.airborne) { const sd = (a & A_DASHR) ? 1 : -1; mx = rx * sd; mz = rz * sd; a |= A_DODGE; keys = (keys & ~(KEY_W | KEY_S | KEY_A | KEY_D)) | (sd > 0 ? KEY_D : KEY_A); }
     const l2 = len(mx, mz);
-    if (!u.champ && (a & A_DODGE) && !u.airborne && (u.dodgeCd || 0) <= 0 && u.st !== ST_STUN && u.st !== ST_RELEASE) { // a quick sidestep or hop back
-      const ddx = l2 > 0 ? mx / l2 : -fx, ddz = l2 > 0 ? mz / l2 : -fz; u.dodgeCd = 0.85; u.dodgeT = 0.32; u.iframe = 0.3; u.dodgeX = ddx; u.dodgeZ = ddz; u.fat = Math.min(100, (u.fat || 0) + 6);
+    if (!u.champ && (a & A_DODGE) && (a & (A_DASHL | A_DASHR)) && l2 > 0 && !u.airborne && (u.dodgeCd || 0) <= 0 && u.st !== ST_STUN && u.st !== ST_RELEASE) { // a quick sidestep (there is no hop back: a man who gives ground walks)
+      const ddx = mx / l2, ddz = mz / l2; u.dodgeCd = 0.85; u.dodgeT = 0.32; u.iframe = 0.3; u.dodgeX = ddx; u.dodgeZ = ddz; u.fat = Math.min(100, (u.fat || 0) + 6);
       if (u.st === ST_WINDUP || u.st === ST_RECOVER) { u.st = ST_IDLE; u.stT = 0; } u.blocking = false;
       this.events.push({ t: 'dodge', id: u.id, x: u.x, y: u.y, z: u.z, side: (keys & KEY_A) ? -1 : (keys & KEY_D) ? 1 : 0, back: (keys & KEY_S) ? 1 : 0, fwd: 0 }); return; }
     if (u.champ && (a & A_DODGE) && !u.airborne && u.downT <= 0) { if (l2 > 0) this.champDodge(u, mx / l2, mz / l2, keys); else this.champDodge(u, -fx, -fz, KEY_S); return; }
@@ -2179,6 +2180,7 @@ class Sim {
           if (u.ctrl < 0) this.cavCharge(u, tgt, d); // shock cavalry: run up, ride through, wheel, come again
           else { const desired = d > 9 ? def.speed : (d > reach ? 4 : 2.5); this.cavSteer(u, tgt.x, tgt.z, desired); }
         } else if (this.pointWait(u, tgt, d, reach)) { }
+        else if (this.xcMeasure(u, tgt, d, reach)) { }
         else if (d > reach - 0.5) { const sp = def.speed * (u.st === ST_IDLE ? 1 : 0.6) * (u.rushT > 0 ? 1.3 : 1); let gx = tgt.x, gz = tgt.z;
           const eg = !tight && !u.mounted ? this.engaged()[tgt.id] - (u.target === tgt.id && Math.abs(tgt.x - u.x) + Math.abs(tgt.z - u.z) < 4.5 ? 1 : 0) : 0;
           if (eg >= 1 && d < reach + 6) { /* someone is already on him: come round his side instead of queueing behind your comrade */ const a0 = atan2(u.x - tgt.x, u.z - tgt.z), sd = (u.id & 1) ? 1 : -1, a = a0 + sd * Math.min(1.4, 0.55 * eg), r = reach * 0.85; gx = tgt.x + sin(a) * r; gz = tgt.z + cos(a) * r; }
@@ -2186,7 +2188,7 @@ class Sim {
         else if (!this.spearKeep(u, tgt, d, reach)) { u.mx = 0; u.mz = 0; }
         if (u.role && sq && !sq.routing && !xl && !yy) { const sd = len(u.slotX - u.x, u.slotZ - u.z); if (sd > 2.2 && d > reach) this.steerFoot(u, u.slotX, u.slotZ, def.speed); else if (d > reach && sd < 2.2) { u.mx *= 0.3; u.mz *= 0.3; } }
         const eager = u.mounted ? 0.35 : u.role === 'spear' && tgt.entT > 0 ? 0.35 : u.role === 'brush' ? 0.2 : u.role === 'shield' ? 0.05 : 0.09;
-        if (d <= (u.mounted ? reach + Math.abs(u.hspeed) * 0.4 : reach + 0.3) && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && xl !== 1 && !yy && !(reach >= 3 && !u.mounted && d < reach * 0.45) /* too close for the point: back off first */ && this.rng.next() < eager && this.xcSpaceOk(u, tgt)) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
+        if (d <= (u.mounted ? reach + Math.abs(u.hspeed) * 0.4 : reach + 0.3) && Math.abs(tgt.y - u.y) < 2.5 && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && u.entT <= 0 && xl !== 1 && !yy && !(reach >= 3 && !u.mounted && d < reach * 0.45) /* too close for the point: back off first */ && u.xcM !== this.tick && this.rng.next() < eager && this.xcSpaceOk(u, tgt)) { if (this.xcToken(u, tgt)) this.startWindup(u, this.aiPickDir(u)); }
         if (this.xc && u.circleT > 0 && !u.mounted && u.st === ST_IDLE && !xl && !yy) { u.circleT -= DT; const sd = (u.id & 1) ? 1 : -1, nx = dx / (d || 1), nz = dz / (d || 1), keep = reach + 1.1; const rad = (d - keep) * 1.6; u.mx = nx * rad + nz * sd * 1.4; u.mz = nz * rad - nx * sd * 1.4; if (!u.blocking && this.rng.next() < 0.02) { u.blocking = true; u.blockT = 0; u.blockDir = DIR_UP; u.blockHold = 0.5; } }
         this.aiBlock(u, tgt);
       }
@@ -2199,7 +2201,7 @@ class Sim {
     if (u.blocking) { u.blockHold -= DT; if (u.blockHold <= 0) u.blocking = false; }
     if (u.blockPend >= 0) { u.blockPend -= DT; if (u.blockPend <= 0) { u.blockPend = -1; if ((u.st === ST_IDLE || u.st === ST_RECOVER) && u.flinchT <= 0) { u.st = ST_IDLE; u.stT = 0; u.blocking = true; u.blockT = 0; u.blockDir = u.blockPendDir; u.blockHold = 0.75; } } }
     if (!u.mounted) {
-      const sm = (u.st === ST_WINDUP || u.st === ST_RELEASE) ? 0.45 : (u.st === ST_AIM && !def.skirmish) || u.st === ST_STUN ? 0 : (u.st === ST_RELOAD) ? 0.6 : 1;
+      const sm = (u.st === ST_WINDUP || u.st === ST_RELEASE) ? (u.xcIn ? 1 : 0.45) : (u.st === ST_AIM && !def.skirmish) || u.st === ST_STUN ? 0 : (u.st === ST_RELOAD) ? 0.6 : 1;
       u.mx *= sm; u.mz *= sm;
     }
     if (!(u.faceLock > 0)) this.turnTo(u, wantYaw, (u.st === ST_AIM ? 2.4 : u.st === ST_WINDUP || u.st === ST_RELEASE ? 3.5 : 6) * DT);
@@ -2381,6 +2383,7 @@ class Sim {
     if (best.team === att.team) { att.st = ST_STUN; att.stT = 0; att.stunDur = 0.3; this.events.push({ t: 'obstruct', id: att.id, x: (att.x + best.x) / 2, y: att.y + 1.3, z: (att.z + best.z) / 2 }); return; }
     const f = brc / R; att.xcMul = dir === DIR_DOWN ? 0.6 + 0.5 * T : 0.45 + 0.75 * f;
     this.resolveMeleeHit(att, best); att.xcMul = 0;
+    if (att.xcIn && !best.dead && att.st === ST_RELEASE && this.rng.next() < 0.3) att.xcPress = this.tick + 24; /* the cut went home: he presses with a second instead of stepping out */
   }
   tryMeleeHit(att) {
     const dir = att.atkDir;
@@ -2447,7 +2450,7 @@ class Sim {
     }
     if ((def_.mounted || def_.type === 'horse' || def_.mount >= 0) && !(att.mounted || att.mount >= 0)) { const hs = def_.type === 'horse' ? def_ : def_.mounted ? def_ : this.units[def_.mount]; const fast = hs && Math.abs(hs.hspeed) > 5; dmg *= fast ? 0.95 : 1.4; if (hs) hs.hspeed *= fast ? 0.85 : 0.35; } // a galloping horseman is a glancing target; a halted one is cut down
     def_.lastAttacker = att.id;
-    const kb = (dir === DIR_UP ? 2.2 : 1.6) * (heavy ? 1.8 : 1) * (att.chg ? 1.6 : 1);
+    const kb = (dir === DIR_UP ? 2.2 : 1.6) * (heavy ? 1.8 : 1) * (att.chg ? 1.6 : 1) * (this.xc && att.ctrl >= 0 && !this.players[att.ctrl].ai && !def_.champ ? 1.3 : 1);
     if (att.def.brush && def_.type !== 'horse') this.brushCatch(def_, att, nx, nz, false, hx, hy, hz);
     this.posture(def_, dmg * (heavy ? 0.9 : 0.45) * (att.def.posture || 1), att);
     this.applyDamage(def_, dmg, att.id, nx * kb, heavy ? 1.2 : 0, nz * kb, 'melee', hx, hy, hz); if (att.chg && !def_.dead && def_.type !== 'horse' && !def_.mounted && def_.mount < 0) { def_.downT = Math.max(def_.downT || 0, heavy ? 0.9 : 0.5); att.vx *= 0.3; att.vz *= 0.3; }
@@ -5021,6 +5024,43 @@ Sim.prototype.pointWait = function (u, tgt, d, reach) {
   const want = tr + 0.45, nx = (tgt.x - u.x) / (d || 1), nz = (tgt.z - u.z) / (d || 1), sd = (u.id & 1) ? 1 : -1, rad = clamp((d - want) * 2, -2, 2);
   u.mx = nx * rad + nz * sd * 0.9; u.mz = nz * rad - nx * sd * 0.9; if (!u.blocking && this.rng.next() < 0.03) { u.blocking = true; u.blockT = 0; u.blockDir = DIR_DOWN; u.blockHold = 0.5; } return true;
 };
+// ---- measure (xc, AI blades only): a swordsman does not walk up into a man's face and stand there. He stops a pace
+// outside his own reach, shuffles, and when he goes he goes with the cut: the step in and the blow are one movement, the
+// blow lands a pace inside the reach, and in the recovery he gives the pace back. Each man has his own tempo, and now and
+// then he feints the step without the cut and cuts on the second step. (紀效新書 on the dao: 進步 with the strike; the
+// 殺手 drill paces are the step-and-cut, not a stand-and-cut.)
+Sim.prototype.xcMeasure = function (u, tgt, d, reach) {
+  if (!this.xc || (u.ctrl >= 0 && !(this.players[u.ctrl] && this.players[u.ctrl].ai)) || u.mounted || u.mount >= 0 || u.champ || u.weapon === 'yari' || u.def.brush || !tgt || tgt.dead || tgt.mounted || tgt.mount >= 0 || tgt.type === 'horse' || u.entT > 0 || u.rushT > 0 || u.wounded) return false;
+  const nx = (tgt.x - u.x) / (d || 1), nz = (tgt.z - u.z) / (d || 1);
+  if (u.st === ST_WINDUP || u.st === ST_RELEASE) { /* the step that carries the cut: easy in the wind-up, the last of it with the blade */
+    if (!u.xcIn) return false; const want = reach * 0.74; const sp = d > want ? Math.min(u.st === ST_RELEASE ? u.def.speed * 1.1 : 2.4, (d - want) * (u.st === ST_RELEASE ? 9 : 3)) : 0;
+    u.mx = nx * sp; u.mz = nz * sp; return true; }
+  u.xcIn = 0;
+  if (u.st !== ST_IDLE && u.st !== ST_RECOVER) return false;
+  if (d > reach + 1.7) return false; /* still coming on: the approach code */
+  if (!(u.xcT > 0)) { u.xcT = 0.7 + this.rng.next() * 0.65; u.xcPh = this.rng.next() * 6.28; } const mt = u.xcT;
+  const meas = reach + 0.35 + (mt - 1) * 0.4, e = d - meas, sq = u.squad >= 0 ? this.squads[u.squad] : null, lined = sq && sq.front;
+  if (u.xcFe > this.tick) { const sp = Math.min(u.def.speed * 0.55, Math.max(0, d - reach * 0.9) * 4); u.mx = nx * sp; u.mz = nz * sp; return true; } /* the feint: a half step in, no blade */
+  const press = u.xcPress > this.tick;
+  if (u.st === ST_RECOVER) { const sp = press ? 0 : Math.min(u.def.speed * 0.7, Math.max(0, -e) * 2.5); u.mx = -nx * sp; u.mz = -nz * sp; return true; } /* the recovery gives the pace back, unless he is pressing */
+  if (press && u.st === ST_IDLE && u.flinchT <= 0 && !(u.hrT > 0) && d < reach + 0.2) { u.xcPress = 0; if (this.xcSpaceOk(u, tgt) && this.xcToken(u, tgt)) { this.startWindup(u, this.aiPickDir(u)); if (u.st === ST_WINDUP) u.xcIn = 1; } u.mx = 0; u.mz = 0; u.xcM = this.tick; return true; }
+  /* holding the measure: close or open to it, and drift a little off the line so he is not a post */
+  let sp = 0; const gave = u.xcGave || 0; /* he gives a pace, not the field: past a metre of ground given he stands, and a crowded man who cannot step back cuts */
+  if (e < -0.3) { if (gave < 1.0) { sp = -Math.min(u.def.speed * 0.6, -e * 2.2); u.xcGave = gave - sp * DT; } } else { if (e > 0.35) sp = Math.min(u.def.speed * 0.8, e * 2.5); u.xcGave = Math.max(0, gave - 0.6 * DT); }
+  const drift = (u.blocking ? 0.15 : 0.45) * (lined ? 0.3 : 1) * sin(this.tick * 0.07 * mt + u.xcPh);
+  u.mx = nx * sp - nz * drift; u.mz = nz * sp + nx * drift;
+  if (Math.abs(e) <= 0.5 && !u.blocking && u.st === ST_IDLE && this.rng.next() < 0.03) this.xcGuard(u); /* at measure the guard comes up now and then */
+  u.xcM = this.tick; /* this tick the measure code holds him: the stand-and-cut below is off */
+  if (Math.abs(e) <= 0.35) { if (!(u.xcAt > 0)) u.xcAt = this.tick + Math.round((5 + this.rng.next() * 20) * mt); }
+  else if (e < -0.5 && u.st === ST_IDLE && this.rng.next() < (gave >= 1.0 ? 0.16 : 0.07)) u.xcAt = this.tick; /* crowded inside his measure: he gives ground, or cuts from where he stands */
+  else if (!u.xcFeD && u.xcFe !== -1) u.xcAt = 0;
+  if (u.xcAt > 0 && this.tick >= u.xcAt && u.st === ST_IDLE && u.flinchT <= 0 && !u.blocking && !(u.hrT > 0) && Math.abs(tgt.y - u.y) < 2.5) {
+    if (u.xcFe === -1) u.xcFe = 0; /* the cut that follows a feint goes without another look */
+    else if (this.rng.next() < 0.14 && !lined) { u.xcFe = this.tick + 8; u.xcAt = this.tick + 10 + this.rng.int(8); u.xcFeD = 1; return true; }
+    u.xcAt = 0; if (this.xcSpaceOk(u, tgt) && this.xcToken(u, tgt)) { this.startWindup(u, this.aiPickDir(u)); if (u.st === ST_WINDUP) u.xcIn = 1; } }
+  if (u.xcFeD && u.xcFe <= this.tick) { u.xcFeD = 0; u.xcFe = -1; }
+  return true;
+};
 Sim.prototype.yyAI = function (u, sq, tgt, d, reach) {
   const r = u.role; if (!r || r === 'cook' || !sq.def.yuanyang) return false;
   if (sq.aliveCount !== undefined && sq.count && sq.aliveCount < sq.count * 0.5) return false;
@@ -5090,6 +5130,7 @@ Sim.prototype.hitReact = function (u, a, kind, heavy, blocked) {
     else k = r < 0.6 ? 0 : r < 0.85 ? 1 : 2;
     d = k === 2 ? 0.34 : k === 1 ? 0.3 : 0.27; if (kind === 'shot') d *= 0.8; }
   if (u.ctrl >= 0 && !(this.players[u.ctrl] && this.players[u.ctrl].ai)) d *= 0.6;
+  else if (a && a.ctrl >= 0 && !(this.players[a.ctrl] && this.players[a.ctrl].ai) && !blocked) d *= 1.3; /* a player's blow is seen to land: the man he hits reels a little longer (still inside the 2 s budget) */
   // the 2-second budget: never reeling more than HR_CAP seconds out of any HR_WIN ticks
   const t = this.tick; let used = 0; for (const iv of u.hrL) used += Math.max(0, Math.min(iv[1], t) - Math.max(iv[0], t - HR_WIN));
   d = Math.min(d, HR_CAP - used * DT); if (d < 0.1) return flick();
@@ -5605,6 +5646,10 @@ const AUDIO = (() => {
     const o = ctx.createOscillator(); o.frequency.value = 3700 + Math.random() * 500; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05 * k, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + 2 + k * 4);
     o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 6.5);
   }
+  function punch(k) { /* the beat after a blow of your own lands: the world drops away for a tenth of a second and comes back, so the hit stands out of the din */
+    if (!ctx || !master) return; const t = ctx.currentTime, g = master.gain, base = 0.6; k = Math.min(1, k || 0.6);
+    g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(base * (1 - 0.6 * k), t + 0.035); g.setValueAtTime(base * (1 - 0.6 * k), t + 0.035 + 0.09 * k); g.linearRampToValueAtTime(base, t + 0.035 + 0.09 * k + 0.25);
+  }
   // ambient beds: wind always, distant battle noise that swells with the fighting
   let rainOn = false, fireLvl = 0; function setRain(v) { rainOn = !!v; } function setFire(v) { fireLvl = Math.max(0, Math.min(1, v)); }
   function ambient(level) {
@@ -5624,7 +5669,7 @@ const AUDIO = (() => {
     if (!amb.loops) amb.rain.g.gain.setTargetAtTime(rainOn ? 0.05 : 0, t, 2); amb.rumble.g.gain.setTargetAtTime(rainOn ? 0.03 : 0, t, 2);
     amb.roar.g.gain.setTargetAtTime(0.06 * Math.min(1, level), t, 1.2); amb.roar.fl.frequency.setTargetAtTime(500 + 250 * Math.sin(amb.t * 0.31), t, 0.6);
   }
-  return { init, play, setListener, ambient, setRain, setFire, shellshock, spatial: (x, y, z, v, m) => ctx ? spatial(x, y, z, v, m) : null, listener, get verbIn() { return verbIn; }, get ready() { return !!ctx; }, get ctx() { return ctx; }, get master() { return master; }, get noise() { return noiseBuf; } };
+  return { init, play, setListener, ambient, setRain, setFire, shellshock, punch, spatial: (x, y, z, v, m) => ctx ? spatial(x, y, z, v, m) : null, listener, get verbIn() { return verbIn; }, get ready() { return !!ctx; }, get ctx() { return ctx; }, get master() { return master; }, get noise() { return noiseBuf; } };
 })();
 
 </script>
@@ -7857,13 +7902,13 @@ class Renderer {
               AUDIO.play(armd ? 'strikearmor' : heavyB ? 'strikeheavy' : 'strike', ev.x, ev.y, ev.z, mine ? 1.25 : 0.95);
               if (!armd) AUDIO.play('flesh', ev.x, ev.y, ev.z, mine ? 1.3 : 0.8); { const me2 = ev.id === heroId; AUDIO.play('thud', ev.x, ev.y, ev.z, mine ? (heavyB || ev.killed ? 2.2 : 1.7) : me2 ? 1.6 : 0.75); if (mine || me2) AUDIO.play('bodythump', ev.x, ev.y - 0.4, ev.z, mine ? (heavyB || ev.killed ? 1.6 : 1.25) : 1.1); } /* layered: the steel, the meat, the weight */
             } else if (shot && vic) { this.dust(ev.x, ev.y, ev.z, 3, dx * 0.6, 0.4, dz * 0.6, 0.25, 0.45, 0.12, 0.45); this.blood(ev.x, ev.y, ev.z, 4, dx * 2.5, 0.6, dz * 2.5); AUDIO.play('strike', ev.x, ev.y, ev.z, 0.5); }
-            if (vic && ev.id !== heroId && (melee || shot)) this.hitImpulse(ev.id, dx, dz, k * (shot ? 0.6 : 1), heavyB);
-            if (melee && att && ev.cause !== 'trample') { const aa = this.anim(att.id); aa.dragT = armd ? 0.07 : heavyB || ev.killed ? 0.16 : 0.11; if (mine) { this.swDrag = aa.dragT + 0.02; this.bladeBlood = Math.min(1, (this.bladeBlood || 0) + (ev.killed ? 0.4 : 0.22)); } }
-            if (mine && melee) { this.recoil = Math.max(this.recoil, heavyB ? 0.75 : 0.45); this.recoilRoll = (Math.random() - 0.5) * (heavyB ? 1.4 : 0.8); this.shake = Math.max(this.shake, heavyB || ev.killed ? 0.35 : 0.18);
-              if (this.imp) { this.imp.fov = Math.min(9, this.imp.fov + (heavyB ? 3 : 1.2)); this.imp.vp -= heavyB ? 2.2 : 1.1; }
-              this.hitMarkPop = ev.killed ? 2 : 1; if (ev.killed) AUDIO.play('killcue', undefined, 0, 0, 0.9); } }
+            if (vic && ev.id !== heroId && (melee || shot)) this.hitImpulse(ev.id, dx, dz, k * (shot ? 0.6 : 1) * (mine && melee && this.sim.xc ? 1.45 : 1), heavyB); /* your own blow (xc): the man is thrown and bent harder, so you see it land */
+            if (melee && att && ev.cause !== 'trample') { const aa = this.anim(att.id); aa.dragT = (armd ? 0.07 : heavyB || ev.killed ? 0.16 : 0.11) * (mine && this.sim.xc ? 1.4 : 1); if (mine) { this.swDrag = aa.dragT + 0.02; this.bladeBlood = Math.min(1, (this.bladeBlood || 0) + (ev.killed ? 0.4 : 0.22)); } }
+            if (mine && melee) { const xf = this.sim.xc ? 1.5 : 1; this.recoil = Math.max(this.recoil, (heavyB ? 0.75 : 0.45) * xf); this.recoilRoll = (Math.random() - 0.5) * (heavyB ? 1.4 : 0.8) * xf; this.shake = Math.max(this.shake, (heavyB || ev.killed ? 0.35 : 0.18) * xf);
+              if (this.imp) { this.imp.fov = Math.min(9, this.imp.fov + (heavyB ? 3 : 1.2) * xf); this.imp.vp -= (heavyB ? 2.2 : 1.1) * xf; if (this.sim.xc) { this.imp.vx -= heavyB || ev.killed ? 2.4 : 1.4; this.imp.vr += (Math.random() - 0.5) * 6; } } /* xc: the weight of the cut goes through your shoulders: a lurch into the blow and a tilt */
+              this.hitMarkPop = ev.killed ? 2 : 1; if (ev.killed) AUDIO.play('killcue', undefined, 0, 0, 0.9); if (this.sim.xc && AUDIO.punch) AUDIO.punch(ev.killed ? 1 : heavyB ? 0.8 : 0.55); } }
           if (ev.id === heroId) { this.hitFlash = 0.6; this.shake = Math.max(this.shake, 0.6); const hh = units[heroId], a = ev.att >= 0 ? units[ev.att] : null; if (hh && ev.cause !== 'fire') { const k = clamp((ev.dmg || 20) / Math.max(40, hh.def.hp * 0.45), 0.25, 1.4) * (ev.cause === 'trample' || ev.cause === 'explosion' ? 1.4 : 1); this.impact(a ? a.x : ev.x, a ? a.z : ev.z + 0.01, k, ev.cause === 'trample' || ev.cause === 'explosion'); } }
-          if (ev.att === heroId && ev.id !== heroId && (ev.cause === 'melee' || ev.cause === 'spear')) { const at0 = units[heroId], hv = !!(at0 && (at0.heavy || at0.lunge)) || (ev.dmg || 0) >= 60; this.hitMark = ev.killed ? 0.5 : 0.32; this.hitMarkHead = false; AUDIO.play('hitmark', undefined, 0, 0, 0.8); this.hitstop = Math.max(this.hitstop, ev.killed ? 0.035 : hv ? 0.03 : 0); }
+          if (ev.att === heroId && ev.id !== heroId && (ev.cause === 'melee' || ev.cause === 'spear')) { const at0 = units[heroId], hv = !!(at0 && (at0.heavy || at0.lunge)) || (ev.dmg || 0) >= 60; this.hitMark = ev.killed ? 0.5 : 0.32; this.hitMarkHead = false; AUDIO.play('hitmark', undefined, 0, 0, 0.8); this.hitstop = Math.max(this.hitstop, this.sim.xc ? (ev.killed ? 0.11 : hv ? 0.085 : 0.055) : ev.killed ? 0.035 : hv ? 0.03 : 0); }
           break;
         }
         case 'block': {
@@ -7880,7 +7925,7 @@ class Renderer {
           if (ev.att === heroId) { this.hitstop = Math.max(this.hitstop, 0.07); this.shake = Math.max(this.shake, 0.45); this.hitQ = { text: 'GUARD CRUSHED', t: 1, c: '#ffb04a' }; } if (ev.by === heroId) { this.shake = Math.max(this.shake, 0.8); this.hitQ = { text: 'Heavy blow — parry it, don\'t block', t: 1.6, c: '#ff5a4a' }; } break; }
         case 'entangle': { this.dust(ev.x, ev.y, ev.z, 5, 0, 0.6, 0, 0.6, 0.4, 0.1, 0.5); if (ev.id === heroId) this.hitQ = { text: 'SNARED by wolf-brush — dodge out', t: 1.2, c: '#9fe07a' }; break; }
         case 'hitq': { if (ev.att === heroId) { const T = { clean: ['CLEAN', '#fff'], tip: ['TIP — perfect measure', '#9fe0ff'], jammed: ['JAMMED — too close for a spear', '#ff9a7a'], graze: ['GRAZE — step in', '#ccc'], pinned: ['PINNED', '#9fe07a'], deathblow: ['致命 DEATHBLOW', '#ffd36a'] }[ev.q] || ['HIT', '#fff'];
-            this.hitQ = { text: (ev.heavy ? 'HEAVY · ' : '') + T[0], t: 0.9, c: T[1] }; this.hitstop = Math.max(this.hitstop, ev.heavy || ev.q === 'deathblow' ? 0.09 : ev.q === 'tip' ? 0.05 : 0.03); if (ev.heavy || ev.q === 'deathblow') this.shake = Math.max(this.shake, 0.45); }
+            this.hitQ = { text: (ev.heavy ? 'HEAVY · ' : '') + T[0], t: 0.9, c: T[1] }; this.hitstop = Math.max(this.hitstop, (ev.heavy || ev.q === 'deathblow' ? 0.09 : ev.q === 'tip' ? 0.05 : 0.03) * (this.sim.xc ? 1.3 : 1)); if (ev.heavy || ev.q === 'deathblow') this.shake = Math.max(this.shake, 0.45); }
           /* hit mist, dust and red sparks on the struck man removed (user: no green/red particles on fallen men) */ break; }
         case 'obstruct': { AUDIO.play('thud', ev.x, ev.y, ev.z, 0.8); if (ev.id === heroId) { this.hitQ = { text: 'BLADE CAUGHT on a comrade — stab (R) in formation', t: 1.4, c: '#e0b070' }; this.shake = Math.max(this.shake, 0.3); } break; }
         case 'chargeatk': { const me3 = ev.id === heroId; AUDIO.play('kiai', ev.x, ev.y + 1.5, ev.z, me3 ? 1.1 : 0.7); this.dust(ev.x, ev.y + 0.1, ev.z, 6, 0, 1, 0, 1.2, 0.7, 0.3, 1.1); if (me3) { this.chgK = 1; this.shake = Math.max(this.shake, 0.25); } break; }
@@ -10656,7 +10701,7 @@ document.addEventListener('keydown', (e) => {
   if (c === 'Tab') e.preventDefault();
   if (state.sim && state.sim.mode === 'campaign' && !storyLock()) { if (DEP.open) { depKey(c, e); return; } if (c === 'KeyP' && state.sim.phase === 1) { depOpen(true); DEP.t = 0; return; } }
   if (state.sim && state.sim.mode === 'assault') { if (DEP.open) { depKey(c, e); return; } if (c === 'KeyP') { depOpen(true); DEP.t = 0; return; } if (c === 'KeyO' || c === 'Backquote') { toast('In an assault you are a soldier: press P to change soldier or spawn point'); return; } }
-  if (!e.repeat && (c === 'KeyA' || c === 'KeyD' || c === 'KeyS') && state.sim && !Input.cmdMode) { const now = performance.now(); const T = Input.tapT || (Input.tapT = {}); if (now - (T[c] || 0) < 260) { const h = localHero(); if (h && !h.dead && !(h.mount >= 0 || h.mounted)) Input.pressed |= c === 'KeyA' ? S.A_DASHL : c === 'KeyD' ? S.A_DASHR : S.A_DODGE; T[c] = 0; } else T[c] = now; }
+  if (!e.repeat && (c === 'KeyA' || c === 'KeyD' || (c === 'KeyS' && state.sim.heroMode)) && state.sim && !Input.cmdMode) { const now = performance.now(); const T = Input.tapT || (Input.tapT = {}); if (now - (T[c] || 0) < 260) { const h = localHero(); if (h && !h.dead && !(h.mount >= 0 || h.mounted)) Input.pressed |= c === 'KeyA' ? S.A_DASHL : c === 'KeyD' ? S.A_DASHR : S.A_DODGE; T[c] = 0; } else T[c] = now; } /* the back-hop is only for the heroes' acrobatics */
   if (KEYMAP[c]) { Input.keys |= KEYMAP[c]; e.preventDefault(); }
   if (e.repeat) return;
   Input.shift = e.shiftKey;
