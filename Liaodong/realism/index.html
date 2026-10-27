@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v85</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v86</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2111,6 +2111,7 @@ class Sim {
           let inPlace = true; if (!def.skirmish) { if (u.mounted) this.cavSteer(u, u.x, u.z, 0); else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z, sd = len(sdx, sdz); if (sq && order !== ORD_CHARGE && sd > 1.3 && u.st === ST_IDLE) { this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.8); inPlace = false; } else { u.mx = 0; u.mz = 0; } } }
           else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z; if (len(sdx, sdz) > 0.6) this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.7); else { u.mx = 0; u.mz = 0; } }
           if (!u.mounted && (u.mx !== 0 || u.mz !== 0)) { const my = atan2(u.mx, u.mz), off = Math.abs(wrap(my - ang)), turner = (u.id * 37) % 10 < 7; if (off > 1.9 && len(u.slotX - u.x, u.slotZ - u.z) > (turner ? 1.2 : 4)) wantYaw = my; else if (off > 1.6) { u.mx *= 0.5; u.mz *= 0.5; } } // a long way back to his place: turn and walk it, don't skate backward; a step or two back is a slow backpedal
+          if (inPlace && u.st === ST_IDLE && u.ammo > 0 && !this.losClear(u, tgt)) { this.steerFoot(u, tgt.x, tgt.z, def.speed * 0.75); inPlace = false; } /* a wall or a house in the way: no shot; go round and find one */
           if (inPlace && u.st === ST_IDLE && u.ammo > 0 && u.flinchT <= 0 && Math.abs(wrap(ang - u.yaw)) < 0.7) {
             u.st = ST_AIM; u.stT = 0; u.aimTarget = tgt.id; u.blocking = false;
             const g0 = gunOf(def, u.weapon); const aimT = Math.round((g0 ? g0.aim : 0.8) * 30);
@@ -2519,6 +2520,17 @@ class Sim {
       prev = t;
     }
     return -1;
+  }
+  // can he see (and shoot) his man? walls, houses, rocks and stockades block it; trees only partly hide, so they don't
+  losClear(u, t) {
+    if (u.losTk !== undefined && this.tick - u.losTk < 12 && u.losTo === t.id) return u.losOk;
+    const ox = u.x, oy = u.y + 1.5, oz = u.z, dx = t.x - ox, dy = t.y + 1.2 - oy, dz = t.z - oz; let ok = true;
+    for (let i = 0; i < this.boxes.length && ok; i++) { const b = this.boxes[i]; if (b.kind === 'sface' && this.overParapet(u)) continue; const k = this.rayBox(ox, oy, oz, dx, dy, dz, b, 1); if (k > 0.02 && k < 0.98) ok = false; }
+    const hd = len(dx, dz);
+    if (ok && hd > 1e-6) { const ux = dx / hd, uz = dz / hd, obs = this.obstacles;
+      for (let i = 0; i < obs.length; i++) { const o = obs[i]; if (o.kind === 0) continue; const lx = ox - o.x, lz = oz - o.z, b = lx * ux + lz * uz, c = lx * lx + lz * lz - o.r * o.r, disc = b * b - c; if (disc < 0) continue;
+        const t2 = -b - Math.sqrt(disc); if (t2 < 0.5 || t2 > hd - 0.5) continue; const y = oy + dy * (t2 / hd), gh = terrainH(o.x, o.z), top = o.kind === 1 ? gh + o.r * 0.9 : o.kind === 2 ? gh + 5 : o.kind === 5 ? gh + 1.2 : gh + 4; if (y < top && y > gh - 1) { ok = false; break; } } }
+    u.losTk = this.tick; u.losTo = t.id; u.losOk = ok; return ok;
   }
   rayBox(ox, oy, oz, dx, dy, dz, b, maxT) {
     const gh = terrainH(b.x, b.z); const minY = gh - 0.5, maxY = gh + b.h;
@@ -5955,7 +5967,7 @@ function legColor(u) {
 // part: m = mesh kind ('b' box, 'c' cone, 'y' cylinder); f = frame (c chest, h head, p pelvis, sl/sr shoulders, or seg:[jointA, jointB, t0, t1]);
 // o = offset in the frame's axes, s = size, r = local euler, k = colour
 const GJ = { hipL: 0, kneeL: 3, footL: 6, hipR: 9, kneeR: 12, footR: 15, shL: 18, elL: 21, haL: 24, shR: 27, elR: 30, haR: 33 };
-const GEAR_K = { b: 42, c: 4, y: 5 }; /* 40 + 2 for the eyes; every extra slot costs an instanced box per man, drawn twice */
+const GEAR_K = { b: 44, c: 4, y: 5 }; /* 40 + 2 for the eyes; every extra slot costs an instanced box per man, drawn twice */
 const uhash = (id, k) => (((id + 1) * 2654435761 + (k || 0) * 40503) >>> 0) % 1000 / 1000;
 const GEAR_CACHE = new Map();
 // hit reaction envelope: snaps in over 70 ms (ease-out), holds while he reels, eases back out over 0.25 s after the stun ends
@@ -6064,14 +6076,16 @@ function gearFor(u) {
   const dingjia = (col, stud) => { b('c', [0, -0.04, 0], [0.5, 0.6, 0.31], col); for (const yy of [0.14, 0.0, -0.14]) { b('c', [0, yy, 0.158], [0.4, 0.018, 0.01], stud || gold); b('c', [0, yy, -0.158], [0.4, 0.018, 0.01], stud || gold); }
     b('sl', [0.06, -0.12, 0], [0.09, 0.22, 0.27], col); b('sr', [-0.06, -0.12, 0], [0.09, 0.22, 0.27], col);
     b('p', [0, -0.26, 0.02], [0.46, 0.4, 0.33], col); b('p', [0, -0.2, 0.168], [0.36, 0.018, 0.01], stud || gold); b('p', [0, -0.32, 0.168], [0.36, 0.018, 0.01], stud || gold); };
-  const robe = (col, sash) => { b('p', [0, -0.25, 0.01], [0.44, 0.4, 0.3], col); if (sash) b('p', [0, -0.07, 0], [0.47, 0.07, 0.32], sash); };
+  /* robe and coat skirts: a short band at the hips, then a flap that hangs on each thigh and swings with it, so a striding leg never comes out through the cloth */
+  const flaps = (col, L) => { seg('hipL', 'kneeL', 0.0, L, 0.26, 0.27, col); seg('hipR', 'kneeR', 0.0, L, 0.26, 0.27, col); };
+  const robe = (col, sash) => { b('p', [0, -0.13, 0.01], [0.44, 0.18, 0.3], col); flaps(col, 0.95); if (sash) b('p', [0, -0.07, 0], [0.47, 0.07, 0.32], sash); };
   const shield = () => { y('sl', [0.12, -0.38, 0.22], [0.56, 0.05, 0.56], 0xa8884a, [HPI, 0, 0]); y('sl', [0.12, -0.38, 0.25], [0.18, 0.03, 0.18], red, [HPI, 0, 0]); };
   const backflag = (col) => { b('c', [0.1, 0.45, -0.24], [0.025, 1.05, 0.025], 0x3a2a1a); b('c', [0.22, 0.72, -0.24], [0.22, 0.4, 0.014], col); }; // pole behind the shoulder, clear of the helmet
   const quiver = () => { y('c', [0.14, 0.05, -0.17], [0.13, 0.6, 0.13], 0x4a2e18, [0, 0, -0.35]); b('c', [0.25, 0.36, -0.17], [0.16, 0.12, 0.08], 0xe8e0cc, [0, 0, -0.35]); };
   // late-Ming kit: vermilion padded coats (胖襖), white puttees, the round 護心鏡 heart-mirror on brigandine,
   // eight-petal iron helmets with red tassels, rattan helmets for shield-men, broad black hats for gunners
   const verm = 0xc4381e, mirror = () => { y('c', [0, 0.06, 0.162], [0.17, 0.02, 0.17], 0xd6dadc, [HPI, 0, 0]); y('c', [0, 0.06, 0.165], [0.1, 0.015, 0.1], 0x9aa2a6, [HPI, 0, 0]); };
-  const coat = (col, sash) => { b('p', [0, -0.3, 0.01], [0.47, 0.52, 0.32], col); b('p', [0, -0.07, 0], [0.48, 0.07, 0.33], sash || 0x2a2622); };
+  const coat = (col, sash) => { b('p', [0, -0.14, 0.01], [0.47, 0.2, 0.32], col); flaps(col, 1.1); b('p', [0, -0.07, 0], [0.48, 0.07, 0.33], sash || 0x2a2622); };
   const tassel = (yy) => { b('h', [0, yy, 0], [0.12, 0.07, 0.12], red); b('h', [0, yy - 0.06, 0], [0.16, 0.05, 0.16], red); };
   const bigHat = () => hatOn(() => { y('h', [0, 0.1, 0], [0.66, 0.025, 0.66], 0x161412); y('h', [0, 0.19, 0], [0.27, 0.16, 0.27], 0x1c1916); tassel(0.3); });
   const rattanHelm = () => hatOn(() => { y('h', [0, 0.12, 0], [0.34, 0.16, 0.34], 0xb8964e); y('h', [0, 0.06, 0], [0.37, 0.03, 0.37], 0x8a6a30); b('h', [0, 0.22, 0], [0.06, 0.05, 0.06], red); });
@@ -9658,13 +9672,15 @@ function realGear(u) {
     b('sl', [0.07, -0.12, 0], [0.1, 0.23, 0.28], col); b('sr', [-0.07, -0.12, 0], [0.1, 0.23, 0.28], col); b('sl', [0.08, -0.17, 0], [0.102, 0.02, 0.282], stud || gold); b('sr', [-0.08, -0.17, 0], [0.102, 0.02, 0.282], stud || gold);
     b('p', [0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [-0.12, -0.3, 0.03], [0.22, 0.44, 0.32], col); b('p', [0, -0.22, 0.172], [0.4, 0.02, 0.01], stud || gold); b('p', [0, -0.36, 0.172], [0.4, 0.02, 0.01], stud || gold); };
   const hoof = (col) => { seg('elL', 'haL', 0.78, 1.0, 0.13, 0.15, col); seg('elR', 'haR', 0.78, 1.0, 0.13, 0.15, col); }; // 馬蹄袖
-  const robe = (col, sash) => { b('p', [0, -0.25, 0.01], [0.44, 0.4, 0.3], col); if (sash) b('p', [0, -0.07, 0], [0.47, 0.07, 0.32], sash); };
+  /* robe and coat skirts: a short band at the hips, then a flap that hangs on each thigh and swings with it, so a striding leg never comes out through the cloth */
+  const flaps = (col, L) => { seg('hipL', 'kneeL', 0.0, L, 0.26, 0.27, col); seg('hipR', 'kneeR', 0.0, L, 0.26, 0.27, col); };
+  const robe = (col, sash) => { b('p', [0, -0.13, 0.01], [0.44, 0.18, 0.3], col); flaps(col, 0.95); if (sash) b('p', [0, -0.07, 0], [0.47, 0.07, 0.32], sash); };
   const backflag = (col, edge) => { b('c', [0.1, 0.5, -0.25], [0.03, 1.15, 0.03], 0x3a2a1a); b('c', [0.25, 0.82, -0.25], [0.28, 0.5, 0.016], col); if (edge) b('c', [0.25, 0.82, -0.252], [0.32, 0.54, 0.012], edge); }; // pole behind the shoulder, clear of the helmet
   const quiver = () => { y('c', [0.14, 0.05, -0.17], [0.13, 0.6, 0.13], 0x4a2e18, [0, 0, -0.35]); b('c', [0.25, 0.36, -0.17], [0.16, 0.12, 0.08], 0xe8e0cc, [0, 0, -0.35]); };
   const sadai = () => { b('p', [0.27, -0.16, 0.02], [0.06, 0.48, 0.24], 0x5a3a22, [0, 0, 0.22]); b('p', [0.29, -0.06, 0.02], [0.065, 0.12, 0.25], brass, [0, 0, 0.22]); // bow case (left hip)
     b('p', [-0.26, -0.08, -0.03], [0.08, 0.34, 0.17], 0x4a2e18, [0, 0, -0.18]); b('p', [-0.29, 0.13, -0.03], [0.06, 0.12, 0.16], 0xe8e0cc, [0, 0, -0.18]); }; // quiver with white fletching
   const verm = 0xc4381e, mirror = () => { y('c', [0, 0.06, 0.162], [0.17, 0.02, 0.17], 0xd6dadc, [HPI, 0, 0]); y('c', [0, 0.06, 0.165], [0.1, 0.015, 0.1], 0x9aa2a6, [HPI, 0, 0]); };
-  const coat = (col, sash, collar) => { b('p', [0, -0.3, 0.01], [0.47, 0.52, 0.32], col); b('p', [0, -0.07, 0], [0.48, 0.07, 0.33], sash || 0x2a2622); b('c', [0, 0.2, 0.06], [0.3, 0.06, 0.24], collar || 0xe8e2d0); };
+  const coat = (col, sash, collar) => { b('p', [0, -0.14, 0.01], [0.47, 0.2, 0.32], col); flaps(col, 1.1); b('p', [0, -0.07, 0], [0.48, 0.07, 0.33], sash || 0x2a2622); b('c', [0, 0.2, 0.06], [0.3, 0.06, 0.24], collar || 0xe8e2d0); };
   const tassel = (yy) => { b('h', [0, yy, 0], [0.12, 0.07, 0.12], red); b('h', [0, yy - 0.06, 0], [0.16, 0.05, 0.16], red); };
   // Qi Jiguang's men: a low rattan helmet woven in bands, red knob, cloth neck guard
   const rattanHelm = () => hatOn(() => { c('h', [0, 0.17, 0], [0.4, 0.2, 0.4], 0xb8964e); y('h', [0, 0.07, 0], [0.4, 0.045, 0.4], 0x8a6a30); y('h', [0, 0.14, 0], [0.33, 0.02, 0.33], 0x8a6a30); b('h', [0, 0.28, 0], [0.07, 0.06, 0.07], red); b('h', [0, -0.08, -0.15], [0.3, 0.16, 0.03], verm, [0.15, 0, 0]); });
