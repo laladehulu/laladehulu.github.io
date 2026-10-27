@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v119</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v120</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2055,8 +2055,19 @@ class Sim {
     u.navT = 8; u.navGx = gx; u.navGz = gz; u.navWp = null;
     if (len(gx - u.x, gz - u.z) < 2 || !this.navBlockedLine(u.x, u.z, gx, gz)) return null;
     const f = this.flowTo(gx, gz); if (!f) return null; const W = this.navW, C = this.navC; let c = this.navCell(u.x, u.z);
-    if (f[c] < 0) { // standing in a blocked cell: step to any reachable neighbour
-      let best = -1, bd = 1e9; for (const o of [1, -1, W, -W, W + 1, W - 1, -W + 1, -W - 1]) { const n = c + o; if (n >= 0 && n < f.length && f[n] >= 0 && f[n] < bd) { bd = f[n]; best = n; } } if (best < 0) return null; c = best; }
+    if (f[c] < 0) { // standing against a wall (inside the blocked margin): walk out to the nearest open ground the field reaches,
+      // searching rings outward rather than only the eight cells touching him - a man in a corner has no open neighbour at all,
+      // and used to get no way at all and walk straight into the stone
+      // he is in the margin along a wall, where the field has no value: come off the face and slide along it the way that
+      // takes him toward his goal, until he is on open ground again and the field can steer him
+      let bb = null, bp = 1e9;
+      for (const b of this.boxes) { if (b.hw < 0.1 || b.pass || b.kind === 'mantlet' || b.kind === 'gone') continue;
+        const px = b.hw + 1.4 - Math.abs(u.x - b.x), pz = b.hd + 1.4 - Math.abs(u.z - b.z); if (px <= 0 || pz <= 0) continue; const p = Math.min(px, pz); if (p < bp) { bp = p; bb = [b, px, pz]; } }
+      if (!bb) return null;
+      const b = bb[0], outX = bb[1] <= bb[2] ? (u.x >= b.x ? 1 : -1) : 0, outZ = bb[1] <= bb[2] ? 0 : (u.z >= b.z ? 1 : -1);
+      const tgX = -outZ, tgZ = outX, sd = ((gx - u.x) * tgX + (gz - u.z) * tgZ) >= 0 ? 1 : -1; /* along the face, toward his goal */
+      const off = Math.min(bb[1] <= bb[2] ? bb[1] : bb[2], 2.2) + 0.6;
+      u.navWp = [u.x + outX * off + tgX * sd * 3.5, u.z + outZ * off + tgZ * sd * 3.5]; return u.navWp; }
     // walk down the field a few cells and aim at the farthest one we can see directly
     const NB = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]], bl = this.navBlk; let cur = c, aim = c;
     for (let step = 0; step < 6; step++) { const ci = cur % W, cj = (cur / W) | 0; let best = cur, bd = f[cur];
@@ -6509,8 +6520,8 @@ const MUSIC = (() => {
     } };
   }
   const TRACKS = {
-    battle: warTrack({ bpm: 132, roots: BAT_R, m: [BAT_A, BAT_B, BAT_C, BAT_D], gong: 'gong_big' }),
-    siege: warTrack({ bpm: 112, roots: SIEGE_R, m: [SIG_A, SIG_B, SIG_C, SIG_D], gong: 'gong_big' }),
+    battle: warTrack({ bpm: 138, roots: BAT_R, m: [BAT_A, BAT_B, BAT_C, BAT_D], gong: 'gong_big' }),
+    siege: warTrack({ bpm: 134, roots: SIEGE_R, m: [SIG_A, SIG_B, SIG_C, SIG_D], gong: 'gong_big' }),
     menu: { bpm: 64, len: 256, rec: { key: 'mus_red_dawn', pure: true, e8: 0.47 }, play(s, t, e8) {
       if (REC && REC.pure) return;
       const sec = Math.floor(s / 64), bar = Math.floor(s / 8) % 8, b8 = s % 8, root = MENU_R[sec][bar];
@@ -6549,7 +6560,7 @@ const MUSIC = (() => {
       else line('xunB', BAT, s, t, e8, (tt, m, d) => xun(tt, m, d * 0.95, 0.26));
       if (I > 0.82) line('erhuB', BAT, s, t, e8, (tt, m, d) => erhu(tt, m - 12, d * 0.95, 0.17));
     } },
-    siege0: { bpm: 104, rec: { key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, recs: [{ key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, { key: 'mus_hill', pure: true, e8: 0.3104 }, { key: 'mus_taiko_1', e8: 0.3076, ph: 0.01 }], len: 128, play(s, t, e8) {
+    siege0: { bpm: 124, rec: { key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, recs: [{ key: 'mus_taiko_2', e8: 0.3104, ph: 0.19 }, { key: 'mus_hill', pure: true, e8: 0.3104 }, { key: 'mus_taiko_1', e8: 0.3076, ph: 0.01 }], len: 128, play(s, t, e8) {
       if (REC && REC.pure) return;
       const bar = Math.floor(s / 8), b8 = s % 8, root = SIEGE_R[bar % 16];
       if (REC) { } else if (b8 === 0 || b8 === 4) dagu(t, 'ff', 0.6); if (b8 === 2 || b8 === 6) dagu(t, 'hand', 0.34); if (b8 === 7) dagu(t, 'rim', 0.22);
@@ -6594,7 +6605,7 @@ const MUSIC = (() => {
     else if (kind === 'phase') { hit('gong_f', t, 0.3); gliss(t, true, 0.24); }
     else if (kind === 'wave') { hit('bo_ff', t, 0.24); dagu(t, 'ff', 0.5); dagu(t + 0.2, 'ff', 0.5); }
   }
-  function setIntensity(v) { target = v; }
+  function setIntensity(v) { target = (playing === 'battle' || playing === 'siege') ? Math.max(0.6, v) : v; } /* a fight never falls to the quiet layer */
   // render a cue offline (for previews and tests): the same scheduler, driven by a fake clock into an OfflineAudioContext
   async function _offline(name, iv, secs, curve) {
     const live = { ctx, out, dry, comp, nb, playing, REC, recSrc, recG, recEnd, nextT, step, I, target, prevMel, recIdx };
@@ -7020,8 +7031,17 @@ function gearFor(u) {
     if (vr === 2) b('h', [0, -0.125, fz - 0.005], [0.05, 0.05, 0.02], hair);
     if (vr === 3) { b('h', [0, -0.12, fz - 0.01], [0.24, 0.06, 0.03], hair); b('h', [0.12, -0.07, 0.06], [0.03, 0.1, 0.12], hair); b('h', [-0.12, -0.07, 0.06], [0.03, 0.1, 0.12], hair); }
   }
-  const hp = P.find(q => q.hat);
+  const hp = P.find(q => q.hat); tagFace(P);
   g = { parts: P, hat: hp ? { m: hp.m, s: hp.s, k: hp.k } : null }; GEAR_CACHE.set(key, g); return g;
+}
+// the face parts that move with an expression (faceFX): found by what faceEyes/lookGear/gearFor drew, so every edition's
+// uniforms get them without each call being touched. fx: 1 brow L, 2 brow R, 3 eye L, 4 eye R, 5 lid L, 6 lid R, 7 mouth
+function tagFace(P) {
+  for (const p of P) { if (p.f !== 'h' || p.m !== 'b' || !p.o || !p.s) continue; const o = p.o, sz = p.s;
+    if (p.k === 0xe2d6c2) p.fx = o[0] > 0 ? 3 : 4;
+    else if (p.k === 0x1e140f) p.fx = o[0] > 0 ? 5 : 6;
+    else if ((p.k === 0x6a3a30 || p.k === 0x5a2a24) && Math.abs(o[0]) < 0.01 && o[1] < -0.07 && o[1] > -0.1 && sz[1] < 0.03) p.fx = 7;
+    else if (p.r && Math.abs(Math.abs(o[0]) - 0.06) < 0.015 && o[1] > 0.02 && o[1] < 0.07 && sz[1] < 0.035 && sz[0] < 0.1) p.fx = o[0] > 0 ? 1 : 2; }
 }
 // Pose tuples: [armRx, armRz, wX, wY, wZ, armLx, armLz]
 const POSES = {
@@ -7134,9 +7154,39 @@ KF.club = {
   stun: KF.katana.stun,
 };
 KF.club.atk[2] = KF.club.atk[0];
+// 狼筅 wolf-brush: the shaft is swept flat and wide from one side to the other, hands at the butt, the bristling head travelling
+// through a half circle at chest height (紀效新書: the brush is thrust and swept to foul the enemy's weapons, never chopped)
+KF.brush = {
+  off2: 0.55, guard: KF.yari.guard, carry: KF.yari.carry, block: KF.yari.block, stun: KF.yari.stun,
+  atk: [
+    null,
+    [KP([-0.5, -0.3, -0.1], N3(-0.95, 0.12, 0.3)), KP([-0.2, -0.32, 0.25], N3(0.0, 0.1, 1)), KP([0.3, -0.3, 0.0], N3(0.95, 0.08, 0.3))],  /* sweep from his left across to the right */
+    KF.yari.atk[2],
+    [KP([0.2, -0.3, -0.1], N3(0.95, 0.12, 0.3)), KP([-0.1, -0.32, 0.25], N3(0.0, 0.1, 1)), KP([-0.6, -0.3, 0.0], N3(-0.95, 0.08, 0.3))],   /* and back the other way */
+  ],
+};
+// the loaded top of each wind-up: the start key drawn a little further back along the start→mid line and lifted, so the blade pauses
+// past where the cut begins (the precursor every blow needs); the spear's top is drawn straight back along the shaft instead
+for (const k in KF) { const T = KF[k]; if (!T.atk) continue; for (let d = 0; d < 4; d++) { const A = T.atk[d]; if (!A || A.load) continue;
+  const g0 = A[0].g, g1 = A[1].g, d0 = A[0].d; const sp = k === 'yari' && d === 2, m = sp ? 0 : -0.22;
+  const g = sp ? add3(g0, d0, -0.3) : [g0[0] + (g1[0] - g0[0]) * m, g0[1] + (g1[1] - g0[1]) * m + 0.06, g0[2] + (g1[2] - g0[2]) * m];
+  const dd = sp ? d0.slice() : N3(d0[0] + (d0[0] - A[1].d[0]) * 0.2, d0[1] + (d0[1] - A[1].d[1]) * 0.2 + 0.1, d0[2] + (d0[2] - A[1].d[2]) * 0.2);
+  A.load = KP(g, dd); } }
 const BODYC = [[0.1, -0.26, -0.05, 0.42, 0.28], [-0.8, -0.04, 0.66, 0.16, 0.22], [0.1, -0.26, -0.05, 0.42, 0.28], [0.8, -0.04, -0.66, 0.16, 0.22]];
 // body motion per attack direction: [twist at windup, lean at windup, twist at release, lean at release, lunge]
 const BODY = [[0, -0.12, 0, 0.3, 0.22], [-0.45, 0, 0.42, 0.12, 0.2], [-0.15, -0.04, 0.05, 0.18, 0.34], [0.45, 0, -0.42, 0.12, 0.2]];
+// the weight of each kind of blow (swKind): load = how far the top is drawn back past the start key in the wind-up, back = weight
+// onto the rear foot (lean back, rad), wtw = extra shoulder turn away in the load, whip = how much the release is eased (0 linear,
+// 1 slow out of the top and fast at the line), tw/ln/lg = scale on the release twist, lean and lunge, sink = knees in the blow,
+// over = follow-through past the line in the recovery (fraction of the mid→end leg)
+const SW = {
+  cut:    { load: 1, back: 0.1, wtw: 0.25, whip: 0.85, tw: 1.15, ln: 1.1, lg: 1.1, sink: 0.6, over: 0.42 },  /* dao side cut: the whole trunk turns through it */
+  chop:   { load: 1, back: 0.14, wtw: 0, whip: 0.9, tw: 1, ln: 1.35, lg: 1.0, sink: 1.0, over: 0.3 },      /* overhead chop: lifted high, the body folds down after it */
+  thrust: { load: 0.8, back: 0.12, wtw: 0.3, whip: 0.7, tw: 1, ln: 1, lg: 1.3, sink: 0.4, over: 0.2 },     /* the thrust: drawn back to the hip, driven out with a long step */
+  spear:  { load: 1, back: 0.08, wtw: 0.35, whip: 0.6, tw: 1.2, ln: 0.8, lg: 1.2, sink: 0.3, over: -0.25 }, /* spear thrust: the shaft slides back through the hands then is driven, and recoils a hand's length */
+  club:   { load: 1, back: 0.16, wtw: 0.2, whip: 0.95, tw: 1.1, ln: 1.3, lg: 0.9, sink: 1.1, over: 0.5 },  /* a gun as a club: heavy, slow out of the top, carried right round */
+  heavy:  { load: 1.25, back: 0.2, wtw: 0.3, whip: 0.95, tw: 1.3, ln: 1.4, lg: 1.25, sink: 1.3, over: 0.55 }, /* the heavy blow: everything bigger and slower */
+};
 // reload paths for the right hand (time 0..1 → chest-local point)
 const POUCH = [-0.26, -0.58, 0.02];
 const MZ = (() => { const d = N3(0.05, 1, 0.12), butt = [0.04, -1.34, 0.34]; const g = add3(butt, d, 0.3), mz = add3(butt, d, 1.3); const up = (h) => [mz[0], mz[1] + h, mz[2]];
@@ -7357,7 +7407,7 @@ const BIOMES = {
 const INK_SHIFT = { value: new THREE.Vector2() };
 // arm proportions: upper arm and forearm about 15% longer than they were (0.30 / 0.29), and hand targets pushed out from
 // the shoulder by ARM_REACH, so swings, thrusts and gestures sweep wider arcs and read from further away
-const ARM_U = 0.345, ARM_F = 0.335, ARM_REACH = 1.12;
+const ARM_U = 0.345, ARM_F = 0.335, ARM_REACH = 1.12, SHW = 0.305; /* SHW: shoulder joint half-width (the torso box is 0.5 wide, the upper arm 0.13 thick, so the arm hangs just outside the coat) */
 (function inkShadows() {
   const REAL = typeof window !== 'undefined' && window.MING_REAL, STYLE = typeof window !== 'undefined' && window.MING_STYLE;
   const C = THREE.ShaderChunk; let src = C.shadowmap_pars_fragment; if (!src || src.indexOf('getShadowBase') >= 0) return;
@@ -7988,7 +8038,7 @@ class Renderer {
     for (const [s0, e, hn, sd, hi] of [[18, 21, 24, 1, 9], [27, 30, 33, -1, 12]]) { const sx = cx + xx * 0.2 * sd, sy = cy + xy * 0.2 * sd, sz = cz + xz * 0.2 * sd; put(s0, sx, sy, sz); put(hn, p[hi], p[hi + 1], p[hi + 2]); put(e, (sx + p[hi]) / 2, (sy + p[hi + 1]) / 2, (sz + p[hi + 2]) / 2); }
     return G; }
   drawGear(slot, u, fr, G, B, noHat, dead) {
-    const f = this.fig, T = this.tmp, g = gearFor(u);
+    const f = this.fig, T = this.tmp, g = gearFor(u); const FXV = !dead && !noHat ? this.faceFX(u) : null;
     for (const p of g.parts) {
       if (p.idx === undefined) continue; const mesh = f['g' + p.m], idx = slot * GEAR_K[p.m] + p.idx;
       if ((noHat && p.hat) || (dead && p.f !== 'seg' && Math.max(p.s[0], p.s[1], p.s[2]) > 0.85)) { mesh.setMatrixAt(idx, T.zero); continue; } /* a fallen man's banner pole and other long kit don't stand up out of the body */
@@ -7997,6 +8047,7 @@ class Renderer {
       // cloth and plates that hang from a joint follow the limb under them (no knee through the skirt, no arm through the pauldron)
       let Bf = F[3], o = p.o, fx0 = F[0], fy0 = F[1], fz0 = F[2], ps = p.s;
       if (G) { const h = this.gearFollow(u, p, F, G); if (h) { Bf = h.B; o = h.o; fx0 = h.x; fy0 = h.y; fz0 = h.z; ps = h.s || p.s; } }
+      if (p.fx && FXV) { const q = this.faceFXPart(p, FXV); if (q) { o = q.o; ps = q.s; if (q.r) { T.m.set(Bf[0], Bf[3], Bf[6], fx0 + Bf[0] * o[0] + Bf[3] * o[1] + Bf[6] * o[2], Bf[1], Bf[4], Bf[7], fy0 + Bf[1] * o[0] + Bf[4] * o[1] + Bf[7] * o[2], Bf[2], Bf[5], Bf[8], fz0 + Bf[2] * o[0] + Bf[5] * o[1] + Bf[8] * o[2], 0, 0, 0, 1).multiply(T.r.makeRotationFromEuler(T.e.set(q.r[0], q.r[1], q.r[2]))).multiply(T.s.makeScale(ps[0], ps[1], ps[2])); mesh.setMatrixAt(idx, T.m); continue; } } }
       const cx = fx0 + Bf[0] * o[0] + Bf[3] * o[1] + Bf[6] * o[2], cy = fy0 + Bf[1] * o[0] + Bf[4] * o[1] + Bf[7] * o[2], cz = fz0 + Bf[2] * o[0] + Bf[5] * o[1] + Bf[8] * o[2];
       if (!p.r) { this.boxB(mesh, idx, cx, cy, cz, Bf, ps[0], ps[1], ps[2]); continue; }
       T.m.set(Bf[0], Bf[3], Bf[6], cx, Bf[1], Bf[4], Bf[7], cy, Bf[2], Bf[5], Bf[8], cz, 0, 0, 0, 1).multiply(T.r.makeRotationFromEuler(T.e.set(p.r[0], p.r[1], p.r[2]))).multiply(T.s.makeScale(ps[0], ps[1], ps[2])); mesh.setMatrixAt(idx, T.m);
@@ -8213,6 +8264,11 @@ class Renderer {
       R: L(0, 0, 0), Lh: L(0, -0.14, 0),
     };
     this.VM.club.windup[2] = this.VM.club.windup[0]; this.VM.club.mid[2] = this.VM.club.mid[0]; this.VM.club.release[2] = this.VM.club.release[0];
+    /* the wolf-brush in the hands: the thrust as the spear's, and the side sweeps wide and flat, the shaft swung through a half circle across the view */
+    this.VM.brush = { idle: this.VM.yari.idle, block: this.VM.yari.block, stun: this.VM.yari.stun, R: this.VM.yari.R, Lh: this.VM.yari.Lh,
+      windup: [this.VM.yari.windup[0], P(0.6, -0.3, -0.3, -1.3, -1.1, 0.1), this.VM.yari.windup[2], P(-0.3, -0.3, -0.3, -1.3, 1.1, -0.1)],
+      mid: [this.VM.yari.mid[0], P(0.25, -0.32, -0.6, -1.45, 0, 0), this.VM.yari.mid[2], P(0.05, -0.32, -0.6, -1.45, 0, 0)],
+      release: [this.VM.yari.release[0], P(-0.3, -0.3, -0.3, -1.3, 1.2, -0.1), this.VM.yari.release[2], P(0.6, -0.3, -0.3, -1.3, -1.2, 0.1)] };
     const R0 = L(0, -0.06, 0.14), B = L(0.035, 0.035, -0.08), PO = L(0.2, -0.32, 0.25), Mz = L(0, 0.02, -0.88), BT = L(0, -0.07, 0.42);
     const o = (v, x, y, z) => v.clone().add(L(x, y, z));
     this.VMR = {
@@ -8476,6 +8532,9 @@ class Renderer {
           if (u.def.ai === 'cannon') { this.drawCannon(this.cannonSlot.get(u.id), u, u.x, u.y, u.z, u.yaw, true); for (const k in this.cannon) this.cannon[k].instanceMatrix.needsUpdate = true; AUDIO.play('death', u.x, u.y, u.z, 0.8); break; }
           if (u.type === 'horse') AUDIO.play('horsedie', u.x, u.y + 1, u.z, 0.8);
           if (u.type === 'horse' || u.mounted) { this.deadHorses.push({ id: u.id, x: u.x, y: u.y, z: u.z, yaw: u.type === 'horse' ? u.yaw : u.hyaw, t: 0 }); if (u.type === 'horse') { this.hideFigure(u.id); AUDIO.play('death', u.x, u.y, u.z, 0.8); break; } }
+          /* an arrow's death is not a fall: he is hit, clutches the shaft and goes down slowly (dyingStart); the ragdoll takes over
+             when the scripted collapse ends. Everything else drops into the ragdoll at once. */
+          if (ev.cause === 'arrow' && !u.mounted && u.mount < 0 && u.type !== 'horse' && ev.id !== heroId && this.dyingStart(u, ev)) break; /* (not your own death: the death view needs the ragdoll at once) */
           const rag = this.ragdolls[this.ragNext]; this.ragNext = (this.ragNext + 1) % MAXRAG;
           const slot = units.length + this.ragdolls.indexOf(rag);
           rag.spawn(u, ev.ix, ev.iy, ev.iz, slot, ev); rag.unit = u; this.colorFigure(slot, u);
@@ -8488,18 +8547,21 @@ class Renderer {
             if (wd) this.spawnDebris('b', u.x + fx * 0.4, u.y + 1.1, u.z + fz * 0.4, ev.ix * 0.3 + fx * rnd(0.5, 2), 2 + Math.random() * 2, ev.iz * 0.3 + fz * rnd(0.5, 2), wd[0], wd[1], wd[2], wd[3], 0.5); }
           if (typeof VOICE === 'undefined' || !VOICE.on || u.type === 'horse') AUDIO.play(Math.random() < 0.55 ? 'scream' : 'death', u.x, u.y + 1, u.z, 0.9);
           if (ev.killer === heroId) { this.hitMark = 0.45; }
+          if (u.squad >= 0 && u.type !== 'horse') { const sq = sim.squads[u.squad]; if (sq) for (const id of sq.unitIds) { const v = units[id]; if (v === u || v.dead || Math.hypot(v.x - u.x, v.z - u.z) > 3.5 || (v.target >= 0 && !units[v.target].dead && Math.hypot(units[v.target].x - v.x, units[v.target].z - v.z) < 6)) continue; const av = this.anim(id); if (uhash(id, 65 + (this.time | 0)) < 0.5) av.griefT = this.time + 2.5 + uhash(id, 67) * 2; } } /* a friend down beside him: a moment's grief on the faces near, when no foe is in reach */
           break;
         }
         case 'reload': { if (ev.id === heroId) AUDIO.play('click', undefined, 0, 0, 1); break; }
         case 'arrow': { AUDIO.play('twang', ev.x, ev.y, ev.z, 1); break; }
         case 'empfb': break;
-        case 'deploy': { if (ev.rekit && units[ev.id]) this.colorFigure(ev.id, units[ev.id]); break; }
+        case 'deploy': { if (ev.rekit && units[ev.id]) this.colorFigure(ev.id, units[ev.id]); if (this.dying) this.dying.delete(ev.id); break; }
         case 'arrowhit': { if (ev.by === heroId && heroId >= 0) this.empHit(ev, ev.killed ? 'BOLT · he goes down' : 'BOLT HIT');  this.blood(ev.x, ev.y, ev.z, 5, 0, 0.5, 0); AUDIO.play('flesh', ev.x, ev.y, ev.z, 0.8); break; }
         case 'arrowstick': { const i = this.stuckNext; this.stuckNext = (this.stuckNext + 1) % this.stuckN; this.tmp.v.set(ev.vx, ev.vy, ev.vz).normalize(); this.tmp.q.setFromUnitVectors(this.tmp.v2.set(0, 0, 1), this.tmp.v); this.tmp.m.compose(this.tmp.v3.set(ev.x - this.tmp.v.x * 0.35, ev.y - this.tmp.v.y * 0.35, ev.z - this.tmp.v.z * 0.35), this.tmp.q, this.tmp.v4.set(1, 1, 1)); this.stuck.setMatrixAt(i, this.tmp.m); this.stuck.instanceMatrix.needsUpdate = true; this.dust(ev.x, ev.y + 0.05, ev.z, 2, 0, 0.6, 0, 0.5, 0.5, 0.15, 0.4); AUDIO.play(ev.y > 0.4 ? 'woodhit' : 'dirt', ev.x, ev.y, ev.z, 0.7); break; }
         case 'bounce': { this.dust(ev.x, ev.y + 0.1, ev.z, ev.big ? 14 : 8, 0, 2.5, 0, 2.2, 1.0, 0.4, 1.8); AUDIO.play('cannonhit', ev.x, ev.y, ev.z, ev.big ? 1.2 : 0.9); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 18) this.shake = Math.max(this.shake, 0.25 * (1 - dc / 18)); break; }
         case 'solidhit': { if (ev.by === heroId && heroId >= 0) this.empHit(ev, ev.killed ? 'SHOT · cut down' : 'SHOT HIT');  this.blood(ev.x, ev.y, ev.z, 14, 0, 1.5, 0); this.dust(ev.x, ev.y, ev.z, 6, 0, 1.5, 0, 1.5, 0.7, 0.3, 1.2); AUDIO.play('flesh', ev.x, ev.y, ev.z, 1.3); break; }
         case 'gatlingstart': { break; }
-        case 'rally': { this.burstSparks(ev.x, ev.y + 1.2, ev.z, 30, 6, 1, 0.85, 0.4, 0.8, 0.14); AUDIO.play('shout', ev.x, ev.y, ev.z, 1); break; }
+        case 'rally': { this.burstSparks(ev.x, ev.y + 1.2, ev.z, 30, 6, 1, 0.85, 0.4, 0.8, 0.14); AUDIO.play('shout', ev.x, ev.y, ev.z, 1); { const p = sim.players[ev.p]; if (p) { this.capOfficer = p.heroId; this.capAt = this.time; } } break; }
+        case 'order': { const p = sim.players[ev.p]; if (p && p.heroId >= 0) { this.capOfficer = p.heroId; this.capAt = this.time; } break; } /* the officer's face shouts the order (faceFX) */
+        case 'msay': { const who = sim.units.find(v => v.look && v.look.id === ev.who && !v.dead); if (who) { this.capOfficer = who.id; this.capAt = this.time; } break; }
         case 'battle': { AUDIO.play('drum', undefined, 0, 0, 1); break; }
         case 'rout': { const sq = sim.squads[ev.sq]; if (sq) AUDIO.play('horn', sq.cx, 1, sq.cz, 1); break; }
         case 'commanderdown': { AUDIO.play('drum', undefined, 0, 0, 0.8); break; }
@@ -8598,6 +8660,7 @@ class Renderer {
   drawFigure(slot, u, x, y, z, yaw, alpha, hide) {
     if (hide) { this.hideFigure(slot); return; }
     const f = this.fig, a = this.anim(u.id), dt = this.fdt, tg = this.tg, def = u.def;
+    if (a.tgY) { yaw += a.tgY; if (!(u.st === ST_WINDUP || u.st === ST_RELEASE || u.st === ST_RECOVER)) a.tgY *= Math.max(0, 1 - dt * 6); } /* the tiger sweep (tigerSweep) turns the whole man; the turn unwinds after */
     /* a blade that bites drags through: the swing slows hard for a moment, then follows through (no frozen frame) */
     if (a.dragT > 0) { a.dragT -= dt; a.lag = (a.lag || 0) + dt * 0.8; } else if (a.lag > 0) a.lag = Math.max(0, a.lag - dt * 2.2); if (u.st === ST_IDLE || u.st === ST_WINDUP) { a.lag = 0; a.dragT = 0; }
     const stT = u.st === ST_IDLE ? 0 : Math.max(0, u.stT + alpha * DT - ((u.st === ST_RELEASE || u.st === ST_RECOVER) ? (a.lag || 0) : 0));
@@ -8605,9 +8668,10 @@ class Renderer {
     // a wounded man going down (and being got up again) is animated, not snapped: a.dw runs 0 (on his feet) to 1 (on the ground)
     if (a.dw === undefined) a.dw = 0;
     if (wnd || a.dw > 0) { const want = wnd && u.downed ? 1 : 0;
-      if (!wnd) { if (u.dead || mounted) a.dw = 0; else { a.dUp = true; a.dw = Math.max(0, a.dw - dt / 0.8); } } // hauled up: he gets up, he doesn't pop up
+      if (!wnd) { if (u.dead || mounted) a.dw = 0; else { a.dUp = true; a.dw = Math.max(0, a.dw - dt / 0.8); if (a.dw === 0 && a.hlpBy >= 0) { a.hlpL = 1.6; } } } // hauled up: he gets up, he doesn't pop up; then a moment leaning on the man who pulled him up
       else if (want > a.dw) { if (!(a.dw > 0)) { a.dw = 0; a.dV = uhash(u.id, 23) < 0.5 ? 1 : -1; } a.dUp = false; a.dw = Math.min(1, a.dw + dt / 1.05); }
-      else if (want < a.dw) { a.dUp = true; a.dw = Math.max(0, a.dw - dt / 0.8); } }
+      else if (want < a.dw) { a.dUp = true; a.dw = Math.max(0, a.dw - dt / 0.8); }
+      if (wnd && u.downed) a.hlpBy = u.reviveBy >= 0 ? u.reviveBy : (a.hlpBy >= 0 && (u.reviveT || 0) > 0 ? a.hlpBy : -1); }
     const down = (u.downT > 0 && !mounted) || (a.dw > 0 && !u.dead && !mounted);
     const sq = u.squad >= 0 ? this.sim.squads[u.squad] : null, routing = !!(sq && sq.routing);
     // ---------- locomotion state ----------
@@ -8626,18 +8690,27 @@ class Renderer {
     a.ph += (back ? -1.3 : 1) * spd * dt * 6.2832 / (1.35 + r * 0.95); // backpedalling is short, quick steps
     const ph = a.ph;
     // ---------- pose targets ----------
-    const w = u.weapon, clubbing = w === 'rifle' && (u.club || (u.ctrl < 0 && u.st >= 1 && u.st <= 3)), KW = KF[clubbing ? 'club' : w]; // a gun turned round swings like a club
+    const w = u.weapon, clubbing = w === 'rifle' && (u.club || (u.ctrl < 0 && u.st >= 1 && u.st <= 3)), brushMan = w === 'yari' && ((u.kitRole !== undefined ? u.kitRole : u.role) === 'brush' || !!def.brush), KW = KF[clubbing ? 'club' : brushMan ? 'brush' : w]; // a gun turned round swings like a club; the wolf-brush sweeps
     const melee = w === 'katana' || w === 'yari' || clubbing;
     const runH = uhash(u.id, 9), runLean = 0.34 + 0.18 * uhash(u.id, 4); // every man runs a little differently: some bent low and driving, some upright
     let lean = 0.03 * mv + runLean * r, twist = -(0.1 + 0.08 * r) * Math.sin(ph) * mv, roll = 0, lunge = 0, crouch = 0.05 * r * uhash(u.id, 5);
     let stance = (1 - mv) * (melee ? 1 : 0.5);
+    /* three ways of running, blended by pace and fatigue: the upright trot (pace 2, or a fresh man at a jog), the low hard sprint
+       (pace 4, or a charging man: bent, driving, shoulders working), and the tired shamble (fat high: head down, knees bent,
+       the trunk rolling with each step, the weapon trailing); a.rs: 0 trot, 1 sprint, -1 shamble */
+    const fatK = clamp(((u.fat || 0) - 55) / 40, 0, 1), sprintK = clamp(((u.pace || 0) - 2.5) / 1.5, 0, 1) * (1 - fatK) * (sq && sq.order === S.ORD_CHARGE ? 1 : 0.7 + 0.3 * uhash(u.id, 47));
+    a.rs = (a.rs === undefined ? 0 : a.rs) + ((sprintK - fatK) - (a.rs === undefined ? 0 : a.rs)) * Math.min(1, dt * 2.5);
+    if (r > 0.02 && !mounted) { const rs = a.rs, sp2 = Math.sin(ph), c2 = Math.cos(2 * ph);
+      if (rs > 0) { lean += 0.22 * rs * r; crouch += 0.08 * rs * r; twist += -0.14 * sp2 * rs * r; roll += 0.05 * sp2 * rs * r; } /* the sprint: lower, longer, the shoulders driving */
+      else if (rs < 0) { const sh = -rs; lean += 0.14 * sh * r + 0.05 * Math.abs(sp2) * sh * r; crouch += 0.16 * sh * r; roll += 0.14 * sp2 * sh * r; twist += 0.08 * c2 * sh * r; } /* the shamble: head down, knees soft, rolling */
+      else { lean -= 0.12 * (1 - Math.abs(rs)) * r * (1 - runLean); } } /* the trot: more upright than the default run */
     if (back && mv > 0.05) { // running backward: the weight goes back over the heels to keep from falling; three very different ways of doing it
       const bk = clamp(spd / 2.2, 0, 1) * mv, bs = Math.floor(uhash(u.id, 13) * 3), sp = Math.sin(ph);
       if (bs === 0) { lean = -0.36 * bk + 0.06 * Math.abs(sp) * bk; crouch = 0.07 * bk; twist *= 1.5; } // stumbling back, rocking on each step
       else if (bs === 1) { lean = -0.2 * bk; crouch = 0.18 * bk; roll = 0.14 * sp * bk; stance = Math.max(stance, 0.55 * bk); } // low wide crab-shuffle, swaying side to side
       else { lean = -0.46 * bk - 0.07 * Math.abs(Math.cos(ph)) * bk; twist = -0.28 * sp * bk; roll = -0.05 * bk; } // bolt upright, pedalling hard, shoulders thrashing
     }
-    let rateW = 13, rateB = 10, anchor = 'R', two = true, fkR = false, fkL = false, rod = -1, arrowVis = 0, bowDraw = 0;
+    let rateW = 13, rateB = 10, anchor = 'R', two = true, fkR = false, fkL = false, rod = -1, arrowVis = 0, bowDraw = 0, lhFree = false; /* lhFree: the left hand goes to tg.lh on its own, off the weapon */
     let sjFl = 0;
     const atkSet = KW && KW.atk ? (KW.atk[u.atkDir] || KW.atk[2]) : null;
     const B = (clubbing ? BODYC : BODY)[u.atkDir] || BODY[2];
@@ -8658,18 +8731,53 @@ class Renderer {
       set3(tg.rh, tg.wp);
     } else if (KW) {
       if ((u.st === ST_WINDUP || u.st === ST_RELEASE || u.st === ST_RECOVER) && atkSet) {
-        if (u.st === ST_WINDUP) { set3(tg.wp, atkSet[0].g); set3(tg.wd, atkSet[0].d); rateW = u.ctrl >= 0 ? 12 : 9; twist = B[0]; lean = B[1]; crouch = 0.04; rateB = 9; }
-        else if (u.st === ST_RELEASE) {
-          const t = clamp(stT / RELEASE_T, 0, 1), e = t * t * (3 - 2 * t);
-          bez3(tg.wp, atkSet[0].g, atkSet[1].g, atkSet[2].g, e); nrm3(bez3(tg.wd, atkSet[0].d, atkSet[1].d, atkSet[2].d, e));
-          rateW = 50; rateB = 22; twist = lerp(B[0], B[2], e); lean = lerp(B[1], B[3], e); lunge = B[4] * e; crouch = 0.04 + 0.06 * e;
+        /* the cut as one movement of the whole body (SW: the weight, the precursor and the follow-through of each kind of blow):
+           wind-up: the hands drift toward the guard side, then the shoulder loads as the weight goes back onto the rear foot and
+           the blade is drawn back to the top and held there a beat; release: the hips turn first, the torso follows, the arm and
+           blade whip through (slow out of the top, fastest at the line) and the lead foot drops as the blade passes; recovery:
+           the blade carries past the line, is brought back as the weight settles, and a chained cut (cbN) turns the recovery into
+           the next wind-up instead of settling */
+        const SWK = this.swKind(u, w, clubbing), hv = !!(u.heavy || u.aiHeavy || u.cbHeavy), SK = SW[SWK], chainOn = u.cbN > 0 && (u.cbE || 0) > this.sim.tick - 24;
+        if (u.st === ST_WINDUP) {
+          const wd = u.ctrl >= 0 && !u.amK ? (u.cbFast ? 0.2 : hv ? 0.4 : 0.28) : Math.min(1.1, def.windup * (u.aiHeavy ? 1.9 : 1) * (u.wMul || 1)), t = clamp(stT / Math.max(0.12, wd), 0, 1);
+          const pre = clamp(t / 0.45, 0, 1), ld = clamp((t - 0.3) / 0.55, 0, 1), e1 = pre * pre * (3 - 2 * pre), e2 = ld * ld * (3 - 2 * ld);
+          const A0 = atkSet[0], L0 = atkSet.load || A0; /* drift to the top, then load: the blade settles a little further back and higher than the top */
+          const rip = u.counterT > 0 && !mounted; /* the riposte: he attacks out of the bind of the parry he just made */
+          if (rip) { /* execution from the bind: the guard turns the blade aside (the block pose rolled out and forward), the body steps
+                        through it, and the cut comes straight from there; with a shield the shield arm shoves out first */
+            const BK = KW.block[u.blockDir] || KW.block[1], sgn = u.blockDir === DIR_RIGHT ? -1 : 1, e0 = clamp(t / 0.35, 0, 1), ee = e0 * e0 * (3 - 2 * e0);
+            const bind = [BK.g[0] + 0.12 * sgn * ee, BK.g[1] + 0.05 * ee, BK.g[2] + 0.18 * ee], bd = N3(BK.d[0] + 0.5 * sgn * ee, BK.d[1] + 0.2 * ee, BK.d[2] + 0.45 * ee);
+            for (let j = 0; j < 3; j++) { tg.wp[j] = lerp(bind[j], L0.g[j], e2); tg.wd[j] = lerp(bd[j], L0.d[j], e2); } nrm3(tg.wd);
+            if (def.shield && a.shvId !== u.windupId) { a.shvId = u.windupId; a.shv = 1; } /* the shield shove runs on its own timer, once per blow (drawn by the left hand offset below) */
+            rateW = 22; rateB = 16; crouch = 0.08 + 0.05 * e2; twist = sgn * 0.3 * ee + B[0] * 0.5 * e2; lean = 0.12 * ee + 0.08 * e2; lunge = 0.22 * ee + 0.1 * e2; roll = -0.08 * sgn * ee; a.swRip = 1;
+          } else {
+          a.swRip = 0;
+          for (let j = 0; j < 3; j++) { tg.wp[j] = lerp(lerp(KW.guard.g[j], A0.g[j], e1), L0.g[j], e2 * SK.load); tg.wd[j] = lerp(lerp(KW.guard.d[j], A0.d[j], e1), L0.d[j], e2 * SK.load); } nrm3(tg.wd);
+          const br = Math.sin(this.time * 9 + u.id) * 0.004 * e2; tg.wp[1] += br; /* the held top is not frozen: a small tremor of the loaded arm */
+          rateW = u.ctrl >= 0 ? 16 : 12; rateB = 11; crouch = 0.04 + 0.05 * e2 * SK.sink;
+          twist = B[0] * (0.6 * e1 + 0.4 * e2) + SK.wtw * e2 * (B[0] >= 0 ? 1 : -1) * (B[0] === 0 ? 0 : 1); lean = B[1] * e1 - SK.back * e2; lunge = -SK.back * 0.6 * e2; roll = -0.06 * e2 * (B[0] > 0 ? 1 : B[0] < 0 ? -1 : 0); }
+          if (a.swPre === undefined) a.swPre = 0; a.swPre = e2; a.swRel = 0;
+        } else if (u.st === ST_RELEASE) {
+          const t = clamp(stT / RELEASE_T, 0, 1);
+          const eh = Math.min(1, t / 0.6), hip = eh * eh * (3 - 2 * eh); /* hips first */
+          const eb = t * t * (2.2 - 1.2 * t), e = clamp(eb * SK.whip + t * (1 - SK.whip), 0, 1); /* the blade: slow out of the top, fastest at the line */
+          const ef = clamp((t - 0.25) / 0.75, 0, 1), foot = ef * ef * (3 - 2 * ef); /* the lead foot drops as the blade passes */
+          const L0 = atkSet.load || atkSet[0];
+          bez3(tg.wp, L0.g, atkSet[1].g, atkSet[2].g, e); nrm3(bez3(tg.wd, L0.d, atkSet[1].d, atkSet[2].d, e));
+          rateW = 50 + 20 * SK.whip; rateB = 24; twist = lerp(B[0] + SK.wtw * (B[0] > 0 ? 1 : B[0] < 0 ? -1 : 0), B[2] * SK.tw, hip); lean = lerp(B[1] - SK.back, B[3] * SK.ln, e * 0.5 + foot * 0.5); lunge = lerp(-SK.back * 0.6, B[4] * SK.lg, foot); if (a.swRip) { lunge = lerp(0.3, B[4] * SK.lg + 0.25, foot); lean += 0.1; } /* the riposte steps through the man */ crouch = 0.04 + (0.06 + 0.05 * SK.sink) * foot; roll = 0.07 * (B[0] > 0 ? 1 : B[0] < 0 ? -1 : 0) * hip;
+          a.swRel = 1;
         } else {
-          const t = clamp(stT / Math.max(0.1, def.recover), 0, 1);
-          if (t < 0.35) { const R = atkSet[2], M = atkSet[1]; for (let j = 0; j < 3; j++) { tg.wp[j] = R.g[j] + (R.g[j] - M.g[j]) * 0.2; tg.wd[j] = R.d[j] + (R.d[j] - M.d[j]) * 0.25; } nrm3(tg.wd); rateW = 9; }
-          else { set3(tg.wp, KW.guard.g); set3(tg.wd, KW.guard.d); rateW = 6; }
-          twist = B[2] * (1 - t); lean = B[3] * (1 - t); lunge = B[4] * (1 - t); crouch = 0.1 * (1 - t); rateB = 6;
+          const t = clamp(stT / Math.max(0.1, def.recover * (u.chg ? 1.35 : 1)), 0, 1), R = atkSet[2], M = atkSet[1];
+          const nd = u.cbD === DIR_RIGHT ? DIR_LEFT : u.cbD === DIR_LEFT ? DIR_RIGHT : DIR_UP; const nx = chainOn && KW.atk ? (KW.atk[nd] || KW.atk[u.cbD] || null) : null; /* a chained cut: the recovery goes to where the next step starts (a side cut comes back from the other side; a thrust or chop is followed from above) */
+          const ov = SK.over * (1 - clamp(t / 0.3, 0, 1)); /* follow-through past the line */
+          const es = clamp((t - 0.2) / 0.8, 0, 1), set = es * es * (3 - 2 * es);
+          for (let j = 0; j < 3; j++) { const G2 = nx ? nx[0].g[j] : KW.guard.g[j], D2 = nx ? nx[0].d[j] : KW.guard.d[j]; tg.wp[j] = lerp(R.g[j] + (R.g[j] - M.g[j]) * ov, G2, nx ? Math.min(1, set * 1.4) : set); tg.wd[j] = lerp(R.d[j] + (R.d[j] - M.d[j]) * ov, D2, nx ? Math.min(1, set * 1.4) : set); } nrm3(tg.wd);
+          rateW = t < 0.3 ? 14 : 7; rateB = 7;
+          twist = B[2] * SK.tw * (1 - set) * (1 + 0.3 * ov); lean = B[3] * SK.ln * (1 - set); lunge = B[4] * SK.lg * (1 - set); crouch = (0.1 + 0.05 * SK.sink) * (1 - set); roll = 0.07 * (B[0] > 0 ? 1 : B[0] < 0 ? -1 : 0) * (1 - set);
+          a.swRel = 0; a.swRip = 0;
         }
         stance = Math.max(stance, 0.7);
+        if (brushMan && (u.atkDir === DIR_LEFT || u.atkDir === DIR_RIGHT)) this.tigerSweep(u, a, tg, dt, x, z, yaw, stT, (v) => { twist += v.twist; lean += v.lean; crouch += v.crouch; roll += v.roll; lunge += v.lunge; });
       } else if (u.blocking) { const K = KW.block[u.blockDir]; set3(tg.wp, K.g); set3(tg.wd, K.d); rateW = 24; twist = u.blockDir === DIR_RIGHT ? -0.2 : u.blockDir === DIR_LEFT ? 0.2 : 0; crouch = 0.05; stance = Math.max(stance, 0.7); }
       else if (u.st === ST_STUN) { set3(tg.wp, KW.stun.g); set3(tg.wd, KW.stun.d); rateW = 11; lean = -0.22; lunge = -0.12; }
       else if (w === 'rifle' && reloading && reloadStyle(u) !== 'lever') {
@@ -8699,20 +8807,21 @@ class Renderer {
         const sw = Math.sin(ph), sw2 = Math.cos(2 * ph), charge = sq && sq.order === S.ORD_CHARGE;
         let G, D;
         const rv = uhash(u.id, 17); // which way this man carries his weapon at the run
-        if (w === 'katana') { const st2 = charge && runH > 0.35 ? 1 : [0, 2, 3, 4][Math.floor(rv * 4)];
+        const tired = (a.rs || 0) < -0.45, hard = (a.rs || 0) > 0.55; /* the tired man lets the weapon trail; the hard sprint carries it back and low */
+        if (w === 'katana') { const st2 = tired ? 0 : hard && runH > 0.5 ? 0 : charge && runH > 0.35 ? 1 : [0, 2, 3, 4][Math.floor(rv * 4)];
           if (st2 === 0) { two = false; G = [-0.3, -0.44 + 0.03 * sw2, -0.44 - 0.04 * sw]; D = N3(-0.14, 0.22 + 0.22 * sw, -1); } /* the trailing run: sword arm thrown straight back behind him, the blade streaming out behind and bobbing with the stride */
           else if (st2 === 1) { two = false; G = [-0.25, 0.14 + 0.03 * sw2, 0.08]; D = N3(0.12, 0.78, -0.62); } // blade cocked back over the shoulder for the first cut
           else if (st2 === 2) { G = [-0.1, -0.32 + 0.04 * sw2, 0.3 + 0.04 * sw]; D = N3(0.3, 0.42, 0.85); } // both hands, blade slanted across the body
           else if (st2 === 3) { G = [-0.12, -0.04 + 0.03 * sw2, 0.26 + 0.03 * sw]; D = N3(0.12, 0.93, 0.25); } // both hands, blade held upright before the face
           else { two = false; G = [-0.24, -0.3 + 0.03 * sw2, 0.3 + 0.06 * sw]; D = N3(0.05, -0.22, 1); } // one hand, point thrust out ahead, low and eager
           if (u.def.shield) two = false; }
-        else if (w === 'yari') { const lsp = (u.kitRole !== undefined ? u.kitRole : u.role) === 'spear', st2 = charge ? 0 : lsp ? 4 : Math.floor(runH * 4); /* the long spear is carried upright on the march */
+        else if (w === 'yari') { const lsp = (u.kitRole !== undefined ? u.kitRole : u.role) === 'spear', st2 = tired ? 2 : charge ? 0 : lsp ? 4 : Math.floor(runH * 4); /* the long spear is carried upright on the march; a tired man trails it */
           if (st2 === 4) { G = [-0.14, -0.2 + 0.03 * sw2, 0.14]; D = N3(0.1, 0.96, 0.18); } else
           if (st2 === 0) { G = [-0.2, -0.27 + 0.04 * sw2, 0.06 + 0.05 * sw]; D = N3(0.05, 0.03 + 0.04 * sw2, 1); } // point levelled for the charge
           else if (st2 === 1) { G = [-0.15, -0.1 + 0.04 * sw2, 0.18]; D = N3(0.35, 0.85, 0.22); } // sloped on the shoulder
           else if (st2 === 2) { two = false; G = [-0.25, -0.45 + 0.03 * sw2, 0.02 - 0.12 * sw]; D = N3(0.02, 0.2, 1); } // trailed in one hand at the balance, swinging with the stride
           else { G = [-0.18, -0.38 + 0.03 * sw2, 0.12 + 0.04 * sw]; D = N3(0.08, 0.5, 0.86); } } // low at the hip in both hands, point angled up
-        else if (w === 'rifle' && !clubbing) { const st2 = Math.floor(runH * 5);
+        else if (w === 'rifle' && !clubbing) { const st2 = tired ? 1 : Math.floor(runH * 5);
           if (st2 === 0) { G = [-0.14, -0.17 + 0.04 * sw2, 0.24 + 0.05 * sw]; D = N3(0.62, 0.74, 0.16); } // port arms across the chest
           else if (st2 === 1) { two = false; G = [-0.25, -0.5 + 0.03 * sw2, 0.04 - 0.18 * sw]; D = N3(0.04, 0.12 + 0.1 * sw, 1); } // trail arms, swinging at the side
           else if (st2 === 2) { two = false; G = [-0.21, 0.03 + 0.03 * sw2, 0.04]; D = N3(0.16, 0.95, -0.24); } // shouldered
@@ -8726,8 +8835,19 @@ class Renderer {
         /* the duck team's long spear stands upright at rest and comes down to the level only when a foe is close */
         if (w === 'yari' && (u.kitRole !== undefined ? u.kitRole : u.role) === 'spear') { const tgu = u.target >= 0 ? this.sim.units[u.target] : null, near = !!(tgu && !tgu.dead && (tgu.x - u.x) * (tgu.x - u.x) + (tgu.z - u.z) * (tgu.z - u.z) < 64) || u.blocking;
           a.spUp = (a.spUp === undefined ? 1 : a.spUp) + ((near ? 0 : 1) - (a.spUp === undefined ? 1 : a.spUp)) * Math.min(1, dt * 4); const k = a.spUp;
-          if (k > 0.01) { const G = [-0.14, -0.22 + Math.sin(this.time * 1.3 + u.id) * 0.01, 0.14], D = N3(0.07, 0.97, 0.14); for (let j = 0; j < 3; j++) { tg.wp[j] = lerp(tg.wp[j], G[j], k); tg.wd[j] = lerp(tg.wd[j], D[j], k); } nrm3(tg.wd); } } }
+          if (k > 0.01) { const G = [-0.14, -0.22 + Math.sin(this.time * 1.3 + u.id) * 0.01, 0.14], D = N3(0.07, 0.97, 0.14); for (let j = 0; j < 3; j++) { tg.wp[j] = lerp(tg.wp[j], G[j], k); tg.wd[j] = lerp(tg.wd[j], D[j], k); } nrm3(tg.wd); } }
+        /* walking with a long weapon: at the slope (on the shoulder) or at the trail (one hand at the balance, point down and back), by the man */
+        if (w === 'yari' && mv > 0.1 && r < 0.6 && !u.blocking && !(u.target >= 0 && !this.sim.units[u.target].dead && Math.hypot(this.sim.units[u.target].x - u.x, this.sim.units[u.target].z - u.z) < 9) && !brushMan) {
+          const kk = clamp(mv * (1 - r / 0.6), 0, 1), trail = uhash(u.id, 45) < 0.4, sw = Math.sin(ph);
+          const G = trail ? [-0.24, -0.46 + 0.02 * Math.cos(2 * ph), 0.05 - 0.1 * sw] : [-0.15, -0.08 + 0.02 * Math.cos(2 * ph), 0.16], D = trail ? N3(0.03, 0.3, 1) : N3(0.3, 0.88, 0.2);
+          for (let j = 0; j < 3; j++) { tg.wp[j] = lerp(tg.wp[j], G[j], kk); tg.wd[j] = lerp(tg.wd[j], D[j], kk); } nrm3(tg.wd); if (trail && kk > 0.5) two = false; }
+        /* idle variety (idleVar): weight on one hip, checking the edge, looking about, the helmet settled, the spear rested on the shoulder */
+        if (mv < 0.15 && u.ctrl < 0 && !u.blocking && !u.aiming && !u.camp && !mounted && !routing && !(u.target >= 0 && !this.sim.units[u.target].dead && Math.hypot(this.sim.units[u.target].x - u.x, this.sim.units[u.target].z - u.z) < 7)) { const IV = this.idleVar(u, a, dt, w, brushMan); if (IV) { lean += IV.lean; twist += IV.twist; roll += IV.roll; crouch += IV.crouch; stance = Math.max(stance, IV.stance); if (IV.wp) { for (let j = 0; j < 3; j++) { tg.wp[j] = lerp(tg.wp[j], IV.wp[j], IV.k); tg.wd[j] = lerp(tg.wd[j], IV.wd[j], IV.k); } nrm3(tg.wd); } a.ivLh = IV.lh; a.hYw = (a.hYw || 0) + (IV.head - (a.hYw || 0)) * Math.min(1, dt * 3); a.ivOn = true; } else a.ivOn = false; } else a.ivOn = false; }
       if (anchor === 'R') { set3(tg.rh, tg.wp); for (let j = 0; j < 3; j++) tg.lh[j] = tg.wp[j] + tg.wd[j] * KW.off2; }
+      if (a.ivOn && a.ivLh) { set3(tg.lh, a.ivLh); lhFree = true; two = true; fkL = false; } /* idleVar: the free hand up to the helmet */
+      if (a.shv > 0) { /* the shield shove before the riposte: the shield arm punches out and up, then comes back as the cut goes */
+        a.shv = Math.max(0, a.shv - dt / 0.3); const sh = Math.sin((1 - a.shv) * PI); fkL = false; two = true; lhFree = true;
+        set3(tg.lh, [0.2, -0.18 + 0.12 * sh, 0.28 + 0.34 * sh]); if (sh > 0.2) lean += 0.06 * sh; }
     } else { fkR = true; fkL = true; }
     if (u.flinchT > 0 && !(u.hrA < 1)) { lean -= 0.3 * (u.flinchT / 0.35); }
     if (a.hiOn) { // hit impulse (hitImpulse): critically damped springs on a shove offset and a bend away from the blow
@@ -8750,8 +8870,16 @@ class Renderer {
     if (u.camp) { // a man who looks up at you turns his head first (the body only turns if he gets up to talk)
       let want = 0; const lp = this.sim.players[this.localIdx], hh = lp ? this.sim.units[lp.heroId] : null;
       if (u.cLook && u.cAct !== 7 && hh && !hh.dead) want = clamp(wrapA(Math.atan2(hh.x - x, hh.z - z) - yaw), -1.05, 1.05);
-      a.hYw = (a.hYw || 0) + (want - (a.hYw || 0)) * (1 - Math.exp(-4 * dt)); } else a.hYw = 0;
+      a.hYw = (a.hYw || 0) + (want - (a.hYw || 0)) * (1 - Math.exp(-4 * dt)); } else if (!a.ivOn) a.hYw = (a.hYw || 0) * Math.max(0, 1 - dt * 5);
     if (u.wounded && !u.dead) { if (u.helpedBy >= 0) { lean = 0.28; crouch = Math.max(crouch, 0.16); roll = 0.12 * Math.sin(ph); } else { crouch = 0.62; lean = 0.62; roll = 0.1; stance = 0.4; } rateB = 8; } // doubled over / limping on a friend's shoulder
+    if (a.hlpL > 0 && !down && !mounted) { /* just pulled up: he leans on the helper's shoulder for his first steps, his near arm over him */
+      const h = a.hlpBy >= 0 ? this.sim.units[a.hlpBy] : null; const e = Math.min(1, a.hlpL / 0.5) * Math.min(1, (1.6 - a.hlpL) / 0.25 + 0.001);
+      if (h && !h.dead) { const rel = wrapA(Math.atan2(h.x - x, h.z - z) - yaw), sd = rel >= 0 ? 1 : -1; roll = 0.2 * sd * e; lean = 0.2 * e; crouch = 0.1 * e; twist = clamp(rel, -0.6, 0.6) * 0.5 * e; a.hlpE = e; a.hlpHs = sd; }
+      a.hlpL = Math.max(0, a.hlpL - dt); } else a.hlpE = 0;
+    /* helping a friend up (helperPose): the helper kneels by the downed man, takes him under the arm, they rise together, and for the
+       first steps the hurt man leans on his shoulder; a.hlp runs 0..1 as the helper goes down and comes up again */
+    { const HP = this.helperPose(u, a, dt, x, z, yaw, mounted); if (HP) { lean = HP.lean; twist = HP.twist; crouch = HP.crouch; stance = HP.stance; roll = HP.roll; rateB = 9; rateW = 10;
+        if (HP.lh) { set3(tg.lh, HP.lh); lhFree = true; fkL = false; two = true; } if (HP.rh) { set3(tg.rh, HP.rh); anchor = 'W'; fkR = false; set3(tg.wp, HP.wp); set3(tg.wd, HP.wd); } } }
     // ---------- smoothing ----------
     a.recoil = Math.max(0, a.recoil - dt * 3.2);
     if (!a.init) { set3(a.wp, tg.wp); set3(a.wd, tg.wd); set3(a.rh, tg.rh); set3(a.lh, tg.lh); a.lean = lean; a.twist = twist; a.init = true; }
@@ -8785,7 +8913,10 @@ class Renderer {
       legs[o + 6] = side * 0.11 + fx * f2; legs[o + 7] = -v2; legs[o + 8] = fz * f2;
       return v2;
     };
-    if (mounted) {
+    const DY = this.dying && u.dead ? this.dying.get(u.id) : null; let dyArm = null;
+    if (DY) { /* the arrow death (dyingStart): keys per variant, blended by the collapse's time; the arms are set after the frame is built */
+      const q = this.dyingPose(DY, u, legPlane, legs); pel = q.pel; a.lean = q.lean; a.roll = q.roll; a.twist = q.twist; a.lunge = 0; a.crouch = 0; a.hK = q.hK; wdp = q.dp; woy = q.oy; dyArm = q;
+    } else if (mounted) {
       const sx = [1, -1];
       for (let i = 0; i < 2; i++) { const o = i * 9, s = sx[i]; legs[o] = s * 0.1; legs[o + 1] = 0; legs[o + 2] = 0; legs[o + 3] = s * 0.34; legs[o + 4] = -0.3; legs[o + 5] = 0.28; legs[o + 6] = s * 0.32; legs[o + 7] = -0.78; legs[o + 8] = 0.1; }
       pel = 1.47 + (u.mount >= 0 ? this.anim(u.mount).hbob : a.hbob);
@@ -8868,19 +8999,19 @@ class Renderer {
     const dirRoot = (v, out, o) => { out[o] = C[0] * v[0] + C[3] * v[1] + C[6] * v[2]; out[o + 1] = C[1] * v[0] + C[4] * v[1] + C[7] * v[2]; out[o + 2] = C[2] * v[0] + C[5] * v[1] + C[8] * v[2]; };
     const J = this._J || (this._J = new Float64Array(60));
     // J layout: 0 shoulderL, 3 elbowL, 6 handL, 9 shoulderR, 12 elbowR, 15 handR, 18 weapon grip, 21 weapon dir, 24 chest centre, 27 head
-    toRoot([0.255, 0, 0], J, 0); toRoot([-0.255, 0, 0], J, 9); /* shoulders out at the edge of the torso, so the arms hang clear of the body */
+    toRoot([SHW, 0, 0], J, 0); toRoot([-SHW, 0, 0], J, 9); /* shoulders out past the edge of the torso (SHW), so the arms hang clear of the body and the upper arm never cuts into the ribs */
     toRoot([0, -0.22, 0], J, 24); toRoot([0, 0.25, 0.01], J, 27);
     const ik = (so, ho, tx, ty, tz, side) => {
       const sx = J[so], sy2 = J[so + 1], sz = J[so + 2]; let dx = (tx - sx) * ARM_REACH, dy = (ty - sy2) * ARM_REACH, dz = (tz - sz) * ARM_REACH; let d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-4; dx /= d; dy /= d; dz /= d;
       const A1 = ARM_U, A2 = ARM_F; d = clamp(d, 0.08, A1 + A2 - 0.002);
       const ca = (A1 * A1 + d * d - A2 * A2) / (2 * A1 * d), sa = Math.sqrt(Math.max(0, 1 - ca * ca));
-      let px = C[0] * side * 1.0 - C[3] * 1 - C[6] * 0.35, py = C[1] * side * 1.0 - C[4] - C[7] * 0.35, pz2 = C[2] * side * 1.0 - C[5] - C[8] * 0.35; /* elbows bend out, away from the ribs */
+      let px = C[0] * side * 1.45 - C[3] * 1 - C[6] * 0.35, py = C[1] * side * 1.45 - C[4] - C[7] * 0.35, pz2 = C[2] * side * 1.45 - C[5] - C[8] * 0.35; /* elbows bend out, away from the ribs */
       const dp = px * dx + py * dy + pz2 * dz; px -= dx * dp; py -= dy * dp; pz2 -= dz * dp; const pl = Math.sqrt(px * px + py * py + pz2 * pz2) || 1; px /= pl; py /= pl; pz2 /= pl;
       J[ho - 3] = sx + A1 * (dx * ca + px * sa); J[ho - 2] = sy2 + A1 * (dy * ca + py * sa); J[ho - 1] = sz + A1 * (dz * ca + pz2 * sa);
       J[ho] = sx + dx * d; J[ho + 1] = sy2 + dy * d; J[ho + 2] = sz + dz * d;
     };
     const fk = (so, ho, side, alpha2, bend) => {
-      const ux = side * 0.12, uy = -Math.cos(alpha2), uz = Math.sin(alpha2), fx = side * 0.05, fy = -Math.cos(alpha2 + bend), fz = Math.sin(alpha2 + bend);
+      const ux = side * 0.2, uy = -Math.cos(alpha2), uz = Math.sin(alpha2), fx = side * 0.05, fy = -Math.cos(alpha2 + bend), fz = Math.sin(alpha2 + bend);
       const tmp = this._tmp3 || (this._tmp3 = new Float64Array(3));
       dirRoot([ux, uy, uz], tmp, 0); const l1 = Math.hypot(tmp[0], tmp[1], tmp[2]);
       J[ho - 3] = J[so] + tmp[0] / l1 * ARM_U; J[ho - 2] = J[so + 1] + tmp[1] / l1 * ARM_U; J[ho - 1] = J[so + 2] + tmp[2] / l1 * ARM_U;
@@ -8896,10 +9027,14 @@ class Renderer {
     else if (anchor === 'W') toRoot(a.wp, J, 18);
     if (fkL || (!two && anchor === 'R')) fk(0, 6, 1, -armA * Math.sin(ph), armBend);
     else if (anchor === 'L') { toRoot(a.lh, tmpA, 0); ik(0, 6, tmpA[0], tmpA[1], tmpA[2], 1); J[18] = J[6]; J[19] = J[7]; J[20] = J[8]; }
-    else if (anchor === 'R' && KW) { ik(0, 6, J[18] + J[21] * KW.off2, J[19] + J[22] * KW.off2, J[20] + J[23] * KW.off2, 1); }
+    else if (anchor === 'R' && KW && !lhFree) { ik(0, 6, J[18] + J[21] * KW.off2, J[19] + J[22] * KW.off2, J[20] + J[23] * KW.off2, 1); }
     else { toRoot(a.lh, tmpA, 0); ik(0, 6, tmpA[0], tmpA[1], tmpA[2], 1); }
     if (fkR && w !== 'bow' && w !== '') { J[18] = J[15]; J[19] = J[16]; J[20] = J[17]; const fx = J[15] - J[12], fy = J[16] - J[13], fz = J[17] - J[14]; const l = Math.hypot(fx, fy, fz) || 1; const cdir = routing ? [fx / l * 0.3 - C[6], fy / l * 0.3 - C[7] - 0.4, fz / l * 0.3 - C[8]] : [C[6], C[7] + 0.3, C[8]]; const cl2 = Math.hypot(cdir[0], cdir[1], cdir[2]) || 1; J[21] = cdir[0] / cl2; J[22] = cdir[1] / cl2; J[23] = cdir[2] / cl2; }
     if (lie && lie.k > 0.01) this.lieArms(lie, J, C, pel, toRoot, ik);
+    if (dyArm) this.dyingArms(DY, dyArm, J, C, pel, toRoot, ik);
+    if (!mounted && ((a.dUp && a.dw > 0 && a.hlpBy >= 0) || a.hlpE > 0)) { /* the man being helped: his near arm reaches up over the helper's shoulder and stays there while he leans */
+      const h = this.sim.units[a.hlpBy]; if (h && !h.dead) { const hdx = h.x - x, hdz = h.z - z; const lx = hdx * cy - hdz * sy, lz = hdx * sy + hdz * cy; const ly = (h.y - y) + 1.35 - (a.hlp ? 0 : 0) - 0.2 * (this.anim(h.id).hlpK || 0);
+        const sd = lx >= 0 ? 1 : -1, so = sd > 0 ? 0 : 9, k = a.hlpE > 0 ? a.hlpE : clamp(1 - a.dw * 1.4, 0, 1); const tx = J[so] + (lx * 0.75 - J[so]) * k, ty = J[so + 1] + (ly - J[so + 1]) * k, tz = J[so + 2] + (lz * 0.75 - J[so + 2]) * k; ik(so, so + 6, tx, ty, tz, sd); } }
     // ---------- to world ----------
     const dp = wdp !== null ? wdp : down ? (u.downed && u.crawling ? 1.22 + Math.sin((this.time || 0) * 5 + u.id) * 0.07 : u.downed ? -(0.55 + 0.45 * uhash(u.id, 21)) * (u.reviveBy >= 0 ? 1 - clamp((u.reviveT || 0) / 45, 0, 1) * 0.8 : 1) : -1.45 * (0.5 + 0.5 * Math.min(1, clamp(u.downT, 0, 1) * 4))) : (u.camp && a.cl ? (a.cTilt || 0) * a.cl : 0), cP = Math.cos(dp), sP = Math.sin(dp); // a downed man is propped on an elbow or half-sitting, and rises as he is hauled up
     const oy0 = wdp !== null ? woy : down ? 0.15 : 0;
@@ -8914,6 +9049,7 @@ class Renderer {
     for (let i = 0; i < 30; i += 3) { if (i === 21) Wd(J[21], J[22], J[23], G, 18 + i); else Wp(J[i], J[i + 1], J[i + 2], G, 18 + i); }
     const CB = this._CB || (this._CB = new Float64Array(9)); Wd(C[0], C[1], C[2], CB, 0); Wd(C[3], C[4], C[5], CB, 3); Wd(C[6], C[7], C[8], CB, 6);
     Wp(0, pelS - 0.02, pzS, G, 60);
+    if (DY) { DY.G = DY.G || new Float64Array(63); DY.G.set(G.subarray(0, 63)); }
     if (u.camp) this.campPropDraw(u, a, G);
     this._sx = CB[0]; this._sy = CB[1]; this._sz = CB[2];
     if (vsc !== 1) for (let i = 0; i < 9; i++) CB[i] *= vsc;
@@ -8986,7 +9122,12 @@ class Renderer {
       this.seg(f.bstring, slot * 2, tx1, ty1, tz1, mx2, my2, mz2, 0.01, 0.01); this.seg(f.bstring, slot * 2 + 1, tx2, ty2, tz2, mx2, my2, mz2, 0.01, 0.01);
       if (arrowVis) { let ax2 = gx - rhx, ay2 = gy - rhy, az2 = gz - rhz; const al = Math.hypot(ax2, ay2, az2) || 1; ax2 /= al; ay2 /= al; az2 /= al; this.seg(f.arrow, slot, rhx, rhy, rhz, rhx + ax2 * 0.85, rhy + ay2 * 0.85, rhz + az2 * 0.85, 0.02, 0.02); } else f.arrow.setMatrixAt(slot, Z);
       this._sx = CB[0]; this._sy = CB[1]; this._sz = CB[2];
-    } else { f.bow.setMatrixAt(slot * 2, Z); f.bow.setMatrixAt(slot * 2 + 1, Z); f.bstring.setMatrixAt(slot * 2, Z); f.bstring.setMatrixAt(slot * 2 + 1, Z); f.arrow.setMatrixAt(slot, Z); }
+    } else { f.bow.setMatrixAt(slot * 2, Z); f.bow.setMatrixAt(slot * 2 + 1, Z); f.bstring.setMatrixAt(slot * 2, Z); f.bstring.setMatrixAt(slot * 2 + 1, Z);
+      if (DY && DY.ax !== undefined) { /* the arrow stuck in him, in the chest frame where it went in; the fletched half stands out */
+        const ax = G[42] + CB[0] * DY.ax + CB[3] * DY.ay + CB[6] * DY.az, ay = G[43] + CB[1] * DY.ax + CB[4] * DY.ay + CB[7] * DY.az, az = G[44] + CB[2] * DY.ax + CB[5] * DY.ay + CB[8] * DY.az;
+        const dxa = CB[0] * DY.dx + CB[3] * DY.dy + CB[6] * DY.dz, dya = CB[1] * DY.dx + CB[4] * DY.dy + CB[7] * DY.dz, dza = CB[2] * DY.dx + CB[5] * DY.dy + CB[8] * DY.dz; const l = Math.hypot(dxa, dya, dza) || 1;
+        this.seg(f.arrow, slot, ax - dxa / l * 0.1, ay - dya / l * 0.1, az - dza / l * 0.1, ax - dxa / l * 0.62, ay - dya / l * 0.62, az - dza / l * 0.62, 0.022, 0.022); }
+      else f.arrow.setMatrixAt(slot, Z); }
     if (u.def.shield && (w === 'katana' || w === 'yari') && !u.mounted) {
       const lx = G[o + 6], ly = G[o + 7], lz = G[o + 8], fx2 = Math.sin(u.yaw), fz2 = Math.cos(u.yaw);
       this.seg(f.shield, slot, lx + fx2 * 0.06, ly, lz + fz2 * 0.06, lx + fx2 * 0.13, ly, lz + fz2 * 0.13, 0.8, 0.8); this.seg(f.boss, slot, lx + fx2 * 0.12, ly, lz + fz2 * 0.12, lx + fx2 * 0.17, ly, lz + fz2 * 0.17, 0.2, 0.2);
@@ -9152,6 +9293,13 @@ class Renderer {
   }
   // a blow on another man: an additive shove (m/s into a spring) and a bend (rad/s), consumed in drawFigure; an animation rig
   // can read a.kbX/a.kbZ (shove offset), a.hb (bend back, rad, negative = away from the front) and a.hs (twist/side bend) instead
+  // which SW weight a man's current blow has (render-only; reads sim state)
+  swKind(u, w, clubbing) {
+    if (u.heavy || u.aiHeavy || u.cbHeavy) return 'heavy';
+    if (clubbing) return 'club';
+    if (w === 'yari') return u.atkDir === DIR_DOWN ? 'spear' : (u.atkDir === DIR_LEFT || u.atkDir === DIR_RIGHT) ? 'cut' : 'chop';
+    return u.atkDir === DIR_UP ? 'chop' : u.atkDir === DIR_DOWN ? 'thrust' : 'cut';
+  }
   hitImpulse(id, dx, dz, k, heavy) {
     const u = this.sim.units[id]; if (!u || u.type === 'horse') return; const a = this.anim(id); if (!a.hiOn) { a.kbX = a.kbZ = a.kbVx = a.kbVz = a.hb = a.hbV = a.hs = a.hsV = 0; } a.hiOn = true;
     const sp = (heavy ? 6.0 : 3.6) * k; a.kbVx += dx * sp; a.kbVz += dz * sp;
@@ -9178,7 +9326,7 @@ class Renderer {
       if (this.vmBowS) { const nz = 0.07 + k * 0.34, tips = [[0.4, -0.02], [-0.4, -0.02]]; this.vmBowS.forEach((s, i) => { const ty = tips[i][0], tz = tips[i][1], dy = 0 - ty, dz = nz - tz, L = Math.hypot(dy, dz); s.position.set(0, ty + dy / 2, tz + dz / 2); s.scale.set(1, L, 1); s.rotation.set(Math.atan2(dz, dy), 0, 0); });
         const nocked = hero.ammo > 0 || (hero.st === ST_RELOAD && hero.stT > (hero.reloadT || 0.8) * 0.6); this.vmBowA.visible = nocked; this.vmBowA.position.set(0.012, 0, nz); } }
     { const arm = hero.def.arm, K = this.vmKatana.scale; if (arm === 'guandao') K.set(1.1, 1.8, 2.2); else if (arm === 'mace') K.set(3, 0.72, 1.3); else if (arm === 'jian') K.set(0.75, 1.15, 0.6); else K.set(1, 1, 1); }
-    { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * (up ? 34 : 12)); const k = this.vmShieldK; tp.set(-0.42 + k * 0.15, -0.36 + k * 0.05, -0.55 - k * 0.07); this.vmShield.rotation.set(0.1 + k * 0.12, 0.5 - k * 0.3, k * 0.12); } }
+    { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * (up ? 34 : 12)); const k = this.vmShieldK; if (this._vmShove > 0) this._vmShove = Math.max(0, this._vmShove - dt / 0.3); const shv = this._vmShove > 0 ? Math.sin((1 - this._vmShove) * PI) : 0; tp.set(-0.42 + k * 0.15 + shv * 0.12, -0.36 + k * 0.05 + shv * 0.08, -0.55 - k * 0.07 - shv * 0.3); this.vmShield.rotation.set(0.1 + k * 0.12 - shv * 0.2, 0.5 - k * 0.3 - shv * 0.25, k * 0.12); } } /* shove: before a riposte the shield punches out, then comes back as the cut goes */
     if (this.vmBloodMat) { this.bladeBlood = Math.max(0, (this.bladeBlood || 0) - (this.fdt || 0.016) / 90); this.vmBloodMat.opacity = 0.82 * Math.sqrt(this.bladeBlood); }
     const yrole = w === 'yari' ? (hero.kitRole !== undefined ? hero.kitRole : hero.role) : null; this.vmYari.scale.y = yrole === 'spear' ? 1.75 : 1; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
     // a three-eyed gun model added by a campaign (vmSj) replaces the musket parts every frame, whoever you now are
@@ -9224,26 +9372,51 @@ class Renderer {
       this.fovTarget = (hero.aiming && hero.st !== ST_RELOAD && !hero.blocking) ? 42 : (hero.aiming && style === 'lever' ? 42 : 75);
     } else {
       { let near = 99; const sim = this.sim; for (const v of sim.teamAlive[1 - hero.team] || []) { const d = Math.abs(v.x - hero.x) + Math.abs(v.z - hero.z); if (d < near) near = d; } this.fovTarget = near < 7 ? 86 : near < 12 ? 80 : 75; } // see more of the melee around you
-      const K = (hero.club && w === 'rifle' ? this.VM.club : this.VM[w]) || this.VM.katana; // turned round, a gun is swung like a club: the blade's cuts and smashes, not a bayonet
+      const K = (hero.club && w === 'rifle' ? this.VM.club : (w === 'yari' && yrole === 'brush') ? this.VM.brush : this.VM[w]) || this.VM.katana; // turned round, a gun is swung like a club: the blade's cuts and smashes, not a bayonet
       rhT.copy(K.R); lhT.copy(K.Lh);
       const d = hero.atkDir; const W = K.windup[d] || K.windup[2] || K.idle, M = K.mid[d] || K.mid[2] || W, R = K.release[d] || K.release[2] || K.idle;
       const side = d === DIR_RIGHT ? 1 : d === DIR_LEFT ? -1 : 0;
-      if (hero.st === ST_WINDUP) { target = W; speed = 13; camRoll = side * 0.06; camPitch = d === DIR_UP ? 0.08 : 0; this._swYaw = side * 0.1; this._swShift = side * 0.07; this._swDrop = 0; } /* the body winds up with the weapon: the view turns and leans into the side it comes from */
+      /* the first-person cut, with the same weight as the figures' (SW): the wind-up drifts to the top then loads (drawn further
+         back, the view leans away and sinks onto the rear foot, a beat of stillness with a tremor), the release whips through
+         with the hips first (the view turns ahead of the blade) and drops onto the front foot as the blade passes, the recovery
+         carries past the line and settles; a chained cut recovers straight into the next step's top */
+      const hv = !!(hero.heavy || hero.cbHeavy), SK = SW[hv ? 'heavy' : (hero.club && w === 'rifle') ? 'club' : w === 'yari' ? (d === DIR_DOWN ? 'spear' : 'chop') : d === DIR_UP ? 'chop' : d === DIR_DOWN ? 'thrust' : 'cut'];
+      const LD = (k) => W[k] + (W[k] - M[k]) * (SK === SW.spear ? 0 : 0.22 * SK.load) + (k === 'py' ? 0.03 : k === 'pz' && SK === SW.spear ? 0.22 : 0); /* the loaded top */
+      const mixP = (A, Bq, e) => P(lerp(A.px, Bq.px, e), lerp(A.py, Bq.py, e), lerp(A.pz, Bq.pz, e), lerp(A.rx, Bq.rx, e), lerp(A.ry, Bq.ry, e), lerp(A.rz, Bq.rz, e));
+      const Lp = P(LD('px'), LD('py'), LD('pz'), LD('rx'), LD('ry'), LD('rz'));
+      if (hero.st === ST_WINDUP) {
+        const wd = hero.cbFast ? 0.2 : hv ? 0.4 : 0.28, t = clamp(stT / wd, 0, 1), pre = clamp(t / 0.45, 0, 1), ld = clamp((t - 0.3) / 0.55, 0, 1), e1 = pre * pre * (3 - 2 * pre), e2 = ld * ld * (3 - 2 * ld);
+        const tr = Math.sin(this.time * 9) * 0.003 * e2;
+        if (hero.counterT > 0) { /* the riposte: out of the bind of the parry, the guard rolls the blade aside and forward, then the cut comes from there */
+          const BK = K.block[hero.blockDir] || K.block[1] || K.idle, sg = hero.blockDir === DIR_RIGHT ? -1 : 1, e0 = clamp(t / 0.35, 0, 1), ee = e0 * e0 * (3 - 2 * e0);
+          const bind = P(BK.px + 0.1 * sg * ee, BK.py + 0.04 * ee, BK.pz - 0.12 * ee, BK.rx - 0.35 * ee, BK.ry + 0.3 * sg * ee, BK.rz - 0.4 * sg * ee);
+          target = mixP(bind, Lp, e2); speed = 22; camRoll = -0.05 * sg * ee; camPush = 0.08 * ee; this._swYaw = sg * 0.12 * ee; this._swShift = sg * 0.06 * ee; this._swDrop = 0.03 * ee;
+          if (hero.def.shield && this._vmShoveId !== hero.windupId) { this._vmShoveId = hero.windupId; this._vmShove = 1; } }
+        else { target = mixP(mixP(K.idle, W, e1), Lp, e2); target = P(target.px, target.py + tr, target.pz, target.rx, target.ry, target.rz); speed = 15;
+        camRoll = side * (0.06 + 0.03 * e2); camPitch = (d === DIR_UP ? 0.08 : 0.02) + 0.03 * SK.back * 4 * e2; this._swYaw = side * (0.1 + 0.08 * SK.wtw * e2); this._swShift = side * 0.07; this._swDrop = -0.03 * SK.back * 4 * e2; /* the body winds up with the weapon: the view turns and leans into the side it comes from, and the weight goes back */
+        camPush = -0.05 * SK.back * 4 * e2; }
+      }
       else if (hero.st === ST_RELEASE) {
-        const t = clamp(stT / RELEASE_T, 0, 1), e = t * t * (3 - 2 * t), u = 1 - e;
-        const q = (k) => u * u * W[k] + 2 * u * e * M[k] + e * e * R[k];
-        target = P(q('px'), q('py'), q('pz'), q('rx'), q('ry'), q('rz')); speed = 60;
-        camRoll = side * lerp(0.06, -0.08, e); camPitch = d === DIR_UP ? lerp(0.08, -0.13, e) : d === DIR_DOWN ? -0.02 : 0; camPush = (d === DIR_DOWN ? 0.3 : d === DIR_UP ? 0.16 : 0.12) * Math.sin(t * PI);
-        this._swYaw = side * lerp(0.1, -0.15, e); this._swShift = side * lerp(0.07, -0.1, e); this._swDrop = (d === DIR_UP ? 0.12 : 0.05) * Math.sin(t * PI); /* and the whole body follows the cut through: shoulders turn, weight drops onto the front foot */
+        const t = clamp(stT / RELEASE_T, 0, 1), eb = t * t * (2.2 - 1.2 * t), e = clamp(eb * SK.whip + t * (1 - SK.whip), 0, 1), u = 1 - e;
+        const eh = Math.min(1, t / 0.6), hip = eh * eh * (3 - 2 * eh), ef = clamp((t - 0.25) / 0.75, 0, 1), foot = ef * ef * (3 - 2 * ef);
+        const q = (k) => u * u * Lp[k] + 2 * u * e * M[k] + e * e * R[k];
+        target = P(q('px'), q('py'), q('pz'), q('rx'), q('ry'), q('rz')); speed = 60 + 25 * SK.whip;
+        camRoll = side * lerp(0.09, -0.08 * SK.tw, hip); camPitch = d === DIR_UP ? lerp(0.1, -0.13 * SK.ln, foot) : d === DIR_DOWN ? lerp(0.04, -0.03, foot) : lerp(0.03, -0.02, foot); camPush = (d === DIR_DOWN ? 0.3 : d === DIR_UP ? 0.16 : 0.12) * SK.lg * Math.sin(t * PI) - 0.05 * SK.back * 4 * (1 - hip);
+        this._swYaw = side * lerp(0.1 + 0.08 * SK.wtw, -0.15 * SK.tw, hip); this._swShift = side * lerp(0.07, -0.1, hip); this._swDrop = (d === DIR_UP ? 0.12 : 0.05) * SK.sink * foot + 0.02 * Math.sin(t * PI); /* the whole body follows the cut through: hips and shoulders turn ahead of the blade, the weight drops onto the front foot */
+        if (t > 0.3 && t < 0.5 && this.imp && !this._swImp) { this._swImp = true; this.imp.vp += (d === DIR_UP ? 1.6 : 0.6) * SK.ln; this.imp.vr += side * 1.4 * SK.tw; } /* the shoulder drives: a small kick through the impact springs as the blade passes the line */
       }
       else if (hero.st === ST_RECOVER) {
-        const t = clamp(stT / Math.max(0.1, hero.def.recover), 0, 1);
-        if (t < 0.3) { target = P(R.px + (R.px - M.px) * 0.15, R.py + (R.py - M.py) * 0.15, R.pz + (R.pz - M.pz) * 0.15, R.rx + (R.rx - M.rx) * 0.15, R.ry + (R.ry - M.ry) * 0.15, R.rz + (R.rz - M.rz) * 0.15); speed = 10; }
-        else { target = K.idle; speed = 7; }
+        const t = clamp(stT / Math.max(0.1, hero.def.recover), 0, 1), chain = hero.cbN > 0 && (hero.cbE || 0) > this.sim.tick - 24;
+        const ov = SK.over * (1 - clamp(t / 0.3, 0, 1)), es = clamp((t - 0.2) / 0.8, 0, 1), set = es * es * (3 - 2 * es);
+        const nd = hero.cbD === DIR_RIGHT ? DIR_LEFT : hero.cbD === DIR_LEFT ? DIR_RIGHT : DIR_UP; const nx = (chain ? (K.windup[nd] || K.windup[hero.cbD] || K.windup[2]) : null) || K.idle;
+        const Ov = P(R.px + (R.px - M.px) * ov, R.py + (R.py - M.py) * ov, R.pz + (R.pz - M.pz) * ov, R.rx + (R.rx - M.rx) * ov, R.ry + (R.ry - M.ry) * ov, R.rz + (R.rz - M.rz) * ov);
+        target = mixP(Ov, nx, chain ? Math.min(1, set * 1.4) : set); speed = t < 0.3 ? 14 : 8;
+        camRoll = side * -0.05 * (1 - set); this._swYaw = side * -0.12 * (1 - set); this._swShift = side * -0.08 * (1 - set); this._swDrop = 0.04 * (1 - set);
       }
       else if (hero.st === ST_STUN) { target = K.stun; speed = 12; camRoll = -0.04; camPitch = 0.03; }
       else if (hero.blocking) { target = K.block[hero.blockDir]; speed = 48; } /* the guard snaps up */
       else target = K.idle;
+      if (hero.st !== ST_RELEASE) this._swImp = false;
     }
     { // at the run the weapon is carried, not presented: musket at port arms across the chest, blade swinging low with the arm, spear tipped forward
       const idleish = hero.st === ST_IDLE && !hero.aiming && !hero.blocking && !mounted;
@@ -9466,6 +9639,7 @@ class Renderer {
     for (let i = 0; i < units.length; i++) {
       if (this.studio && i === this.studio.id) { const S0 = this.studio; this.drawFigure(i, S0.u, S0.x, S0.y, S0.z, S0.yaw, 1, false); continue; } // portrait studio: one man posed alone, high above the field
       const u = units[i];
+      if (u.dead && this.dying && this.dying.has(i)) { this.dyingDraw(i, u, dt); continue; } /* an arrow's slow collapse: drawn by the figure for a moment after the sim has him dead */
       if (u.dead || u.inactive) continue;
       const x = lerp(u.px, u.x, alpha), y = lerp(u.py, u.y, alpha), z = lerp(u.pz, u.z, alpha);
       if (om && u.squad >= 0 && i !== heroId && u.type !== 'horse' && !u.downed && !u.wounded && !(u.downT > 0)) { const q = sim.squads[u.squad]; if (q && q.owner !== this.localIdx && this.friendOwner[q.owner] && sim.units[sim.players[q.owner].heroId] !== u) om.pushF(x, y + (u.mounted ? 3.15 : 2.55) * (u.look && u.look.h ? u.look.h : 1), z); if (q && (q.owner === this.localIdx || (q.id === sim.players[this.localIdx].soldierSq && sim.mission && sim.mission.soldier))) { const top = y + (u.mounted ? 3.15 : 2.55) * (u.look && u.look.h ? u.look.h : 1); om.push(x, top, z); if (capt[u.squad] === undefined) capt[u.squad] = [x, top, z]; } else if (q && u.team === sim.players[this.localIdx].team && !(this.friendOwner[q.owner]) && (x - cx) * (x - cx) + (z - cz) * (z - cz) < 55 * 55) om.pushC(x, y + (u.mounted ? 3.15 : 2.55) * (u.look && u.look.h ? u.look.h : 1), z); }
@@ -9902,6 +10076,233 @@ Renderer.prototype.lieArms = function (lie, J, C, pel, toRoot, ik) {
   const gx = -0.42 * sps, gz = 0.15; J[18] += (gx - J[18]) * k; J[19] += (0.05 - J[19]) * k; J[20] += (gz - J[20]) * k;
   let dx = J[21] * (1 - k) + 0.08 * k, dy = J[22] * (1 - k), dz = J[23] * (1 - k) + k; const l = Math.hypot(dx, dy, dz) || 1; J[21] = dx / l; J[22] = dy / l; J[23] = dz / l;
 };
+// ---- the arrow death: a scripted collapse before the ragdoll (render-only; the sim has him dead from the first tick) ----
+// Three ways to go: 0 clutch — a hand to the shaft, the knees go, he sinks to his knees and folds forward over it;
+// 1 stagger — a step taken, the free hand reaching for the shaft, then he folds at the hip and drops; 2 spin — turned by the
+// blow, an arm flung out, and he goes over sideways. Each ends by handing the pose, with its velocities, to the ragdoll.
+// Agreed hook (ragdoll agent): Ragdoll.spawn(u, ix, iy, iz, slot) is called as for any death; if the Ragdoll class later
+// accepts a `from` argument (world points G: 0 legs, 18 joints, 60 pelvis) it may take it from DY.G — nothing here edits Ragdoll.
+Renderer.prototype.dyingStart = function (u, ev) {
+  if (!this.dying) this.dying = new Map();
+  if (this.dying.size > 24) return false; /* budget: a volley's worth; the rest fall as before */
+  const a = this.anim(u.id); if (a.dw > 0 || u.downT > 0) return false;
+  const r = uhash(u.id, 29), v = r < 0.45 ? 0 : r < 0.8 ? 1 : 2, dur = v === 0 ? 1.15 : v === 1 ? 0.95 : 0.7;
+  /* where the arrow went in, in the chest frame: from the hit point if the event carries one, else the front of the chest */
+  let ax = 0.04 - 0.08 * uhash(u.id, 31), ay = 0.0 + 0.14 * (uhash(u.id, 33) - 0.5), az = 0.16; const cy = Math.cos(u.yaw), sy = Math.sin(u.yaw);
+  let dx = 0, dy = -0.2, dz = -1; if (ev.ix || ev.iz) { const l = Math.hypot(ev.ix, ev.iz) || 1; const wx = ev.ix / l, wz = ev.iz / l; dx = wx * cy - wz * sy; dz = wx * sy + wz * cy; if (dz > 0) az = -0.16; dy = -0.25; }
+  const side = Math.abs(dx) > 0.5 ? (dx > 0 ? 1 : -1) : (uhash(u.id, 35) < 0.5 ? 1 : -1);
+  this.dying.set(u.id, { t: 0, dur, v, side, ax, ay, az, dx, dy, dz, ev, yaw: u.yaw, x: u.x, y: u.y, z: u.z, hand: dx > 0.3 ? 1 : -1 });
+  AUDIO.play('flesh', u.x, u.y + 1.2, u.z, 0.9);
+  return true;
+};
+Renderer.prototype.dyingDraw = function (i, u, dt) {
+  const D = this.dying.get(i); D.t += dt;
+  if (!u.dead) { this.dying.delete(i); return; }
+  this.drawFigure(i, u, D.x, D.y, D.z, D.yaw, 1, false);
+  if (D.t < D.dur) return;
+  /* hand over to the ragdoll from where the collapse left him: spawn as usual, then put its points where the figure's are */
+  this.dying.delete(i); this.hideFigure(i);
+  const units = this.sim.units, rag = this.ragdolls[this.ragNext]; this.ragNext = (this.ragNext + 1) % MAXRAG;
+  const slot = units.length + this.ragdolls.indexOf(rag); const ev = D.ev;
+  rag.spawn(u, ev.ix, ev.iy, ev.iz, slot); rag.unit = u; this.colorFigure(slot, u);
+  if (D.G) { const G = D.G, P = [[18 + 27, 0], [18 + 24, 1], [60, 2], [18 + 6, 3], [18 + 15, 4], [6, 5], [15, 6]]; /* head, chest, pelvis, handL, handR, footL, footR */
+    const vf = D.v === 2 ? 0.9 : 0.35, fx = Math.sin(D.yaw) * (D.v === 1 ? 0.6 : 0.2), fz = Math.cos(D.yaw) * (D.v === 1 ? 0.6 : 0.2), sx = Math.cos(D.yaw) * D.side * vf, sz = -Math.sin(D.yaw) * D.side * vf;
+    for (const [o, k] of P) { const wx = G[o], wy = G[o + 1] + (k === 2 ? 0.06 : 0), wz = G[o + 2]; rag.p[k * 3] = wx; rag.p[k * 3 + 1] = wy; rag.p[k * 3 + 2] = wz; const h = 1 / 60; rag.q[k * 3] = wx - (fx + sx) * h; rag.q[k * 3 + 1] = wy + 0.2 * h; rag.q[k * 3 + 2] = wz - (fz + sz) * h; } }
+  this.blood(D.x, D.y + 0.6, D.z, 4, 0, 0.6, 0);
+  { const gr = terrainH(D.x, D.z); this.timers.push({ t: 0.6, fn: () => { this.decal(D.x + rnd(-0.3, 0.3), gr, D.z + rnd(-0.3, 0.3), 0.5 + Math.random() * 0.4, 0x4a0d0e); } }); }
+  { const g = gearFor(u); rag.hatOff = !!g.hat && uhash(u.id, 11) < 0.4; if (rag.hatOff) { const h = g.hat; this.spawnDebris(h.m, D.x, D.y + 1.6, D.z, rnd(-0.6, 0.6), 1.5 + Math.random(), rnd(-0.6, 0.6), h.s[0], h.s[1], h.s[2], h.k, 0.4); }
+    const w = u.weapon, wd = w === 'katana' ? [0.035, 0.05, 1.0, 0xcfd6dc] : w === 'yari' ? [0.04, 0.04, 2.5, 0x8b6b4a] : w === 'rifle' ? [0.06, 0.09, 1.35, 0x4a2e18] : w === 'bow' ? [0.04, 0.04, 1.9, 0x5a3b1e] : null;
+    if (wd) this.spawnDebris('b', D.x + Math.sin(D.yaw) * 0.3, D.y + 0.5, D.z + Math.cos(D.yaw) * 0.3, rnd(-0.5, 0.5), 1 + Math.random(), rnd(-0.5, 0.5), wd[0], wd[1], wd[2], wd[3], 0.5); }
+};
+// the collapse's legs, pelvis and trunk for this frame. keys: [thighA, kneeA, thighB, kneeB, pel, lean, roll, twist, planeA, planeB, dp]
+Renderer.prototype.dyingPose = function (D, u, legPlane, legs) {
+  const t = D.t / D.dur, sd = D.side, K = this._dyK || (this._dyK = new Float64Array(11)), smooth = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const ST = [0.08, 0.14, -0.06, 0.14, 0.9, 0.0, 0, 0, 0, 0, 0]; /* standing */
+  let keys;
+  if (D.v === 0) keys = [[0, ST], [0.12, [0.1, 0.2, -0.04, 0.22, 0.86, -0.12, 0.04 * sd, 0.1 * sd, 0, 0, 0]], /* the hit: a jolt back */
+    [0.5, [0.2, 1.7, -0.1, 1.75, 0.5, 0.3, 0.08 * sd, 0.15 * sd, 0.1 * sd, -0.1 * sd, 0]],                        /* sinks to the knees (shins folded back under him) */
+    [0.8, [0.35, 1.9, 0.05, 1.95, 0.42, 0.95, 0.15 * sd, 0.2 * sd, 0.15 * sd, -0.1 * sd, 0]],                     /* folds forward over the shaft */
+    [1, [0.5, 2.0, 0.2, 2.0, 0.36, 1.3, 0.3 * sd, 0.25 * sd, 0.2 * sd, -0.1 * sd, 0.35]]];                         /* going over onto his face */
+  else if (D.v === 1) keys = [[0, ST], [0.12, [0.1, 0.2, -0.04, 0.22, 0.86, -0.18, 0, 0.1 * sd, 0, 0, 0]],
+    [0.4, [0.55, 0.3, -0.35, 0.25, 0.84, 0.1, 0.1 * sd, 0.2 * sd, 0.05, 0, 0]],                                   /* a step taken, the knee high */
+    [0.65, [0.6, 1.3, -0.1, 1.2, 0.6, 0.75, 0.12 * sd, 0.3 * sd, 0.1 * sd, 0, 0]],                                 /* folds at the hip, the knees going */
+    [1, [0.4, 1.9, 0.1, 1.9, 0.38, 1.25, 0.2 * sd, 0.3 * sd, 0.15 * sd, -0.1 * sd, 0.4]]];                          /* drops */
+  else keys = [[0, ST], [0.15, [0.12, 0.25, -0.1, 0.25, 0.86, -0.1, 0.25 * sd, 0.5 * sd, 0, 0, 0]],                /* turned by the blow */
+    [0.5, [0.4, 0.9, -0.2, 0.5, 0.72, 0.05, 0.6 * sd, 1.1 * sd, 0.2 * sd, 0.1 * sd, 0]],                           /* the spin: knees crossing */
+    [1, [0.7, 1.4, 0.3, 0.9, 0.42, 0.2, 1.1 * sd, 1.5 * sd, 0.3 * sd, 0.2 * sd, -0.25 * sd]]];                      /* over sideways */
+  let i = 0; while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
+  const k0 = keys[i], k1 = keys[i + 1], s = smooth((t - k0[0]) / Math.max(1e-4, k1[0] - k0[0]));
+  for (let j = 0; j < 11; j++) K[j] = k0[1][j] + (k1[1][j] - k0[1][j]) * s;
+  const oA = sd > 0 ? 0 : 9, oB = sd > 0 ? 9 : 0; legPlane(oA, oA ? -1 : 1, K[0], K[1], K[8]); legPlane(oB, oB ? -1 : 1, K[2], K[3], K[9]);
+  const tr = Math.sin(D.t * 23 + u.id) * 0.015 * (1 - t); /* the shiver */
+  return { pel: K[4], lean: K[5] + tr, roll: K[6], twist: K[7], hK: 0.4 + 0.3 * t, dp: K[10], oy: 0, t };
+};
+Renderer.prototype.dyingArms = function (D, q, J, C, pel, toRoot, ik) {
+  const t = q.t, T = this._dyT || (this._dyT = new Float64Array(6)), smooth = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const hand = D.hand, cl = hand > 0 ? 0 : 9, fr = hand > 0 ? 9 : 0, cs = hand > 0 ? 1 : -1; /* the clutching hand and the free one */
+  const reach = smooth(t / 0.3); /* the hand finds the shaft */
+  toRoot([D.ax + cs * 0.03, D.ay - 0.02, D.az + (D.az > 0 ? 0.1 : -0.1)], T, 0); ik(cl, cl + 6, lerp(J[cl + 6], T[0], reach), lerp(J[cl + 7], T[1], reach), lerp(J[cl + 8], T[2], reach), cs);
+  if (D.v === 2) { /* the spin: the free arm flung out wide, then falling */
+    const fl = Math.sin(clamp(t * 1.3, 0, 1) * PI); toRoot([-cs * (0.3 + 0.5 * fl), 0.2 * fl - 0.3 * (1 - fl), 0.2 * (1 - fl) - 0.2 * fl], T, 3); ik(fr, fr + 6, T[3], T[4], T[5], -cs);
+  } else if (D.v === 1) { /* the stagger: the free arm reaches forward for balance, then both hands go to the shaft */
+    const k2 = smooth((t - 0.5) / 0.4); toRoot([-cs * 0.35 * (1 - k2) + (D.ax - cs * 0.03) * k2, (0.05 - 0.2 * t) * (1 - k2) + (D.ay - 0.05) * k2, 0.55 * (1 - k2) + (D.az + 0.08) * k2], T, 3); ik(fr, fr + 6, T[3], T[4], T[5], -cs);
+  } else { /* the clutch: the free hand comes to the other one on the shaft, then both slide down as he folds */
+    const k2 = smooth((t - 0.2) / 0.35), k3 = smooth((t - 0.7) / 0.3); toRoot([-cs * 0.25 * (1 - k2) + (D.ax - cs * 0.04) * k2, -0.35 * (1 - k2) + (D.ay - 0.06 - 0.25 * k3) * k2, 0.1 * (1 - k2) + (D.az + 0.06) * k2], T, 3); ik(fr, fr + 6, T[3], T[4], T[5], -cs);
+  }
+  /* the weapon drops from the hand: it goes down out of the grip and is let go by a third of the way */
+  const dr = smooth(t / 0.35); J[18] = lerp(J[18], J[cl === 9 ? 15 : 6] - cs * 0.1, dr); J[19] = lerp(J[19], 0.05, dr); J[20] = lerp(J[20], 0.3, dr);
+  let dx = J[21] * (1 - dr) + 0.3 * cs * dr, dy = J[22] * (1 - dr), dz = J[23] * (1 - dr) + dr; const l = Math.hypot(dx, dy, dz) || 1; J[21] = dx / l; J[22] = dy / l; J[23] = dz / l;
+};
+// ---- helping a friend up (render-only, reads reviveBy/reviveT/helpedBy) ----
+// The helper: goes down on one knee beside the man (a.hlp 0→1 over 0.5 s), reaches under his near arm, and as the revive bar
+// fills he rises with him; a spearman keeps his spear in the right hand and pulls one-handed, a swordsman puts the blade
+// away low and uses both hands; a second idle comrade standing close bends to take the other arm (two men lifting one).
+// The helped man, once up, leans on the helper's shoulder for his first steps (a.hlpL).
+Renderer.prototype.helperPose = function (u, a, dt, x, z, yaw, mounted) {
+  if (mounted || u.dead) { a.hlp = 0; return null; }
+  const sim = this.sim; let v = null, second = false;
+  if (a.hlpOf >= 0 && a.hlpOf !== undefined) { const w0 = sim.units[a.hlpOf]; if (w0 && !w0.dead && w0.downed && (w0.reviveBy === u.id || (w0.reviveBy >= 0 && Math.hypot(w0.x - x, w0.z - z) < 1.7))) v = w0; }
+  if (!v && !u.downed && !u.wounded && (sim.tick + u.id) % 5 === 0 && u.st === ST_IDLE) { /* find a downed friend being helped within reach (cheap: every 5th tick) */
+    const n = sim.gatherNear ? sim.gatherNear(x, z, 1.8) : 0; for (let i = 0; i < n; i++) { const w0 = sim.units[sim.nearBuf[i]]; if (w0 === u || w0.dead || !w0.downed || w0.team !== u.team || w0.reviveBy < 0) continue; const aw = this.anim(w0.id); if (w0.reviveBy === u.id || (u.ctrl < 0 && (aw.hlp2 === undefined || aw.hlp2 === u.id || aw.hlp2T < sim.tick - 30) && !(u.target >= 0 && !sim.units[u.target].dead && Math.hypot(sim.units[u.target].x - x, sim.units[u.target].z - z) < 8))) { if (w0.reviveBy !== u.id) { aw.hlp2 = u.id; aw.hlp2T = sim.tick; } v = w0; break; } } }
+  a.hlpOf = v ? v.id : -1; if (v) { second = v.reviveBy !== u.id; if (second) { const aw = this.anim(v.id); aw.hlp2 = u.id; aw.hlp2T = sim.tick; } } /* one second helper at most (aw.hlp2) */
+  const want = v ? 1 : 0; a.hlp = (a.hlp || 0) + (want - (a.hlp || 0)) * Math.min(1, dt / (want ? 0.5 : 0.6) * 2.2);
+  if (a.hlp < 0.02 && !(a.hlpL > 0)) { a.hlp = 0; return null; }
+  if (v) { a.hlpX = v.x; a.hlpZ = v.z; a.hlpR = v.reviveT || 0; a.hlpS = second; }
+  const k = a.hlp, rv = clamp((a.hlpR || 0) / 45, 0, 1), rise = rv * rv; /* the bar: down on the knee at first, standing again as it fills */
+  const rel = wrapA(Math.atan2((a.hlpX || x) - x, (a.hlpZ || z) - z) - yaw), tw = clamp(rel, -0.9, 0.9) * k, sd = rel >= 0 ? 1 : -1;
+  const oneHand = u.weapon === 'yari' || (u.weapon === 'rifle') || (a.hlpS && u.weapon === 'katana' && uhash(u.id, 37) < 0.5);
+  const kneel = k * (1 - rise * 0.85);
+  a.hlpK = kneel; a.hlpSd = sd;
+  const out = this._hlpO || (this._hlpO = { lean: 0, twist: 0, crouch: 0, stance: 0, roll: 0, lh: [0, 0, 0], rh: null, wp: [0, 0, 0], wd: [0, 1, 0] });
+  out.lean = (0.55 * kneel + 0.22 * k * rise) * (a.hlpS ? 0.8 : 1); out.twist = tw; out.crouch = 0.12 * kneel; out.stance = 0.3 * k; out.roll = 0.1 * sd * k;
+  /* the near hand goes under his arm (low and to his side while he is down, up to the shoulder as they rise) */
+  const hy = lerp(-0.62, -0.3, rise), hz = lerp(0.42, 0.3, rise); out.lh[0] = sd * 0.1 + 0.2 * k * sd; out.lh[1] = hy; out.lh[2] = hz;
+  if (oneHand) { out.rh = null; } else { out.rh = out.rh || [0, 0, 0]; out.rh[0] = sd * 0.05 - 0.15; out.rh[1] = hy - 0.05; out.rh[2] = hz + 0.05; set3(out.wp, [-0.2, -0.6, 0.0]); set3(out.wd, N3(0.1, 0.3, -0.95)); } /* both hands: the blade hangs behind, out of the way */
+  if (a.hlpL > 0) { a.hlpL = Math.max(0, a.hlpL - dt); } /* the helped man's lean is applied in drawFigure through a.hlpL (set by hlpRisen) */
+  return out;
+};
+// ---- 狼筅 the tiger sweep: a wolf-brush man with enemies on more than one side of him swings the brush round in a wide
+// level circle, the whole body turning with it: the feet pivot (the figure's yaw is carried round through a.tgY), the shaft
+// goes out to arm's length and sweeps a half circle at chest height, the trunk leans out over the sweep and the head leads
+// it. Read from sim state only (the sim's brush sweeps side to side by itself); the extra turn unwinds in the recovery.
+Renderer.prototype.tigerSweep = function (u, a, tg, dt, x, z, yaw, stT, addBody) {
+  const sim = this.sim, now = sim.tick;
+  if (a.tgN === undefined || now - (a.tgT || -99) > 10) { /* count the sides he is threatened from (every third of a second) */
+    a.tgT = now; let n = 0, L = 0, R = 0, B = 0; const cnt = sim.gatherNear ? sim.gatherNear(x, z, 5.5) : 0;
+    for (let i = 0; i < cnt; i++) { const v = sim.units[sim.nearBuf[i]]; if (v === u || v.dead || v.team === u.team || v.downed || v.type === 'horse') continue; const rel = wrapA(Math.atan2(v.x - x, v.z - z) - yaw); n++; if (Math.abs(rel) > 2.2) B++; else if (rel > 0.6) L++; else if (rel < -0.6) R++; }
+    a.tgN = n; a.tgSides = (L ? 1 : 0) + (R ? 1 : 0) + (B ? 1 : 0) + (n - L - R - B > 0 ? 1 : 0); }
+  const on = a.tgN >= 2 && a.tgSides >= 2; a.tgK = (a.tgK || 0) + ((on ? 1 : 0) - (a.tgK || 0)) * Math.min(1, dt * 5);
+  const k = a.tgK; if (k < 0.02) { if (u.st !== ST_WINDUP) a.tgY = (a.tgY || 0) * Math.max(0, 1 - dt * 6); return; }
+  const sg = u.atkDir === DIR_LEFT ? 1 : -1; /* the direction the head travels (DIR_LEFT: from his left across to the right... in root x, +x is left) */
+  let ph; /* 0 at the top of the wind-up, 1 at the end of the sweep */
+  if (u.st === ST_WINDUP) ph = -0.25 * clamp(stT / 0.3, 0, 1);
+  else if (u.st === ST_RELEASE) ph = clamp(stT / RELEASE_T, 0, 1);
+  else ph = 1 + clamp(stT / 0.4, 0, 1) * 0.35;
+  const ang = -sg * (0.45 - ph * 2.1) * PI * 0.5; /* the shaft's heading in root space over the sweep: from 40° on the start side round to 150° past the front */
+  const ex = Math.sin(ang), ez = Math.cos(ang); const lift = 0.1 + 0.12 * Math.sin(clamp(ph, 0, 1) * PI);
+  const G = [-0.15 + 0.12 * ex, -0.34 + lift * 0.3, 0.1 + 0.15 * Math.max(0, ez)], D = N3(ex, 0.08 + lift * 0.3, ez); /* the hands go out toward the side the head is on */
+  for (let j = 0; j < 3; j++) { tg.wp[j] = lerp(tg.wp[j], G[j], k); tg.wd[j] = lerp(tg.wd[j], D[j], k); } nrm3(tg.wd);
+  /* the body goes round with it: the whole man turns up to 70° through the release, the trunk leans out over the sweep, the knees drop */
+  const turn = -sg * (ph < 0 ? ph * 0.5 : ph <= 1 ? ph * 1.2 : 1.2 - (ph - 1) * 1.2) * k; a.tgY = (a.tgY || 0) + (turn - (a.tgY || 0)) * Math.min(1, dt * 14);
+  addBody({ twist: sg * (0.35 - 0.7 * clamp(ph, 0, 1)) * k, lean: (0.12 + 0.1 * Math.sin(clamp(ph, 0, 1) * PI)) * k, crouch: 0.12 * k * Math.sin(clamp(ph, 0, 1) * PI), roll: sg * 0.12 * k * Math.sin(clamp(ph, 0, 1) * PI), lunge: 0.1 * k * Math.sin(clamp(ph, 0, 1) * PI) });
+};
+// ---- idle variety: a man standing has something to do with himself. Five idles, chosen by uhash of his id and cycled
+// every 6–11 s (each man on his own clock), eased in and out over 0.6 s: 0 weight on one hip (a hip cocked, the shoulders
+// counter-tilted, the free foot easy); 1 checking the weapon (the blade turned up before the face, the head bent to the
+// edge; a spear held level and sighted along); 2 looking about (the head turning slowly from side to side, the trunk a
+// little after it); 3 settling the helmet (the free hand up to the brim for a moment, then down); 4 the spear rested on
+// the shoulder (long weapons only; the hand loose on the shaft). Returns body offsets, a head yaw, and hand/weapon targets.
+Renderer.prototype.idleVar = function (u, a, dt, w, brushMan) {
+  const T = this.time || 0; if (a.ivT === undefined) { a.ivT = T + 1 + uhash(u.id, 51) * 4; a.ivK = -1; a.ivE = 0; }
+  if (T > a.ivT) { const long = w === 'yari' || w === 'rifle'; const picks = long ? [0, 1, 2, 3, 4] : [0, 1, 2, 3]; a.ivN = (a.ivN || 0) + 1; a.ivK = picks[Math.floor(uhash(u.id, 53 + a.ivN * 7) * picks.length)]; a.ivT = T + 6 + uhash(u.id, 55 + a.ivN) * 5; a.ivS = T; }
+  const k0 = a.ivK; if (k0 < 0) return null;
+  const age = T - (a.ivS || 0), dur = k0 === 3 ? 2.2 : k0 === 1 ? 3.2 : 5.5, e = Math.min(1, age / 0.6) * Math.min(1, Math.max(0, (dur - age) / 0.6)); if (e <= 0) return null;
+  const O = this._ivO || (this._ivO = { lean: 0, twist: 0, roll: 0, crouch: 0, stance: 0, head: 0, k: 0, wp: null, wd: null, lh: null });
+  O.lean = 0; O.twist = 0; O.roll = 0; O.crouch = 0; O.stance = 0; O.head = 0; O.k = 0; O.wp = null; O.wd = null; O.lh = null;
+  const sd = uhash(u.id, 57) < 0.5 ? 1 : -1, br = Math.sin(T * 0.9 + u.id) * 0.01;
+  switch (k0) {
+    case 0: O.roll = -0.09 * sd * e; O.twist = 0.08 * sd * e; O.lean = 0.02 * e + br; O.stance = 0.3 * e; O.crouch = 0.02 * e; break;
+    case 1: if (brushMan) { O.head = 0; break; } O.k = e; O.lean = 0.1 * e + br; O.head = 0;
+      if (w === 'katana') { O.wp = [-0.1, -0.05, 0.3]; O.wd = N3(0.1, 0.95, 0.2); } else if (w === 'yari') { O.wp = [-0.14, -0.2, 0.1]; O.wd = N3(0.0, 0.08, 1); O.lean = 0.14 * e; } else { O.wp = [-0.1, -0.25, 0.25]; O.wd = N3(0.3, 0.5, 0.8); } break;
+    case 2: { const sw = Math.sin(age * 0.7 + u.id); O.head = 0.75 * sw * e; O.twist = 0.2 * sw * e; O.lean = br; break; }
+    case 3: { const up = Math.sin(clamp(age / 2.2, 0, 1) * PI); O.lh = [0.12, 0.3 * up - 0.3 * (1 - up), 0.18 * up + 0.15 * (1 - up)]; O.lean = -0.04 * up; O.head = 0.1 * up; break; }
+    case 4: O.k = e; O.wp = [-0.2, 0.02, 0.1]; O.wd = N3(0.28, 0.85, -0.45); O.roll = 0.05 * e; O.lean = br; break;
+  }
+  return O;
+};
+// ---- faces: dynamic expressions for the men near the camera ----
+// An expression is a small vector over the face parts: [browRaise, browKnit (inner ends down and in), browSlant (outer ends
+// down: sad / up: fierce), eyeOpen (1 wide, -1 shut), mouthOpen, mouthWide, mouthCorner (up smile / down grimace), jaw]. Each
+// man's state picks a target (FX table: twelve and more), blended on a 0.3 s spring so faces never pop; only men within
+// FACE_R of the camera are evaluated (the far ones keep the carved face), and the blend is held still when nothing changes.
+const FX = {
+  calm:    [0, 0, 0, 0, 0, 0, 0, 0],
+  fear:    [0.9, 0.3, 0.6, 0.9, 0.5, -0.2, -0.5, 0.2],      /* routing, or a man whose squad is breaking */
+  fury:    [-0.3, 0.9, -0.6, 0.6, 0.8, 0.6, -0.6, 0.6],     /* the war-shout of the wind-up and the charge */
+  pain:    [0.2, 0.9, 0.4, -0.8, 0.6, 0.3, -0.8, 0.3],      /* hit: eyes screwed shut, teeth bared */
+  dying:   [0.6, 0.2, 0.7, 0.3, 0.7, -0.3, -0.3, 0.5],      /* the slack face of the last moments */
+  spent:   [0.1, 0.1, 0.3, -0.4, 0.8, -0.3, -0.3, 0.6],     /* blown: mouth open, lids heavy */
+  veteran: [-0.1, 0.4, -0.2, -0.2, 0, 0.3, -0.2, 0.2],      /* the set jaw and narrowed eye of a man with stars */
+  alarm:   [0.8, 0.1, 0, 1, 0.4, 0, -0.2, 0.1],             /* a horseman coming: brows up, eyes wide */
+  resolve: [-0.1, 0.5, -0.1, -0.1, 0, 0.1, -0.3, 0.3],      /* the line waiting: grim, lips pressed */
+  shout:   [0.3, 0.3, -0.3, 0.5, 1, 0.5, 0, 0.8],           /* the officer giving an order */
+  relief:  [0.4, -0.2, 0.2, 0.2, 0.4, 0.8, 0.8, 0.3],       /* camp: the laugh */
+  grief:   [0.5, 0.6, 0.9, -0.3, 0.2, -0.3, -0.7, 0.2],     /* by a fallen friend */
+  surprise:[1, -0.2, 0, 1, 0.7, -0.3, 0, 0.5],              /* parried, or a blow turned */
+  focus:   [-0.2, 0.5, -0.1, -0.5, 0, 0, 0, 0],             /* aiming: one eye narrowed, lips still */
+  strain:  [-0.2, 0.8, -0.3, -0.5, 0.5, 0.4, -0.5, 0.5],    /* the heavy blow, the shield shove, hauling a man up */
+  wary:    [0.3, 0.2, 0, 0.4, 0, 0, -0.2, 0],               /* a foe in reach: watching him */
+};
+const FACE_R = 9;
+Renderer.prototype.faceFX = function (u) {
+  const cam = this.camera ? this.camera.position : null; if (!cam) return null;
+  const dx = u.x - cam.x, dz = u.z - cam.z; if (dx * dx + dz * dz > FACE_R * FACE_R) { const a0 = this.anims[u.id]; if (a0 && a0.fx) a0.fxOn = false; return null; }
+  const a = this.anim(u.id), sim = this.sim, dt = this.fdt || 0.016, now = this.time || 0;
+  if (!a.fx) { a.fx = new Float64Array(8); a.fxV = new Float64Array(8); a.fxT = -1; a.fxK = 'calm'; }
+  if (now - (a.fxT || -1) > 0.1 || a.fxT < 0) { a.fxT = now; /* pick the expression from his state, ten times a second */
+    let k = 'calm'; const sq = u.squad >= 0 ? sim.squads[u.squad] : null, f = u.fat || 0, DY = this.dying && u.dead ? this.dying.get(u.id) : null;
+    const tgt = u.target >= 0 ? sim.units[u.target] : null, tdist = tgt && !tgt.dead ? Math.hypot(tgt.x - u.x, tgt.z - u.z) : 99;
+    if (DY) k = 'dying';
+    else if (u.hrA < (u.hrD || 0.3) + 0.2 && u.hrA !== undefined && u.hrK !== 5) k = 'pain';
+    else if (u.hrA < 0.3 && u.hrK === 5) k = 'surprise';
+    else if (u.wounded || u.downed) k = 'pain';
+    else if (u.st === ST_STUN) k = 'surprise';
+    else if (u.camp) k = (u.cLook || u.cAct === 2 || u.cAct === 3) ? 'relief' : 'calm';
+    else if (sq && sq.routing) k = 'fear';
+    else if (a.hlp > 0.3 || a.shv > 0 || (u.heavy && (u.st === ST_WINDUP || u.st === ST_RELEASE))) k = 'strain';
+    else if (u.st === ST_WINDUP || u.st === ST_RELEASE || u.chg) k = 'fury';
+    else if (u.st === ST_AIM || u.aiming) k = 'focus';
+    else if (this.capOfficer === u.id && now - (this.capAt || -9) < 1.4) k = 'shout';
+    else if (f > 80) k = 'spent';
+    else if (tgt && !tgt.dead && (tgt.mounted || tgt.type === 'horse') && tdist < 14 && !(u.mounted || u.mount >= 0)) k = 'alarm';
+    else if (a.griefT > now) k = 'grief';
+    else if (sq && sq.morale < (sq.moraleMax || sq.def.morale || 100) * 0.35) k = 'fear';
+    else if (tgt && !tgt.dead && tdist < 4) k = 'wary';
+    else if (sq && sq.stars >= 2) k = 'veteran';
+    else if (tgt && !tgt.dead && tdist < 20) k = 'resolve';
+    a.fxK = k; }
+  const V = FX[a.fxK] || FX.calm, S = a.fx, Vv = a.fxV; const w = 22, e = Math.exp(-w * Math.min(dt, 0.05)); let moving = 0; /* the 0.3 s spring (critically damped) */
+  for (let i = 0; i < 8; i++) { const x = S[i] - V[i], v = Vv[i], g = v + w * x; S[i] = (x + g * Math.min(dt, 0.05)) * e + V[i]; Vv[i] = (v - w * g * Math.min(dt, 0.05)) * e; moving += Math.abs(x) + Math.abs(v); }
+  /* life in the face: a blink every few seconds, and a breath on the mouth when spent or shouting */
+  const bl = ((now * 0.37 + uhash(u.id, 61) * 7) % (2.8 + uhash(u.id, 63) * 3)); const blink = bl < 0.12 ? Math.sin(bl / 0.12 * PI) : 0;
+  a.fxOn = true; a.fxBlink = blink; a.fxBreath = (a.fxK === 'spent' ? 0.3 : a.fxK === 'fury' ? 0.15 : 0) * Math.sin(now * (a.fxK === 'spent' ? 7 : 11) + u.id);
+  if (moving < 0.002 && blink === 0 && a.fxBreath === 0 && a.fxK === 'calm') return null; /* a calm, still face costs nothing */
+  return a;
+};
+Renderer.prototype.faceFXPart = function (p, a) {
+  const S = a.fx, o = p.o, s = p.s, Q = this._fxQ || (this._fxQ = { o: [0, 0, 0], s: [0, 0, 0], r: null, rb: [0, 0, 0] }); Q.r = null;
+  Q.o[0] = o[0]; Q.o[1] = o[1]; Q.o[2] = o[2]; Q.s[0] = s[0]; Q.s[1] = s[1]; Q.s[2] = s[2];
+  const sx = o[0] > 0 ? 1 : -1, blink = a.fxBlink || 0;
+  switch (p.fx) {
+    case 1: case 2: { /* brows: raised, knitted (inner end down, pulled in), slanted (outer end down); the tilt is a z-rotation */
+      Q.o[1] += 0.03 * S[0] - 0.012 * S[1]; Q.o[0] -= sx * 0.012 * S[1]; const rz = (p.r ? p.r[2] : 0) + sx * (0.45 * S[1] - 0.35 * S[2]); /* +rz lifts the +x end: for the left brow (x>0) a knit lowers the inner end, a slant (sad) lowers the outer */ Q.rb[0] = p.r ? p.r[0] : 0; Q.rb[1] = p.r ? p.r[1] : 0; Q.rb[2] = rz; Q.r = Q.rb; break; }
+    case 3: case 4: { const op = clamp(1 + 0.5 * S[3] - blink, 0.08, 1.6); Q.s[1] = s[1] * op; break; } /* the white of the eye: wide or shut */
+    case 5: case 6: { const op = clamp(1 + 0.5 * S[3] - blink, 0.08, 1.6); Q.s[1] = s[1] * (0.7 + 0.3 * op); Q.o[1] += 0.012 * (1 - op) + 0.006 * S[3] * (S[3] > 0 ? 1 : 0); if (p.r) Q.r = p.r; break; } /* the lid and iris follow */
+    case 7: { const open = clamp(S[4] + (a.fxBreath || 0), 0, 1.2); Q.s[1] = s[1] * (1 + 3.5 * open); Q.s[0] = s[0] * (1 + 0.5 * S[5]); Q.o[1] -= 0.02 * open + 0.01 * S[7]; Q.o[2] += 0.004 * open;
+      if (Math.abs(S[6]) > 0.05) { Q.rb[0] = 0; Q.rb[1] = 0; Q.rb[2] = 0; Q.r = null; Q.o[1] += 0.008 * S[6]; Q.s[0] = Q.s[0] * (1 + 0.25 * Math.max(0, S[6])); } break; } /* the mouth: open, wide, the corners */
+  }
+  return Q;
+};
 Renderer.prototype.campPoseT = function (u, a, w) {
   const tg = this.tg, t = (this.time || 0) + uhash(u.id, 31) * 20, dt = this.fdt || 0.016, act = u.cAct | 0, rise = !!u.cRise, look = !!u.cLook;
   const lie = act === 7 && !rise, squat = !!u.cSeat && (act === 4 || act === 12) && !rise && !lie, sit = !!u.cSeat && !lie && !squat && !rise;
@@ -9977,7 +10378,7 @@ Renderer.prototype.pkFrame = function (sim) {
     if (!g) { g = make(p.k); const y = terrainH(p.x, p.z); g.position.set(p.x, y + 0.01, p.z); g.rotation.y = (p.id * 2.399) % 6.283; g.rotation.z = ((p.id * 0.37) % 0.3) - 0.15; this.scene.add(g); M.set(p.id, g); } }
   for (const [id, g] of M) if (!seen.has(id)) { this.scene.remove(g); g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); M.delete(id); }
 };
-return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear, faceEyes, roundBox, uhash };
+return { Renderer, TEAM_COL, gearFor, GEAR_K, GEAR_HOOK, BANNER, torsoColor, legColor, lookGear, faceEyes, tagFace, FX, roundBox, uhash };
 })();
 </script>
 <script>
@@ -10809,7 +11210,7 @@ function realGear(u) {
     if (vr === 2) b('h', [0, -0.125, fz - 0.005], [0.05, 0.05, 0.02], hair);
     if (vr === 3) { b('h', [0, -0.12, fz - 0.01], [0.24, 0.06, 0.03], hair); b('h', [0.12, -0.07, 0.06], [0.03, 0.1, 0.12], hair); b('h', [-0.12, -0.07, 0.06], [0.03, 0.1, 0.12], hair); }
   }
-  const hp = P.find(q => q.hat);
+  const hp = P.find(q => q.hat); if (R.tagFace) R.tagFace(P);
   g = { parts: P, hat: hp ? { m: hp.m, s: hp.s, k: hp.k } : null }; RG_CACHE.set(key, g); return g;
 }
 R.GEAR_HOOK.fn = realGear;
@@ -11793,7 +12194,7 @@ function handleEvents(events) {
     }
     else if (ev.t === 'squaddead') { const sq = sim.squads[ev.sq]; if (sq.owner === state.localIdx) feed(`Your ${sq.def.name} are wiped out`); }
     else if (ev.t === 'end') { state.slowT = 3.2; finish(ev.winner); }
-    else if (ev.t === 'battle') { toast('The battle begins'); MUSIC.play(sim.heroMode ? 'siege' : 'battle'); MUSIC.setIntensity(0.6); }
+    else if (ev.t === 'battle') { toast('The battle begins'); MUSIC.play(sim.heroMode ? 'siege' : 'battle'); MUSIC.setIntensity(0.85); }
     else if (ev.t === 'rout') { const sq = sim.squads[ev.sq]; if (sq.owner === state.localIdx) feed(`Your ${sq.def.name} are routing!`); else if (sq.team !== sim.players[state.localIdx].team) feed(`Enemy ${sq.def.name} break and run`, true); }
     else if (ev.t === 'rallied') { const sq = sim.squads[ev.sq]; if (sq.owner === state.localIdx) feed(`Your ${sq.def.name} rally`); }
     else if (ev.t === 'rally' && ev.p === state.localIdx) { toast(ev.n ? `Rally! ${ev.n} squad${ev.n === 1 ? '' : 's'} take heart` : 'No one close enough to hear you'); }
@@ -11866,7 +12267,7 @@ function finish(winner) {
 }
 // ---------- replay ----------
 function startReplay() {
-  MUSIC.play(state.sim && state.sim.heroMode ? 'siege' : 'battle'); MUSIC.setIntensity(0.6);
+  MUSIC.play(state.sim && state.sim.heroMode ? 'siege' : 'battle'); MUSIC.setIntensity(0.85);
   const rp = state.replay; if (!rp) return;
   state.replayMode = true; state.replayTick = 0; state.replaySpeed = 1; state.replayPaused = false; state.ended = true;
   state.sim = new S.Sim(rp.cfg);
@@ -12094,7 +12495,7 @@ function updateHUD(dt) {
   state.hudT -= dt;
   if (state.hudT <= 0) {
     state.hudT = 0.4;
-    if (sim.phase === 1 && hero && !state.ended) { let near = 0; for (const v of sim.teamAlive[1 - me.team]) if (Math.abs(v.x - hero.x) + Math.abs(v.z - hero.z) < 40) near++; MUSIC.setIntensity(0.38 + Math.min(1, near / 12) * 0.62); }
+    if (sim.phase === 1 && hero && !state.ended) { let near = 0; for (const v of sim.teamAlive[1 - me.team]) if (Math.abs(v.x - hero.x) + Math.abs(v.z - hero.z) < 40) near++; MUSIC.setIntensity(0.72 + Math.min(1, near / 8) * 0.28); } /* in a battle the drums never drop to the quiet level: the floor is the full band, and a crowd of foes takes it to the top */
     const a0 = sim.teamAlive[0].length, a1 = sim.teamAlive[1].length;
     $('status').innerHTML = `<span class="t0">${S.FACTION[0].jp} ${a0}</span><span class="vs">·</span><span class="t1">${a1} ${S.FACTION[1].jp}</span>`;
     if (sim.mission && sim.mission.beacon && typeof beaconGoal === 'function') $('status').innerHTML = beaconGoal();
@@ -12561,7 +12962,7 @@ function renderMissions() {
 let MIS = null;
 function missionStart() {
   const sim = state.sim, M = sim.mission; MIS = { radioT: 0, bannerT: 0, said: [] };
-  MUSIC.play(sim.mode === 'assault' ? 'siege' : 'battle'); MUSIC.setIntensity(0.5);
+  MUSIC.play(sim.mode === 'assault' ? 'siege' : 'battle'); MUSIC.setIntensity(0.85);
   if (sim.mode === 'assault') { const me = sim.players[state.localIdx], att = me.team === M.attacker; setTimeout(() => storyCard(M.talk ? `${M.brief} ${att ? `You attack, with ${M.tickets} men to spend.` : 'You defend.'}` : `${M.brief} ${att ? `You attack. Your side has ${M.tickets} men to spend: every one who falls is gone for good. Take every point of a sector to push the line forward.` : `You defend. Hold each line as long as you can; when a sector falls, fall back to the next.`}`, `${M.title} · ${M.year}`), 400); }
 }
 function radio(who, text) { if (typeof SPEECH !== 'undefined' && SPEECH.note) { SPEECH.note(who, text); return; } const r = $('radio'); r.firstChild.textContent = who; r.lastChild.textContent = text; r.hidden = false; MIS.radioT = Math.min(11, 4 + text.length / 22); AUDIO.play('ui', undefined, 0, 0, 0.6); }
