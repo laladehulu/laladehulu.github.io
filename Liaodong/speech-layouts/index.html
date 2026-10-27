@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v97</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v98</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -334,6 +334,11 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 #fpmarks .mk.own.sel { background: #ffe08a; outline: 2px solid #fff; }
 #fpmarks .mk.own small { font-weight: 400; margin-left: 4px; opacity: .8; }
 #fpmarks .mk.ally { color: #8fe08a; font-size: 13px; }
+#fpmarks .mk.friend { color: #bfe8ff; font-size: 12px; text-align: center; line-height: 1.1; }
+#fpmarks .mk.friendsq { color: #d9f0ff; background: rgba(20,60,90,.72); padding: 1px 6px; border: 1px solid #7fc4ef; border-radius: 2px; font-size: 10px; }
+#fpmarks .mk.friendsq small { font-weight: 400; margin-left: 5px; opacity: .85; }
+#fpmarks .mk.friendord { color: #7fc4ef; font-size: 16px; }
+#fpmarks .mk.friendord small { display: block; font-size: 10px; color: #d9f0ff; }
 #fpmarks .mk.foe { color: #ff5a4a; font-size: 13px; }
 #labels .lab.own { border-color: #e8c25a !important; background: rgba(60,44,10,.85); }
 #labels .lab:not(.own):not(.enemy) { border-color: #8fe08a !important; }
@@ -1914,7 +1919,17 @@ class Sim {
   buildNav() {
     const C = 2, W = Math.ceil((HALF * 2) / C); this.navC = C; this.navW = W; const bl = new Uint8Array(W * W); this.navBlk = bl;
     for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) { const x = -HALF + (i + 0.5) * C, z = -HALF + (j + 0.5) * C; if (waterAt(x, z) === 1) bl[j * W + i] = 1; }
-    this.navBoxes(); this.flows = new Map(); this.flowOrder = []; this.navStamp = 0;
+    this.untangleHouses(); this.navBoxes(); this.flows = new Map(); this.flowOrder = []; this.navStamp = 0;
+  }
+  // houses laid out by the map makers must not stand inside one another (roofs and eaves included): a house that overlaps an
+  // earlier one is trimmed back clear of it, and dropped if too little is left (it keeps its slot so indices don't move)
+  untangleHouses() {
+    const H = this.boxes.filter(b => b.kind === 'house' || b.kind === 'hall'), m = 0.9; // the eaves overhang the walls
+    for (let i = 0; i < H.length; i++) { const b = H[i];
+      for (let j = 0; j < i; j++) { const a = H[j]; if (a.kind === 'gone') continue;
+        const ox = (a.hw + b.hw + m) - Math.abs(a.x - b.x), oz = (a.hd + b.hd + m) - Math.abs(a.z - b.z); if (ox <= 0 || oz <= 0) continue;
+        if (ox < oz) { b.hw -= ox; b.x += (b.x >= a.x ? 1 : -1) * ox / 2; } else { b.hd -= oz; b.z += (b.z >= a.z ? 1 : -1) * oz / 2; }
+        if (b.hw < 1.6 || b.hd < 1.6) { b.kind = 'gone'; b.hw = b.hd = 0.01; b.h = 0; break; } } }
   }
   navBoxes() {
     const C = this.navC, W = this.navW, bl = this.navBlk;
@@ -5818,11 +5833,31 @@ const MUSIC = (() => {
 // ===== P2P networking (PeerJS mesh) + deterministic lockstep =====
 const PREFIX = 'mingwar1619-';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+// Players on different networks (home routers, phone hotspots, campus or carrier NAT) usually cannot reach each other directly,
+// so WebRTC needs relay (TURN) servers: several STUN servers to find the public address, then the Open Relay project's free TURN
+// (static-auth: a short-lived username signed with its published shared secret) on UDP/TCP 80 and 443 and TLS 443, plus PeerJS's own.
+// A custom relay can be given in the address: ?turn=turn:host:port,user,password
+const ICE_BASE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] },
+  { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' }];
+async function iceServers() {
+  const out = ICE_BASE.slice();
+  try { const q = new URLSearchParams(location.search).get('turn'); if (q) { const [u, n, c] = q.split(','); out.unshift({ urls: u, username: n, credential: c }); } } catch (e) { }
+  try {
+    const user = (Math.floor(Date.now() / 1000) + 24 * 3600) + ':liaodong', enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode('openrelayprojectsecret'), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+    const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(user))); let b = ''; for (const x of sig) b += String.fromCharCode(x);
+    const H = 'staticauth.openrelay.metered.ca';
+    out.push({ urls: ['turn:' + H + ':80', 'turn:' + H + ':80?transport=tcp', 'turn:' + H + ':443', 'turns:' + H + ':443?transport=tcp'], username: user, credential: btoa(b) });
+  } catch (e) { console.warn('relay credentials', e); }
+  return out;
+}
+function peerOpts(ice) { return { debug: 0, config: { iceServers: ice, sdpSemantics: 'unified-plan' } }; }
 function genCode() { let s = ''; for (let i = 0; i < 5; i++) s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; return s; }
 
 class Net {
   constructor() {
     this.peer = null; this.conns = {}; this.isHost = false; this.players = []; this.myIdx = -1; this.myCfg = null; this.code = ''; this.started = false;
+    this.fast = {}; this.sent = []; this.rtt = {}; this.rtick = {};
     this.onLobby = null; this.onStart = null; this.onInput = null; this.onHash = null; this.onPeerLeft = null; this.onFail = null; this.onChat = null;
   }
   static available() { return typeof Peer !== 'undefined' && typeof RTCPeerConnection !== 'undefined'; }
@@ -5830,32 +5865,45 @@ class Net {
     const code = genCode(); this.code = code; this.isHost = true; this.myIdx = 0; this.myCfg = cfg;
     this.players = [{ id: 'self', idx: 0, cfg, connected: true }];
     let peer;
-    try { peer = new Peer(PREFIX + code, { debug: 0 }); } catch (e) { cb(e); return; }
+    if (!this.ice) { iceServers().then(ice => { this.ice = ice; this.host(cfg, cb); }); return; }
+    try { peer = new Peer(PREFIX + code, peerOpts(this.ice)); } catch (e) { cb(e); return; }
     this.peer = peer;
-    peer.on('open', (id) => { this.players[0].id = id; cb(null, code); this.pingTimer = setInterval(() => { if (this.started) { clearInterval(this.pingTimer); return; } this.broadcast({ t: 'ping', ts: performance.now() }); }, 2000); });
+    peer.on('open', (id) => { this.players[0].id = id; cb(null, code); this.startPing(); });
     peer.on('error', (e) => { if (e.type === 'unavailable-id') { try { peer.destroy(); } catch (_) { } this.host(cfg, cb); } else cb(e); });
     peer.on('connection', (conn) => this.acceptConn(conn));
     peer.on('disconnected', () => { try { peer.reconnect(); } catch (_) { } });
   }
+  // round trips are measured all through the battle (over the fast channel when it is up) so the input delay can follow the network
+  startPing() { clearInterval(this.pingTimer); this.pingTimer = setInterval(() => { const m = { t: 'ping', ts: performance.now() }; for (const id in this.conns) { const f = this.fast[id]; if (f && f.readyState === 'open') { try { f.send(JSON.stringify(m)); continue; } catch (e) { } } try { this.conns[id].send(m); } catch (e) { } } }, this.started ? 700 : 2000); }
+  maxRtt() { let m = 0; for (const id in this.conns) { const r = this.rtt[id]; if (r > m) m = r; } return m; }
   join(code, cfg, cb) {
     this.code = code; this.isHost = false; this.myCfg = cfg;
-    let peer; try { peer = new Peer({ debug: 0 }); } catch (e) { cb(e); return; }
+    if (!this.ice) { iceServers().then(ice => { this.ice = ice; this.join(code, cfg, cb); }); return; }
+    let peer; try { peer = new Peer(peerOpts(this.ice)); } catch (e) { cb(e); return; }
     this.peer = peer; let done = false;
     peer.on('open', () => {
       const conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'json' });
-      const timer = setTimeout(() => { if (!done) { done = true; cb(new Error('No answer from that room code. Check the code and that the host is still in the lobby.')); } }, 12000);
+      const timer = setTimeout(() => { if (!done) { done = true; cb(new Error(this.iceFail ? 'Found the room, but your networks could not connect (blocked by a firewall or carrier NAT). Try again, or both join from a different network.' : 'No answer from that room code. Check the code and that the host is still in the lobby.')); } }, 25000);
+      this.watchIce(conn);
       this.wire(conn, () => { if (!done) { done = true; clearTimeout(timer); cb(null); } });
     });
     peer.on('error', (e) => { if (!done) { done = true; cb(new Error(e.type === 'peer-unavailable' ? 'Room not found. Check the code.' : (e.message || String(e)))); } });
     peer.on('connection', (conn) => this.acceptConn(conn));
   }
-  acceptConn(conn) {
+  // report why a connection failed instead of hanging: WebRTC tells us when no network path (direct or relayed) works
+  watchIce(conn) { const t = setInterval(() => { const pc = conn.peerConnection; if (!pc) return; clearInterval(t);
+    pc.addEventListener('iceconnectionstatechange', () => { const st = pc.iceConnectionState; if (st === 'failed') { this.iceFail = true; console.warn('ICE failed for', conn.peer); try { pc.restartIce && pc.restartIce(); } catch (e) { } } }); }, 100); setTimeout(() => clearInterval(t), 10000); }
+  acceptConn(conn) { this.watchIce(conn);
     if (this.started && this.isHost) { conn.on('open', () => { try { conn.send({ t: 'reject' }); } catch (_) { } setTimeout(() => conn.close(), 800); }); return; }
     this.wire(conn, null);
   }
   wire(conn, onOpen) {
     conn.on('open', () => {
-      this.conns[conn.peer] = conn;
+      this.conns[conn.peer] = conn; if (!this.pingTimer) this.startPing();
+      // a second, unordered and unretransmitted channel on the same connection carries the inputs: a lost packet never holds up
+      // the ones behind it (each packet repeats the last few ticks), and the reliable channel still backs every input up
+      try { const pc = conn.peerConnection; if (pc && !this.fast[conn.peer]) { const dc = pc.createDataChannel('fast', { negotiated: true, id: 77, ordered: false, maxRetransmits: 0 }); this.fast[conn.peer] = dc;
+        dc.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (_) { return; } this.onData(conn, m); }; } } catch (e) { console.warn('fast channel', e); }
       if (this.isHost) {
         const idx = this.players.length;
         this.players.push({ id: conn.peer, idx, cfg: null, connected: true });
@@ -5898,10 +5946,11 @@ class Net {
       case 'pcfg': { const p = this.players.find(p => p.idx === m.idx); if (p) p.cfg = m.cfg; this.onLobby && this.onLobby(); break; }
       case 'start': { this.started = true; this.onStart && this.onStart(m); break; }
       case 'i': { this.onInput && this.onInput(m.p, m.k, m.d); break; }
+      case 'I': { this.rtick[m.p] = { k: m.r, at: performance.now(), id: conn.peer }; if (this.onInput) for (let j = 0; j < m.h.length; j++) this.onInput(m.p, m.k - j, m.h[j]); break; }
       case 'h': { this.onHash && this.onHash(m.p, m.k, m.h); break; }
       case 'chat': { this.onChat && this.onChat(m.p, m.s); break; }
       case 'ping': { try { conn.send({ t: 'pong', ts: m.ts }); } catch (e) { } break; }
-      case 'pong': { const p = this.playerByPeer(conn.peer); if (p) p.rtt = Math.round(performance.now() - m.ts); this.onLobby && this.onLobby(); break; }
+      case 'pong': { const r = performance.now() - m.ts, o = this.rtt[conn.peer]; this.rtt[conn.peer] = o ? (r > o ? o * 0.6 + r * 0.4 : o * 0.85 + r * 0.15) : r; const p = this.playerByPeer(conn.peer); if (p) p.rtt = Math.round(this.rtt[conn.peer]); if (!this.started) this.onLobby && this.onLobby(); break; }
       case 'reject': { this.onFail && this.onFail('That battle has already started.'); break; }
     }
   }
@@ -5913,7 +5962,13 @@ class Net {
   }
   sendCfg(cfg) { this.myCfg = cfg; const me = this.players.find(p => p.idx === this.myIdx); if (me) me.cfg = cfg; if (this.myIdx >= 0) this.broadcast({ t: 'cfg', idx: this.myIdx, cfg }); }
   start(msg) { this.started = true; this.broadcast(msg); this.onStart && this.onStart(msg); }
-  sendInput(tick, data) { this.broadcast({ t: 'i', p: this.myIdx, k: tick, d: data }); }
+  sendInput(tick, data, now) {
+    this.broadcast({ t: 'i', p: this.myIdx, k: tick, d: data });
+    const S = this.sent; S.push([tick, data]); if (S.length > 8) S.shift();
+    const h = []; for (let j = S.length - 1; j >= 0 && S[j][0] === tick - h.length; j--) h.push(S[j][1]);
+    const msg = JSON.stringify({ t: 'I', p: this.myIdx, k: tick, r: now, h });
+    for (const id in this.fast) { const f = this.fast[id]; if (f.readyState === 'open') try { f.send(msg); } catch (e) { } }
+  }
   sendHash(tick, h) { this.broadcast({ t: 'h', p: this.myIdx, k: tick, h }); }
   sendChat(s) { this.broadcast({ t: 'chat', p: this.myIdx, s }); }
   destroy() { clearInterval(this.pingTimer); try { this.peer && this.peer.destroy(); } catch (e) { } }
@@ -5925,15 +5980,20 @@ class Lockstep {
   constructor(n, me, delay) {
     this.n = n; this.me = me; this.delay = delay; this.tick = 0; this.buf = new Map(); this.connected = new Array(n).fill(true);
     this.hashes = new Map(); this.desync = false; this.desyncTick = -1; this.stalledSince = 0;
-    for (let t = 0; t < delay; t++) { const a = this.get(t); for (let p = 0; p < n; p++) a[p] = 0; }
+    for (let t = 0; t < delay; t++) { const a = this.get(t); for (let p = 0; p < n; p++) a[p] = 0; } this.lastQ = delay - 1;
   }
   get(t) { let a = this.buf.get(t); if (!a) { a = new Array(this.n).fill(undefined); this.buf.set(t, a); } return a; }
   ready(t) { const a = this.get(t); for (let p = 0; p < this.n; p++) if (this.connected[p] && a[p] === undefined) return false; return true; }
   waitingOn(t) { const a = this.get(t); const out = []; for (let p = 0; p < this.n; p++) if (this.connected[p] && a[p] === undefined) out.push(p); return out; }
-  queueLocal(inp) { const t = this.tick + this.delay; this.get(t)[this.me] = inp; return t; }
-  onRemote(p, t, d) { if (t < this.tick) return; this.get(t)[p] = d; }
+  queueLocal(inp) { const t = this.tick + this.delay; this.get(t)[this.me] = inp; this.lastQ = t; return t; }
+  // the input delay can change mid-battle: each peer only chooses when its own inputs take effect, so this needs no agreement.
+  // Lengthening leaves a tick with no input of ours (filled with a copy of the last one, minus one-off commands); shortening
+  // skips a tick's input (that tick's slot was already filled)
+  needsInput() { return this.lastQ === undefined || this.tick + this.delay > this.lastQ; }
+  onRemote(p, t, d) { if (t < this.tick) return; const a = this.get(t); if (a[p] === undefined) a[p] = d; }
   inputsFor(t) { const a = this.get(t); for (let p = 0; p < this.n; p++) if (a[p] === undefined) a[p] = 0; return a; }
   advance() { this.buf.delete(this.tick - 3); this.tick++; }
+  local(t) { const a = this.buf.get(t); return a ? a[this.me] : undefined; }
   disconnect(p) { this.connected[p] = false; }
   recordHash(p, t, h) {
     let m = this.hashes.get(t); if (!m) { m = new Array(this.n).fill(undefined); this.hashes.set(t, m); }
@@ -6880,9 +6940,9 @@ class Renderer {
     const plm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: snow ? 0x8a8780 : 0x75706a }), houses.length + 1);
     houses.forEach((b, i) => {
       const y = terrainH(b.x, b.z); const wh = b.h * 0.62, fy = this.footY(b), pt = y + 0.32;
-      T.m.compose(T.v.set(b.x, (fy + pt) / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2 + 0.36, pt - fy, b.hd * 2 + 0.36)); plm.setMatrixAt(i, T.m);
+      T.m.compose(T.v.set(b.x, (fy + pt) / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2 + 0.12, pt - fy, b.hd * 2 + 0.12)); plm.setMatrixAt(i, T.m); /* the plinth barely proud of the walls, so a man pressed against the house stands outside it, not in it */
       T.m.compose(T.v.set(b.x, (pt - 0.05 + y + wh) / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2, y + wh - pt + 0.05, b.hd * 2)); hm.setMatrixAt(i, T.m);
-      T.m.compose(T.v.set(b.x, y + wh + b.h * 0.2, b.z), T.q.setFromEuler(T.e.set(0, PI / 4, 0)), T.v2.set(Math.max(b.hw, b.hd) * 2 * 1.15, b.h * 0.42, Math.max(b.hw, b.hd) * 2 * 1.15)); rm.setMatrixAt(i, T.m);
+      T.m.compose(T.v.set(b.x, y + wh + b.h * 0.2, b.z), T.q.setFromEuler(T.e.set(0, PI / 4, 0)), T.v2.set(1, b.h * 0.42, 1)); { const rs = new THREE.Matrix4().makeScale((b.hw * 2 + 0.7) / 1.02, 1, (b.hd * 2 + 0.7) / 1.02); T.m.premultiply(new THREE.Matrix4().makeTranslation(-b.x, -(y + wh + b.h * 0.2), -b.z)).premultiply(rs).premultiply(new THREE.Matrix4().makeTranslation(b.x, y + wh + b.h * 0.2, b.z)); } rm.setMatrixAt(i, T.m); /* a hipped roof the shape of the house under it, eaves 35 cm out, not a square cap overhanging the neighbours */
     });
     const wm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), plasterMat, walls.length + 1), cm = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), capMat, walls.length + 1);
     walls.forEach((b, i) => { const y = terrainH(b.x, b.z), fy = this.footY(b); T.m.compose(T.v.set(b.x, (fy + y + b.h) / 2, b.z), T.q.identity(), T.v2.set(b.hw * 2, y + b.h - fy, b.hd * 2)); wm.setMatrixAt(i, T.m); T.m.compose(T.v.set(b.x, y + b.h + 0.08, b.z), T.q.identity(), T.v2.set(b.hw * 2 + 0.3, 0.18, b.hd * 2 + 0.3)); cm.setMatrixAt(i, T.m); });
@@ -8458,7 +8518,7 @@ class Renderer {
     const cam = this.camera;
     let camYaw = view.yaw;
     if (fp) {
-      const hx = lerp(hero.px, hero.x, alpha), hy = lerp(hero.py, hero.y, alpha), hz = lerp(hero.pz, hero.z, alpha);
+      const PR = this.pred, hx = lerp(hero.px, hero.x, alpha) + (PR ? PR.x : 0), hy = lerp(hero.py, hero.y, alpha), hz = lerp(hero.pz, hero.z, alpha) + (PR ? PR.z : 0);
       const mounted = hero.mount >= 0 || hero.mounted;
       const slideK = !hero.champ && hero.dodgeT > 0 ? Math.sin(clamp(1 - hero.dodgeT / 0.32, 0, 1) * PI) : 0;
       if (!hero.champ) { const fx0 = Math.sin(view.yaw), fz0 = Math.cos(view.yaw); const side = hero.dodgeT > 0 ? (hero.dodgeX * -fz0 + hero.dodgeZ * fx0) : 0; this.slideRoll = (this.slideRoll || 0) + ((side > 0.4 ? 1 : side < -0.4 ? -1 : 0) * slideK * 0.16 - (this.slideRoll || 0)) * (1 - Math.exp(-dt * 16)); }
@@ -10695,6 +10755,28 @@ function updateMarks() {
       const html = mineSq ? `${idx + 1}<small>${sq.def.name} ${sq.aliveCount}</small>` : ally ? '▲' : '▼'; if (el._h !== html) { el.innerHTML = html; el._h = html; }
       el.style.transform = `translate(${pt.x.toFixed(0)}px, ${(pt.y - (mineSq ? 6 : 0)).toFixed(0)}px) translate(-50%, -100%)`; el.hidden = false; } }
   for (let i = n; i < markPool.length; i++) markPool[i].hidden = true;
+  allyMarks();
+}
+// fellow players on your side: a tag over each one's own man (name and health), one over each of his companies, and a flag where
+// he has sent them, so you can see what your friend is doing and what he has ordered
+const allyPool = []; const ORD_TXT = ['moving', 'charging', 'holding', 'following him', 'forming', 'firing', 'under his hand', 'fighting freely', 'ability', 'boats', 'on a directive'];
+function allyMarks() {
+  const sim = state.sim, R = state.renderer, box = $('fpmarks'); let n = 0; const pt = {}; const w = canvas.clientWidth, h = canvas.clientHeight; const me = sim.players[state.localIdx];
+  const put = (cls, html, x, y, z, edge) => { R.project(x, y, z, pt); if (!pt.visible) { if (!edge) return; } let px = pt.x, py = pt.y;
+    if (edge) { if (!pt.visible) { px = w - px; py = h - 30; } px = Math.max(40, Math.min(w - 40, px)); py = Math.max(24, Math.min(h - 30, py)); } else if (px < -40 || px > w + 40 || py < 0 || py > h) return;
+    let el = allyPool[n]; if (!el) { el = document.createElement('div'); box.appendChild(el); allyPool[n] = el; } n++;
+    if (el.className !== cls) el.className = cls; if (el._h !== html) { el.innerHTML = html; el._h = html; }
+    el.style.transform = `translate(${px.toFixed(0)}px, ${py.toFixed(0)}px) translate(-50%, -100%)`; el.hidden = false; };
+  if (me && state.net) for (let i = 0; i < sim.players.length; i++) { const p = sim.players[i]; if (i === state.localIdx || p.ai || p.team !== me.team) continue;
+    const nm = escapeHtml((state.peerNames && state.peerNames[i]) || ('Player ' + (i + 1)));
+    const hu = sim.units[p.heroId];
+    if (hu && !hu.dead) { const hp = Math.max(0, Math.min(1, hu.hp / (hu.def.hp || 100)));
+      put('mk friend', `${nm}<i style="display:block;height:3px;margin:2px auto 0;width:44px;background:#0008"><b style="display:block;height:3px;width:${(hp * 100).toFixed(0)}%;background:${hp > 0.5 ? '#7fe07a' : hp > 0.25 ? '#e8c25a' : '#e8584a'}"></b></i>▼`, (hu.px + (hu.x - hu.px) * (R.alpha || 1)), hu.y + 2.35, (hu.pz + (hu.z - hu.pz) * (R.alpha || 1)), true); }
+    for (const id of p.squads || []) { const sq = sim.squads[id]; if (!sq || !sq.alive || sq.inactive) continue; const ord = sq.routing ? 'routing' : (ORD_TXT[sq.order] || '');
+      const cam = R.camera.position; const far = Math.hypot(sq.cx - cam.x, sq.cz - cam.z); if (!Input.cmdMode && far > 140) continue;
+      put('mk friendsq', `${nm} · ${sq.def.name}<small>${sq.aliveCount} · ${ord}</small>`, sq.cx, S.terrainH(sq.cx, sq.cz) + 3.2, sq.cz, false);
+      if ((sq.order === 0 || sq.order === 1) && sq.tx !== undefined && Math.hypot(sq.tx - sq.cx, sq.tz - sq.cz) > 4) put('mk friendord', `⚑<small>${nm}: ${sq.order === 1 ? 'charge' : 'move'}</small>`, sq.tx, S.terrainH(sq.tx, sq.tz) + 0.4, sq.tz, false); } }
+  for (let i = n; i < allyPool.length; i++) allyPool[i].hidden = true;
 }
 function cmdCamUpdate(dt) {
   const r = state.renderer; if (!r || !Input.cmdMode) return; const c = r.cmdCam; const sp = c.h * 1.1 * dt;
@@ -10881,7 +10963,7 @@ function replayFrame(dt) {
     }
     if (state.replayTick >= rp.inputs.length) state.acc = 0;
   }
-  cmdCamUpdate(dt);
+  predictHero(ls); cmdCamUpdate(dt);
   state.renderer.render(Math.min(1, state.acc / DT), dt, { mode: 'cmd', yaw: Input.yaw, pitch: Input.pitch, selected: [] });
   if (state.toastT > 0) { state.toastT -= dt; if (state.toastT <= 0) $('toast').classList.remove('show'); }
   state.hudT -= dt;
@@ -11103,12 +11185,46 @@ function updateHUD(dt) {
 function stepOnce() {
   const sim = state.sim, ls = state.ls, net = state.net;
   if (!ls.ready(ls.tick)) return false;
-  const inp = collectInput(); const tk = ls.queueLocal(inp); if (net) net.sendInput(tk, inp);
+  if (net) netTune(ls, net);
+  if (ls.needsInput()) { const t0 = ls.tick + ls.delay;
+    if (ls.lastQ !== undefined && ls.lastQ < t0 - 1) { const last = ls.local(ls.lastQ); for (let t = ls.lastQ + 1; t < t0; t++) { const f = last ? [last[0], last[1], last[2], last[3] & (S.A_ATK | S.A_BLOCK | S.A_AIM | S.A_CMD), last[4], last[5], [], 0] : 0; ls.get(t)[ls.me] = f; if (net) net.sendInput(t, f, ls.tick); } }
+    const inp = collectInput(); const tk = ls.queueLocal(inp); if (net) net.sendInput(tk, inp, ls.tick); }
   const tickInputs = ls.inputsFor(ls.tick); if (state.replay && state.replay.inputs.length < 30 * 60 * 40) state.replay.inputs.push(tickInputs.slice());
   sim.step(tickInputs); ls.advance();
   state.renderer.processEvents(sim.events); handleEvents(sim.events);
   if (ls.tick % 60 === 0 && net) { const h = sim.hash(); net.sendHash(ls.tick, h); ls.recordHash(ls.me, ls.tick, h); }
   return true;
+}
+// online play: the input delay follows the measured round trip (half of it, plus a margin for jitter) and moves one tick at a time
+function netTune(ls, net) {
+  const now = performance.now(); if (now - (state.tuneT || 0) < 1500) return; state.tuneT = now;
+  const rtt = net.maxRtt(); if (!rtt) return; const want = Math.max(2, Math.min(12, Math.ceil((rtt / 2 + 22) / (DT * 1000)) + 1));
+  if (want > ls.delay) ls.delay++; else if (want < ls.delay - 1) ls.delay--; state.delay = ls.delay;
+}
+// keep every peer's clock in step: a peer running ahead of the others would only stall waiting for their inputs, so it slows a
+// touch instead (the slower peer is never asked to speed up past real time)
+function netAhead(ls, net) {
+  let ahead = 0; const now = performance.now();
+  for (const p in net.rtick) { const R = net.rtick[p]; if (!ls.connected[p]) continue; const est = R.k + ((net.rtt[R.id] || 0) / 2 + (now - R.at)) / (DT * 1000); ahead = Math.max(ahead, ls.tick - est); }
+  return ahead;
+}
+// what the local man's own pending inputs will do: in first person the camera moves at once with the keys instead of after the
+// input delay (drawing only; the simulation is untouched and catches up to the same place)
+function predictHero(ls) {
+  const h = localHero(); const R = state.renderer; if (!R) return;
+  let ox = 0, oz = 0;
+  if (h && !h.dead && state.net && h.mount < 0 && !h.mounted && !h.airborne && !(h.downT > 0) && !(h.dodgeT > 0) && h.st !== S.ST_STUN) {
+    const base = h.def.speed * state.sim.zoneSpeed(h.x, h.z, Math.sin(h.yaw), Math.cos(h.yaw)); const cur = Math.hypot(h.mx, h.mz), was = state.predSp || base;
+    const k = Math.min(1.2, cur > 0.05 ? cur / Math.max(0.1, was) : 1);
+    for (let t = ls.tick; t < ls.tick + ls.delay; t++) { const inp = ls.local(t); if (!inp || !inp[0]) continue; const keys = inp[0], yaw = inp[1] / 65536 * Math.PI * 2;
+      const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = -Math.cos(yaw), rz = Math.sin(yaw); let mx = 0, mz = 0;
+      if (keys & S.KEY_W) { mx += fx; mz += fz; } if (keys & S.KEY_S) { mx -= fx; mz -= fz; } if (keys & S.KEY_D) { mx += rx; mz += rz; } if (keys & S.KEY_A) { mx -= rx; mz -= rz; }
+      const l = Math.hypot(mx, mz); if (l < 1e-3) continue; let sp = base; if ((keys & S.KEY_S) && !(keys & S.KEY_W)) sp *= 0.65; if ((keys & S.KEY_SPRINT) && (keys & S.KEY_W) && !(keys & S.KEY_S) && !h.winded) sp *= 1.42;
+      ox += mx / l * sp * k * DT; oz += mz / l * sp * k * DT; }
+    const pl = Math.hypot(ox, oz); if (pl > 2) { ox *= 2 / pl; oz *= 2 / pl; }
+    { let sp = base; const keys = ls.local(ls.tick - 1); if (keys && keys[0] & S.KEY_SPRINT) sp *= 1.42; state.predSp = sp; }
+  }
+  const P = R.pred || (R.pred = { x: 0, z: 0 }); const a = 1 - Math.exp(-(state.dtF || 0.016) * 30); P.x += (ox - P.x) * a; P.z += (oz - P.z) * a;
 }
 function frame(now) {
   requestAnimationFrame(frame);
@@ -11121,7 +11237,8 @@ function frame(now) {
   const sim = state.sim, ls = state.ls, net = state.net;
   // game speed (solo only): more fixed-length ticks per frame; capped so a slow machine just runs slower
   const spd = state.net ? 1 : (state.speed || 1), maxS = Math.min(48, Math.max(2, Math.ceil(6 * spd)));
-  state.acc += dt * spd; let steps = 0; const tStep = performance.now();
+  state.dtF = dt; let ndt = dt; if (net && state.ls) { const ah = netAhead(ls, net); if (ah > 1.5) ndt *= ah > 4 ? 0.8 : 0.92; }
+  state.acc += ndt * spd; let steps = 0; const tStep = performance.now();
   while (state.acc >= DT && steps < maxS) {
     if (spd > 1 && steps >= 2 && performance.now() - tStep > 14) { state.acc = 0; break; } // fast-forward never starves the frame: a slow machine just gets less speed
     if (!stepOnce()) { state.acc = Math.min(state.acc, DT); state.stalled = true; state.stallT += dt; break; }
