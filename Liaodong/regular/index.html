@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v116</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v117</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -827,7 +827,7 @@ const STORY = [
 ];
 const FACTION = [{ name: 'Ming Army', jp: '大明', short: 'Ming' }, { name: 'Later Jin', jp: '後金', short: 'Jin' }];
 const BATTLES = {
-  field:    { name: 'Jiefan Hill', jp: '界凡 (薩爾滸)', when: 'April 1619', biome: 'autumn', fog: 0, terrain: 0.7, features: ['hill'], desc: 'Jiefan hill above the Hun River ford, the Jin\'s half-built stockade on the crest. Whoever holds the height shoots farther and cuts downhill.' },
+  field:    { name: 'Jiefan Hill', jp: '界凡 (薩爾滸)', when: 'April 1619', biome: 'autumn', fog: 0, terrain: 0.7, features: ['hill'], desc: 'The open hill country of Jiefan above the Hun River, a wayside shrine on the crest. Whoever holds the height shoots farther and cuts downhill.' },
   toba:     { name: 'Hun River', jp: '渾河', when: 'March 1621', biome: 'winter', fog: 0.35, terrain: 0.6, horizon: { lo: 0.45, nokarst: true }, features: ['river', 'village'], desc: 'A half-frozen river splits the field outside Shenyang. Two bridges and a shallow ford are the only quick crossings; mist shortens every musket.' },
   ueno:     { name: 'Songshan temple', jp: '松山 · 寺', when: 'Summer 1641', biome: 'summer', fog: 0.1, terrain: 0.7, horizon: { lo: 0.6, nokarst: true, open: [0.9, 2.3] }, features: ['temple', 'houses'], desc: 'Hong Chengchou\'s men hold a walled temple compound on a raised plateau. Storm the gate or shell it with heavy guns.' },
   nagaoka:  { name: 'Yangzhou', jp: '揚州', when: 'May 1645', biome: 'summer', weather: 'storm', fog: 0.3, terrain: 0.3, horizon: { lo: 0.3, nokarst: true }, features: ['paddies', 'flankriver'], desc: 'Jiangnan rice paddies under a spring thunderstorm. Rain fouls matchlocks, lightning seeks the banners, and one bridge guards the western flank.' },
@@ -1004,21 +1004,21 @@ class Sim {
       for (let cz = z0; cz <= z1; cz++) for (let cx = x0; cx <= x1; cx++) { const c = cz * W + cx; if (!this.boxCells[c]) this.boxCells[c] = []; this.boxCells[c].push(i); }
     }
     this.buildNav(); this.flowBudget = 4;
+    this.unstickSpawns(); /* (maps) a deployment row laid across a wall, a house or a river: those men are set on the nearest open ground */
   }
   // ---------- map ----------
   planTerrain() {
     const b = this.battle, L = { scale: this.bdef.terrain, hills: [], plateaus: [] };
     const r = new RNG(this.seed ^ 0x1234567);
     if (b === 'field') { L.hills.push({ x: 0, z: 2, r: 72, h: 12 }); L.hills.push({ x: r.range(-150, -110), z: r.range(-40, 40), r: 35, h: 5 }); L.hills.push({ x: r.range(110, 150), z: r.range(-40, 40), r: 35, h: 5 });
-      /* 界凡 1619: the hill stands in the fork of the 渾河 and the 蘇子河 (《滿文老檔》, 《明史》杜松傳: Du Song forded the Hun River below Jiefan with the water at his men's chests); the river is the field's south edge, a ford on the Ming side */
-      if (!this.mission) L.river = { axis: 'x', c0: -143, amp: 2, freq: 0.03, ph: r.range(0, 6), w: 6, depth: 2.2, bridges: [{ at: 0, hw: 24, ford: true }] }; }
+      /* 界凡 1619 (《明史》杜松傳): the hill stands in the fork of the 渾河 and the 蘇子河; the river itself is on the 'sarhu' map, this field stays open ground */ }
     if (b === 'toba') { L.river = { axis: 'x', c0: 0, amp: 9, freq: 0.019, ph: r.range(0, 6), w: 9, depth: 3.6, bridges: [{ at: -78, hw: 4 }, { at: 74, hw: 4 }, { at: 0, hw: 9, ford: true }] };
       /* 渾河 1621 (《明史》陳策傳, 《滿文老檔》天命六年三月): the Sichuan White Poles crossed the Hun River bridge and camped on the north bank, seven li from Shenyang's walls, the Zhejiang
          men under Chen Ce and Tong Zhongkui dug in south of the river (the Jin side is north: team 1 deploys at z > 0 here, so Shenyang's wall is the north-west skyline, a low rise behind the south camp) */
       L.hills.push({ x: -40, z: -118, r: 48, h: 4 }); L.hills.push({ x: 120, z: 30, r: 40, h: 3 }); }
     if (b === 'ueno') { const cx = r.range(-25, 25); this.templeX = cx; L.plateaus.push({ x: cx, z: 72, r0: 32, r1: 46, h: 7 }); }
     if (b === 'nagaoka') L.river = { axis: 'z', c0: -105, amp: 10, freq: 0.022, ph: r.range(0, 6), w: 11, depth: 3.2, bridges: [{ at: r.range(-30, 30), hw: 4.5 }] };
-    if (b === 'aizu') { L.plateaus.push({ x: 0, z: 96, r0: 21, r1: 27, h: 6 }); L.rmoat = { x: 0, z: 96, hw: 31, hd: 31, w: 5.5, depth: 2.8, gates: [[0, 63]] }; L.hills.push({ x: -150, z: 40, r: 60, h: 14 });
+    if (b === 'aizu') { L.plateaus.push({ x: 0, z: 96, r0: 21, r1: 27, h: 6 }); L.rmoat = { x: 0, z: 96, hw: 31, hd: 31, w: 5.5, depth: 2.8, gates: [[0, 63], [0, 129], [-33, 96], [33, 96]] }; /* causeways at four gates (《遼東志》遼陽城: 門六, the main four on the cardinal sides) */ L.hills.push({ x: -150, z: 40, r: 60, h: 14 });
       /* 遼陽 1621 (《滿文老檔》天命六年三月二十日, 《明史》袁應泰傳): a square walled city with a wide wet moat fed from the 太子河, which runs past the east side; the Jin cut the inlet dyke, drained the moat and filled it to cross.
          The river is the east edge of the field with one bridge on the east road; the moat is square now (the round one and the hill were a Japanese castle's) */
       L.river = { axis: 'z', c0: 132, amp: 4, freq: 0.03, ph: r.range(0, 6), w: 9, depth: 3.4, bridges: [{ at: 60, hw: 4 }] }; }
@@ -1053,10 +1053,10 @@ class Sim {
     const keep = []; // {x,z,r} exclusion circles
     const clear = (x, z, rad) => { if (waterAt(x, z) !== 0) return false; for (let i = 0; i < keep.length; i++) if (len(x - keep[i].x, z - keep[i].z) < rad + keep[i].r) return false; return true; };
     const B = this.battle;
-    if (B === 'field') { // 吉林崖 (Jiefan hill) 1619: the Jin stockade on the crest that Du Song's men were storming when the banners came (《滿文老檔》天命四年三月初一: 界凡山上築城, the half-built fort of 界藩 and its workmen); no shrine stood there
-      const sx = 0, sz = 6; const pal = (x0, x1, z) => { for (let x = x0; x < x1; x += 3) this.boxes.push({ x: x + 1.5, z, hw: 1.5, hd: 0.5, h: 1.6, kind: 'palisade' }); }; const palZ = (x, z0, z1) => { for (let z = z0; z < z1; z += 3) this.boxes.push({ x, z: z + 1.5, hw: 0.5, hd: 1.5, h: 1.6, kind: 'palisade' }); };
-      if (!this.mission) { pal(-12, -3, sz + 10); pal(3, 12, sz + 10); pal(-12, 12, sz - 10); palZ(-12, sz - 10, sz + 10); palZ(12, sz - 10, sz + 10); this.boxes.push({ x: sx, z: sz, hw: 2.2, hd: 2, h: 2.6, kind: 'house' }); } /* the Changshan mission (jin4) lays its own wagon camp on this hill */
-      keep.push({ x: sx, z: sz, r: 15 });
+    if (B === 'field') { // the generic open field: Jiefan hill as a rise with a wayside shrine on the crest (the historic Jin stockade is on the 'sarhu' map); open ground, nothing to fight into
+      const sx = 0, sz = 6, syaw = PI; this.deco.push({ kind: 'shrine', x: sx, z: sz, yaw: syaw }); const rx = -cos(syaw), rz = sin(syaw);
+      this.obstacles.push({ x: sx + rx * 1.6, z: sz + rz * 1.6, r: 0.35, kind: 2 }); this.obstacles.push({ x: sx - rx * 1.6, z: sz - rz * 1.6, r: 0.35, kind: 2 }); this.obstacles.push({ x: sx + sin(syaw) * 7, z: sz + cos(syaw) * 7, r: 3.2, kind: 3, yaw: syaw });
+      keep.push({ x: sx, z: sz, r: 12 });
       for (let i = 0; i < 40; i++) { const a = r.range(0, TAU), d = r.range(28, 60); const x = sin(a) * d, z = 2 + cos(a) * d; if (Math.abs(z) > 30 && Math.abs(x) < 30) continue; if (clear(x, z, 3)) this.obstacles.push({ x, z, r: 0.45, kind: 0, variant: r.next() < 0.6 ? 1 : 0, scale: r.range(0.9, 1.5), rot: r.range(0, TAU) }); }
     }
     for (const rv of (this.layout.river ? [this.layout.river] : []).concat(this.layout.rivers || [])) for (const b of rv.bridges) { const c = rv.c0 + rv.amp * sin(b.at * rv.freq + rv.ph); this.deco.push({ kind: b.ford ? 'ford' : 'bridge', axis: rv.axis, at: b.at, c, hw: b.hw, w: rv.w, rv: rv.id }); keep.push(rv.axis === 'x' ? { x: b.at, z: c, r: 16 } : { x: c, z: b.at, r: 16 }); }
@@ -3965,7 +3965,12 @@ const MISSIONS = {
 const OPS = { // Assault: attackers with limited manpower take sectors of fortified points one by one; defenders fall back
   ningyuan_siege: {
     siege: true, title: '寧遠攻守 · The Siege of Ningyuan', year: 'February 1626', battle: 'siegecity', attacker: 1, tickets: 640,
-    brief: 'Nurhaci brings the Eight Banners against Ningyuan in the depth of winter. Yuan Chonghuan has burned the suburbs, brought the people inside and mounted Western cannon on the walls. The Jin must fill the ditch, climb or break the walls, take the gatehouse and fight through the streets to the yamen.',
+    brief: 'Nurhaci\'s banners against Yuan Chonghuan\'s walls and Western cannon, in the depth of winter.',
+    // the briefing is talk, spaced through the first minutes and heard by one side only (talk[team]): [t, who, en, zh]
+    talk: { 1: [[4, 'A bannerman', 'The suburbs are ash. He burned them himself.', '城外燒成灰了。他自己燒的。'], [16, 'Your banner chief', 'Fill the ditch first. Nobody climbs till the ditch is full.', '先填壕。壕不滿誰也不許爬。'],
+        [40, 'A bannerman', 'Those are Western guns on the wall. Big ones.', '牆上是西洋砲。大傢伙。'], [70, 'Your banner chief', 'The gatehouse, then the streets. The yamen is at the end.', '先門樓，再街巷。衙門在最裡頭。']],
+      0: [[4, 'Yuan Chonghuan', 'I burned the suburbs myself. They get nothing out there.', '城外是我自己燒的。他們什麼也撈不著。'], [16, 'A gunner', 'Red cannon loaded. Wait till they are in the ditch.', '紅衣砲裝好了。等他們進壕。'],
+        [40, 'A sergeant', 'They fall back from the ditch, we fall back to the wall. Then the gate.', '壕丟了退上牆。牆丟了退到門。'], [70, 'Yuan Chonghuan', 'The yamen is the last line. There is nothing behind it.', '衙門是最後一道。後頭什麼都沒有。']] },
     zones: [{ key: 'ditchW', x: -28, z: 22, r: 13, name: 'A · West ditch', rate: 0.5 }, { key: 'ditchE', x: 28, z: 22, r: 13, name: 'B · East ditch', rate: 0.5 },
       { key: 'wallW', x: -25, z: 43.5, r: 7, name: 'A · West wall', owner: 0, rate: 0.6 }, { key: 'wallE', x: 25, z: 43.5, r: 7, name: 'B · East wall', owner: 0, rate: 0.6 },
       { key: 'gatehouse', x: 0, z: 55, r: 8, name: 'A · The gatehouse', owner: 0, rate: 0.5 },
@@ -3979,7 +3984,11 @@ const OPS = { // Assault: attackers with limited manpower take sectors of fortif
   },
   liaoyang: {
     title: '遼陽之戰 · Assault on Liaoyang', year: 'April 1621', battle: 'aizu', attacker: 1, tickets: 520,
-    brief: 'The Jin storm Liaoyang, capital of Liaodong. Three lines stand between the banners and the keep: the outer trenches, the market quarter and the city gate.',
+    brief: 'The Jin storm Liaoyang, the capital of Liaodong.',
+    talk: { 1: [[4, 'Your banner chief', 'Liaoyang. Take this and Liaodong is ours.', '遼陽。拿下它，遼東就是咱們的。'], [18, 'A bannerman', 'Trenches first, west and east. They have muskets in them.', '先是壕，東西兩道。裡頭有銃。'],
+        [45, 'Your banner chief', 'Behind the trenches, the market. Then the gate. Then the keep.', '壕後頭是市集。再是城門。再是內城。']],
+      0: [[4, 'Yuan Yingtai', 'They are coming for the capital. Hold the trenches.', '他們衝著省城來。守住壕。'], [18, 'A sergeant', 'Muskets in the trench. Fire when they reach the stakes.', '銃手在壕裡。到了木樁再放。'],
+        [45, 'A sergeant', 'If the trench goes, the market. If the market goes, the gate.', '壕丟了守市集。市集丟了守城門。']] },
     zones: [{ key: 'a1', x: -40, z: -62, r: 12, name: 'A · West trench', owner: 0, rate: 0.55 }, { key: 'b1', x: 40, z: -62, r: 12, name: 'B · East trench', owner: 0, rate: 0.55 },
       { key: 'a2', x: 0, z: 6, r: 14, name: 'A · Market quarter', owner: 0, rate: 0.5 }, { key: 'b2', x: -60, z: 20, r: 12, name: 'B · Drum tower', owner: 0, rate: 0.55 },
       { key: 'a3', x: 0, z: 63, r: 10, name: 'A · City gate', owner: 0, rate: 0.45 }, { key: 'b3', x: 0, z: 96, r: 13, name: 'B · The keep', owner: 0, rate: 0.4 }],
@@ -3993,7 +4002,11 @@ const OPS = { // Assault: attackers with limited manpower take sectors of fortif
   },
   shanhai: {
     title: '山海關 · The First Pass Under Heaven', year: 'May 1644', battle: 'bonari', attacker: 1, tickets: 480,
-    brief: 'Li Zicheng\'s rebels hold Beijing; the Qing banners come down on Shanhai Pass. The pass is narrow: an outer trench line, the earthwork, and the great gate itself.',
+    brief: 'The Qing banners come down on Shanhai Pass, the First Pass Under Heaven.',
+    talk: { 1: [[4, 'Your banner chief', 'Beijing has fallen to the rebels. This pass is the way in.', '北京落到流賊手裡了。這道關是進去的路。'], [18, 'A bannerman', 'Narrow. A trench line, then an earthwork, then the gate.', '窄。一道壕，一道土牆，再是關門。'],
+        [45, 'Your banner chief', 'No way round the slopes. Straight up the middle, point by point.', '兩邊坡繞不過去。從中間一處一處打。']],
+      0: [[4, 'Wu Sangui', 'Beijing is gone. This pass is all that is left of the Ming.', '北京沒了。大明就剩這道關。'], [18, 'A sergeant', 'Trench line first. When it goes, the earthwork. Then the gate.', '先守壕。壕丟了守土牆。再守關門。'],
+        [45, 'A gunner', 'They must come up the middle. Every gun on the road.', '他們只能從中間上來。所有砲對著路。']] },
     zones: [{ key: 'a1', x: -14, z: -40, r: 11, name: 'A · Trench line', owner: 0, rate: 0.55 }, { key: 'b1', x: 16, z: -34, r: 11, name: 'B · Signal tower', owner: 0, rate: 0.55 },
       { key: 'a2', x: 0, z: 32, r: 11, name: 'A · Outer earthwork', owner: 0, rate: 0.5 },
       { key: 'a3', x: -10, z: 92, r: 11, name: 'A · Pass gate', owner: 0, rate: 0.45 }, { key: 'b3', x: 14, z: 104, r: 10, name: 'B · Gate tower', owner: 0, rate: 0.45 }],
@@ -4097,7 +4110,8 @@ Sim.prototype.mBreak = function (gid) { // a beaten group gives up the field and
 Sim.prototype.mAct = function (a) {
   if (a[0] === 'release') this.mRelease(a[1]);
   else if (a[0] === 'dir') this.mDir(a[1], a.slice(2));
-  else if (a[0] === 'say') this.events.push({ t: 'msay', who: a[1], text: a[2] });
+  else if (a[0] === 'say') this.events.push({ t: 'msay', who: a[1], text: a[2], zh: a[3] || '', ord: a[4] });
+  else if (a[0] === 'fell') this.mFell(a[1] | 0, a[2]);
   else if (a[0] === 'show') { const z = this.missionZone(a[1]); if (z) z.hidden = false; }
   else if (a[0] === 'hide') { const z = this.missionZone(a[1]); if (z) z.hidden = true; }
   else if (a[0] === 'kill') { const g = this.mg[a[1]]; if (g) { const h = this.units[this.players[g.p].heroId]; if (h && !h.dead) { h.officer = false; this.applyDamage(h, 1e6, -1, 0, 0, 0, 'arrow'); } this.events.push({ t: 'mkill', gid: a[1], name: g.G.name, zh: g.G.zh || '' }); } }
@@ -4131,6 +4145,18 @@ Sim.prototype.zWound = function (k) {
     u.hp = 1; u.wounded = true; u.downed = true; u.helpedBy = -1; u.reviveBy = -1; u.reviveT = 0; u.bleed = 30 * (this.mission && this.mission.soft ? 240 : 60); u.medic = -1; u.st = ST_IDLE; u.stT = 0; u.blocking = false; u.aiming = false; u.target = -1; u.downT = Math.max(u.downT, 1.2); u.mx = 0; u.mz = 0;
     this.events.push({ t: 'zwound', p: p.idx, id: u.id, x: u.x, z: u.z }); }
 };
+// co-op missions: a man of each player's own company is hit and goes down where he stands (an arrow off a roof, a
+// grapeshot). He bleeds for a minute; a player beside him with E gets him up (helpWounded), as in the story chapters.
+// Objective { rescue: true } waits while any such man still lies there alive. n men per player (default one).
+Sim.prototype.mFell = function (n, why) {
+  for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; const cand = [];
+    for (const id of p.squads) { const q = this.squads[id]; if (!q.alive || q.inactive || q.def.ai === 'cannon' || q.def.mounted) continue; for (const uid of q.unitIds) { const u = this.units[uid]; if (!u.dead && !u.wounded && !u.inactive && u.ctrl < 0 && u.type !== 'horse' && !u.mounted) cand.push(u); } }
+    if (!cand.length) continue; const hx = h ? h.x : 0, hz = h ? h.z : 0; cand.sort((a, b) => (len(a.x - hx, a.z - hz) - len(b.x - hx, b.z - hz)) || (a.id - b.id));
+    for (let k = 0; k < Math.max(1, n | 0) && k < cand.length; k++) { const u = cand[k];
+      u.hp = 1; u.wounded = true; u.downed = true; u.mFell = true; u.helpedBy = -1; u.reviveBy = -1; u.reviveT = 0; u.bleed = 30 * 60; u.medic = -1; u.st = ST_IDLE; u.stT = 0; u.blocking = false; u.aiming = false; u.target = -1; u.downT = Math.max(u.downT, 1.2); u.mx = 0; u.mz = 0;
+      this.events.push({ t: 'zwound', p: p.idx, id: u.id, x: u.x, z: u.z, why: why || '' }); } }
+};
+Sim.prototype.mFallen = function () { let n = 0; for (const u of this.units) if (u.mFell && u.downed && !u.dead) n++; return n; };
 Sim.prototype.helpWounded = function (u) { // E beside a downed or wounded comrade: haul him up, or get his arm over your shoulder
   if (u.dead || u.mounted) return false; let best = null, bd = 2.6;
   for (const v of this.teamAlive[u.team]) { if (!v.downed || v.aided || v === u) continue; const d = len(v.x - u.x, v.z - u.z); if (d < bd) { bd = d; best = v; } }
@@ -4527,9 +4553,12 @@ Sim.prototype.mObj = function (o, el) {
   if (o.capture) { for (const k of o.capture) { const z = this.missionZone(k); if (z.owner !== this.mission.side) return 0; } }
   if (o.defeat) { for (const gid of o.defeat) { const g = this.mg[gid]; if (!g || (!g.released && !g.broken)) return 0; if (!g.broken && this.mGroupFrac(gid) > 1 - (o.frac || 0.8)) return 0; } for (const gid of o.defeat) this.mBreak(gid); }
   if (o.officer) { const g = this.mg[o.officer]; if (!g || !g.released) return 0; const h = this.units[this.players[g.p].heroId]; const wound = g.G.wound; if (h && !h.dead && !(wound && h.hp < h.def.hp * wound)) return 0; if (!g.broken) { this.events.push({ t: 'mofficer', name: g.G.name, zh: g.G.zh || '', gid: o.officer, wounded: !!(h && !h.dead) }); this.mBreak(o.officer); } }
-  if (o.arrive) { const z = this.missionZone(o.zone), p = this.players[this.mg[o.arrive].p]; let n = 0, a = 0; for (const id of p.squads) { const q = this.squads[id]; if (!q.alive) continue; a++; if (len(q.cx - z.x, q.cz - z.z) < z.r + 8) n++; } if (a === 0) return -1; if (n < a) return 0; }
+  if (o.arrive) { const z = this.missionZone(o.zone), p = this.players[this.mg[o.arrive].p]; let n = 0, a = 0; for (const id of p.squads) { const q = this.squads[id]; if (!q.alive) continue; a++; if (len(q.cx - z.x, q.cz - z.z) < z.r + 8) n++; }
+    if (a === 0) { const gh = this.units[p.heroId]; if (!(o.general && gh && !gh.dead)) return -1; if (len(gh.x - z.x, gh.z - z.z) >= z.r + 8) return 0; } /* arrive + general: his companies may all be gone as long as he himself gets through */
+    else if (n < a) return 0; }
   if (o.survive) { if (el < o.survive && !this.mQuietDone(el)) return 0; } /* 'hold out' only while there is something to hold against */
   if (o.never) return 0;
+  if (o.rescue && this.mFallen() > 0) return 0; /* a man of yours is still down: get him up (he dies of it in a minute, and then the phase goes on without him) */
   if (o.extract) { const z = this.missionZone(o.extract); let ok = false; for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead && len(h.x - z.x, h.z - z.z) < z.r + 1) ok = true; } if (!ok) return 0;
     // you are out: wait (up to 20 s) for the men of your file who are still on their feet and coming
     if (this.mv.exT === undefined) { this.mv.exT = this.tick; this.events.push({ t: 'zwait', s: 20 }); }
@@ -4566,7 +4595,7 @@ Sim.prototype.missionThink = function () {
   const P = M.phases[mv.ph], el = (this.tick - mv.t0) / 30;
   for (const [t, gid, dir] of P.waves || []) { const k = mv.ph + ':' + gid; if (!mv.waves[k] && el >= t) { mv.waves[k] = 1; this.mRelease(gid); if (dir) this.mDir(gid, dir); } }
   for (const [t, a] of P.at || []) { const k = mv.ph + ':at:' + t; if (!mv.ats[k] && el >= t) { mv.ats[k] = 1; this.mAct(a); } }
-  for (const [t, who, text, zh] of P.say || []) { const k = mv.ph + ':' + t; if (!mv.said[k] && el >= t) { mv.said[k] = 1; this.events.push({ t: 'msay', who, text, zh: zh || '' }); } }
+  for (const [t, who, text, zh, ord] of P.say || []) { const k = mv.ph + ':' + t; if (!mv.said[k] && el >= t) { mv.said[k] = 1; this.events.push({ t: 'msay', who, text, zh: zh || '', ord }); } }
   if (this.tick % 60 === 0) this.mAggro();
   // broken groups melt away at the field's edge
   for (const gid in this.mg) { const g = this.mg[gid]; if (!g.broken) continue; const p = this.players[g.p];
@@ -4654,6 +4683,8 @@ Sim.prototype.reviveUnit = function (u, x, z) {
 Sim.prototype.defKey = function (di) { const M = this.mission; let k = 0; for (const s of M.sectors) for (const key of s) { if (k === di) return key; k++; } return null; };
 Sim.prototype.assaultThink = function () {
   const M = this.mission, A = M.attacker; const keys = M.sectors[this.sector];
+  // the briefing as talk: each side's lines, spaced through the opening (both sides' events go out; the HUD keeps its own)
+  if (M.talk) { const mv = this.mv, el = this.tick / 30; for (const tm in M.talk) for (const [t, who, text, zh] of M.talk[tm]) { const k = 'op:' + tm + ':' + t; if (!mv.said[k] && el >= t) { mv.said[k] = 1; this.events.push({ t: 'msay', who, text, zh: zh || '', team: tm | 0 }); } } }
   // manpower: every attacking man who falls costs a ticket; reserves march on while tickets last and the line is thin
   let act = 0, rngN = 0; for (const u of this.teamAlive[A]) if (!u.inactive && u.type !== 'horse' && u.def.ai !== 'cannon') { act += u.def.ai === 'ranged' ? 0.35 : 1; if (u.def.ai === 'ranged') rngN++; } act = Math.round(act); /* archers and gunners stand back and seldom fall: counted at a third, so a standing archery company cannot fill the field and starve the assault of fresh men */
   const CAP = M.cap || 64;
@@ -5264,6 +5295,14 @@ Sim.prototype.hrTick = function (u) {
   if (u.hrF > 0) u.hrF -= DT;
   if (u.hrA < 5) u.hrA += DT;
 };
+// (maps) men placed at setup inside a structure's collider or in deep water are moved to the nearest open ground; a
+// squad whose men move keeps its slots (its formation reference) where they were, so the company closes up again as it
+// marches. Deterministic: this.boxes order, freeSpot's fixed spiral.
+Sim.prototype.unstickSpawns = function () {
+  const inBox = (x, z) => { for (const b of this.boxes) { if (b.hw < 0.1 || b.kind === 'mantlet') continue; if (Math.abs(x - b.x) < b.hw + 0.3 && Math.abs(z - b.z) < b.hd + 0.3) return true; } return false; };
+  for (const u of this.units) { if (u.dead || u.inactive) continue; if (!inBox(u.x, u.z) && waterAt(u.x, u.z) !== 1) continue;
+    const p = this.freeSpot(u.x, u.z); u.x = u.px = p[0]; u.z = u.pz = p[1]; u.y = u.py = terrainH(u.x, u.z); if (u.mount >= 0 && this.units[u.mount]) { const h = this.units[u.mount]; h.x = h.px = u.x; h.z = h.pz = u.z; h.y = h.py = u.y; } }
+};
 return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUDGET, TICK, DT, HALF, DEPLOY_TICKS, RALLY_CD, terrainH, setTerrainScale, TERR, waterAt, slotOffset, YY_SLOT, FORM_COLUMN, WPN, spacingOf, gunOf,
   KEY_W, KEY_S, KEY_A, KEY_D, A_ATK, A_BLOCK, A_FIRE, A_AIM, A_KICK, A_MOUNT, A_JUMP, A_SWAP, A_RELOAD, A_CMD, A_RALLY, A_READY, A_THROW, A_DUEL, AIM_RAISE, A_AB1, A_AB2, A_AB3, A_ULT, A_DODGE, A_DASHL, A_DASHR, A_GRIP, KEY_SPRINT, ORD_SPAWN, ORD_CLASS, HCLASS, HAB, SCEN, BOMBS, FURY_MAX, SROLE, ARMS, RANGED, MISSIONS, OPS,
   DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT, ST_IDLE, ST_WINDUP, ST_RELEASE, ST_RECOVER, ST_STUN, ST_RELOAD, ST_AIM, ST_SWAP, ST_KICK, ST_BURST,
@@ -5273,8 +5312,14 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
 <script>
 // ===================== co-op missions: raids, ambushes, the front line, a sortie by night =====================
 // Every phase is something to do — get there, break them, burn it, kill him, get out — never a clock to sit out.
-// Sources: 《明史》毛文龍傳 (鎮江, 1621), 東江塘報 on the raids against Jin grain trains, 《明史》袁崇煥傳 and 《崇禎長編》 on
-// 寧錦 (1627), 《清太宗實錄》天聰五年 on the siege of 大凌河 (1631: Zu Dashou's sorties against the siege lines and guns).
+// Each mission is five or six phases with a turn in the middle: a man down, a fire, horse on the flank, a gate to hold.
+// The exposition is talk: a cast of named men (cast[key] = [zh, en, group]) speak short bilingual lines where they
+// stand, spaced out over the phase (say: [t, who, en, zh, order]); an officer's line that carries a squad order names
+// the order so the HUD can show the key. No cards, no walls of text: the brief is only the menu blurb.
+// Sources: 《明史》毛文龍傳 (鎮江, 1621: 陳良策 the inside man, 佟養真 taken alive), 東江塘報 on the raids against Jin grain
+// trains, 《明史》袁崇煥傳 on 寧錦 (1627: 滿桂、祖大壽 sent to relieve 錦州), 《清太宗實錄》天聰五年 on the siege of 大凌河
+// (1631: Zu Dashou's sorties, 佟養性's red cannon, 何可綱 his deputy). Unnamed sergeants, scouts and gunners are
+// invented where the sources give no name; each such man is marked (no source) where he is defined.
 (function () { if (typeof SIM === 'undefined') return; const PI = Math.PI;
   const house = (x, z, hw, hd) => [x, z, hw, hd, 3.4, 'house'], pal = (x0, x1, z) => { const o = []; for (let x = x0; x < x1; x += 3) o.push([x + 1.5, z, 1.5, 0.5, 1.6, 'palisade']); return o; };
   Object.assign(SIM.MISSIONS, {
@@ -5282,8 +5327,10 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
   zhenjiang: {
     title: '鎮江夜襲 · The night raid on Zhenjiang', year: 'Summer 1621', battle: 'toba', side: 0, soloExtra: 'samurai',
     bdef: { name: 'Zhenjiang', jp: '鎮江', when: 'Summer 1621', biome: 'night', fog: 0.35 },
-    brief: 'Liaodong has fallen. Mao Wenlong slips across the Yalu by night with a few hundred men to Zhenjiang, where the townsmen have promised to rise. Take the bridge quietly, get the gate open, seize the Jin commander Tong Yangzhen, fire the granary, and be gone before the banners ride in.',
+    brief: 'Two hundred men over the Yalu by night: take Zhenjiang, seize Tong Yangzhen, burn the granary, and be gone by dawn.',
     start: [-78, -118, 0],
+    // the cast: Mao and Chen Liangce are in 《明史》; Han the scout and Sergeant Du are invented (no source)
+    cast: { mao: ['毛文龍', 'Mao Wenlong', 'mao'], chen: ['陳良策', 'Chen Liangce', 'rising'], han: ['韓老五', 'Han the scout', 'me'], du: ['杜把總', 'Sergeant Du', 'me'], town: ['', 'A townsman', 'rising'] },
     zones: [{ key: 'bridge', x: -78, z: -14, r: 10, name: 'The west bridge' }, { key: 'gate', x: 0, z: 52, r: 8, name: 'The town gate' }, { key: 'yamen', x: 0, z: 86, r: 9, name: 'The yamen' }, { key: 'granary', x: 34, z: 92, r: 8, name: 'The granary' }, { key: 'boats', x: -78, z: -88, r: 14, name: 'The boats' }],
     forts: [house(-22, 64, 4, 3), house(22, 64, 4, 3), house(-24, 82, 3.5, 3), house(-6, 100, 3, 3), house(34, 104, 4, 3), house(48, 86, 3, 3.5), [0, 92, 5, 3.5, 4, 'hall'], [34, 92, 3, 3, 3, 'house']].concat(pal(-44, -4, 48), pal(4, 44, 48)),
     groups: {
@@ -5296,21 +5343,30 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
       relief2: { team: 1, name: 'More horse', army: ['cavalry', 'byakkotai'], at: [138, -40, -PI / 2], reserve: true },
     },
     phases: [
-      { title: 'I · 夜渡 · The bridge', text: 'Across the river in the dark. The bridge sentries are half asleep: take them before they can raise the town.', show: ['bridge'],
+      { title: 'I · 夜渡 · The bridge', goal: 'Take the bridge sentries quietly', text: 'Across the river in the dark. Take the sentries before they raise the town.', show: ['bridge'],
         start: [['calm', 'watch', 6]], obj: { all: [{ reach: 'bridge' }, { defeat: ['watch'], frac: 0.7 }] },
-        say: [[2, 'Mao Wenlong', 'No match lit until they see us. Knives and spears first.'], [14, 'Scout', 'Two fires on the bridge. Six, maybe eight men.']] },
-      { title: 'II · 開門 · The gate', text: 'The townsmen are rising inside. Get to the gate and in before the garrison is awake.', show: ['gate'], hide: ['bridge'],
-        start: [['release', 'rising'], ['dir', 'mao', 'hold', 0, 40]], obj: { reach: 'gate' }, at: [[20, ['release', 'garrison']], [21, ['dir', 'garrison', 'hold', 0, 58]]],
-        say: [[3, 'Scout', 'Torches in the streets — the townsmen are up! The gate is opening!'], [22, 'Townsman', 'The bannermen are coming out of the barracks!']] },
-      { title: 'III · 佟養真 · Tong Yangzhen', text: 'The Jin commander is in the yamen. Take him.', show: ['yamen'], hide: ['gate'],
+        say: [[3, 'mao', 'No match lit until they see us. Knives first.', '見了人才點火繩。先用刀。'], [9, 'han', 'Two fires on the bridge. Eight men, half asleep.', '橋上兩堆火。八個人，睡了一半。'],
+          [26, 'du', 'Muskets, hold your fire. Not till they shout.', '銃手，不許放。等他們喊了再說。', 'holdfire'], [48, 'mao', 'Shields up the bridge. Go.', '刀牌上橋。走。', 'charge']] },
+      { title: 'II · 開門 · The gate', goal: 'Get in through the town gate', text: 'The townsmen are rising inside. In through the gate before the garrison wakes.', show: ['gate'], hide: ['bridge'],
+        start: [['release', 'rising'], ['dir', 'mao', 'hold', 0, 40]], obj: { reach: 'gate' }, at: [[22, ['release', 'garrison']], [23, ['dir', 'garrison', 'hold', 0, 58]]],
+        say: [[4, 'chen', 'Torches in the streets. Chen Liangce keeps his word: the gate is open.', '街上有火把。陳良策說話算話，門開了。'], [25, 'town', 'The bannermen are out of the barracks!', '旗兵出營了！'],
+          [31, 'mao', 'Muskets, fire at will. Shields to the gate.', '銃手自由放。刀牌上門。', 'fire']] },
+      { title: 'III · 巷戰 · The streets', goal: 'Get your man up, break the garrison', text: 'An arrow off a roof. A man is down in the street and the garrison is on you.', hide: ['gate'],
+        start: [['fell', 1, 'an arrow off a roof'], ['dir', 'mao', 'hold', 0, 60]], obj: { all: [{ rescue: true }, { defeat: ['garrison'], frac: 0.6 }] },
+        say: [[2, 'du', 'Archer on the roof! Man down!', '房上有弓手！有人倒了！'], [12, 'mao', 'Nobody leaves him. Get him up and hold the street.', '誰也不許丟下他。拉起來，守住街口。', 'hold'],
+          [40, 'han', 'The yamen is lit. He is in there.', '衙門亮著燈。他在裡頭。']] },
+      { title: 'IV · 佟養真 · Tong Yangzhen', goal: 'Take Tong Yangzhen in the yamen', text: 'The Jin commander is in the yamen. Take him.', show: ['yamen'],
         start: [['release', 'tong'], ['dir', 'mao', 'hold', 0, 80]], obj: { officer: 'tong' },
-        say: [[2, 'Mao Wenlong', 'Tong Yangzhen, the Liaodong Han who opened Fushun to them. The court wants him. Alive or not.']] },
-      { title: 'IV · 焚倉 · The granary', text: 'Fire the granary, so the banners have nothing to eat when they come back.', show: ['granary'], hide: ['yamen'],
-        obj: { reach: 'granary' }, done: [['explode', 34, 92, 4, 30, 0], ['say', 'Scout', 'It burns! The whole granary!']] },
-      { title: 'V · 回船 · The boats', text: 'Jin horse are coming down from Kuandian. Back over the bridge to the boats.', show: ['boats'], hide: ['granary'],
+        say: [[3, 'mao', 'Tong Yangzhen. He opened Fushun to them. Alive if you can.', '佟養真。撫順是他開的門。能活捉就活捉。'], [20, 'han', 'He has barred the hall doors. His guard is at the steps.', '他把堂門閂上了。親兵在台階上。']] },
+      { title: 'V · 焚倉 · The granary', goal: 'Fire the granary before the horse come', text: 'Horse are coming down from Kuandian. Fire the granary first.', show: ['granary'], hide: ['yamen'],
+        start: [['dir', 'mao', 'hold', 20, 80]], obj: { reach: 'granary' }, limit: 220, fail: 'The Kuandian horse caught you in the town.', done: [['explode', 34, 92, 4, 30, 0], ['say', 'han', 'It burns! The whole granary!', '燒起來了！整個倉！']],
+        at: [[28, ['release', 'relief']], [29, ['dir', 'relief', 'hold', 40, 60]]],
+        say: [[3, 'mao', 'The granary. Torches to every roof.', '糧倉。每個屋頂都點上。'], [30, 'han', 'Horse on the north road! Hundreds!', '北路有馬！好幾百！'], [36, 'du', 'Muskets, a volley down the road. Then we run.', '銃手，朝路上放一排。然後跑。', 'fire']] },
+      { title: 'VI · 回船 · The boats', goal: 'Back over the bridge to the boats', text: 'Back over the bridge to the boats before they cut you off.', show: ['boats'], hide: ['granary'],
         start: [['dir', 'mao', 'hold', -78, -80], ['dir', 'rising', 'hold', -70, -84]], obj: { extract: 'boats' }, limit: 330, fail: 'The Jin horse caught you before the river.',
-        waves: [[6, 'relief', ['hold', -40, 20]], [40, 'relief2', ['hold', -60, -60]]],
-        say: [[7, 'Scout', 'Horsemen on the north road! Hundreds!'], [42, 'Scout', 'More of them along the south bank — they want to cut us off from the boats!']] },
+        waves: [[30, 'relief2', ['hold', -60, -60]]],
+        say: [[4, 'mao', 'Walk, do not run. Wounded in the middle. Follow me.', '走，別跑。傷的在中間。跟我來。', 'follow'], [32, 'han', 'More along the south bank. They want the boats!', '南岸又來一隊。他們要截船！'],
+          [60, 'chen', 'The boatmen are waiting. Zhenjiang will pay for this night.', '船家等著呢。鎮江要為今夜付代價。']] },
     ],
     win: 'Zhenjiang was taken in a night. The Jin answered by killing the people of the towns along the Yalu, and Mao Wenlong went out to the islands to begin twenty years of raids.',
   },
@@ -5318,31 +5374,43 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
   grainroad: {
     title: '劫糧 · The grain road', year: 'Autumn 1623', battle: 'abudali', side: 0, soloExtra: 'rifle_imp',
     bdef: { name: 'The Haizhou road', jp: '海州道', when: 'Autumn 1623', biome: 'autumn', fog: 0.2 },
-    brief: 'Mao Wenlong\'s Eastern River men raid out of the islands and the Korean border hills. A Jin grain train is coming down the valley to Haizhou. Lie on the slopes, let the escort into the narrows, break it, burn the carts, and fight your way back to the boats.',
+    brief: 'A Jin grain train is coming down the valley to Haizhou. Lie on the slopes, break the escort, burn the carts, get back to the boats.',
     start: [30, -96, 0],
-    zones: [{ key: 'slope', x: 26, z: -30, r: 10, name: 'The east slope' }, { key: 'carts', x: 0, z: -44, r: 9, name: 'The grain carts' }, { key: 'south', x: 0, z: -132, r: 14, name: 'The way to the boats' }],
-    forts: [[-4, -44, 2, 0.6, 1.4, 'mantlet'], [4, -40, 2, 0.6, 1.4, 'mantlet'], [0, -50, 2, 0.6, 1.4, 'mantlet']],
+    // Chen Jisheng was Mao Wenlong's deputy (《明史》); Nikan is a Jin captain's name, not this man; Old Pang the gunner and
+    // the boy scout are invented (no source)
+    cast: { chen: ['陳繼盛', 'Chen Jisheng', 'chen'], pang: ['龐老銃', 'Old Pang the gunner', 'me'], boy: ['小石', 'Shi the boy scout', 'me'], jin: ['', 'A Jin carter', 'escort'] },
+    zones: [{ key: 'slope', x: 26, z: -30, r: 10, name: 'The east slope' }, { key: 'carts', x: 0, z: -44, r: 9, name: 'The grain carts' }, { key: 'rear', x: 0, z: -4, r: 10, name: 'The tail of the train' }, { key: 'mouth', x: 0, z: -96, r: 12, name: 'The valley mouth' }, { key: 'south', x: 0, z: -132, r: 14, name: 'The way to the boats' }],
+    forts: [[-4, -44, 2, 0.6, 1.4, 'mantlet'], [4, -40, 2, 0.6, 1.4, 'mantlet'], [0, -50, 2, 0.6, 1.4, 'mantlet'], [-3, -2, 2, 0.6, 1.4, 'mantlet'], [4, -6, 2, 0.6, 1.4, 'mantlet']],
     groups: {
-      chen: { team: 0, name: 'Chen Jisheng\'s raiders', zh: '陳繼盛', army: ['rifle_imp', 'samurai'], at: [-30, -96, 0], dir: ['hold', -26, -36] },
+      chen: { team: 0, name: 'Chen Jisheng\'s raiders', zh: '陳繼盛', army: ['rifle_imp', 'samurai'], at: [-30, -96, 0], dir: ['hold', -26, -36], officer: 2 },
       escort: { team: 1, name: 'The grain escort', army: ['samurai', 'archer', 'samurai'], at: [0, 138, PI], dir: ['hold', 0, -40] },
       rear: { team: 1, name: 'The rearguard', army: ['cavalry', 'samurai'], at: [0, 138, PI], reserve: true },
       relief: { team: 1, name: 'Bordered Blue horse from Haizhou', zh: '鑲藍旗', army: ['cavalry', 'cavalry', 'byakkotai'], at: [-138, -60, PI / 2], reserve: true },
-      chief: { team: 1, name: 'Their captain, Nikan', zh: '尼堪', officer: 3, army: ['cavalry', 'samurai'], at: [0, 138, PI], reserve: true },
+      chief: { team: 1, name: 'Their captain, Nikan', zh: '尼堪', officer: 3, army: ['cavalry', 'samurai'], at: [-138, -70, PI / 2], reserve: true, stay: true, dir: ['hold', -10, -96] },
+      chase: { team: 1, name: 'Jin horsemen', army: ['cavalry'], at: [138, -110, -PI / 2], reserve: true, n: 8 },
     },
     phases: [
-      { title: 'I · 埋伏 · Lie in wait', text: 'Up the east slope before the escort comes into the narrows.', show: ['slope'],
+      { title: 'I · 埋伏 · Lie in wait', goal: 'Up the east slope, no shot fired', text: 'Up the east slope before the escort comes into the narrows.', show: ['slope'],
         start: [['calm', 'escort', 6]], obj: { reach: 'slope' },
-        say: [[3, 'Chen Jisheng', 'They come down this valley every ten days. They have stopped looking up.']] },
-      { title: 'II · 截 · Into the narrows', text: 'The escort is in the narrows. Break it.', hide: ['slope'],
+        say: [[3, 'chen', 'Every ten days they come down this valley. They stopped looking up.', '每隔十天他們走這條谷。早不往上看了。'], [8, 'pang', 'Matches out. Lie flat till Chen stands up.', '火繩收了。趴著，等陳爺站起來。', 'holdfire'],
+          [15, 'boy', 'Carts! Twenty, with oxen. The soldiers walk behind.', '車！二十輛，牛拉的。兵走在後頭。']] },
+      { title: 'II · 截 · Into the narrows', goal: 'Break the escort from both slopes', text: 'The escort is in the narrows. Break it.', hide: ['slope'],
         start: [['calm', 'escort', 60], ['dir', 'escort', 'attack'], ['dir', 'chen', 'hold', -6, -40]], obj: { defeat: ['escort'], frac: 0.7 },
-        waves: [[25, 'rear', ['hold', 0, -36]]], say: [[1, 'Chen Jisheng', 'Now! Into them from both slopes!'], [26, 'Scout', 'Horse at the back of the column, coming up!']] },
-      { title: 'III · 焚 · Burn the grain', text: 'Get to the carts and fire them.', show: ['carts'],
-        obj: { reach: 'carts' }, done: [['explode', 0, -44, 4, 30, 0], ['say', 'Scout', 'Burn, you bastards. Eat ash this winter.']] },
-      { title: 'IV · 援 · Their relief', text: 'Their horse is coming up the valley from Haizhou. Kill their captain and they will break.', hide: ['carts'],
-        start: [['release', 'relief'], ['dir', 'relief', 'hold', -10, -50], ['release', 'chief'], ['dir', 'chief', 'hold', 0, -40]], obj: { officer: 'chief' }, limit: 300, fail: 'They rode you down in the valley.',
-        say: [[2, 'Scout', 'Banners in the valley mouth! It\'s the Bordered Blue!'], [6, 'Chen Jisheng', 'The one with the red plume. Kill him and the rest go home.']] },
-      { title: 'V · 退 · To the boats', text: 'Back down the valley to the boats before more come.', show: ['south'],
-        start: [['dir', 'chen', 'hold', 0, -126]], obj: { extract: 'south' }, limit: 240, fail: 'More banners closed the valley.' },
+        waves: [[24, 'rear', ['hold', 0, -36]]], say: [[1, 'chen', 'Now! Both slopes! Muskets first, then down on them!', '就是現在！兩面坡！先放銃，再衝下去！', 'fire'], [26, 'boy', 'Horse at the back of the train, coming up!', '車隊後頭有馬，上來了！']] },
+      { title: 'III · 焚 · Burn the grain', goal: 'Fire the carts, then the tail of the train', text: 'Fire the carts, then the ones that turned back.', show: ['carts'],
+        obj: { reach: 'carts' }, done: [['explode', 0, -44, 4, 30, 0], ['say', 'pang', 'Burn, you bastards. Eat ash this winter.', '燒吧，狗東西。這個冬天吃灰去。']],
+        say: [[3, 'chen', 'The carts. Torches. Nothing goes to Haizhou.', '車。火把。一粒米也不許到海州。'], [18, 'jin', 'Cut the oxen loose! Turn the tail back!', '砍斷牛繩！把後隊掉頭！']] },
+      { title: 'IV · 尾 · The tail of the train', goal: 'Fire the last carts; get your man up', text: 'The last carts turned back up the valley. Chase them down.', show: ['rear'], hide: ['carts'],
+        start: [['dir', 'chen', 'hold', -8, -10], ['fell', 1, 'a cart went over on him']], obj: { all: [{ reach: 'rear' }, { rescue: true }] }, done: [['explode', 0, -4, 4, 30, 0]],
+        say: [[2, 'boy', 'A cart went over! It is on his leg!', '車翻了！壓住他的腿了！'], [10, 'chen', 'Two men lift it. The rest run for the tail carts.', '兩個人抬車。其他人追後隊。'],
+          [38, 'pang', 'Smoke in the valley mouth. That is not ours.', '谷口有煙。不是咱們的。']] },
+      { title: 'V · 援 · Their relief', goal: 'Hold the valley mouth; kill Nikan', text: 'Haizhou horse are in the valley mouth. Kill the captain and they go home.', show: ['mouth'], hide: ['rear'],
+        start: [['dir', 'chen', 'hold', -10, -88], ['release', 'relief'], ['dir', 'relief', 'hold', -10, -80]], at: [[20, ['release', 'chief']]], obj: { officer: 'chief' }, limit: 300, fail: 'They rode you down in the valley.',
+        say: [[3, 'boy', 'Banners in the valley mouth! The Bordered Blue!', '谷口有旗！鑲藍旗！'], [8, 'chen', 'Muskets to the mouth. Line, and hold your fire till I say.', '銃手去谷口。列隊，我不說不許放。', 'line'],
+          [24, 'pang', 'Red plume. That is their captain. Give him to me.', '紅纓。那是他們的頭。讓我來。'], [40, 'chen', 'Spears forward. Horse will not go onto points.', '長槍上前。馬不往槍尖上撞。', 'hold']] },
+      { title: 'VI · 退 · To the boats', goal: 'Down the valley to the boats', text: 'Back down the valley to the boats before more come.', show: ['south'], hide: ['mouth'],
+        start: [['dir', 'chen', 'hold', 0, -126]], obj: { extract: 'south' }, limit: 240, fail: 'More banners closed the valley.', waves: [[12, 'chase', ['hold', 20, -120]]],
+        say: [[2, 'chen', 'Enough. To the boats. Wounded in the middle, follow me.', '夠了。回船。傷的在中間，跟我走。', 'follow'], [14, 'boy', 'Riders behind us, along the east bank!', '後面有馬，沿東岸來了！'], [40, 'pang', 'Ash in Haizhou this winter. Worth a boy\'s leg.', '海州這個冬天吃灰。值一條腿。']] },
     ],
     win: 'The grain train burned in the narrows. Raids like it kept the Jin looking over their shoulders for a decade — and the Jin killed Korean and Han villagers for every one.',
   },
@@ -5350,29 +5418,41 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
   jinzhou: {
     title: '寧錦 · The lines before Jinzhou', year: 'Summer 1627', battle: 'bonari', side: 0, soloExtra: 'ashigaru',
     bdef: { name: 'Before Jinzhou', jp: '錦州', when: 'Summer 1627', biome: 'summer', fog: 0.12 },
-    brief: 'Hong Taiji has thrown up earthworks around Jinzhou and is battering at its walls. Yuan Chonghuan sends a column out from Ningyuan to break the siege lines. Go over the first line, throw back their counter-charge, take the second line, and drive them from their camp.',
+    brief: 'Hong Taiji is battering Jinzhou. A column from Ningyuan goes out to break the siege lines.',
     start: [0, -112, 0],
-    zones: [{ key: 'line1', x: 0, z: 34, r: 14, name: 'The first line', owner: 1 }, { key: 'line2', x: 0, z: 66, r: 14, name: 'The second line', owner: 1 }, { key: 'camp', x: 0, z: 112, r: 16, name: 'The Jin camp', owner: 1, rate: 0.7 }],
+    // Man Gui and Zu Dashou led the Ningyuan relief (《明史》袁崇煥傳); Amin commanded the Bordered Blue at Jinzhou. Corporal
+    // Wei of the muskets and the drummer boy are invented (no source).
+    cast: { man: ['滿桂', 'Man Gui', 'man'], zu: ['祖大壽', 'Zu Dashou', 'zu'], wei: ['魏什長', 'Corporal Wei', 'me'], drum: ['鼓手', 'The drummer', 'me'] },
+    zones: [{ key: 'line1', x: 0, z: 34, r: 14, name: 'The first line', owner: 1 }, { key: 'right', x: 44, z: 48, r: 12, name: 'The right bank' }, { key: 'line2', x: 0, z: 66, r: 14, name: 'The second line', owner: 1 }, { key: 'camp', x: 0, z: 112, r: 16, name: 'The Jin camp', owner: 1, rate: 0.7 }],
     groups: {
       man: { team: 0, name: 'Man Gui', zh: '滿桂', army: ['cavalry', 'samurai', 'rifle_imp'], at: [-40, -112, 0], dir: ['hold', -30, 20], officer: 2 },
       zu: { team: 0, name: 'Zu Dashou', zh: '祖大壽', army: ['ashigaru', 'samurai', 'rifle_imp'], at: [40, -112, 0], dir: ['hold', 30, 20], officer: 2 },
       wall1: { team: 1, name: 'The first line', army: ['archer', 'samurai', 'archer'], at: [0, 40, PI], stay: true, dir: ['hold', 0, 38] },
       wall2: { team: 1, name: 'The second line', army: ['archer', 'samurai', 'samurai'], at: [0, 72, PI], stay: true, dir: ['hold', 0, 70] },
       counter: { team: 1, name: 'Mongol horse', zh: '蒙古騎', army: ['cavalry', 'byakkotai', 'cavalry'], at: [-138, 50, PI / 2], reserve: true },
+      rightjin: { team: 1, name: 'The Bordered Blue right', zh: '鑲藍旗', army: ['samurai', 'archer', 'samurai'], at: [138, 60, -PI / 2], reserve: true, n: 22 },
       camp: { team: 1, name: 'The camp guard', army: ['samurai', 'samurai', 'archer'], at: [0, 120, PI], stay: true, dir: ['hold', 0, 114] },
       beile: { team: 1, name: 'Amin', zh: '阿敏', officer: 3.5, army: ['shinsengumi', 'samurai'], at: [0, 136, PI], reserve: true },
     },
     phases: [
-      { title: 'I · 一線 · The first line', text: 'Over the first earthwork. Muskets keep their heads down; the rest go over together.', show: ['line1'],
+      { title: 'I · 一線 · The first line', goal: 'Over the first earthwork', text: 'Over the first earthwork. Muskets keep their heads down; the rest go over together.', show: ['line1'],
         start: [['dir', 'man', 'hold', -20, 30], ['dir', 'zu', 'hold', 20, 30]], obj: { capture: ['line1'] },
-        say: [[2, 'Zu Dashou', 'At Ningyuan we sat behind walls. Today we go to them.'], [20, 'Scout', 'Archers on the bank — get your shields up!']] },
-      { title: 'II · 反衝 · The counter-charge', text: 'Mongol horse coming round the flank. Face left and break them.', start: [['release', 'counter'], ['dir', 'counter', 'hold', -10, 30]],
-        obj: { defeat: ['counter'], frac: 0.65 }, say: [[2, 'Scout', 'Horse on the left flank, out of the gully!'], [5, 'Man Gui', 'Pikes to the left! Let them come onto the points!']] },
-      { title: 'III · 二線 · The second line', text: 'On to the second earthwork before they can man it properly.', show: ['line2'], hide: ['line1'],
-        start: [['dir', 'man', 'hold', -18, 62], ['dir', 'zu', 'hold', 18, 62]], obj: { capture: ['line2'] } },
-      { title: 'IV · 營 · The camp', text: 'Their camp is behind the lines. Take it, and bring down Amin\'s banner.', show: ['camp'], hide: ['line2'],
+        say: [[3, 'zu', 'At Ningyuan we sat behind walls. Today we go to them.', '寧遠咱們躲在牆後頭。今天去找他們。'], [14, 'wei', 'Muskets in line, forty paces from the bank. Fire when they show.', '銃手列隊，離土牆四十步。他們露頭就放。', 'line'],
+          [30, 'drum', 'Archers on the bank! Shields up!', '牆上有弓手！舉盾！'], [50, 'man', 'Muskets, keep firing. Shields, over the bank now!', '銃手不停。刀牌，現在上牆！', 'charge']] },
+      { title: 'II · 反衝 · The counter-charge', goal: 'Face left, break the Mongol horse', text: 'Mongol horse coming round the flank. Face left and break them.', start: [['release', 'counter'], ['dir', 'counter', 'hold', -10, 30]],
+        obj: { defeat: ['counter'], frac: 0.65 }, say: [[2, 'drum', 'Horse on the left! Out of the gully!', '左邊有馬！從溝裡出來了！'], [6, 'man', 'Spears to the left! Let them come onto the points!', '長槍向左！讓他們撞到槍尖上！', 'hold'],
+          [24, 'wei', 'Hold fire till they wheel. Then into the flank.', '等他們轉向再放。打側面。', 'holdfire']] },
+      { title: 'III · 右翼 · Zu is cut off', goal: 'Bring Zu Dashou through on the right', text: 'Zu Dashou is cut off on the right bank. Get him through to you.', show: ['right'],
+        start: [['release', 'rightjin'], ['dir', 'rightjin', 'hold', 70, 48], ['calm', 'rightjin', 30], ['dir', 'zu', 'hold', 40, 54], ['dir', 'man', 'hold', 10, 40], ['fell', 1, 'a Jin arrow']], obj: { all: [{ reach: 'right' }, { defeat: ['rightjin'], frac: 0.6 }, { rescue: true }] }, /* (no arrive: Zu's men may all fall; the players clearing the bank is what frees him) */
+        at: [[30, ['calm', 'rightjin', 60]]],
+        say: [[3, 'zu', 'Bannermen on my right! They are between us!', '右邊有旗兵！隔開我們了！'], [9, 'man', 'Muskets, volley at the right bank. Shields, go to Zu.', '銃手，朝右岸放排銃。刀牌去接祖大壽。', 'fire'],
+          [28, 'wei', 'One of ours is down. Somebody get him up!', '咱們的人倒了一個。誰去拉一把！'], [48, 'zu', 'Good. Together now. The second line.', '好。合兵了。二線。']] },
+      { title: 'IV · 二線 · The second line', goal: 'Take the second earthwork', text: 'On to the second earthwork before they can man it properly.', show: ['line2'], hide: ['line1', 'right'],
+        start: [['dir', 'man', 'hold', -18, 62], ['dir', 'zu', 'hold', 18, 62]], obj: { capture: ['line2'] },
+        say: [[4, 'man', 'Column, fast, before they man it. Then line at the ditch.', '縱隊，快，趁他們沒上牆。到壕邊再列隊。', 'column'], [30, 'drum', 'They are running from the second line!', '他們從二線跑了！']] },
+      { title: 'V · 營 · The camp', goal: 'Take the camp; bring down Amin', text: 'Their camp is behind the lines. Take it, and bring down Amin\'s banner.', show: ['camp'], hide: ['line2'],
         start: [['release', 'beile'], ['dir', 'man', 'hold', -10, 108], ['dir', 'zu', 'hold', 10, 108]], obj: { all: [{ capture: ['camp'] }, { officer: 'beile' }] },
-        say: [[3, 'Scout', 'That banner — Amin himself!']] },
+        say: [[4, 'drum', 'That banner. The Bordered Blue. Amin himself!', '那面旗。鑲藍旗。是阿敏！'], [12, 'zu', 'Muskets on the banner. Everyone else, the tents.', '銃手打旗。其他人，上帳篷。', 'fire'], [40, 'man', 'He fights. Good. Finish it.', '他還打。好。了結他。']] },
     ],
     win: 'The siege lines broke. At Ningyuan and Jinzhou in 1627 Hong Taiji was thrown back from the walls, and went home.',
   },
@@ -5380,30 +5460,44 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
   dalinghe: {
     title: '大凌河 · The sortie', year: 'Autumn 1631', battle: 'hakodate', side: 0, soloExtra: 'samurai',
     bdef: { name: 'Dalinghe', jp: '大凌河', when: 'Autumn 1631', biome: 'night', fog: 0.3 },
-    brief: 'Zu Dashou is besieged in the half-built fort of Dalinghe. Hong Taiji has dug a ditch around it and brought up red cannon cast that year in Shenyang. Go out by the south gate in the dark, cross their trench, spike the guns, and get back inside before the banners close in.',
-    start: [0, 70, PI],
-    zones: [{ key: 'gate', x: 0, z: 44, r: 8, name: 'The south gate' }, { key: 'trench', x: 0, z: 14, r: 12, name: 'The siege trench' }, { key: 'guns', x: 0, z: -18, r: 9, name: 'The red cannon' }, { key: 'fort', x: 0, z: 72, r: 12, name: 'Inside the fort' }],
+    brief: 'Besieged in Dalinghe, Zu Dashou sends men out by night across the siege trench to break the red cannon.',
+    start: [0, 96, PI],
+    // Zu Dashou and He Kegang are in 《清太宗實錄》天聰五年 (He Kegang was killed by Zu at the surrender); Tong Yangxing commanded
+    // the Ujen Cooha guns. Ma the gunner (a Ming artilleryman who knows the vents) and the sentry are invented (no source).
+    cast: { zu: ['祖大壽', 'Zu Dashou', 'zu'], he: ['何可綱', 'He Kegang', 'he'], ma: ['馬砲手', 'Ma the gunner', 'me'], sentry: ['', 'A Jin sentry', 'trench'] },
+    zones: [{ key: 'gate', x: 0, z: 40, r: 7, name: 'The south gate' }, { key: 'trench', x: 0, z: 14, r: 12, name: 'The siege trench' }, { key: 'guns', x: 0, z: -18, r: 9, name: 'The red cannon' }, { key: 'lastgun', x: 14, z: -24, r: 7, name: 'The last gun' }, { key: 'fort', x: 0, z: 78, r: 12, name: 'Inside the fort' }],
     forts: pal(-46, -6, 20).concat(pal(6, 46, 20)),
     groups: {
       zu: { team: 0, name: 'Zu Dashou', zh: '祖大壽', army: ['samurai', 'rifle_imp'], at: [12, 76, PI], dir: ['support'], officer: 2 },
+      he: { team: 0, name: 'He Kegang at the gate', zh: '何可綱', army: ['rifle_imp', 'ashigaru'], at: [-34, 62, PI], dir: ['hold', -30, 52], stay: true, officer: 2 },
       trench: { team: 1, name: 'The trench guard', army: ['samurai', 'archer', 'samurai'], at: [0, 10, PI], stay: true, dir: ['hold', 0, 12] },
-      guns: { team: 1, name: 'The red cannon (Ujen Cooha)', zh: '烏真超哈', army: ['cannon4', 'cannon4', 'rifle_sho'], at: [0, -22, PI], stay: true, dir: ['hold', 0, -20] },
+      guns: { team: 1, name: 'The red cannon (Ujen Cooha)', zh: '烏真超哈', army: ['cannon4', 'cannon4', 'rifle_sho'], at: [0, -22, PI], stay: true, dir: ['hold', 0, -20], n: 20 },
+      crew: { team: 1, name: 'The last gun\'s crew', zh: '砲手', army: ['rifle_sho', 'samurai'], at: [40, -40, PI / 2], reserve: true, stay: true, dir: ['hold', 14, -26], n: 14 },
       hong: { team: 1, name: 'Hong Taiji\'s guard', zh: '皇太極', army: ['samurai', 'cavalry', 'samurai', 'archer'], at: [0, -138, 0], reserve: true },
       left: { team: 1, name: 'Plain Yellow horse', army: ['cavalry', 'cavalry'], at: [-138, 20, PI / 2], reserve: true },
+      gatejin: { team: 1, name: 'Bannermen at the gate', army: ['samurai', 'archer'], at: [60, 40, -PI / 2], reserve: true },
     },
     labels: { cannon4: ['Red cannon (Ujen Cooha)', '紅衣砲'] },
     phases: [
-      { title: 'I · 出城 · Out of the gate', text: 'Out by the south gate in the dark. No match lit.', show: ['gate'], obj: { reach: 'gate' },
-        say: [[3, 'Zu Dashou', 'We eat horses now. In a month we eat worse. Those guns go tonight or the wall goes tomorrow.']] },
-      { title: 'II · 壕 · The trench', text: 'Over their trench and through the guard before they wake the camp.', show: ['trench'], hide: ['gate'],
+      { title: 'I · 出城 · Out of the gate', goal: 'Out by the south gate, no match lit', text: 'Out by the south gate in the dark. No match lit.', show: ['gate'], obj: { reach: 'gate' },
+        say: [[3, 'zu', 'We eat horses now. In a month, worse.', '現在吃馬。再一個月，吃更壞的。'], [9, 'he', 'Those guns go tonight, or the wall goes tomorrow.', '今晚砲不廢，明天牆就塌。'],
+          [16, 'ma', 'Matches out. A spark and the whole camp knows.', '火繩收了。一點火星全營都知道。', 'holdfire'], [26, 'he', 'I hold the gate. Come back through me.', '我守門。從我這兒回來。']] },
+      { title: 'II · 壕 · The trench', goal: 'Over the trench, through the guard quietly', text: 'Over their trench and through the guard before they wake the camp.', show: ['trench'], hide: ['gate'],
         start: [['calm', 'trench', 8]], obj: { defeat: ['trench'], frac: 0.7 },
-        say: [[2, 'Scout', 'Sentries by the fires. They\'re cooking.']] },
-      { title: 'III · 砲 · The guns', text: 'Get to the red cannon and break them.', show: ['guns'], hide: ['trench'],
-        obj: { all: [{ reach: 'guns' }, { defeat: ['guns'], frac: 0.5 }] }, done: [['explode', 0, -20, 5, 45, 0], ['say', 'Scout', 'Their powder! It\'s gone up!']],
-        at: [[18, ['release', 'left']], [19, ['dir', 'left', 'hold', -10, 0]]], say: [[2, 'Zu Dashou', 'Spike them! Hammer the nails into the vents!'], [20, 'Scout', 'Horse along the trench! The camp is awake!']] },
-      { title: 'IV · 回城 · Back inside', text: 'The whole siege camp is awake. Back to the fort.', show: ['fort'], hide: ['guns'],
-        start: [['dir', 'zu', 'hold', 0, 72]], obj: { extract: 'fort' }, limit: 300, fail: 'They cut you off from the gate.',
-        waves: [[4, 'hong', ['hold', 0, 30]]], say: [[5, 'Scout', 'The yellow banners! Hong Taiji\'s own guard!']] },
+        say: [[3, 'ma', 'Sentries by the fires. They are cooking.', '哨兵在火堆邊。在煮東西。'], [10, 'zu', 'Shields first, into the trench. No shouting.', '刀牌先下壕。不許喊。', 'charge'], [30, 'sentry', 'Who goes? Who is that in the ditch?!', '誰？壕裡是誰？！']] },
+      { title: 'III · 砲 · The guns', goal: 'Break the red cannon', text: 'Get to the red cannon and break them.', show: ['guns'], hide: ['trench'],
+        obj: { all: [{ reach: 'guns' }, { defeat: ['guns'], frac: 0.5 }] }, done: [['explode', 0, -20, 5, 45, 0], ['fell', 1, 'the powder went up beside him'], ['say', 'ma', 'Their powder! It went up! Who is down?', '他們的火藥！炸了！誰倒了？']],
+        at: [[18, ['release', 'left']], [19, ['dir', 'left', 'hold', -10, 0]]], say: [[2, 'zu', 'Spike them! Nails into the vents!', '釘死它們！釘子砸進火門！'], [8, 'ma', 'I know these guns. Give me a hammer and cover me.', '這砲我認得。給我錘子，掩護我。', 'hold'], [20, 'ma', 'Horse along the trench! The camp is awake!', '壕邊有馬！營裡醒了！']] },
+      { title: 'IV · 一門 · The last gun', goal: 'Get your man up; take the last gun', text: 'One gun is still loaded, its crew running back to it. Get your man up and take it.', show: ['lastgun'], hide: ['guns'],
+        start: [['release', 'crew'], ['dir', 'zu', 'hold', 8, -16]], obj: { all: [{ rescue: true }, { reach: 'lastgun' }, { defeat: ['crew'], frac: 0.5 }] },
+        say: [[3, 'zu', 'Get him up! Nobody stays in this camp.', '拉他起來！誰也不留在這營裡。'], [12, 'ma', 'That one is loaded. Its crew is coming back for it.', '那門是裝好的。砲手回來搶了。'], [30, 'zu', 'Muskets on the crew. Shields, take the gun.', '銃手打砲手。刀牌，奪砲。', 'fire']] },
+      { title: 'V · 轉砲 · Turn it on them', goal: 'Fire the last gun into their camp', text: 'Ma has the gun. One shot into the camp, then run.', hide: ['lastgun'],
+        start: [['dir', 'zu', 'hold', 8, -20]], obj: { hold: 'lastgun', t: 10 }, done: [['explode', 0, -70, 7, 60, 0], ['say', 'ma', 'There! Let them eat that!', '著！讓他們吃這個！']],
+        say: [[2, 'ma', 'Ten breaths. Keep them off me ten breaths and it speaks.', '十口氣。擋他們十口氣，它就響了。', 'hold'], [7, 'zu', 'Line in front of the gun. Hold!', '砲前列隊。守住！', 'line']] },
+      { title: 'VI · 回城 · Back inside', goal: 'Back through He Kegang\'s gate', text: 'The whole siege camp is awake. Back to the fort.', show: ['fort'],
+        start: [['dir', 'zu', 'hold', 0, 78], ['dir', 'he', 'hold', -6, 48]], obj: { extract: 'fort' }, limit: 300, fail: 'They cut you off from the gate.',
+        waves: [[4, 'hong', ['hold', 0, 30]], [24, 'gatejin', ['hold', 20, 44]]], say: [[3, 'zu', 'Now run. Wounded first. Follow me to the gate.', '現在跑。傷的先走。跟我回門。', 'follow'], [8, 'ma', 'The yellow banners! Hong Taiji\'s own guard!', '黃旗！皇太極的親兵！'],
+          [26, 'he', 'Bannermen at the gate! Muskets, fire!', '門口有旗兵！銃手，放！'], [60, 'he', 'In. In! Close it behind them!', '進來。進來！他們過了就關門！']] },
     ],
     win: 'The guns were broken. It bought Dalinghe a few more weeks. In the tenth month, after the people inside had eaten the dead, Zu Dashou surrendered.',
   },
@@ -5545,6 +5639,113 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
       stockade(sim, keep, -100, 60, -78, 82, 's'); for (const [x, z] of [[-92, 66], [-86, 74]]) sim.boxes.push({ x, z, hw: 2.4, hd: 2, h: 3, kind: 'house' });
       for (let i = 0; i < 8; i++) { const x = 100 + r.range(-6, 6), z = -110 + i * 30 + r.range(-8, 8); if (clear(x, z, 3)) sim.obstacles.push({ x, z, r: 1.6, kind: 1, rot: r.range(0, TAU) }); }
       trees(sim, r, clear, 20, -140, 100, -140, 140, 1); } };
+
+  // ---------- 大凌河 Dalinghe, the eighth to tenth months of 1631 ----------
+  // 《清太宗實錄》天聰五年八月初六 (the host arrived and in three days dug round the city: 掘壕四道, a trench ten feet across
+  // and deep, a wall behind it, the whole ring thirty li, a camp of each banner at its station), 九月 (the Jinzhou relief
+  // columns of 宋偉 and 吳襄 beaten at the Xiaoling river, Zhang Chun at 長山); 《明史》祖大壽傳, 孫承宗傳; 《崇禎長編》.
+  // The city of Dalinghe (today's Linghai) is a small square fort that Zu Dashou was rebuilding when the Jin came; the
+  // Daling river runs past its east side. Here the city's west wall stands at the Ming edge (-z, Zu Dashou's men inside
+  // it) and the Jin ring of trench and bank crosses the field in front; the river is the east edge. The Jin deploy
+  // behind their lines; the Ming inside the wall must sortie across the open ground into the trenches (as Zu did on the
+  // 9th and 20th of the eighth month) or hold the gate.
+  B.dalinghe = { name: 'Dalinghe', jp: '大凌河', when: 'September 1631', biome: 'autumn', fog: 0.12, terrain: 0.3, features: [], horizon: { lo: 0.5, nokarst: true },
+    desc: 'Zu Dashou\'s half-built fort and the Jin ring round it: a trench ten feet deep with an earth wall behind, banner camps at intervals, the Daling River to the east. The sortie must cross the open ground and the trench.' };
+  M.dalinghe = { trees: 40, rocks: 20, nomant: true,
+    terrain(L, r) { L.hills.push({ x: -120, z: 100, r: 60, h: 7 }); L.hills.push({ x: 60, z: 130, r: 50, h: 5 });
+      L.river = { axis: 'z', c0: 134, amp: 5, freq: 0.022, ph: 1.4, w: 10, depth: 3, bridges: [{ at: -60, hw: 9, ford: true }] }; /* the 大凌河, a ford on the Jinzhou road */
+      L.trenches = [{ x0: -150, z0: 24, x1: 118, z1: 30, w: 3.2, depth: 2.8, bank: 1.6, gaps: [-70, 40] }, { x0: -150, z0: 44, x1: 118, z1: 50, w: 2.4, depth: 1.6, bank: 0.9, gaps: [-20] }]; }, /* 壕 and the inner line: the bank is thrown up on the city side (toward -z) */
+    objectives: [{ x: 0, z: -92, r: 12, name: 'Under the west gate' }, { x: -70, z: 26, r: 11, name: 'The trench (west gap)' }, { x: 40, z: 28, r: 11, name: 'The trench (east gap)' }, { x: -131, z: 83, r: 13, name: 'The Bordered Yellow camp' }],
+    noTree(x, z) { return (z > 14 && z < 60) || z < -80; },
+    build(sim, r, keep, clear) {
+      /* the city's west wall at the Ming edge, its gate in the middle: a wall half built (《明史》祖大壽傳: 城工未竣), so its ends are low rammed earth without the brick facing (lower h) */
+      cityWall(sim, { axis: 'x', at: -163, from: -60, to: 60, h: 9, hd: 3.5, out: 1, gx: 0, gw: 3.2, name: '大凌河', nobast: true }); cityWall(sim, { axis: 'x', at: -163, from: -110, to: -64, h: 4.5, hd: 3, out: 1, notower: true, nobast: true }); cityWall(sim, { axis: 'x', at: -163, from: 64, to: 110, h: 4.5, hd: 3, out: 1, notower: true, nobast: true });
+      keep.push({ x: 0, z: -163, r: 20 }); keep.push({ x: -87, z: -163, r: 10 }); keep.push({ x: 87, z: -163, r: 10 }); /* the wall stands at the field edge: the Ming sortie forms up under it */
+      /* the Jin banner camps behind the inner line (《清太宗實錄》: 各旗營於所分汛地), with the shield carts (盾車) parked at the gaps */
+      stockade(sim, keep, -146, 70, -116, 96, 'e'); stockade(sim, keep, 116, 70, 146, 96, 'w'); /* the camps on the flanks: the deployment ground is between them */
+      for (const [x, z] of [[-74, 36], [-66, 36], [44, 38], [36, 38]]) sim.boxes.push({ x, z, hw: 1.6, hd: 0.5, h: 1.4, kind: 'mantlet' });
+      /* the burnt houses of the suburb between the wall and the ring (the Jin burned the outer settlement on arrival) */
+      for (const [x, z] of [[-40, -70], [34, -66], [-22, -52], [52, -48]]) house(sim, keep, x, z, 2.8, 2.4, true);
+      trees(sim, r, clear, 40, -140, 110, 60, 140, 0); } };
+
+  // ---------- 錦州 Jinzhou, the fifth month of 1627 (寧錦之戰) ----------
+  // 《清太宗實錄》天聰元年五月十一日 (the host before Jinzhou at dawn; the city 'walled in brick and moated, its walls lined
+  // with 紅夷砲'; thirteen days of assaults on the south and west faces with ladders and 盾車 broken by the guns; the
+  // 28th moved on to Ningyuan and came back); 《明史》趙率教傳 (Zhao Shuaijiao held the city with Ji Yongzhen; the
+  // Jin camps three li off; the Ming cavalry sortied on the 25th); 《明熹宗實錄》天啟七年五月, 《兩朝從信錄》. Jinzhou's wall
+  // (《遼東志》: 廣寧中屯衛, 周五里二百二十步, 四門) had been rebuilt by Yuan Chonghuan the winter before. Here the west wall
+  // and its gate fill the Ming edge, the moat in front, the Jin ladder parties and shield carts form up on the open
+  // ground; a ruined temple and the burnt suburb give the attackers cover on the way in.
+  B.jinzhou = { name: 'Jinzhou', jp: '錦州 (寧錦)', when: 'June 1627', biome: 'summer', fog: 0.05, terrain: 0.2, features: [], horizon: { lo: 0.45, nokarst: true },
+    desc: 'Zhao Shuaijiao holds Jinzhou\'s rebuilt walls, the moat in front and the guns above. The banners\' ladders and shield carts must come across a shot-swept plain and a burnt suburb; the Ming cavalry waits inside the gate to sortie.' };
+  M.jinzhou = { trees: 50, rocks: 16, nomant: true,
+    terrain(L, r) { L.hills.push({ x: 140, z: 60, r: 50, h: 6 }); L.hills.push({ x: -130, z: 120, r: 60, h: 7 });
+      L.trenches = [{ x0: -150, z0: -146, x1: 150, z1: -146, w: 4, depth: 2.6, wet: true, gaps: [0, -40, 40] }]; }, /* the moat along the wall (plank bridges for the sortie),, a causeway at the gate (《清太宗實錄》: 城外濬壕) */
+    objectives: [{ x: 0, z: -90, r: 11, name: 'Under the gate' }, { x: -60, z: -20, r: 13, name: 'The burnt suburb' }, { x: 56, z: 10, r: 12, name: 'The ruined temple' }, { x: 133, z: 110, r: 14, name: 'The Jin siege camp' }],
+    noTree(x, z) { return z < -60; },
+    build(sim, r, keep, clear) {
+      sim.deco.push({ kind: 'road', x: 0, w: 6 }); sim.roadX = 0;
+      cityWall(sim, { axis: 'x', at: -163, from: -150, to: 150, h: 11, hd: 4, out: 1, gx: 0, gw: 3.4, name: '錦州', notower: true, nobast: true }); keep.push({ x: 0, z: -163, r: 24 }); /* the wall at the field edge, the sortie forms up under it */
+      for (const sx of [-1, 1]) sim.boxes.push({ x: sx * 120, z: -152, hw: 4.5, hd: 3.5, h: 3.4, kind: 'rampart', tight: true }); /* Hongyipao platforms on the wall (《清太宗實錄》: 城上列紅夷砲) */
+      for (const [x, z] of [[-70, -30], [-52, -20], [-60, -8], [-78, -12], [-44, -34], [-32, -6]]) house(sim, keep, x, z, 2.8, 2.4, true);
+      /* a ruined temple compound (its walls stand, the hall is burnt): cover the Jin used to form up out of the guns' sight */
+      sim.boxes.push({ x: 56, z: 22, hw: 14, hd: 0.5, h: 2.2, kind: 'wall' }); sim.boxes.push({ x: 42, z: 8, hw: 0.5, hd: 14, h: 2.2, kind: 'wall' }); sim.boxes.push({ x: 70, z: 8, hw: 0.5, hd: 14, h: 2.2, kind: 'wall' }); sim.boxes.push({ x: 56, z: 12, hw: 5, hd: 3.5, h: 2.4, kind: 'house', burnt: true }); keep.push({ x: 56, z: 10, r: 20 });
+      /* the Jin camp (《明史》: 營於城外三里) and the shield carts (盾車) in a line, the ladder parties behind them */
+      stockade(sim, keep, -148, 96, -118, 124, 'e'); stockade(sim, keep, 118, 96, 148, 124, 'w');
+      for (let x = -40; x <= 40; x += 10) sim.boxes.push({ x, z: 60, hw: 1.6, hd: 0.5, h: 1.5, kind: 'mantlet' });
+      trees(sim, r, clear, 50, -140, 140, 30, 140, undefined); } };
+
+  // ---------- 開原 Kaiyuan, the sixth month of 1619 ----------
+  // 《滿文老檔》天命四年六月十六日 (the host marched in heavy rain, reached Kaiyuan at dawn; the garrison commander 馬林
+  // led his men out of the gate to fight in the open and was killed; the walls were scaled where the rain had brought
+  // the rammed earth down); 《明史》馬林傳; 《明神宗實錄》萬曆四十七年六月; 《遼東志》開原城 (the largest city of the north-east
+  // frontier: 周十三里, brick-faced, a moat; the Jurchen and Mongol horse fairs outside the gates). Here the south-east
+  // wall of Kaiyuan runs along the Ming edge with the gate Ma Lin rode out of; the horse-fair ground outside the gate,
+  // a slumped stretch of wall (the breach) to the east, rice and millet fields in the flat; rain all day.
+  B.kaiyuan = { name: 'Kaiyuan', jp: '開原', when: 'July 1619', biome: 'summer', weather: 'storm', fog: 0.3, terrain: 0.2, features: ['paddies'], horizon: { lo: 0.4, nokarst: true },
+    desc: 'Rain on the millet fields outside Kaiyuan. Ma Lin has ridden out of the gate to fight in the open; the walls behind him have slumped in the wet where the banners will climb. Matchlocks are fouled, the ground is mud.' };
+  M.kaiyuan = { trees: 50, rocks: 10,
+    terrain(L, r) { L.hills.push({ x: 140, z: 130, r: 50, h: 6 }); L.hills.push({ x: -140, z: 90, r: 60, h: 5 });
+      L.trenches = [{ x0: -150, z0: -146, x1: 150, z1: -146, w: 4, depth: 2.4, wet: true, gaps: [0, 70] }]; }, /* the moat; a causeway at the gate and the gap where the slumped wall's rubble filled it */
+    objectives: [{ x: 0, z: -92, r: 12, name: 'The horse-fair ground' }, { x: 70, z: -118, r: 11, name: 'The slumped wall' }, { x: -50, z: 20, r: 13, name: 'The Mongol road' }],
+    noTree(x, z) { return z < -100; },
+    build(sim, r, keep, clear) {
+      sim.deco.push({ kind: 'road', x: 0, w: 6 }); sim.roadX = 0;
+      cityWall(sim, { axis: 'x', at: -163, from: -150, to: 56, h: 11, hd: 4, out: 1, gx: 0, gw: 3.4, name: '開原', notower: true, nobast: true }); cityWall(sim, { axis: 'x', at: -163, from: 84, to: 150, h: 11, hd: 4, out: 1, notower: true, nobast: true });
+      cityWall(sim, { axis: 'x', at: -163, from: 56, to: 84, h: 4, hd: 5, out: 1, notower: true, nobast: true }); keep.push({ x: 0, z: -163, r: 24 }); keep.push({ x: 70, z: -150, r: 16 }); /* the breach: rammed earth slumped to a slope the men can climb (《滿文老檔》: 雨壞城) */
+      /* the horse-fair ground: stalls and pens outside the gate (《遼東志》: 馬市 at the 慶雲堡 gate), a few houses of the Mongol traders */
+      for (const [x, z] of [[-30, -120], [-44, -108], [36, -126], [48, -112]]) house(sim, keep, x, z, 2.6, 2.2, false);
+      for (const [x, z, dir] of [[-20, -100, 0], [20, -100, 0]]) { const n = 8; for (let i = 0; i <= n; i++) sim.obstacles.push({ x: x + i * 1.6 - 6.4, z, r: 0.22, kind: 5 }); sim.deco.push({ kind: 'fence', x: x - 6.4, z, yaw: Math.PI / 2, len: n * 1.6 }); }
+      /* the Jin host came by the Mongol road from the north-west: a hamlet on it, and the Khan's standard-camp */
+      for (const [x, z] of [[-60, 10], [-48, 24], [-72, 30]]) house(sim, keep, x, z, 2.8, 2.4, false);
+      stockade(sim, keep, 110, 100, 146, 130, 'w'); } };
+
+  // ---------- 覺華島 Juehua Island, the first month of 1626 ----------
+  // 《清太祖實錄》天命十一年正月二十六日 (after the repulse at Ningyuan the Khan sent 武訥格 with the Mongol horse across
+  // the frozen sea to Juehua; the Ming sailors under 姚撫民 and 金冠 had cut a channel fifteen li long through the
+  // ice, but it froze over in the night; the Jin crossed, killed seven thousand sailors and burned the grain and the
+  // ships); 《明史》袁崇煥傳, 《明熹宗實錄》天啟六年正月; 《寧遠衛志》. The island is low, the depot and the sailors' camp
+  // on its north shore facing the mainland. Here the mainland shore is the Jin edge (+z), the frozen strait across
+  // the middle (ice: slow going, the re-frozen channel a darker band that is slower still), and the island's north
+  // shore with the grain depot and the ships frozen in at the Ming edge.
+  B.juehua = { name: 'Juehua Island', jp: '覺華島', when: 'February 1626', biome: 'winter', fog: 0.25, terrain: 0.15, features: [], horizon: { lo: 0.3, nokarst: true, open: [-1.2, 1.2] },
+    desc: 'The frozen strait between the mainland and Juehua island. The sailors cut a channel through the ice but it froze again in the night; the Mongol horse come over the ice at the grain depot and the ships frozen in at the shore.' };
+  M.juehua = { trees: 30, rocks: 10, nomant: true,
+    terrain(L, r) { L.hills.push({ x: 0, z: -140, rx: 160, rz: 36, rot: 0, h: 6 }); L.hills.push({ x: 120, z: -120, r: 40, h: 5 }); L.hills.push({ x: -40, z: 172, rx: 190, rz: 40, rot: 0, h: 9 });
+      /* the strait: a wide frozen river across the field (ice: walked at ford speed); the cut channel re-frozen in the night as a second, thinner band */
+      L.river = { axis: 'x', c0: 20, amp: 3, freq: 0.012, ph: 0.5, w: 72, depth: 0.5, ice: true, bridges: [] };
+      L.rivers = [{ id: 1, axis: 'x', c0: -12, amp: 2, freq: 0.02, ph: 1.1, w: 5, depth: 0.7, ice: true, bridges: [] }]; },
+    objectives: [{ x: 0, z: -100, r: 13, name: 'The grain depot' }, { x: -80, z: -96, r: 12, name: 'The ships in the ice' }, { x: 70, z: 112, r: 12, name: 'The mainland shore' }],
+    noTree(x, z) { return z > -60 && z < 100; },
+    build(sim, r, keep, clear) {
+      /* the depot: granaries in rows behind a palisade (《明史》: 糧料八萬餘石, 船二千餘), the sailors' camp beside it */
+      stockade(sim, keep, -30, -118, 30, -84, 'n'); for (const [x, z] of [[-18, -108], [0, -108], [18, -108], [-18, -94], [18, -94]]) sim.boxes.push({ x, z, hw: 4, hd: 2.6, h: 3, kind: 'house' });
+      for (let i = 0; i < 6; i++) sim.boxes.push({ x: 40 + (i % 3) * 7, z: -100 - Math.floor(i / 3) * 7, hw: 2.4, hd: 2.4, h: 2.2, kind: 'tent' }); keep.push({ x: 47, z: -104, r: 12 });
+      /* the ships frozen in along the shore: hulls as long boxes (the renderer's 'wagon' kind draws a plank body: no ship model in the game, a known stand-in) */
+      for (let i = 0; i < 6; i++) { const x = -110 + i * 12, z = -92 + (i % 2) * 6; sim.boxes.push({ x, z, hw: 1.6, hd: 5, h: 2.2, kind: 'wagon' }); } keep.push({ x: -80, z: -90, r: 36 });
+      /* the mainland shore: the Mongol horse lines' stockade and a fishing hamlet on the beach */
+      stockade(sim, keep, 110, 112, 146, 140, 'w'); for (const [x, z] of [[-100, 118], [-86, 126], [-112, 130]]) house(sim, keep, x, z, 2.6, 2.2, false);
+      trees(sim, r, clear, 30, -140, 140, 110, 145, 0); } };
 
   // the picker shows BATTLES in table order: keep the new ones after the old
 })();
@@ -7604,7 +7805,7 @@ class Renderer {
       const a0 = rv.a0 === undefined ? -HALF - 40 : rv.a0 - 8, a1 = rv.a1 === undefined ? HALF + 40 : rv.a1 + 8;
       for (let al = a0; al <= a1; al += 2.5) {
         const c = rv.c0 + rv.amp * Math.sin(al * rv.freq + rv.ph); const e1 = at(al, c - rv.w), e2 = at(al, c + rv.w);
-        const lvl = Math.min(terrainH(e1[0], e1[1]), terrainH(e2[0], e2[1])) - rv.depth * 0.32; const a = at(al, c - rv.w * 0.86), b = at(al, c + rv.w * 0.86);
+        const lvl = rv.ice ? Math.min(terrainH(e1[0], e1[1]), terrainH(e2[0], e2[1])) - rv.depth * 0.08 : Math.min(terrainH(e1[0], e1[1]), terrainH(e2[0], e2[1])) - rv.depth * 0.32; const a = at(al, c - rv.w * 0.86), b = at(al, c + rv.w * 0.86); /* an iced river: the sheet lies at the bank, near the surface */
         pts.push([a[0], lvl, a[1], b[0], lvl, b[1]]);
       }
       strip(pts);
@@ -12300,13 +12501,35 @@ let MIS = null;
 function missionStart() {
   const sim = state.sim, M = sim.mission; MIS = { radioT: 0, bannerT: 0, said: [] };
   MUSIC.play(sim.mode === 'assault' ? 'siege' : 'battle'); MUSIC.setIntensity(0.5);
-  if (sim.mode === 'assault') { const me = sim.players[state.localIdx], att = me.team === M.attacker; setTimeout(() => storyCard(`${M.brief} ${att ? `You attack. Your side has ${M.tickets} men to spend: every one who falls is gone for good. Take every point of a sector to push the line forward.` : `You defend. Hold each line as long as you can; when a sector falls, fall back to the next.`}`, `${M.title} · ${M.year}`), 400); }
+  if (sim.mode === 'assault') { const me = sim.players[state.localIdx], att = me.team === M.attacker; setTimeout(() => storyCard(M.talk ? `${M.brief} ${att ? `You attack, with ${M.tickets} men to spend.` : 'You defend.'}` : `${M.brief} ${att ? `You attack. Your side has ${M.tickets} men to spend: every one who falls is gone for good. Take every point of a sector to push the line forward.` : `You defend. Hold each line as long as you can; when a sector falls, fall back to the next.`}`, `${M.title} · ${M.year}`), 400); }
 }
 function radio(who, text) { if (typeof SPEECH !== 'undefined' && SPEECH.note) { SPEECH.note(who, text); return; } const r = $('radio'); r.firstChild.textContent = who; r.lastChild.textContent = text; r.hidden = false; MIS.radioT = Math.min(11, 4 + text.length / 22); AUDIO.play('ui', undefined, 0, 0, 0.6); }
 function banner(big, small, t) { const b = $('banner'); b.innerHTML = `${big}${small ? `<small>${small}</small>` : ''}`; b.hidden = false; MIS.bannerT = t || 3.5; }
+// co-op missions (M.cast): the exposition is talk between named men, captioned over the speaker (SPEECH), not cards.
+// cast[key] = [zh, en, of]: 'of' names an AI group (its general speaks), 'me' a man of your own company, or nothing
+// when the key is itself a group id. An officer's line can carry an order (say[4]): shown as the key to give it.
+const COOP_ORD = { fire: ['放 · Fire at will', 'N'], holdfire: ['止 · Hold your fire', 'N'], follow: ['跟 · Follow me', 'F'], hold: ['守 · Hold here', 'H'], line: ['列 · Form a line', 'Z'], charge: ['衝 · Charge', 'C'], column: ['縱 · Column', 'X'] };
+function coopWho(key) {
+  const sim = state.sim, M = sim.mission, c = (M.cast || {})[key]; const of = c ? c[2] : key; const h = localHero();
+  if (of && sim.mg[of]) { const g = sim.mg[of], p = sim.players[g.p]; const gh = sim.units[p.heroId]; if (gh && !gh.dead && !gh.inactive) return gh.id; for (const id of p.squads) { const q = sim.squads[id]; if (!q.alive || q.inactive) continue; const u = q.unitIds.map(i => sim.units[i]).find(v => !v.dead && !v.wounded); if (u) return u.id; } }
+  if (h) { const me = sim.players[state.localIdx]; let n = 0; for (const id of me.squads) { const q = sim.squads[id]; if (!q.alive) continue; for (const uid of q.unitIds) { const u = sim.units[uid]; if (u.dead || u.wounded || u.ctrl >= 0 || u.type === 'horse') continue; if ((n++ % 5) === (key.length % 5)) return u.id; } } }
+  return -1;
+}
+function coopSay(ev) {
+  const sim = state.sim, M = sim.mission, c = (M.cast || {})[ev.who]; const nm = c ? `${c[0]} ${c[1]}` : sim.mg[ev.who] ? `${sim.mg[ev.who].G.zh || ''} ${sim.mg[ev.who].G.name}`.trim() : ev.who;
+  const id = coopWho(ev.who); const ok = id >= 0 && typeof SPEECH !== 'undefined' && SPEECH.say(id, ev.zh || '', ev.text, { prio: 3, loud: true, radio: true, who: nm, dur: Math.min(7, 2.5 + ev.text.length / 20) });
+  if (!ok) radio(nm, `${ev.zh ? ev.zh + '  ' : ''}${ev.text}`);
+  const o = ev.ord && COOP_ORD[ev.ord]; if (o) banner(o[0], `Give the order: ${o[1]} (pick a squad with 1–9 first)`, 3.5);
+}
 function missionEvent(ev) {
   if (!MIS) return; const sim = state.sim, M = sim.mission, me = sim.players[state.localIdx];
   if (ev.t === 'mphase' && M.camp) return;
+  if (M.cast && ev.t === 'mphase') { const P = M.phases[ev.ph] || {}; banner(ev.title.split(' · ').slice(1).join(' · ') || ev.title, P.goal || '', 5); if (ev.ph) MUSIC.accent('phase'); return; }
+  if (M.cast && ev.t === 'msay') { coopSay(ev); return; }
+  if (ev.t === 'msay' && ev.team !== undefined) { if (ev.team !== me.team) return; const h = localHero(); let id = -1; /* an op's briefing line: a man of your own side near you says it */
+    if (h && typeof SPEECH !== 'undefined') { const c = sim.teamAlive[me.team].filter(u => u.id !== h.id && !u.dead && !u.wounded && u.type !== 'horse' && Math.hypot(u.x - h.x, u.z - h.z) < 14); if (c.length) id = c[(ev.text.length + c.length) % c.length].id; }
+    if (!(id >= 0 && SPEECH.say(id, ev.zh || '', ev.text, { prio: 3, loud: true, radio: true, who: ev.who, dur: Math.min(7, 2.5 + ev.text.length / 20) }))) radio(ev.who, `${ev.zh ? ev.zh + '  ' : ''}${ev.text}`); return; }
+  if (M.cast && ev.t === 'zwound' && ev.p === state.localIdx) { const u = sim.units[ev.id]; if (u && typeof SPEECH !== 'undefined') SPEECH.say(ev.id, '我倒了……拉我一把！', 'I\'m down... get me up!', { prio: 3, dur: 4, loud: true, who: 'One of your men' }); toast(`One of your men is down${ev.why ? ' (' + ev.why + ')' : ''}. Get to him and press E to get him up`); return; }
   if (ev.t === 'mphase' && M.soldier) { const P = M.phases[ev.ph] || {}; banner(ev.title.split(' · ').slice(1).join(' · ') || ev.title, P.goal || (ev.text || '').split(/(?<=[.!?])\s/)[0], 5); if (ev.ph) MUSIC.accent('phase'); return; }
   if (ev.t === 'msay' && M.soldier && typeof zheSay === 'function' && zheSay(ev)) return;
   if (ev.t === 'mphase') { const first = ev.ph === 0; if (first) storyCard(`${M.brief}<br><br><b>${ev.title}.</b> ${ev.text}`, `${M.title} · ${M.year}`);
@@ -12346,6 +12569,7 @@ function missionHUD(dt) {
       if (o.survive) { s += M.soldier ? `<div class="ob"><i>◆</i><span>${P.text}</span></div>` : `<div class="ob${el >= o.survive ? ' done' : ''}"><i>◆</i><span>Hold out · ${Math.max(0, Math.ceil(o.survive - el))} s</span></div>${pct(el / o.survive)}`; }
       if (o.extract) { const z = Z(o.extract), h0 = sim.units[me.heroId]; s += `<div class="ob"><i>◆</i><span>Reach ${z.name}${h0 && !h0.dead ? ` · ${Math.round(Math.hypot(h0.x - z.x, h0.z - z.z))} m` : ''}</span></div>`; }
       if (o.keep) s += `<div class="ob"><i>!</i><span>Do not lose ${Z(o.keep).name}</span></div>`;
+      if (o.rescue) { const n = typeof sim.mFallen === 'function' ? sim.mFallen() : 0; s += `<div class="ob${n ? '' : ' done'}"><i>傷</i><span>${n ? `${n} of your men down · get to him, press E` : 'Your men are up'}</span></div>`; }
       return s; };
     h += line(P.obj); if (M.soldier && typeof zheObjLines === 'function') h += zheObjLines();
     if (P.limit) h += `<div class="ob"><i>⏳</i><span>${Math.max(0, Math.ceil(P.limit - el))} s left</span></div>`;
