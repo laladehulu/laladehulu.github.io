@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v95</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v96</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -686,6 +686,7 @@ function d2fuse(d) { return d / 13 + 0.3; }
 const FORM_LINE = 0, FORM_COLUMN = 1, FORM_WEDGE = 2, FORM_LOOSE = 3;
 const BUDGET = 1500;
 const RELEASE_T = 0.2, KICK_T = 0.45, SWAP_T = 0.5;
+const NO_GROUND_FIRE = true; // the owner's call: no burning grass or burning ground in any mode (rockets, oil, saltpeter and scripted fires light nothing on the ground)
 const XCOMBAT = typeof globalThis !== 'undefined' && !!globalThis.MING_XCOMBAT; // experimental combat build
 const DEPLOY_TICKS = 30 * 40;
 const RALLY_CD = 30 * 40;
@@ -1550,7 +1551,7 @@ class Sim {
     if (u.champ && atkPressed && u.sta < 8) { if (!u.tiredT || u.tiredT <= 0) { u.tiredT = 0.8; this.events.push({ t: 'tired', id: u.id }); } u.atkHeld = atk; u.blockHeld = blk; return; }
     if (atkPressed && u.flinchT <= 0 && (u.st === ST_IDLE || (u.st === ST_RECOVER && u.stT > u.def.recover * 0.6))) {
       u.blocking = false; if (u.champ) { const chain = this.tick - (u.lastSwing || -999) < 40; u.combo = chain ? (u.combo || 0) + 1 : 0; u.lastSwing = this.tick; u.sta -= 6 + u.combo * 3; u.staT = 0; } this.startWindup(u, u.weapon === 'rifle' && u.club ? ad : weaponDir(u.weapon, ad));
-    } else if (blk && u.st !== ST_WINDUP && u.st !== ST_RELEASE && u.st !== ST_KICK && u.st !== ST_SWAP && u.flinchT <= 0 && (u.st === ST_IDLE || u.st === ST_RECOVER || u.st === ST_RELOAD)) {
+    } else if (blk && u.st !== ST_WINDUP && u.st !== ST_RELEASE && u.st !== ST_KICK && u.st !== ST_SWAP && (u.flinchT <= 0 || (u.ctrlActive && u.flinchT < 0.3)) && (u.st === ST_IDLE || u.st === ST_RECOVER || u.st === ST_RELOAD)) { /* a player can get his guard back up while still shaken from a blow */
       if (!u.blocking) { u.blocking = true; u.blockT = 0; u.blockDir = bd; }
       if (u.st === ST_RECOVER) { u.st = ST_IDLE; u.stT = 0; }
     } else if (!blk) u.blocking = false;
@@ -2385,7 +2386,7 @@ class Sim {
     if (def_.entT > 0 && att.weapon === 'yari' && !att.def.brush) { dmg *= 2.0; q = 'pinned'; }
     if (def_.openT > 0) { dmg *= 2.2; def_.openT = 0; q = 'deathblow'; }
     const behind = Math.abs(wrap(atan2(att.x - def_.x, att.z - def_.z) - def_.yaw)) > 2.0;
-    const canBlock = def_.blocking && def_.entT <= 0 && def_.flinchT <= 0 && def_.downT <= 0 && def_.type !== 'horse' && !behind;
+    const canBlock = def_.blocking && def_.entT <= 0 && (def_.flinchT <= 0 || (def_.ctrlActive && def_.flinchT < 0.3)) && def_.downT <= 0 && def_.type !== 'horse' && !behind;
     const shieldBlock = canBlock && def_.def.shield && dir !== DIR_DOWN;
     const omni = def_.ctrlActive; // human players hold one block that covers the front; AI still has to read the direction
     if (canBlock && att.def.brush && def_.type !== 'horse' && (omni || def_.blockDir === counterDir(dir) || shieldBlock)) { // branches can't be parried clean: they wrap the guard
@@ -3001,7 +3002,7 @@ class Sim {
     for (const sp of spots) { if (this.countNear(sp[0], sp[1], 5, 1) < 4 || this.countNear(sp[2], sp[3], 10, 0) < 1) continue;
       const x = sp[0] + (this.rng.next() - 0.5) * 3, z = sp[1] + (this.rng.next() - 0.5) * 2; const nn = this.gatherNear(x, z, 4.5); const ids = []; for (let i = 0; i < nn; i++) ids.push(this.nearBuf[i]); ids.sort((a, b) => a - b);
       for (const id of ids) { const v = this.units[id]; if (v.dead || v.team !== 1 || v.type === 'horse') continue; const dd = len(v.x - x, v.z - z); if (dd > 4.5) continue; this.applyDamage(v, (v.champ ? 30 : 55) * (1 - dd / 6), -1, 0, 0, 0, 'fire'); if (v.squad >= 0 && !this.squads[v.squad].def.fearless) this.squads[v.squad].morale = Math.max(0, this.squads[v.squad].morale - 4); }
-      if (!this.rain) { this.fireState[this.fireCell(x, z)] = 1; this.burnT[this.fireCell(x, z)] = 240; }
+      { const fc = this.fireCell(x, z); if (!this.rain && fc >= 0) { this.fireState[fc] = 1; this.burnT[fc] = 240; } }
       this.events.push({ t: 'oil', x, z }); break; }
   }
   ramThink() {
@@ -3087,7 +3088,7 @@ class Sim {
       this.fuel[j * W + i] = f;
     }
   }
-  fireCell(x, z) { const i = Math.floor((x + HALF) / FIRE_CS), j = Math.floor((z + HALF) / FIRE_CS); if (i < 0 || j < 0 || i >= this.fireW || j >= this.fireW) return -1; return j * this.fireW + i; }
+  fireCell(x, z) { if (NO_GROUND_FIRE) return -1; const i = Math.floor((x + HALF) / FIRE_CS), j = Math.floor((z + HALF) / FIRE_CS); if (i < 0 || j < 0 || i >= this.fireW || j >= this.fireW) return -1; return j * this.fireW + i; }
   ignite(x, z, chance) {
     if (this.rain) return; const c = this.fireCell(x, z); if (c < 0 || this.fireState[c] !== 0 || this.fuel[c] <= 0) return;
     if (this.rng.next() < chance * Math.min(1, this.fuel[c])) { this.fireState[c] = 1; this.burnT[c] = Math.round(330 * Math.min(this.fuel[c], 1.6)) + 150; this.events.push({ t: 'ignite', c, x, z }); }
@@ -5241,7 +5242,8 @@ const AUDIO = (() => {
       // a landed blow: the cut (flesh sample, pitched down) with a short low body thump under it; heavier blows go lower and longer;
       // on armour a dull metal knock rides on top
       case 'strike': case 'strikeheavy': case 'strikearmor': { if (!P('flesh')) return false; const hv = name === 'strikeheavy'; if (!at(vol * (hv ? 1.15 : 0.95), 70)) return true;
-        samp(sp, t, P('flesh'), rr(0.72, 0.86) * (hv ? 0.85 : 1), sp.gain * 1.15); samp(sp, t + 0.012, P('flesh'), rr(1.15, 1.3), sp.gain * 0.35);
+        samp(sp, t, P('flesh'), rr(0.72, 0.86) * (hv ? 0.85 : 1), sp.gain * 1.5); samp(sp, t + 0.012, P('flesh'), rr(1.15, 1.3), sp.gain * 0.5);
+        noise({ ...sp, wet: 0.02 }, t, 0.035, 'bandpass', 2600, 1.2, sp.gain * 0.7, 0.001); /* the bite of the edge: a short bright crack on top, so a landed blow always reads, even in the din */
         tone(sp, t, hv ? 0.2 : 0.12, 'sine', hv ? 95 : 120, hv ? 34 : 48, sp.gain * (hv ? 1.1 : 0.8)); noise({ ...sp, wet: 0.05 }, t, hv ? 0.1 : 0.06, 'lowpass', hv ? 700 : 1100, 0.8, sp.gain * 0.5, 0.002);
         if (name === 'strikearmor') { if (P('ametal')) samp(sp, t + 0.004, P('ametal'), rr(0.6, 0.72), sp.gain * 0.55); if (P('clash')) samp(sp, t, P('clash'), rr(0.55, 0.65), sp.gain * 0.3); }
         return true; }
@@ -7808,7 +7810,7 @@ class Renderer {
         let G, D;
         const rv = uhash(u.id, 17); // which way this man carries his weapon at the run
         if (w === 'katana') { const st2 = charge && runH > 0.35 ? 1 : [0, 2, 3, 4][Math.floor(rv * 4)];
-          if (st2 === 0) { two = false; G = [-0.27, -0.3 + 0.04 * sw2, -0.02 - 0.24 * sw]; D = N3(-0.12, -0.38 - 0.25 * sw, -1); } // blade trailing low behind, sword arm swinging
+          if (st2 === 0) { two = false; G = [-0.3, -0.44 + 0.03 * sw2, -0.44 - 0.04 * sw]; D = N3(-0.14, 0.22 + 0.22 * sw, -1); } /* the trailing run: sword arm thrown straight back behind him, the blade streaming out behind and bobbing with the stride */
           else if (st2 === 1) { two = false; G = [-0.25, 0.14 + 0.03 * sw2, 0.08]; D = N3(0.12, 0.78, -0.62); } // blade cocked back over the shoulder for the first cut
           else if (st2 === 2) { G = [-0.1, -0.32 + 0.04 * sw2, 0.3 + 0.04 * sw]; D = N3(0.3, 0.42, 0.85); } // both hands, blade slanted across the body
           else if (st2 === 3) { G = [-0.12, -0.04 + 0.03 * sw2, 0.26 + 0.03 * sw]; D = N3(0.12, 0.93, 0.25); } // both hands, blade held upright before the face
@@ -8282,11 +8284,11 @@ class Renderer {
       // the draw: the bow comes up to the eye, the string comes back toward the cheek; a long-held full draw trembles
       const d = Math.min(1, (hero.drawT || 0) / 0.8), k = this.vmBowK = (this.vmBowK || 0) + (d - (this.vmBowK || 0)) * Math.min(1, dt * 16), tr = Math.max(0, (hero.drawT || 0) - 2.5) * 0.004;
       const sh = tr ? Math.sin(performance.now() / 23) * tr : 0;
-      this.vmBow.position.set(-0.05 + dr * 0.04 + sh, -0.12 + dr * 0.08 + sh * 0.7, -0.55 + k * 0.05); this.vmBow.rotation.set(0, 0, 0.2 - dr * 0.15 - k * 0.05);
+      this.vmBow.position.set(-0.22 + dr * 0.1 + sh, -0.15 + dr * 0.07 + sh * 0.7, -0.55 + k * 0.05); this.vmBow.rotation.set(0, -0.06 + dr * 0.04, 0.55 - dr * 0.2 - k * 0.05); /* held off to the left and canted, as an archer holds it, so the centre of the view stays clear to aim */
       if (this.vmBowS) { const nz = 0.07 + k * 0.34, tips = [[0.4, -0.02], [-0.4, -0.02]]; this.vmBowS.forEach((s, i) => { const ty = tips[i][0], tz = tips[i][1], dy = 0 - ty, dz = nz - tz, L = Math.hypot(dy, dz); s.position.set(0, ty + dy / 2, tz + dz / 2); s.scale.set(1, L, 1); s.rotation.set(Math.atan2(dz, dy), 0, 0); });
         const nocked = hero.ammo > 0 || (hero.st === ST_RELOAD && hero.stT > (hero.reloadT || 0.8) * 0.6); this.vmBowA.visible = nocked; this.vmBowA.position.set(0.012, 0, nz); } }
     { const arm = hero.def.arm, K = this.vmKatana.scale; if (arm === 'guandao') K.set(1.1, 1.8, 2.2); else if (arm === 'mace') K.set(3, 0.72, 1.3); else if (arm === 'jian') K.set(0.75, 1.15, 0.6); else K.set(1, 1, 1); }
-    { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * 14); const k = this.vmShieldK; tp.set(-0.42 + k * 0.15, -0.36 + k * 0.05, -0.55 - k * 0.07); this.vmShield.rotation.set(0.1 + k * 0.12, 0.5 - k * 0.3, k * 0.12); } }
+    { const sv = hero.def.shield && (w === 'katana' || w === 'yari') && !mounted; this.vmShield.visible = sv; if (sv) { const up = hero.blocking ? 1 : 0; const tp = this.vmShield.position; this.vmShieldK = (this.vmShieldK || 0) + (up - (this.vmShieldK || 0)) * Math.min(1, dt * (up ? 34 : 12)); const k = this.vmShieldK; tp.set(-0.42 + k * 0.15, -0.36 + k * 0.05, -0.55 - k * 0.07); this.vmShield.rotation.set(0.1 + k * 0.12, 0.5 - k * 0.3, k * 0.12); } }
     if (this.vmBloodMat) { this.bladeBlood = Math.max(0, (this.bladeBlood || 0) - (this.fdt || 0.016) / 90); this.vmBloodMat.opacity = 0.82 * Math.sqrt(this.bladeBlood); }
     const yrole = w === 'yari' ? (hero.kitRole !== undefined ? hero.kitRole : hero.role) : null; this.vmYari.scale.y = yrole === 'spear' ? 1.75 : 1; this.vmRifle.visible = w === 'rifle'; this.vmKatana.visible = w === 'katana'; this.vmYari.visible = w === 'yari' && yrole !== 'brush' && yrole !== 'trident'; this.vmBrush.visible = w === 'yari' && yrole === 'brush'; this.vmFork.visible = w === 'yari' && yrole === 'trident'; this.vmRevolver.visible = w === 'revolver';
     // a three-eyed gun model added by a campaign (vmSj) replaces the musket parts every frame, whoever you now are
@@ -8350,7 +8352,7 @@ class Renderer {
         else { target = K.idle; speed = 7; }
       }
       else if (hero.st === ST_STUN) { target = K.stun; speed = 12; camRoll = -0.04; camPitch = 0.03; }
-      else if (hero.blocking) { target = K.block[hero.blockDir]; speed = 26; }
+      else if (hero.blocking) { target = K.block[hero.blockDir]; speed = 48; } /* the guard snaps up */
       else target = K.idle;
     }
     { // at the run the weapon is carried, not presented: musket at port arms across the chest, blade swinging low with the arm, spear tipped forward
@@ -10012,7 +10014,7 @@ P.amResolve = function (u, v, h, M) {
   const k = u.amK, dx = v.x - u.x, dz = v.z - u.z, d = len(dx, dz) || 1, nx = dx / d, nz = dz / d, hx = v.x - nx * v.def.r, hy = v.y + 1.2, hz = v.z - nz * v.def.r;
   const facing = Math.abs(wrap(Math.atan2(u.x - v.x, u.z - v.z) - v.yaw)) < 1.4; u.amHitAny = 1;
   if (v.iframe > 0 || (v.dodgeT || 0) > 0) { this.events.push({ t: 'amcounter', how: 'dodge', id: u.id, by: v.id, k, x: hx, y: hy, z: hz }); if (M.big) { this.amEnd(u, 1.3); u.st = ST_STUN; u.stT = 0; u.stunDur = 0.9; } return; }
-  const canBlock = v.blocking && facing && v.flinchT <= 0 && (v.downT || 0) <= 0;
+  const canBlock = v.blocking && facing && (v.flinchT <= 0 || (v.ctrlActive && v.flinchT < 0.3)) && (v.downT || 0) <= 0;
   if (canBlock) {
     if (v.def.shield && h.thrust) { // the shield meets the point and shoves: he goes back off his feet, open
       u.vx = -nx * 6.5; u.vz = -nz * 6.5; this.amEnd(u, 1.4); u.st = ST_STUN; u.stT = 0; u.stunDur = 1.2; this.posture(u, 45, v);
