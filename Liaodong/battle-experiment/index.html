@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v100</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v101</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2717,14 +2717,14 @@ class Sim {
               if (p.kind === 'arrow' && v.ctrl >= 0 && !v.dead && (v.iframe > 0 || (v.blocking && Math.abs(wrap(atan2(p.x - v.x, p.z - v.z) - v.yaw)) < 1.2 && this.rng.next() < (v.def.shield ? 1 : 0.8)))) { this.events.push({ t: v.iframe > 0 ? 'evade' : 'arrowstick', id: v.id, x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); if (v.iframe <= 0) this.events.push({ t: 'block', x: p.x, y: p.y, z: p.z, perfect: false, by: v.id, att: -1, shield: !!v.def.shield }); done = true; break; } // you can slide under an arrow or turn it on your guard
               if (p.kind === 'arrow' && v.zfile && !v.dead && this.coverShield(v, p)) { this.events.push({ t: 'arrowstick', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz }); done = true; break; }
               if (p.kind === 'arrow') { v.lastAttacker = p.owner; this.applyDamage(v, (p.dmg || (this.units[p.owner].def.bow || { dmg: 30 }).dmg) * (v.def.ai === 'cannon' ? 0.3 : 1) * (v.ctrl >= 0 && !(this.players[v.ctrl] && this.players[v.ctrl].ai) ? 0.65 : 1), p.owner, p.vx * 0.03, 0, p.vz * 0.03, 'arrow', p.x, p.y, p.z); if (!v.dead) { if (this.xc) this.hitReact(v, this.units[p.owner], 'shot', false, false); else { v.flinchT = Math.max(v.flinchT, 0.25); if (v.st === ST_WINDUP || v.st === ST_AIM) { v.st = ST_IDLE; v.stT = 0; } } } this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); done = true; break; }
-              if (p.bolt) { v.lastShotBy = p; p.hits++; this.applyDamage(v, 80, p.owner, p.vx * 0.05, 1, p.vz * 0.05, 'arrow', p.x, p.y, p.z); if (!v.dead && v.mass < 5) v.downT = Math.max(v.downT, 0.8); this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z }); if (p.hits >= 3) { done = true; break; } continue; }
+              if (p.bolt) { v.lastShotBy = p; p.hits++; this.applyDamage(v, 80, p.owner, p.vx * 0.05, 1, p.vz * 0.05, 'arrow', p.x, p.y, p.z); if (!v.dead && v.mass < 5) v.downT = Math.max(v.downT, 0.8); this.events.push({ t: 'arrowhit', x: p.x, y: p.y, z: p.z, by: p.owner, killed: v.dead }); if (p.hits >= 3) { done = true; break; } continue; }
               // solid shot: bowl through
               const sp = len(p.vx, p.vz) || 1; const nx = p.vx / sp, nz = p.vz / sp;
               v.lastShotBy = p; p.hits++;
               const dmg = 60 + sp * 1.4;
               if (v.mass < 5) { v.downT = Math.max(v.downT, 1.5); v.st = ST_IDLE; v.stT = 0; v.blocking = false; v.aiming = false; }
               this.applyDamage(v, dmg, p.owner, nx * (6 + sp * 0.25), 5 + sp * 0.12, nz * (6 + sp * 0.25), 'solid', p.x, p.y, p.z);
-              this.events.push({ t: 'solidhit', x: p.x, y: p.y, z: p.z });
+              this.events.push({ t: 'solidhit', x: p.x, y: p.y, z: p.z, by: p.owner, killed: v.dead });
               p.vx *= 0.78; p.vz *= 0.78; p.vy *= 0.6;
               if (len(p.vx, p.vz) < 7) { done = true; break; }
             }
@@ -4655,7 +4655,7 @@ Sim.prototype.siegeTick = function () {
   for (let i = ps.length - 1; i >= 0; i--) { const p = ps[i]; if (p.kind === 'bomb') continue;
     for (const e of sg.engines) { if (e.hp <= 0 || p.team === e.team) continue; const S = SGE[e.kind]; if (Math.abs(p.x - e.x) > S.hw || Math.abs(p.z - e.z) > S.hd || p.y > terrainH(e.x, e.z) + S.h) continue;
       const dmg = p.kind === 'shell' ? 260 : p.kind === 'solid' ? (p.bolt ? 50 : 180) : 4; this.sgHurt(e, dmg); if (p.kind === 'arrow' && e.kind !== 'cart' && this.rng.next() < 0.04 && !this.rain) e.burn = Math.max(e.burn, 6);
-      this.events.push({ t: 'sghit', x: p.x, y: p.y, z: p.z, kind: p.kind, eng: e.kind }); ps[i] = ps[ps.length - 1]; ps.pop(); break; } }
+      this.events.push({ t: 'sghit', x: p.x, y: p.y, z: p.z, kind: p.kind, eng: e.kind, by: p.owner, left: Math.max(0, e.hp) / e.max }); ps[i] = ps[ps.length - 1]; ps.pop(); break; } }
   for (const e of sg.emp) { if (e.cd > 0) e.cd--; if (e.man < 0) continue; const u = this.units[e.man];
     if (!u || u.dead || len(u.x - e.x, u.z - e.z) > 3.2) { e.man = -1; if (u) u.manE = -1; continue; }
     // the piece traverses and elevates toward where its gunner looks, at the speed a crew can lay it; he stands at its breech
@@ -4670,7 +4670,7 @@ Sim.prototype.sgFire = function (e, yaw, pitch, by) {
   const bow = e.kind === 'bow', v = bow ? 62 : 78; e.cd = bow ? 30 * 5 : 30 * 9; e.cdMax = e.cd;
   const cp = cos(pitch), x = e.x + sin(yaw) * 1.6, z = e.z + cos(yaw) * 1.6, y = e.y + (bow ? 1.4 : 1.2);
   // a piece on the wall top fires out through its embrasure, over the parapet in front of it
-  this.projectiles.push({ kind: 'solid', bolt: bow, x, y, z, vx: sin(yaw) * cp * v, vy: sin(pitch) * v, vz: cos(yaw) * cp * v, team: e.team, owner: -1, life: 0, hits: 0, over: e.team === this.sg.D });
+  this.projectiles.push({ kind: 'solid', bolt: bow, x, y, z, vx: sin(yaw) * cp * v, vy: sin(pitch) * v, vz: cos(yaw) * cp * v, team: e.team, owner: by >= 0 ? by : -1, life: 0, hits: 0, over: e.team === this.sg.D });
   this.events.push({ t: 'sgshot', x, y, z, dx: sin(yaw), dz: cos(yaw), gun: !bow, team: e.team, by: by === undefined ? -1 : by, emp: e.id });
 };
 // a manned piece takes all of its gunner's hands: left click (attack or fire) looses it, E leaves it; his own weapon is
@@ -7630,6 +7630,8 @@ class Renderer {
         case 'swing': { const u = units[ev.id]; if (u) AUDIO.play(u.weapon === 'yari' ? 'thrust' : 'swish', ev.x, ev.y + 1.3, ev.z, ev.id === heroId ? 1.3 : 0.9); break; }
         case 'windup': { const u = units[ev.id]; if (u && ev.id !== heroId && u.team !== this.localTeam) { const dc = Math.hypot(u.x - this.camera.position.x, u.z - this.camera.position.z); if (dc < 14) { const fx = Math.sin(u.yaw), fz = Math.cos(u.yaw); this.sparks.spawn(u.x + fx * 0.5 - Math.cos(u.yaw) * 0.3, u.y + 1.9, u.z + fz * 0.5 + Math.sin(u.yaw) * 0.3, 0, 0.3, 0, 0.18, 0.9, 0.2, 1, 0.45, 0.35, 1, 1, 0, 1, 0.2, 0.1); } } break; }
         case 'hit': {
+          if (ev.att === heroId && ev.id !== heroId && heroId >= 0 && (ev.cause === 'arrow' || ev.cause === 'solid' || ev.cause === 'explosion') && !(this.hitMark > 0.3)) { /* bows, crossbows, guns and bombs of your own: a marker and a tick you can hear at any range */
+            this.hitMark = 0.35; this.hitMarkHead = false; const cp = this.camera.position; AUDIO.play('hitmark', cp.x, cp.y, cp.z, 1); if (ev.killed) AUDIO.play('killcue', cp.x, cp.y, cp.z, 0.9); }
           { // a blow that lands has weight: the struck man is shoved and bends away, the blade bites with a thud, a little blood and grit fly
             const vic = units[ev.id], att = ev.att >= 0 ? units[ev.att] : null, mine = ev.att === heroId && ev.id !== heroId;
             let dx = vic && att ? vic.x - att.x : 0, dz = vic && att ? vic.z - att.z : 1; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
@@ -7697,10 +7699,11 @@ class Renderer {
         }
         case 'reload': { if (ev.id === heroId) AUDIO.play('click', undefined, 0, 0, 1); break; }
         case 'arrow': { AUDIO.play('twang', ev.x, ev.y, ev.z, 1); break; }
-        case 'arrowhit': { this.blood(ev.x, ev.y, ev.z, 5, 0, 0.5, 0); AUDIO.play('flesh', ev.x, ev.y, ev.z, 0.8); break; }
+        case 'empfb': break;
+        case 'arrowhit': { if (ev.by === heroId && heroId >= 0) this.empHit(ev, ev.killed ? 'BOLT · he goes down' : 'BOLT HIT');  this.blood(ev.x, ev.y, ev.z, 5, 0, 0.5, 0); AUDIO.play('flesh', ev.x, ev.y, ev.z, 0.8); break; }
         case 'arrowstick': { const i = this.stuckNext; this.stuckNext = (this.stuckNext + 1) % this.stuckN; this.tmp.v.set(ev.vx, ev.vy, ev.vz).normalize(); this.tmp.q.setFromUnitVectors(this.tmp.v2.set(0, 0, 1), this.tmp.v); this.tmp.m.compose(this.tmp.v3.set(ev.x - this.tmp.v.x * 0.35, ev.y - this.tmp.v.y * 0.35, ev.z - this.tmp.v.z * 0.35), this.tmp.q, this.tmp.v4.set(1, 1, 1)); this.stuck.setMatrixAt(i, this.tmp.m); this.stuck.instanceMatrix.needsUpdate = true; this.dust(ev.x, ev.y + 0.05, ev.z, 2, 0, 0.6, 0, 0.5, 0.5, 0.15, 0.4); AUDIO.play(ev.y > 0.4 ? 'woodhit' : 'dirt', ev.x, ev.y, ev.z, 0.7); break; }
         case 'bounce': { this.dust(ev.x, ev.y + 0.1, ev.z, ev.big ? 14 : 8, 0, 2.5, 0, 2.2, 1.0, 0.4, 1.8); AUDIO.play('cannonhit', ev.x, ev.y, ev.z, ev.big ? 1.2 : 0.9); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 18) this.shake = Math.max(this.shake, 0.25 * (1 - dc / 18)); break; }
-        case 'solidhit': { this.blood(ev.x, ev.y, ev.z, 14, 0, 1.5, 0); this.dust(ev.x, ev.y, ev.z, 6, 0, 1.5, 0, 1.5, 0.7, 0.3, 1.2); AUDIO.play('flesh', ev.x, ev.y, ev.z, 1.3); break; }
+        case 'solidhit': { if (ev.by === heroId && heroId >= 0) this.empHit(ev, ev.killed ? 'SHOT · cut down' : 'SHOT HIT');  this.blood(ev.x, ev.y, ev.z, 14, 0, 1.5, 0); this.dust(ev.x, ev.y, ev.z, 6, 0, 1.5, 0, 1.5, 0.7, 0.3, 1.2); AUDIO.play('flesh', ev.x, ev.y, ev.z, 1.3); break; }
         case 'gatlingstart': { break; }
         case 'rally': { this.burstSparks(ev.x, ev.y + 1.2, ev.z, 30, 6, 1, 0.85, 0.4, 0.8, 0.14); AUDIO.play('shout', ev.x, ev.y, ev.z, 1); break; }
         case 'battle': { AUDIO.play('drum', undefined, 0, 0, 1); break; }
@@ -7751,8 +7754,8 @@ class Renderer {
         case 'sghole': { const gy = SIM.terrainH(ev.x, ev.z - 2); for (let i = 0; i < 12; i++) this.spawnDebris('b', ev.x + rnd(-1, 1), gy + rnd(0.5, 3), ev.z - 0.5, rnd(-2, 2), rnd(1, 4), rnd(-4, -1), rnd(0.2, 0.5), rnd(0.2, 0.5), rnd(0.2, 0.5), 0x6f6a62, 1); this.puffSmoke(ev.x, gy + 1.5, ev.z - 1, 30, 0, 1.5, -1, 3, 6, 1.5, 6, 0.6, 0.7); AUDIO.play('collapse', ev.x, gy + 2, ev.z, 1.2); break; }
         case 'sgdock': { const gy = SIM.terrainH(ev.x, ev.z); AUDIO.play('thud', ev.x, gy + 6, ev.z, 2); this.dust(ev.x, gy + 6.6, ev.z + 4, 14, 0, 0.5, 0, 2, 1.2, 0.5, 2); break; }
         case 'sgengine': { const gy = SIM.terrainH(ev.x, ev.z); for (let i = 0; i < 22; i++) this.spawnDebris('b', ev.x + rnd(-2, 2), gy + rnd(1, ev.kind === 'tower' ? 9 : 3), ev.z + rnd(-2, 2), rnd(-5, 5), rnd(2, 8), rnd(-5, 5), rnd(0.15, 0.45), rnd(0.8, 3), rnd(0.15, 0.4), 0x5a3a20, 1); this.puffSmoke(ev.x, gy + 2, ev.z, 40, 0, 2.5, 0, 4, 8, 1.5, 6, 0.25, 0.7); AUDIO.play('collapse', ev.x, gy + 2, ev.z, 1.3); break; }
-        case 'sghit': { this.burstSparks(ev.x, ev.y, ev.z, ev.kind === 'arrow' ? 3 : 14, 5, 0.8, 0.6, 0.35, 0.35, 0.08); if (ev.kind !== 'arrow') { for (let i = 0; i < 5; i++) this.spawnDebris('b', ev.x, ev.y, ev.z, rnd(-3, 3), rnd(1, 4), rnd(-3, 3), 0.5, 0.06, 0.06, 0x6a4a2c, 1); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.4); } break; }
-        case 'sgshot': { this.flash(ev.x, ev.y, ev.z, ev.gun ? 5 : 1.5, ev.gun ? 0.2 : 0.08); if (ev.by === heroId && ev.by >= 0) { this.empKick = 1; this.recoil = 1; this.recoilRoll = rnd(-1, 1); this.shake = Math.max(this.shake, ev.gun ? 1 : 0.35); if (this.imp) this.imp.vp += ev.gun ? 2.2 : 0.8; } if (ev.gun) { this.puffSmoke(ev.x + ev.dx * 1.5, ev.y, ev.z + ev.dz * 1.5, 30, ev.dx * 3, 0.6, ev.dz * 3, 1.5, 5, 1, 4.5, 0.85, 0.7); AUDIO.play('cannon', ev.x, ev.y, ev.z, 1.6); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 40) this.shake = Math.max(this.shake, 0.6 * (1 - dc / 40)); } else AUDIO.play('thud', ev.x, ev.y, ev.z, 1.2); break; }
+        case 'sghit': { if (ev.by === heroId && heroId >= 0) this.empHit(ev, 'HIT the ' + ({ ram: 'ram', tower: 'siege tower', cart: 'shield cart', ladder: 'ladder' }[ev.eng] || ev.eng) + (ev.left !== undefined ? ' · ' + Math.round(ev.left * 100) + '% left' : ''), true);  this.burstSparks(ev.x, ev.y, ev.z, ev.kind === 'arrow' ? 3 : 14, 5, 0.8, 0.6, 0.35, 0.35, 0.08); if (ev.kind !== 'arrow') { for (let i = 0; i < 5; i++) this.spawnDebris('b', ev.x, ev.y, ev.z, rnd(-3, 3), rnd(1, 4), rnd(-3, 3), 0.5, 0.06, 0.06, 0x6a4a2c, 1); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.4); } break; }
+        case 'sgshot': { this.flash(ev.x, ev.y, ev.z, ev.gun ? 5 : 1.5, ev.gun ? 0.2 : 0.08); if (ev.by === heroId && ev.by >= 0) { this.empKick = 1; this.recoil = 1; this.recoilRoll = rnd(-1, 1); this.shake = Math.max(this.shake, ev.gun ? 1 : 0.35); if (this.imp) this.imp.vp += ev.gun ? 2.2 : 0.8; } if (ev.gun) { this.puffSmoke(ev.x + ev.dx * 1.5, ev.y, ev.z + ev.dz * 1.5, 30, ev.dx * 3, 0.6, ev.dz * 3, 1.5, 5, 1, 4.5, 0.85, 0.7); AUDIO.play('cannon', ev.x, ev.y, ev.z, 1.6); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 40) this.shake = Math.max(this.shake, 0.6 * (1 - dc / 40)); } else { AUDIO.play('thud', ev.x, ev.y, ev.z, 1.2); AUDIO.play('twang', ev.x, ev.y, ev.z, ev.by === heroId ? 1.8 : 1.2); AUDIO.play('whiz', ev.x + ev.dx * 4, ev.y, ev.z + ev.dz * 4, 1); } break; }
         case 'sgsaltpeter': AUDIO.play('fire', this.camera.position.x, 0, ev.z, 1.6); break;
         case 'sgram': { const gy = SIM.terrainH(ev.x, ev.z - 2); this.dust(ev.x, gy + 1.5, ev.z - 1, 10, 0, 1, -1, 2, 1, 0.4, 1.6); this.burstSparks(ev.x, gy + 1.8, ev.z - 0.5, 8, 4, 0.9, 0.7, 0.4, 0.3, 0.08); AUDIO.play('ram', ev.x, gy + 1.5, ev.z, 2); const dc = Math.hypot(ev.x - this.camera.position.x, ev.z - this.camera.position.z); if (dc < 25) this.shake = Math.max(this.shake, 0.35 * (1 - dc / 25)); break; }
         case 'sgfill': AUDIO.play('thud', ev.x, 0, ev.z, 1.2); break;
@@ -8539,6 +8542,9 @@ class Renderer {
       const d = this.camera.position.distanceTo(this.tmp.v.set(c[0], c[1], c[2])); const sc = Math.max(0.9, d * 0.045); sp.scale.set(sc, sc, 1); sp.position.set(c[0], c[1] + 0.35 + sc * 0.5, c[2]); sp.visible = true; n++; }
     for (let i = n; i < this.omSpr.length; i++) this.omSpr[i].visible = false;
   }
+  // feedback for a shot from a manned bed crossbow or gun: the hit marker, a ring you can hear at any range, the word of what you struck
+  empHit(ev, text, eng) { this.hitMark = 0.45; this.hitMarkHead = false; AUDIO.play('hitmark', this.camera.position.x, this.camera.position.y, this.camera.position.z, 1.2); if (ev.killed) AUDIO.play('killcue', this.camera.position.x, this.camera.position.y, this.camera.position.z, 1);
+    this.hitQ = { text, t: 1.6, c: eng ? '#ffd36a' : ev.killed ? '#ffd27a' : '#f2ead8' }; this.empHits = (this.empHits || 0) + 1; }
   render(alpha, dt, view) {
     this.alpha = alpha; // overlays (speech captions) read positions interpolated the same way the bodies are
     if (this.hitstop > 0 && !this.studio) { this.hitstop -= dt; this.present(this.camera); return; }
