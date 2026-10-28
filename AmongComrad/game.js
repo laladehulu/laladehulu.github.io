@@ -178,6 +178,9 @@ function newGame(cfg){
   const bots=SQUAD.filter(s=>keep.has(s.name));const posts=assignPostsList(bots.length);
   bots.forEach((s,i)=>{const u=mkUnit({kind:'sq',name:s.name,rank:s.rank,col:s.col,wpn:s.wpn,mag:WPN[s.wpn].mag,post:posts[i],hp:DF.hp,maxhp:DF.hp});u.x=u.post.x;u.y=u.post.y;u.aim=u.post.face;G.units.push(u)});
   G.squad=G.units.filter(u=>u.kind==='sq');G.people=[...G.humans,...G.squad];G.people.forEach((u,i)=>u.col=HCOL[i%HCOL.length]);
+  // everyone musters together in the back room, then the squad heads out to its posts
+  {const sp=[];for(const [x,y] of [[49,21],[51,21],[48,22],[50,22],[49,23],[51,23],[48,20],[50,20],[48,21],[49,22],[51,22],[50,23],[49,20],[51,20],[48,23]])if(passable(x,y)&&!blockedAt(x+.5,y+.5,0.35))sp.push({x:x+.5,y:y+.5});
+   if(sp.length)G.people.forEach((u,i)=>{const s=sp[i%sp.length],k=Math.floor(i/sp.length);u.x=s.x+(k?0.3*(k%2?1:-1):0);u.y=s.y;u.aim=Math.PI})}
   {const sz=shuffle(G.people.map((_,i)=>i%3));G.people.forEach((u,i)=>{u.boot=sz[i];u.pd=0;u.foot=0})}G.prints=[];G.casings=[];
   // secret roles: one spy, one commissar, the rest regulars
   let spy,com;const pref=G.humans.length===1?cfg.rolePref:null;let pr=pref==='random'?(()=>{const r=rnd();return r<1/8?'spy':r<2/8?'comrade':'regular'})():pref;
@@ -193,7 +196,10 @@ let GRID0=null,CK0=null;
 function resetMap(){if(!GRID0){GRID0=grid.slice();CK0=ck.slice()}grid.set(GRID0);ck.set(CK0);FIRES.length=FIRES0;for(const s of CSPOTS)s.res=null}
 const humans=()=>G.humans;
 const liveHumans=()=>G.humans.filter(h=>h.alive);
-function seesPt(h,x,y,r){return !!(h&&h.alive&&dist(h.x,h.y,x,y)<=(r||VIS)&&los(h.x,h.y,x,y))}
+// players see a 120° cone where they aim, plus a small ring around them (also what counts when they witness something)
+const CONE=Math.PI*7/18,NEAR=1.8;// 140° forward cone
+function inCone(h,x,y){const d=dist(h.x,h.y,x,y);return d<=NEAR||Math.abs(angDiff(h.aim,Math.atan2(y-h.y,x-h.x)))<=CONE}
+function seesPt(h,x,y,r){return !!(h&&h.alive&&dist(h.x,h.y,x,y)<=(r||VIS)&&(!h.isPlayer||inCone(h,x,y))&&los(h.x,h.y,x,y))}
 const roleOf=u=>u.isSpy?'spy':u.isCom?'com':'reg';
 const turnedList=()=>G.people.filter(u=>u.turned).map(u=>u.name);
 function assignPostsList(n){
@@ -1050,7 +1056,7 @@ function bake(){
 function craterAt(g,x,y,r){g.fillStyle='rgba(243,240,231,.8)';g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.fillStyle='rgba(98,76,50,.75)';g.beginPath();g.arc(x+r*0.06,y+r*0.06,r*0.76,0,TAU);g.fill();g.fillStyle='rgba(29,24,21,.55)';g.beginPath();g.arc(x+r*0.12,y+r*0.12,r*0.45,0,TAU);g.fill();g.strokeStyle='rgba(29,24,21,.45)';g.lineWidth=1.3;g.beginPath();g.arc(x,y,r,0,TAU);g.stroke()}
 function decal(k,x,y,r){if(!MG)return;if(k==='crater')craterAt(MG,x*S,y*S,(r||2)*S*0.45);else if(k==='blood'){MG.fillStyle='rgba(122,24,16,.75)';MG.beginPath();MG.arc(x*S,y*S,2+crnd()*3,0,TAU);MG.fill()}else if(k==='pool'){MG.fillStyle='rgba(122,24,16,.65)';MG.beginPath();MG.ellipse(x*S,y*S,10+crnd()*6,7+crnd()*4,crnd()*3,0,TAU);MG.fill()}}
 
-function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=$('app').getBoundingClientRect();VW=r.width;VH=r.height;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);fog.width=cv.width;fog.height=cv.height;TS=clamp(Math.min(VW,VH)/(VW<600?14:20),24,40)}
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=$('app').getBoundingClientRect();VW=r.width;VH=r.height;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);fog.width=cv.width;fog.height=cv.height;TS=clamp(Math.min(VW,VH)/(VW<600?13:18),26,44)}
 window.addEventListener('resize',resize);
 const w2s=(x,y)=>[x*TS-camX,y*TS-camY];
 function star(g,cx,cy,r){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*0.42:r;i?g.lineTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q):g.moveTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q)}g.closePath()}
@@ -1155,7 +1161,7 @@ function render(){
   if(eye){
     fctx.setTransform(DPR,0,0,DPR,0,0);fctx.globalCompositeOperation='source-over';fctx.clearRect(0,0,VW,VH);fctx.fillStyle=fogPattern(fctx);fctx.fillRect(0,0,VW,VH);fctx.globalCompositeOperation='destination-out';
     const [px,py]=w2s(p.x,p.y);const R=VIS*TS;fctx.fillStyle='#000';
-    fctx.beginPath();const N=360;for(let i=0;i<N;i++){const a=i/N*TAU,dx=Math.cos(a),dy=Math.sin(a);let d=0;while(d<VIS){d+=0.2;const xx=p.x+dx*d,yy=p.y+dy*d;if(xx<0||yy<0||xx>=W||yy>=H)break;if(grid[(yy|0)*W+(xx|0)]===WALL){d+=0.4;break}}const [sx,sy]=w2s(p.x+dx*d,p.y+dy*d);i?fctx.lineTo(sx,sy):fctx.moveTo(sx,sy)}fctx.closePath();fctx.fill();
+    fctx.beginPath();const N=360;for(let i=0;i<N;i++){const a=i/N*TAU,dx=Math.cos(a),dy=Math.sin(a),lim=Math.abs(angDiff(p.aim,a))<=CONE?VIS:NEAR;let d=0;while(d<lim){d+=0.2;const xx=p.x+dx*d,yy=p.y+dy*d;if(xx<0||yy<0||xx>=W||yy>=H)break;if(grid[(yy|0)*W+(xx|0)]===WALL){d+=0.4;break}}d=Math.min(d,lim);const [sx,sy]=w2s(p.x+dx*d,p.y+dy*d);i?fctx.lineTo(sx,sy):fctx.moveTo(sx,sy)}fctx.closePath();fctx.fill();
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(fog,0,0);ctx.setTransform(DPR,0,0,DPR,0,0)}
   for(const f of G.fx){if(f.k!=='flare')continue;const k=Math.min(1,f.t/1);const x=f.x0+(f.x-f.x0)*k,y=f.y0+(f.y-f.y0)*k;const [sx,sy]=w2s(x,y);const [ox,oy]=w2s(f.x0,f.y0);
     ctx.strokeStyle=`rgba(140,255,150,${0.5*Math.max(0,1-Math.max(0,f.t-2)/3)})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ox,oy);ctx.quadraticCurveTo((ox+sx)/2,Math.min(oy,sy)-TS*4,sx,sy);ctx.stroke();
@@ -1680,6 +1686,6 @@ async function boot(){resize();if(TOUCH)document.body.classList.add('touch');
     if(rec&&Room.ok()&&Date.now()-(rec.at||0)<6*3600e3){$('mpMsg').textContent='Reopening your room…';NET=new Room(myName());NET.hostRecover(rec,err=>{if(err)return mpErr(err);$('mpMsg').textContent='';$('title').hidden=true;$('hud').hidden=false;state='play';
         newGame({seed:rec.cfg.seed,diff:rec.cfg.diff,humans:rec.cfg.names.map(n=>({name:n}))});G.me=G.humans[0]})}
     else if(Room.ok())joinCode(code)}
-  window.__ac={G:()=>G,state:()=>state,net:()=>NET,hh:()=>[...HHIST],step,serialize,stateHash,desync(){if(G&&G.me){G.me.x+=0.01}}}}
+  window.__ac={G:()=>G,state:()=>state,net:()=>NET,hh:()=>[...HHIST],step,serialize,stateHash,passable,desync(){if(G&&G.me){G.me.x+=0.01}}}}
 boot();
 })();
