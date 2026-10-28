@@ -102,6 +102,12 @@ function smooth(sx,sy,path){const out=[];let cx=sx,cy=sy,i=0;while(i<path.length
 function goTo(u,x,y){const p=bfs(u.x|0,u.y|0,x|0,y|0);if(!p){u.path=[];return false}if(p.length)p[p.length-1]={x,y};else p.push({x,y});u.path=smooth(u.x,u.y,p);return true}
 function followPath(u,dt,sp){let rem=sp*dt;u.moving=u.path.length>0;while(rem>0&&u.path.length){const n=u.path[0];const dx=n.x-u.x,dy=n.y-u.y;const d=Math.hypot(dx,dy);if(d<=rem){u.x=n.x;u.y=n.y;u.path.shift();rem-=d}else{u.x+=dx/d*rem;u.y+=dy/d*rem;rem=0;u.moveA=Math.atan2(dy,dx)}}if(u.moving)u.phase+=dt*10}
 function moveFree(u,dx,dy){const r=0.3;const nx=u.x+dx;if(!blockedAt(nx,u.y,r))u.x=nx;const ny=u.y+dy;if(!blockedAt(u.x,ny,r))u.y=ny}
+// vault: hop over a window sill or low cover (sandbags, rubble) that is right in front of you
+function tryVault(u,a){const dx=Math.cos(a),dy=Math.sin(a);let hit=-1;
+  for(let d=0.35;d<=1.3;d+=0.1){const t=get(Math.floor(u.x+dx*d),Math.floor(u.y+dy*d));if(t===WALL||t===WATER||t===CRATE)return false;if(t===WIN||t===COVER){hit=d;break}}
+  if(hit<0)return false;
+  for(let d=hit+0.5;d<=hit+1.8;d+=0.1){const x=u.x+dx*d,y=u.y+dy*d,t=get(Math.floor(x),Math.floor(y));if(t===WALL||t===WATER||t===CRATE)return false;if(!blockedAt(x,y,0.3)){u.vault={x0:u.x,y0:u.y,x1:x,y1:y,t:0,T:0.3+0.12*(d-hit)};return true}}
+  return false}
 
 // ================= weapons & cast =================
 const WPN={
@@ -568,6 +574,8 @@ function humanTick(p,I,dt){
   if(p.stam===undefined)p.stam=1.5;const wantRun=!!(p.btn&32)&&!p.crouch&&!p.onGun&&!(p.btn&1)&&!p.knife&&!p.recruit;
   const l=Math.hypot(mx,my);
   if(p.onGun){const cs=crewSpot(p.onGun-1);p.x=cs.x;p.y=cs.y;p.moving=false}
+  if(p.vault){const v=p.vault;v.t+=dt;const k=Math.min(1,v.t/v.T);p.x=v.x0+(v.x1-v.x0)*k;p.y=v.y0+(v.y1-v.y0)*k;p.moving=true;p.crouch=false;if(k>=1)p.vault=null;
+    if(I&&I[4])for(const e of I[4])if(Array.isArray(e)&&e[0]!=='j')humanEvent(p,e);if(p.hp<p.maxhp&&G.time-(p.lastHit||-99)>2.5)p.hp=Math.min(p.maxhp,p.hp+32*dt);return}
   p.sprint=wantRun&&l>0.1&&p.stam>0&&!p.winded;
   if(p.sprint){p.stam=Math.max(0,p.stam-dt);if(p.stam<=0)p.winded=true;p.restT=0}else{p.restT=(p.restT||0)+dt;if(p.restT>0.4)p.stam=Math.min(1.5,p.stam+dt*0.75);if(p.winded&&p.stam>=0.6)p.winded=false}
   if(p.onGun){}
@@ -600,6 +608,7 @@ function humanEvent(p,e){
     case 'f':doArrestStart(p);break;
     case 'q':playerFlare(p,(e[1]|0)/100,(e[2]|0)/100);break;
     case 'k':if(traitor(p)&&!p.revealed)startKnife(p,knifeTarget(p));break;
+    case 'j':if(!p.onGun&&!p.knife&&!p.recruit&&!p.vault){const mv=p.moving&&p.moveA!==undefined;if(!tryVault(p,mv?p.moveA:p.aim)&&mv)tryVault(p,p.aim);if(p.vault&&p===G.me)sfx('throw')}break;
     case 'c':if(p===G.spy&&!p.revealed){const T=recruitTarget(p);if(!T)logMsg('Nobody close enough to whisper to.','',p);else if((p.recruitLeft||0)<=0)logMsg('You have already made an offer this assault.','',p);else startRecruit(p,T)}break;
     case 'y':answerOffer(p,true);break;case 'n':answerOffer(p,false);break;
     case 's':switchSlot(p,e[1]);break;
@@ -1065,7 +1074,7 @@ function star(g,cx,cy,r){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+
 // soldiers are printed shapes: flat khaki or field-grey, ink outline, a hard offset shadow; Soviet helmets carry a red star
 const UNI={sov:{coat:'#8a7d47',pack:'#5a5531',helm:'#55602c'},ger:{coat:'#6b7471',pack:'#4a524f',helm:'#4a524f'}};
 function drawSoldier(g,x,y,s,u){
-  g.save();g.translate(x,y);if(u.crouch)s*=0.8;const sov=u.uniform==='sov',C=sov?UNI.sov:UNI.ger,lw=Math.max(1.5,s*0.06);
+  g.save();g.translate(x,y);if(u.crouch)s*=0.8;if(u.vault)s*=1+0.18*Math.sin(Math.PI*Math.min(1,u.vault.t/u.vault.T));const sov=u.uniform==='sov',C=sov?UNI.sov:UNI.ger,lw=Math.max(1.5,s*0.06);
   g.fillStyle='rgba(29,24,21,.55)';g.beginPath();g.ellipse(s*0.09,s*0.1,s*0.34,s*0.3,0,0,TAU);g.fill();
   if(sov){g.strokeStyle=PAL.ink;g.lineWidth=Math.max(3,s*0.13);g.beginPath();g.arc(0,0,s*0.45,0,TAU);g.stroke();g.strokeStyle=u.revealed?PAL.red:u.col;g.lineWidth=Math.max(2,s*0.07);g.stroke()}
   g.rotate(u.aim);
@@ -1324,7 +1333,7 @@ function openArmory(){const el=$('armory');$('armBody').innerHTML=pickerHTML(pri
 function closeArmory(){$('armory').hidden=true;if(state==='armory')state='play'}
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
-function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['Hold Shift','Sprint (about 1.5 s of breath)'],['Hold C','Crouch — behind cover almost nothing gets through'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
+function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['Space','Vault over a window or cover'],['Hold Shift','Sprint (about 1.5 s of breath)'],['Hold C','Crouch — behind cover almost nothing gets through'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
   ...(role==='spy'?[['B','Whisper an offer to the soldier next to you (once per assault)'],['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
 function showBrief(){
   const p=G.me,role=roleOf(p),spy=role==='spy',multi=G.humans.length>1;
@@ -1425,7 +1434,7 @@ function press(code){
   if(code==='KeyN'){if(state==='play'&&G.me&&G.me.offer){queueEvent(['n']);return}if(state==='notebook')closeNotebook();else openNotebook();return}
   if(state!=='play'||!G.me||!G.me.alive||G.council)return;
   switch(code){case 'KeyR':queueEvent(['r']);break;case 'KeyE':queueEvent(['e']);break;case 'KeyG':{const [x,y]=cursorWorld();queueEvent(['g',q100(x),q100(y)]);break}case 'KeyT':queueEvent(['t']);break;case 'KeyF':queueEvent(['f']);break;
-    case 'KeyQ':{const [x,y]=G.me&&TOUCH?[G.me.x+Math.cos(G.me.aim)*12,G.me.y+Math.sin(G.me.aim)*12]:cursorWorld();queueEvent(['q',q100(x),q100(y)]);break}case 'KeyV':queueEvent(['k']);break;case 'KeyB':queueEvent(['c']);break;case 'KeyY':queueEvent(['y']);break;case 'KeyN':break;case 'Digit1':queueEvent(['s',0]);break;case 'Digit2':queueEvent(['s',-1]);break}}
+    case 'KeyQ':{const [x,y]=G.me&&TOUCH?[G.me.x+Math.cos(G.me.aim)*12,G.me.y+Math.sin(G.me.aim)*12]:cursorWorld();queueEvent(['q',q100(x),q100(y)]);break}case 'KeyV':queueEvent(['k']);break;case 'Space':queueEvent(['j']);break;case 'KeyB':queueEvent(['c']);break;case 'KeyY':queueEvent(['y']);break;case 'KeyN':break;case 'Digit1':queueEvent(['s',0]);break;case 'Digit2':queueEvent(['s',-1]);break}}
 window.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!KEYS[e.code])press(e.code);KEYS[e.code]=true});
 window.addEventListener('keyup',e=>{KEYS[e.code]=false});
 window.addEventListener('blur',()=>{for(const k in KEYS)KEYS[k]=false;MOUSE.down=false});
