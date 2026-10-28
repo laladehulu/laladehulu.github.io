@@ -457,6 +457,10 @@ diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.02, 0.015), gBl * 0.8);`)
     .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 1.0, clamp(gDust * 0.7 + gMud, 0.0, 1.0)); roughnessFactor = mix(roughnessFactor, 0.35, gBl * 0.6);')
     .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - clamp(gDust * 0.55 + gMud, 0.0, 0.9);'); };
   m.customProgramCacheKey = () => 'grime'; return m; }
+const LMAT = {}; function looseMat(k) { const key = Array.isArray(k) ? k.join('|') : k; if (LMAT[key]) return LMAT[key]; let c; if (k === 'line') c = new THREE.MeshBasicMaterial({ color: 0x15100b, side: THREE.BackSide }); else { c = matOf(k).clone(); c.skinning = false; } return (LMAT[key] = c); }
+// everything made on first use, made now: the gaits' measures, the held guards, the dropped-helmet materials
+function prewarm() { for (const n of ['Walk_Loop', 'Walk_Fwd_Loop', 'Walk_Bwd_Loop', 'Walk_L_Loop', 'Walk_R_Loop', 'Jog_Fwd_Loop', 'Jog_Bwd_Loop', 'Jog_Left_Loop', 'Jog_Right_Loop', 'Sprint_Loop', 'Sprint_Shield_Loop']) if (BODY.clips[n]) { contactT(n); clipInfo(n); }
+  holdClip('Sword_Block', 0.42); holdClip('Idle_Shield_Break', 0.18); looseMat('line'); for (const k in ARMOR) { const S = ARMOR[k]; if (S.helmet) for (const [mk] of helmetBoxes(S.helmet)) looseMat(mk); } }
 // ---- loose things on the field (a helmet knocked off, a weapon dropped): fall, bounce, tumble, lie, and in time sink away
 const LOOSE = [];
 function loose(obj, vel, groundAt, rest) { const L = { obj, v: vel.clone(), w: new V3((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 9), t: 0, rest: rest || 0.05, groundAt }; LOOSE.push(L); return L; }
@@ -519,7 +523,7 @@ class Man {
   dispose() { this.scene.remove(this.root); this.mixer.stopAllAction(); }
   // the helmet knocked off, flying from where it sat: a loose copy (unskinned, placed by the head's own transform) given to loose()
   dropHelmet(vel) { if (!this.helm || !this.helm.length || this.helmOff) return null; this.helmOff = true; const head = this.bones.Head, M = new M4().multiplyMatrices(head.matrixWorld, this.skel.boneInverses[BODY.bi.Head]).multiply(this.body[0].bindMatrix), g = new THREE.Group();
-    for (const h of this.helm) { h.mesh.visible = false; const mat = h.line ? new THREE.MeshBasicMaterial({ color: 0x15100b, side: THREE.BackSide }) : (() => { const c = matOf(h.k).clone(); c.skinning = false; return c; })(); g.add(new THREE.Mesh(h.mesh.geometry, mat)); }
+    for (const h of this.helm) { h.mesh.visible = false; const mat = h.line ? looseMat('line') : looseMat(h.k); g.add(new THREE.Mesh(h.mesh.geometry, mat)); }
     M.decompose(g.position, g.quaternion, g.scale); this.scene.add(g); return loose(g, vel, this.groundAt, 0.18); }
   putHelmetOn() { if (!this.helm) return; this.helmOff = false; for (const h of this.helm) h.mesh.visible = true; }
   // the weapon let go: it leaves the hand where it is and falls
@@ -887,5 +891,5 @@ function crowdStep(F, dt, c) {
   if (F.prev) { F.w = Math.min(1, F.w + dt / F.fade); if (F.w >= 1) F.prev = null; }
 }
 
-window.RIG = { poseRag, stepLoose, LOOSE, Crowd, crowdState, crowdStep, bake, CROWD_GRIME, GRIME, analyse, Man, Animator, ARMOR, WEAPON, CHAINS, HITS, IDLES, SPEED, TRAVEL, SKIN, setGeo, bodyBoxes, get BODY() { return BODY; } };
+window.RIG = { prewarm, poseRag, stepLoose, LOOSE, Crowd, crowdState, crowdStep, bake, CROWD_GRIME, GRIME, analyse, Man, Animator, ARMOR, WEAPON, CHAINS, HITS, IDLES, SPEED, TRAVEL, SKIN, setGeo, bodyBoxes, get BODY() { return BODY; } };
 })();

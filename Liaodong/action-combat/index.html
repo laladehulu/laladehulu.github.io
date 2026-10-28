@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v133</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v134</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -11549,7 +11549,7 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
   // F6: grime on or off (remembered)
   try { if (localStorage.getItem('ming_grime') === '0') RIG.GRIME.uOn.value = 0; } catch (e) {}
   window.addEventListener('keydown', (e) => { if (e.code !== 'F6') return; e.preventDefault(); RIG.GRIME.uOn.value = RIG.GRIME.uOn.value ? 0 : 1; try { localStorage.setItem('ming_grime', RIG.GRIME.uOn.value ? '1' : '0'); } catch (er) {} });
-  new THREE.GLTFLoader().load(window.MING_NEWMODEL_URL || '../model/man.glb', (g) => { RIG.analyse(g); NM.ok = true; }, undefined, (e) => console.warn('new model: man.glb', e));
+  new THREE.GLTFLoader().load(window.MING_NEWMODEL_URL || '../model/man.glb', (g) => { RIG.analyse(g); RIG.prewarm(); NM.ok = true; }, undefined, (e) => console.warn('new model: man.glb', e));
 
   const hash = (id, k) => { let h = (id * 374761393 + k * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
   // ---- who wears what: the faction from the game (team 0, or a Ming look, is Ming), the kit from his weapon and place
@@ -11640,10 +11640,17 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
   const clampDt = (d) => Math.min(0.05, d || 1 / 60);
 
   // ---- the frame
+  // men made ahead of need, two a frame, for the kits on this field, and every material compiled once: a man walking into the
+  // near field, a helmet knocked off, a first block, never stall a frame
+  function warm(r) { if (NM.warmDone) return; if (!NM.warmList) { const seen = new Map(); for (const u of r.sim.units) if (eligible(u)) { const k = kitOf(u, r.sim), key = k.set + '|' + k.wpn; seen.set(key, (seen.get(key) || 0) + 1); }
+      NM.warmList = []; for (const [key, n] of [...seen].sort((a, b) => b[1] - a[1])) for (let i = 0; i < Math.min(6, Math.ceil(n / 4)); i++) NM.warmList.push(key); NM.warmList = NM.warmList.slice(0, CAP); }
+    for (let i = 0; i < 2 && NM.warmList.length; i++) { const key = NM.warmList.shift(), [set, wpn] = key.split('|'); const m = new RIG.Man(set, wpn, r.scene); m.key = key; for (const s of m.meshes) s.castShadow = false; lit(r, m); m.root.visible = false; m.unit = -1; NM.pool.push(m);
+      if (!NM.compiled) NM.compiled = new Set(); if (!NM.compiled.has(set)) { NM.compiled.add(set); m.root.visible = true; m.root.position.set(0, -50, 0); try { r.renderer.compile(r.scene, r.camera); } catch (e) {} m.root.visible = false; } }
+    if (!NM.warmList.length) NM.warmDone = true; }
   const render0 = R.render;
   R.render = function (alpha, dt, view) {
     NM.touched = NM.ok ? new Set() : null; NM.n = 0; this._nmDt = clampDt(dt);
-    if (NM.ok) { NM.helping.clear(); for (const v of this.sim.units) if (v.downed && !v.dead && v.reviveBy >= 0) NM.helping.add(v.reviveBy); RIG.stepLoose(this._nmDt); }
+    if (NM.ok) { warm(this); NM.helping.clear(); for (const v of this.sim.units) if (v.downed && !v.dead && v.reviveBy >= 0) NM.helping.add(v.reviveBy); RIG.stepLoose(this._nmDt); }
     const out = render0.call(this, alpha, dt, view);
     if (!NM.ok) return out;
     for (const id of [...NM.men.keys()]) if (!NM.touched.has(id)) give(id);
@@ -11679,7 +11686,7 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
           let side = 'F'; if (a) { const fx = Math.sin(v.yaw), fz = Math.cos(v.yaw), lx = Math.cos(v.yaw), lz = -Math.sin(v.yaw), f = -dx * fx - dz * fz, l = -dx * lx - dz * lz; side = a.atkDir === DIR_UP ? 'U' : a.atkDir === DIR_DOWN ? 'D' : Math.abs(l) > Math.abs(f) * 0.5 ? (l > 0 ? 'L' : 'R') : 'F'; }
           if (melee || shot) m.anim.hit(shot ? 'F' : side, heavyB && melee);
           if (ev.cause === 'headshot' || (shot && ev.y > v.y + 1.55)) { const hv = new THREE.Vector3(dx * 2.5, 2.5, dz * 2.5); m.dropHelmet(hv); } } /* a ball to the head takes the helmet off */
-        if (a && (ev.cause === 'melee' || ev.cause === 'spear')) { const am = NM.men.get(a.id); if (am) am.anim.bite(heavyB0(a, ev) ? 0.16 : 0.11); } /* his blade bites: the cut drags before it follows through */
+        /* (no bite-drag on the attacker's swing: a hit stop on men who are nothing to do with the player) */
         const D = NM.dirt.get(ev.id) || { b: 0, m: 0 }; D.b = Math.min(1, D.b + 0.22); NM.dirt.set(ev.id, D); }
       if (ev.t === 'block') { const m = NM.men.get(ev.by); if (m) m.anim.impulse(new THREE.Vector3(-Math.sin(m.root.rotation.y), 0, -Math.cos(m.root.rotation.y)), ev.perfect ? 0.2 : 0.45, false); }
       if (ev.t === 'death') { const m = NM.men.get(ev.id), u = this.sim.units[ev.id]; if (m && u && ev.cause !== 'fled') { NM.men.delete(ev.id); deaths.push({ m, u, ev, x: u.x, y: u.y, z: u.z }); } }
