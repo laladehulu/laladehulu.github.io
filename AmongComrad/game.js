@@ -1101,7 +1101,7 @@ function snowfall(tm){const n=REDUCED?60:FLAKES.length;ctx.fillStyle='rgba(243,2
 const BLOTS=Array.from({length:14},(_,i)=>{const side=i%4,t=crnd();return{side,t,r:0.05+crnd()*0.07,th:i/14}});
 let FAINT=0,lastFaintAt=-1e9;
 function damageOverlay(p,tm){if(!p.alive)return;const dmg=clamp(1-p.hp/p.maxhp,0,1)+(G.dmgFlash>0?G.dmgFlash*0.5:0);
-  if(dmg>0.04){const R0=Math.min(VW,VH),gr=ctx.createRadialGradient(VW/2,VH/2,R0*(0.62-dmg*0.3),VW/2,VH/2,Math.max(VW,VH)*0.72);
+  if(dmg>0.04){const R0=Math.min(VW,VH),gr=ctx.createRadialGradient(VW/2,VH/2,Math.max(VW,VH)*(0.5-dmg*0.08),VW/2,VH/2,Math.max(VW,VH)*0.7);
     gr.addColorStop(0,'rgba(122,24,16,0)');gr.addColorStop(1,`rgba(140,20,12,${Math.min(0.85,dmg*0.9+(dmg>0.7?0.08*Math.sin(tm*6):0))})`);ctx.fillStyle=gr;ctx.fillRect(0,0,VW,VH);
     ctx.fillStyle=`rgba(122,24,16,${Math.min(0.8,dmg)})`;
     for(const b of BLOTS){if(dmg<b.th*0.9+0.08)continue;const s2=R0*b.r*(0.7+dmg*0.6);const x=b.side===0?b.t*VW:b.side===1?VW:b.side===2?b.t*VW:0,y=b.side===0?0:b.side===1?b.t*VH:b.side===2?VH:b.t*VH;
