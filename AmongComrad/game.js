@@ -146,7 +146,7 @@ const SORTIES=[
 const TEAM=[3,4,4,5,5];
 // mul: German numbers per assault · spread: German inaccuracy · pdmg: German damage to you · hp: squad toughness
 // mul: German numbers · spread: German inaccuracy · pdmg/bdmg: German damage to players/bots · ghp: German toughness · hp: bot health
-const DIFF={easy:{mul:0.8,spread:3.4,pdmg:0.3,bdmg:0.5,ghp:0.35,hp:190,name:'Easy'},normal:{mul:1,spread:3.0,pdmg:0.42,bdmg:0.6,ghp:0.45,hp:165,name:'Normal'},hard:{mul:1.25,spread:2.4,pdmg:0.6,bdmg:0.8,ghp:0.6,hp:140,name:'Hard'}};
+const DIFF={easy:{mul:0.8,spread:3.4,pdmg:0.3,bdmg:0.5,ghp:0.35,hp:190,name:'Easy'},normal:{mul:1,spread:3.0,pdmg:0.42,bdmg:0.6,ghp:0.45,hp:165,name:'Normal'},hard:{mul:1.25,spread:2.4,pdmg:0.6,bdmg:0.8,ghp:0.45,hp:140,name:'Hard'}};
 let UID=0;
 function mkUnit(o){return Object.assign({id:UID++,alive:true,x:0,y:0,aim:Math.PI,hp:100,maxhp:100,path:[],moving:false,phase:0,fireCd:0,reloadT:0,burst:4,burstPause:0,thinkT:rnd()*0.3,target:null,state:'idle',timer:0,bark:null,grenCd:8+rnd()*12,side:'sov',uniform:'sov',isSpy:false,revealed:false,arrested:false,sight:{},plog:[],logT:0,sightT:rnd()*0.4,repathT:0,mag:0,kind:'sq',moveA:0},o)}
 
