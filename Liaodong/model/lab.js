@@ -417,8 +417,9 @@ class Animator {
   // ---- one-shots: each fades in over the base and out again; a new one takes over from the last
   play(name, o) { o = o || {}; if (this.dead && !o.force) return null; const a = this.A(name); if (!a) return null; const f = o.fade === undefined ? 0.12 : Math.max(0.02, o.fade);
     for (const e of this.os) e.target = 0, e.rate = 1 / f;
+    const prev = this.os.find(e => e.a === a); if (prev) this.os = this.os.filter(e => e.a !== a); /* the same clip again: it takes over its own fading entry, which must not stop it when it fades out (that left no clip on the body: the T-pose) */
     a.reset(); a.enabled = true; a.setLoop(o.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity); a.clampWhenFinished = true; a.timeScale = o.ts || 1; a.setEffectiveWeight(0); a.play();
-    this.os.push({ a, w: 0, target: 1, rate: 1 / f }); this.one = { name, a, then: o.then === undefined ? null : o.then, chainAt: o.chainAt || 0.62, attack: !!o.attack, freezeAt: o.freezeAt, hold: !!o.hold || !!o.loop };
+    this.os.push({ a, w: prev ? prev.w * 0.5 : 0, target: 1, rate: 1 / f }); this.one = { name, a, then: o.then === undefined ? null : o.then, chainAt: o.chainAt || 0.62, attack: !!o.attack, freezeAt: o.freezeAt, hold: !!o.hold || !!o.loop };
     if (o.expr) this.man.setExpr(o.expr); return a; }
   endOne() { for (const e of this.os) { e.target = 0; e.rate = 1 / 0.18; } this.one = null; }
   attack(key) {
@@ -446,7 +447,7 @@ class Animator {
       if (this.one.freezeAt !== undefined && this.blockOn && a.time >= dur * this.one.freezeAt) a.timeScale = 0;
       if (!this.one.hold && a.time >= dur - 0.03) { const then = this.one.then; this.one = null; if (then) then(); else this.endOne(); } }
     let oneW = 0; for (const e of this.os) { e.w += clamp(e.target - e.w, -e.rate * dt, e.rate * dt); oneW += e.w; }
-    this.os = this.os.filter(e => { if (e.target === 0 && e.w <= 0.001) { e.a.stop(); return false; } return true; });
+    this.os = this.os.filter(e => { if (e.target === 0 && e.w <= 0.001) { if (!this.os.some(o => o !== e && o.a === e.a)) e.a.stop(); return false; } return true; });
     // the base
     const tgt = {}, sp = this.speed, ang = this.ang, loco = clamp((sp - 0.08) / 0.45, 0, 1); const st = this.stance(); tgt[st] = 1 - loco;
     const dir = Math.abs(ang) > 2.3 ? 'back' : ang > 0.8 ? 'left' : ang < -0.8 ? 'right' : 'fwd'; for (const d in this.dirW) this.dirW[d] += ((d === dir ? 1 : 0) - this.dirW[d]) * Math.min(1, dt * 7);
@@ -462,6 +463,8 @@ class Animator {
     for (const n in this.bw) { const a = this.A(n); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(this.bw[n] * norm);
       if (SPEED[n]) { a.timeScale = 0; a.time = this.phase * a.getClip().duration; } else a.timeScale = 1; }
     for (const e of this.os) e.a.setEffectiveWeight(e.w * oneNorm);
+    { let tot = 0; for (const a of m.mixer._actions) if (a.isRunning() || (a.enabled && a.paused)) tot += a.getEffectiveWeight(); /* never less than a whole body: whatever is missing the stance fills, so no frame falls back to the bind pose */
+      if (tot < 0.995) { const a = this.A(st); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(a.getEffectiveWeight() + 1 - tot); this.bw[st] = this.bw[st] || 0.001; } }
     if (IDLES.includes(st) && loco < 0.5) { this.idleT -= dt; if (this.idleT <= 0) { this.idleT = 8 + Math.random() * 9; this.idle = IDLES[(IDLES.indexOf(this.idle) + 1 + ((Math.random() * 2) | 0)) % IDLES.length]; } }
     m.mixer.update(dt); m.root.updateMatrixWorld(true);
     if (this.hands) { const pt = this.pointW > 0.4; poseHand(m, 'r', this.hands.r, 1); poseHand(m, 'l', pt ? 'point' : this.hands.l, 1); }
