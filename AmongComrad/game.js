@@ -263,10 +263,11 @@ function updateProj(dt){
       if(p.he&&p.dist>=p.max){p.dead=true;explode(nx,ny,2.2,95,{owner:p.owner,cause:'shell',hurtSov:true,hurtGer:false});break}
       if(p.dist>p.max){p.dead=true;break}}}
   G.proj=G.proj.filter(p=>!p.dead)}
-// a bullet crossing cover is stopped half the time — almost always if a soldier is crouched just behind it
+// cover only stops a bullet when a soldier is crouched right behind it and the shot comes from the far side;
+// otherwise bullets pass over sandbags, rubble and window sills (so you can always shoot out of your own cover)
 function coverStop(p,x,y,t){const cx=(x|0)+0.5,cy=(y|0)+0.5;
   for(const u of G.units){if(!u.alive||!u.crouch||u.kind==='tank'||!canHit(p,u))continue;const dx=u.x-cx,dy=u.y-cy;if(dx*dx+dy*dy<2.4&&dx*p.dx+dy*p.dy>0)return 0.92}
-  return t===WIN?0.6:0.5}
+  return 0}
 function impact(x,y){if(!G.me||dist(x,y,G.me.x,G.me.y)>VIS+4)return;G.fx.push({k:'dust',x,y,t:0,life:0.45});if(crnd()<0.4)G.fx.push({k:'spark',x,y,t:0,life:0.12,n:2});if(crnd()<0.06)sfxAt('ric',x,y)}
 function dirKey(s){if(s.cause!=='bullet'||s.dx===undefined)return'none';if(s.dx<-0.35)return'behind';if(s.dx>0.35)return'front';return'flank'}
 function hurt(u,dmg,src){
@@ -556,9 +557,13 @@ function humanTick(p,I,dt){
   const mx=I?clamp(I[0]/100,-1,1):0,my=I?clamp(I[1]/100,-1,1):0;
   if(I)p.aim=I[2]/1000;
   p.crouch=!!(p.btn&16)&&!p.onGun;
+  if(p.stam===undefined)p.stam=1.5;const wantRun=!!(p.btn&32)&&!p.crouch&&!p.onGun&&!(p.btn&1)&&!p.knife&&!p.recruit;
   const l=Math.hypot(mx,my);
   if(p.onGun){const cs=crewSpot(p.onGun-1);p.x=cs.x;p.y=cs.y;p.moving=false}
-  else if(l>0.1){const s=(p.crouch?1.7:p.reloadT>0?3.3:4.0)*Math.min(1,l)/l;moveFree(p,mx*s*dt,my*s*dt);p.moving=true;p.phase+=dt*10;p.moveA=Math.atan2(my,mx)}else p.moving=false;
+  p.sprint=wantRun&&l>0.1&&p.stam>0&&!p.winded;
+  if(p.sprint){p.stam=Math.max(0,p.stam-dt);if(p.stam<=0)p.winded=true;p.restT=0}else{p.restT=(p.restT||0)+dt;if(p.restT>0.4)p.stam=Math.min(1.5,p.stam+dt*0.75);if(p.winded&&p.stam>=0.6)p.winded=false}
+  if(p.onGun){}
+  else if(l>0.1){const s=(p.crouch?1.7:p.sprint?7.0:p.reloadT>0?3.3:4.0)*Math.min(1,l)/l;moveFree(p,mx*s*dt,my*s*dt);p.moving=true;p.phase+=dt*10;p.moveA=Math.atan2(my,mx)}else p.moving=false;
   const trig=!!(p.btn&1)&&!p.onGun;
   if(trig){const w=WPN[p.wpn];if(w.auto||!p.semiLock){if(fire(p,p.aim))p.semiLock=true;else if(p.mag<=0&&p.reserve<=0&&!(p.clickT>0)){if(p===G.me)sfx('empty');p.clickT=0.4}}}
   if(p.clickT>0)p.clickT=Math.max(0,p.clickT-dt);
@@ -1217,6 +1222,7 @@ function hudTick(dt){
   else{const wk=p.alive?p.wpn:'none';if($('wName').dataset.w!==wk){$('wName').dataset.w=wk;$('wName').innerHTML=p.alive?(WSVG[p.wpn]||esc(w.name)):(p.escaped?'Escaped':p.arrested?'Arrested':'Killed');$('wName').title=p.alive?`${w.name} · ${w.cal}`:''}$('ammo').innerHTML=p.alive?`${p.reloadT>0?'—':p.mag} <small>/ ${p.reserve}</small>`:'<small>spectating</small>'}
   const ex=!p.alive?'':`<span title="Grenades (G)">${ICON.gren}${p.grenades}</span>`+(p.isSpy?`<span title="Flares (Q)">${ICON.flare}${p.flares}</span>`:p.isCom?`<span title="Arrests (hold F)">${ICON.cuffs}${p.arrestsLeft}</span>`:'');
   if($('extra').innerHTML!==ex)$('extra').innerHTML=ex;
+  {const sb=$('stamBar');const v=(p.stam===undefined?1.5:p.stam)/1.5;sb.hidden=!p.alive||v>=0.999;sb.firstElementChild.style.width=v*100+'%';sb.classList.toggle('winded',!!p.winded)}
   const hb=$('meHp').firstElementChild;hb.style.width=Math.max(0,p.hp/p.maxhp*100)+'%';hb.style.background=p.hp<p.maxhp*0.3?'var(--red)':'var(--ok)';
   if(p.isSpy||p.isCom){$('susWrap').hidden=false;const v=p.isSpy?Math.min(1,(G.susp[p.id]||0)/80):(G.comKnown?1:Math.min(1,(G.comGuess[p.id]||0)/55));
     $('susWrap').title=p.isSpy?'Suspicion on you':'How close the spy is to knowing you are the commissar';if(!$('susIc').innerHTML)$('susIc').innerHTML=ICON.eye;$('susMeter').firstElementChild.style.width=v*100+'%'}
@@ -1231,7 +1237,7 @@ function hudTick(dt){
       const ar=p.isCom&&p.arrestsLeft>0?nearestArrestable(p,1.9):null;if(ar)pr.push(`<span><kbd>F</kbd> hold: arrest ${esc(ar.name)} (${p.arrestsLeft} left)</span>`)}
     else if(G.phase==='wave'&&p.flares>0)pr.push('<span><kbd>Q</kbd> Fire green flare at cursor</span>');
     if(p.offer)pr.unshift(`<span><b>${esc(p.offer.from.name)}'s offer</b> — <kbd>Y</kbd> accept · <kbd>N</kbd> refuse (${Math.ceil(p.offer.t)} s)</span>`);
-    if(p===G.spy&&(p.recruitLeft||0)>0&&!p.recruit){const rt=recruitTarget(p);if(rt)pr.push(`<span><kbd>C</kbd> Whisper an offer to ${esc(rt.name)}</span>`)}
+    if(p===G.spy&&(p.recruitLeft||0)>0&&!p.recruit){const rt=recruitTarget(p);if(rt)pr.push(`<span><kbd>B</kbd> Whisper an offer to ${esc(rt.name)}</span>`)}
     if(p.recruit)pr.push(`<span>Whispering to ${esc(p.recruit.T.name)}… ${Math.round(p.recruit.t/REC_T*100)}%</span>`);
     if(traitor(p)&&!p.knife){const kt=knifeTarget(p);if(kt)pr.push((p.knifeCd||0)>0?`<span>Knife ready in ${Math.ceil(p.knifeCd)} s</span>`:`<span><kbd>V</kbd> Knife ${esc(kt.name)} from behind</span>`)}
     const si=stationAt(p,1.8);if(si>=0){const st=G.st[si],nm2=STATIONS[si].name;
@@ -1297,8 +1303,8 @@ function openArmory(){const el=$('armory');$('armBody').innerHTML=pickerHTML(pri
 function closeArmory(){$('armory').hidden=true;if(state==='armory')state='play'}
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
-function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['Hold Shift','Crouch — behind cover almost nothing gets through'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
-  ...(role==='spy'?[['C','Whisper an offer to the soldier next to you (once per assault)'],['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
+function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['Hold Shift','Sprint (about 1.5 s of breath)'],['Hold C','Crouch — behind cover almost nothing gets through'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
+  ...(role==='spy'?[['B','Whisper an offer to the soldier next to you (once per assault)'],['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
 function showBrief(){
   const p=G.me,role=roleOf(p),spy=role==='spy',multi=G.humans.length>1;
   const sortieP='<p><b>Sabotage.</b> Eight stations hold the block together: three 45 mm anti-tank guns dug in along the front (press E to man one — they are the answer to the Panzers), the field telephone, the dugout barricade, a window lamp and two stacks of ammo crates. The spy can wreck one in three seconds when nobody is looking. Nobody notices until a loyal soldier walks past it — and every soldier who passes a working station proves it was fine at that moment, so each discovery comes with a time window. Hold E to repair it. A station still wrecked when an assault starts hurts the squad for that assault. <b>Three of those and the block falls.</b></p>';
@@ -1307,7 +1313,7 @@ function showBrief(){
   $('briefRole').textContent=spy?'Brandenburger':role==='com'?'Commissar':'Soldier';$('briefRole').className=spy?'spy':'com';
   $('briefSub').textContent=spy?'Abwehr special unit, in Red Army uniform':role==='com'?'Secret political officer · five assaults until dawn':'Rifleman · five assaults until dawn';
   $('briefText').innerHTML=tracksP+(spy?
-   `<p>You are ${esc(p.name)}, an Abwehr infiltrator in a Red Army greatcoat. Somewhere in the squad is a <b>secret commissar</b> hunting you. He goes over every body after each assault: a 7.62×25 mm wound in the back points at the PPSh carriers, a captured MP 40 hides the calibre, and a green flare brings German mortars down on the squad. Once per assault you can stand next to someone, unseen, and press C to offer them German papers — a soldier who accepts joins your side, but one who refuses will talk, and the commissar arrests you on the spot. Get behind someone who is looking the other way and press V: the knife is silent and leaves no calibre — but if they turn round, or anyone sees, you are finished.</p>${sortieP}<p><b>You win</b> if three wrecked stations reach an assault unrepaired, if <b>you kill the commissar</b> (he gives himself away by questioning people and making arrests), or if the command dugout falls. <b>You lose</b> if you are arrested, killed, or the line holds until dawn.</p>`:
+   `<p>You are ${esc(p.name)}, an Abwehr infiltrator in a Red Army greatcoat. Somewhere in the squad is a <b>secret commissar</b> hunting you. He goes over every body after each assault: a 7.62×25 mm wound in the back points at the PPSh carriers, a captured MP 40 hides the calibre, and a green flare brings German mortars down on the squad. Once per assault you can stand next to someone, unseen, and press B to offer them German papers — a soldier who accepts joins your side, but one who refuses will talk, and the commissar arrests you on the spot. Get behind someone who is looking the other way and press V: the knife is silent and leaves no calibre — but if they turn round, or anyone sees, you are finished.</p>${sortieP}<p><b>You win</b> if three wrecked stations reach an assault unrepaired, if <b>you kill the commissar</b> (he gives himself away by questioning people and making arrests), or if the command dugout falls. <b>You lose</b> if you are arrested, killed, or the line holds until dawn.</p>`:
    role==='com'?
    `<p>You are Commissar ${esc(p.name)}, wearing a private's coat. Nobody knows what you are — keep it that way. One of the squad is a German infiltrator who shoots comrades in the back, fires green flares for the mortars, and wrecks the stations that hold the block together.</p><p><b>Inspect bodies</b>, <b>question the squad</b>, and <b>arrest</b> the spy (two arrests). But if the spy sees you asking questions he will work out who you are — and <b>his other way to win is to kill you</b>. Watch your cover meter. An arrest reveals you to everyone.</p>${sortieP}<p>You lose if you die, if three wrecked stations reach an assault, or the Germans hold the command dugout for eight seconds.</p>`:
    `<p>You are Private ${esc(p.name)}. Somewhere in the squad is a German spy — and a <b>secret commissar</b> hunting him. You don't know who either of them is.</p><p>Hold the line and keep an eye on the stations: when one turns up wrecked, the time window tells you who could have done it. You can inspect bodies and question comrades too — but the spy can't tell a curious private from the commissar. If you work out who the commissar is, keep them alive — <b>the spy wins if he kills the commissar.</b> The spy may also try to turn you. If he does, you choose: take the German offer and switch sides in secret, or refuse — and you know who he is.</p>${sortieP}<p>The squad wins if the line holds until dawn. You lose if you die, three wrecked stations reach an assault, the commissar is assassinated, or the dugout falls.</p>`)+others;
@@ -1390,7 +1396,7 @@ function collectInput(){
   if(live){if(KEYS.KeyW||KEYS.ArrowUp)my-=1;if(KEYS.KeyS||KEYS.ArrowDown)my+=1;if(KEYS.KeyA||KEYS.ArrowLeft)mx-=1;if(KEYS.KeyD||KEYS.ArrowRight)mx+=1;if(TOUCH){mx+=TCH.mx;my+=TCH.my}}
   let aim=p?p.aim:Math.PI;
   if(live){if(TOUCH){if(TCH.aiming)aim=Math.atan2(TCH.ay,TCH.ax);else if(Math.hypot(mx,my)>0.1)aim=Math.atan2(my,mx)}else if(MOUSE.in)aim=Math.atan2((MOUSE.y+camY)/TS-p.y,(MOUSE.x+camX)/TS-p.x)}
-  let b=0;if(live){if(TOUCH?TCH.fire:MOUSE.down)b|=1;if(KEYS.KeyF)b|=2;if(KEYS.KeyX)b|=4;if(KEYS.KeyE)b|=8;if(KEYS.ShiftLeft||KEYS.ShiftRight||TCH.crouch)b|=16}
+  let b=0;if(live){if(TOUCH?TCH.fire:MOUSE.down)b|=1;if(KEYS.KeyF)b|=2;if(KEYS.KeyX)b|=4;if(KEYS.KeyE)b|=8;if(KEYS.KeyC||TCH.crouch)b|=16;if(KEYS.ShiftLeft||KEYS.ShiftRight)b|=32}
   const r=[q100(clamp(mx,-1,1)),q100(clamp(my,-1,1)),Math.round(aim*1000),b];const ev=EVQ.splice(0);if(ev.length)r.push(ev);return r}
 function press(code){
   if(code==='Escape'&&state==='armory'){closeArmory();return}
@@ -1398,7 +1404,7 @@ function press(code){
   if(code==='KeyN'){if(state==='play'&&G.me&&G.me.offer){queueEvent(['n']);return}if(state==='notebook')closeNotebook();else openNotebook();return}
   if(state!=='play'||!G.me||!G.me.alive||G.council)return;
   switch(code){case 'KeyR':queueEvent(['r']);break;case 'KeyE':queueEvent(['e']);break;case 'KeyG':{const [x,y]=cursorWorld();queueEvent(['g',q100(x),q100(y)]);break}case 'KeyT':queueEvent(['t']);break;case 'KeyF':queueEvent(['f']);break;
-    case 'KeyQ':{const [x,y]=G.me&&TOUCH?[G.me.x+Math.cos(G.me.aim)*12,G.me.y+Math.sin(G.me.aim)*12]:cursorWorld();queueEvent(['q',q100(x),q100(y)]);break}case 'KeyV':queueEvent(['k']);break;case 'KeyC':queueEvent(['c']);break;case 'KeyY':queueEvent(['y']);break;case 'KeyN':break;case 'Digit1':queueEvent(['s',0]);break;case 'Digit2':queueEvent(['s',-1]);break}}
+    case 'KeyQ':{const [x,y]=G.me&&TOUCH?[G.me.x+Math.cos(G.me.aim)*12,G.me.y+Math.sin(G.me.aim)*12]:cursorWorld();queueEvent(['q',q100(x),q100(y)]);break}case 'KeyV':queueEvent(['k']);break;case 'KeyB':queueEvent(['c']);break;case 'KeyY':queueEvent(['y']);break;case 'KeyN':break;case 'Digit1':queueEvent(['s',0]);break;case 'Digit2':queueEvent(['s',-1]);break}}
 window.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!KEYS[e.code])press(e.code);KEYS[e.code]=true});
 window.addEventListener('keyup',e=>{KEYS[e.code]=false});
 window.addEventListener('blur',()=>{for(const k in KEYS)KEYS[k]=false;MOUSE.down=false});

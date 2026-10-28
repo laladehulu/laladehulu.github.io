@@ -223,6 +223,7 @@ body.touch #radio{width:calc(100vw - 32px);top:calc(200px + env(safe-area-inset-
 #wName svg{height:24px;width:100px}
 #ammo{font-size:24px}#ammo small{font-size:13px}
 #meHp{height:7px}
+#stamBar{height:4px;background:var(--paper2);border:1.5px solid var(--ink);position:relative}#stamBar i{position:absolute;inset:0 auto 0 0;background:var(--ochre)}#stamBar.winded i{background:var(--red)}
 #me #extra{justify-content:flex-start;gap:12px;font:700 14px/1 var(--display);color:var(--ink)}
 #extra span{display:inline-flex;align-items:center;gap:3px}
 #susWrap{display:flex;align-items:center;gap:6px}#susWrap .ic{color:var(--red)}#susMeter{flex:1;height:6px}
@@ -249,7 +250,7 @@ body.touch #radio{width:calc(100vw - 32px);top:calc(200px + env(safe-area-inset-
     <div id="squad" class="box"><table id="squadTbl"></table></div>
     <div id="me" class="box">
       <div class="row"><span id="wName">PPSh-41</span><span id="ammo">71 <small>/ 213</small></span></div>
-      <div id="meHp"><i></i></div>
+      <div id="meHp"><i></i></div><div id="stamBar" hidden><i></i></div>
       <div class="row" id="extra"></div>
       <div id="susWrap" hidden><span id="susIc"></span><div id="susMeter"><i></i></div></div>
     </div>
