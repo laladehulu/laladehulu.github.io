@@ -122,9 +122,9 @@ const SQUAD=[
  {name:'Lebedev',rank:'Pvt.',col:'#e9e3d1',wpn:'ppsh'},
 ];
 const WAVES=[
- {r:12,s:5,m:0,g:2,t:0,txt:'A probing attack in strength. Riflemen are pouring through the ruins.'},
+ {r:12,s:5,m:0,g:2,t:1,txt:'Riflemen pour through the ruins behind a Panzer. Get the 45 mm gun on it.'},
  {r:14,s:10,m:1,g:3,t:1,txt:'Assault troops behind a Panzer. Man the 45 mm gun in the street.'},
- {r:16,s:12,m:2,g:4,t:1,txt:'Two MG 42 teams and a Panzer. Get the gun on the tank before it reaches the wire.'},
+ {r:16,s:12,m:2,g:4,t:2,txt:'Two MG 42 teams and two Panzers. Get the gun on the tanks before they reach the wire.'},
  {r:18,s:14,m:2,g:5,t:2,txt:'A heavy assault on both flanks with two Panzers. Watch the trenches.'},
  {r:20,s:18,m:2,g:5,t:3,txt:'Everything they have. Three Panzers lead the last assault.'},
 ];
@@ -481,10 +481,11 @@ function runSched(e){
 
 // ================= German AI =================
 function spawnGerman(kind){
-  if(kind==='tank'){const th=Math.round(800*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:800,wpn:'mg42',mag:75,x:-1.5,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);logMsg(G.tankMul<1?'Tank! The Panzer hit our mines — it is damaged, but still coming!':'Tank! A Panzer is coming down the street!','bad');sfx('tankHorn');return}
-  let y=0;for(let k=0;k<40;k++){y=1+(rnd()*38|0);if(passable(0,y)&&passable(1,y))break}
+  if(kind==='tank'){const th=Math.round(800*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:800,wpn:'mg42',mag:75,x:7,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);logMsg(G.tankMul<1?'Tank! The Panzer hit our mines — it is damaged, but still coming!':'Tank! A Panzer is coming down the street!','bad');sfx('tankHorn');return}
+  // infantry appear in the ruins just beyond the defenders' sight, so they are in the fight within seconds
+  let y=0,x0=0;for(let k=0;k<60;k++){y=1+(rnd()*38|0);x0=14+(rnd()*5|0);if(passable(x0,y)&&passable(x0+1,y))break;x0=0;if(passable(0,y)&&passable(1,y))break}
   const wpn=kind==='smg'?'mp40':kind==='mg'?'mg42':'kar98';
-  const u=mkUnit({kind,side:'ger',uniform:'ger',name:'German',wpn,mag:WPN[wpn].mag,x:0.5,y:y+0.5,aim:0,hp:kind==='mg'?140:100,maxhp:kind==='mg'?140:100,grenCd:kind==='gren'?6:30+rnd()*30});
+  const u=mkUnit({kind,side:'ger',uniform:'ger',name:'German',wpn,mag:WPN[wpn].mag,x:x0+0.5,y:y+0.5,aim:0,hp:kind==='mg'?140:100,maxhp:kind==='mg'?140:100,grenCd:kind==='gren'?6:30+rnd()*30});
   G.units.push(u);
   if(kind==='mg'){const c=CSPOTS.filter(s=>!s.res&&s.x>14&&s.x<27);if(c.length){const s=pick(c);if(goTo(u,s.x,s.y)){s.res=u;u.res=s;u.state='mgmove';return}}}
   nextMove(u)}
@@ -500,7 +501,7 @@ function gerAI(u,dt){
   u.thinkT-=dt;if(u.thinkT<=0){u.thinkT=0.3+rnd()*0.15;u.target=pickTarget(u)}
   const t=u.target&&u.target.alive?u.target:null;const sp=u.kind==='smg'?3.3:2.9;
   switch(u.state){
-    case 'advance':if(u.path.length)followPath(u,dt,sp);else{u.moving=false;u.state='engage';u.timer=u.kind==='smg'?1+rnd()*2:2.5+rnd()*3.5}break;
+    case 'advance':if(u.path.length)followPath(u,dt,sp);else{u.moving=false;u.state='engage';u.timer=u.kind==='smg'?0.6+rnd()*1.2:1.4+rnd()*2.2}break;
     case 'engage':u.moving=false;u.timer-=dt;if(u.timer<=0)nextMove(u);break;
     case 'mgmove':if(u.path.length)followPath(u,dt,2.5);else{u.moving=false;u.state='mg';say(u,'MG — Feuer!',1.6)}break;
     case 'mg':u.moving=false;break;
@@ -906,15 +907,16 @@ function endWave(){
   if(G.wave>=WAVES.length){const sf=G.spyFate,arr=G.spy.arrested;
     endGame(false,me=>me.isSpy?'Dawn. Fresh troops are crossing the Volga and the line held. Your mission failed.':
       sf==='killed'?'Dawn. The line held, and the traitor is dead.':sf==='escaped'?'Dawn. The line held, but the spy got away to the Germans.':arr?'Dawn. The line held.':me.isCom?'Dawn. The line held, but the spy is still among you — and you never caught him.':'Dawn. The line held, but the spy is still among you.');return}
-  G.phase='lull';G.phaseT=13;G.effects={};G.overLimit=8;
+  G.phase='lull';G.phaseT=20;G.effects={};G.overLimit=8;
   for(const u of liveSov())u.hp=u.maxhp;
   for(const k in G.comGuess)G.comGuess[k]=Math.max(0,G.comGuess[k]-8);
-  banner('Assault beaten back','The Germans are pulling back. Restock, check the stations, question the squad.','good',3.5);
+  banner('Assault beaten back','The main attack is broken, but they keep probing. Keep the posts manned.','good',3.5);
   processSuspicion();
   G.bodies=G.bodies.filter(b=>b.uniform==='sov'||G.time-b.t<150||(b.wpn&&!b.taken));
   if(rnd()<0.5){G.prints=[];logMsg('Fresh snow is falling. The old tracks are gone.');G.snowT=G.time}}
 function phaseTick(dt){
   if(G.phase==='lull'){
+    G.harT=(G.harT===undefined?2:G.harT)-dt;if(G.harT<=0){G.harT=3+rnd()*3;if(G.units.filter(u=>u.alive&&u.side==='ger').length<3+G.wave)spawnGerman(rnd()<0.35?'smg':'rifle')}
     G.dutyT-=dt;if(G.dutyT<=0){G.dutyT=5+rnd()*5;assignDuty(NM.floor(rnd()*STATIONS.length),false)}
     G.phaseT-=dt;if(!G.arrestDone&&G.phaseT<5&&G.wave>0){G.arrestDone=true;officerArrest()}if(G.phaseT<=0)startWave()}
   else{G.spawnT-=dt;if(G.spawnQ.length&&G.spawnT<=0){spawnGerman(G.spawnQ.shift());if(G.spawnQ.length&&G.spawnQ[0]!=='tank'&&rnd()<0.35)spawnGerman(G.spawnQ.shift());G.spawnT=0.45+rnd()*0.75;G.lastSpawn=G.time}
@@ -1134,7 +1136,7 @@ function hudTick(dt){
   if(onS){const mine=M.team.includes(p)&&p.alive;$('waveNum').textContent=`Sortie ${M.i+1}: ${M.def.name}`;$('waveState').textContent=`${Math.ceil(Math.max(0,M.tLeft))} s`;
     $('waveSub').textContent=(M.contested?'Germans at the objective — clear them out. ':M.prog>0?'Work under way. ':'')+(mine?(p.isSpy&&!M.sabBy.includes(p)?'Hold X at the objective to sabotage it.':'Hold the yellow marker.'):`Team: ${M.team.map(u=>u.name).join(', ')}.`)}
   else if(G.council){$('waveState').textContent='sortie council';$('waveSub').textContent='The squad is choosing a sortie team.'}
-  else if(G.phase==='lull'){$('waveState').textContent=`next in ${Math.ceil(G.phaseT)} s`;$('waveSub').textContent=G.wave===0?'Get to a firing position. Ammo crates are in the dugout and the east rooms.':traitor(p)?'Lull. Wreck a station while nobody is looking.':'Lull. Restock, check the stations, question the squad.'}
+  else if(G.phase==='lull'){$('waveNum').textContent=G.wave?`Skirmish · ${G.wave} / ${WAVES.length} held`:'Before dusk';$('waveState').textContent=`main assault in ${Math.ceil(G.phaseT)} s`;$('waveSub').textContent=G.wave===0?'Get to a firing position. Probes are already coming in.':traitor(p)?'They keep probing. Wreck a station while the posts are busy.':'They keep probing. Keep the posts manned — and someone has to check the stations.'}
   else{const left=G.units.filter(u=>u.alive&&u.side==='ger').length+G.spawnQ.length;$('waveState').textContent=`${left} Germans left`;$('waveSub').textContent=WAVES[G.wave-1].txt}
   $('objWrap').hidden=!onS;if(onS)$('objBar').firstElementChild.style.width=Math.min(100,M.prog*100)+'%';
   const th=sabHTML();if($('hudTrack').innerHTML!==th)$('hudTrack').innerHTML=th;
