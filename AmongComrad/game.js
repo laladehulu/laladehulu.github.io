@@ -110,7 +110,7 @@ const WPN={
  ptrd:{name:'PTRD-41',cal:'14.5×114 mm',dmg:120,rof:0.3,mag:1,res:30,reload:2.3,spread:0.012,range:44,speed:70,auto:false,len:1.2,snd:'ptrd',at:true},
  pps43:{name:'PPS-43',cal:'7.62×25 mm',dmg:21,rof:0.085,mag:35,res:210,reload:2.2,spread:0.055,range:16,speed:42,auto:true,len:0.5,snd:'smg'},
  mosinS:{name:'Mosin sniper',cal:'7.62×54R',dmg:105,rof:1.5,mag:5,res:45,reload:3.4,spread:0.005,range:46,speed:66,auto:false,len:0.95,snd:'rifle'},
- roks:{name:'ROKS-3 flamethrower',cal:'fuel',dmg:9,rof:0.05,mag:60,res:120,reload:3.5,spread:0.2,range:6.5,speed:14,auto:true,len:0.6,snd:'smg2',flame:true},
+ roks:{name:'ROKS-3 flamethrower',cal:'fuel',dmg:9,rof:0.05,mag:60,res:120,reload:3.5,spread:0.2,range:6.5,speed:14,auto:true,len:0.6,snd:'flame',flame:true},
  mp40:{name:'MP 40',cal:'9×19 mm',dmg:20,rof:0.11,mag:32,res:96,reload:2.5,spread:0.08,range:16,speed:40,auto:true,len:0.55,snd:'smg2'},
  kar98:{name:'Kar98k',cal:'7.92×57 mm',dmg:52,rof:1.6,mag:5,res:40,reload:3,spread:0.03,range:36,speed:60,auto:false,len:0.88,snd:'rifle2'},
  mg42:{name:'MG 42',cal:'7.92×57 mm',dmg:22,rof:0.05,mag:75,res:999,reload:4.5,spread:0.07,range:38,speed:60,auto:true,len:0.95,snd:'mg42'},
@@ -1328,6 +1328,7 @@ function tn(fr,dur,type,gain,o={}){const c=SND.ctx;const t=c.currentTime+(o.dela
 function sfxAt(n,x,y){if(!SND.ctx||SND.muted||state!=='play'||!G.me)return;const d=dist(x,y,G.me.x,G.me.y);const v=1/(1+d/7);if(v<0.06||SND.budget>9)return;SND.budget++;sfx(n,v,clamp((x-G.me.x)/18,-0.9,0.9))}
 function sfx(n,v=1,pan=0){if(!SND.ctx||SND.muted)return;try{const o={pan};switch(n){
   case 'smg':nb(0.07,1900,'bandpass',0.45*v,o);tn(150,0.05,'triangle',0.15*v,o);break;
+  case 'flame':nb(0.16,420,'lowpass',0.42*v,o);nb(0.12,1100,'bandpass',0.14*v,{pan,q:0.6});if(Math.random()<0.35)nb(0.03,3200,'highpass',0.1*v,o);break;
   case 'smg2':nb(0.08,1500,'bandpass',0.4*v,o);tn(130,0.06,'triangle',0.13*v,o);break;
   case 'rifle':nb(0.22,1300,'bandpass',0.75*v,o);tn(85,0.18,'sine',0.4*v,o);break;
   case 'rifle2':nb(0.2,1100,'bandpass',0.65*v,o);tn(75,0.18,'sine',0.35*v,o);break;
