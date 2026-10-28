@@ -23,6 +23,8 @@ const Math=Object.assign(Object.create(NM),{sin:fsin,cos:fcos,atan2:fatan2,hypot
 let RS=1;
 function rnd(){RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
 const crnd=NM.random;
+// hit feedback is local to each player's screen: hit markers, flashes, ejected brass
+const HM={t:0,kill:false},FLASH=new Map(),BRASS=[];
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,pick=a=>a[Math.floor(rnd()*a.length)],TAU=Math.PI*2;
 const dist=(ax,ay,bx,by)=>Math.hypot(ax-bx,ay-by);
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -235,9 +237,9 @@ function fire(u,ang,o={}){
   G.proj.push({x:u.x+dx*0.3,y:u.y+dy*0.3,dx,dy,sp:w.speed,dmg:w.dmg*(o.mul||1),cal:w.cal,owner:u,side:u.side,tk,flame:!!w.flame,dist:0,max:u.isPlayer?w.range*1.3:Math.min(w.range*1.3,AI_RANGE+3),at:!!w.at,last:-1,he:false});
   u.mag--;u.fireCd=w.rof*(u.isPlayer?1:1+rnd()*0.25);dropCasing(u,w);
   if(u.side==='sov'&&u.x>42&&u.x<53&&((G.effects.crN&&u.y<19)||(G.effects.crS&&u.y>=19)))u.fireCd*=1.7;
-  const ml=w.len+0.1;G.fx.push({k:'muz',x:u.x+dx*ml,y:u.y+dy*ml,a,t:0,life:0.06});
+  const ml=w.len+0.1;G.fx.push({k:'muz',x:u.x+dx*ml,y:u.y+dy*ml,a,t:0,life:u===G.me?0.08:0.06,big:u===G.me&&!w.auto});
   sfxAt(w.snd,u.x,u.y);
-  if(u===G.me)G.kick=Math.min(0.25,G.kick+0.06);
+  if(u===G.me){G.kick=Math.min(0.3,G.kick+(w.auto?0.05:0.12));const ea=a+Math.PI/2+(crnd()-.5)*0.6;if(!w.flame)BRASS.push({x:u.x+dx*0.25,y:u.y+dy*0.25,vx:Math.cos(ea)*(2.5+crnd()*1.5),vy:Math.sin(ea)*(2.5+crnd()*1.5),t:0,r:crnd()*TAU});if(BRASS.length>40)BRASS.shift()}
   if(u.mag<=0)startReload(u);
   return true}
 function startReload(u){if(u.reloadT>0)return;const w=WPN[u.wpn];if(u.isPlayer&&(u.reserve<=0||u.mag>=w.mag))return;u.reloadT=w.reload;if(u.isPlayer){if(u===G.me)sfx('reload')}else if(w.mag>5&&rnd()<0.5)say(u,pick(['Reloading!','Changing drum!','Cover me!']),1.4)}
@@ -275,6 +277,9 @@ function hurt(u,dmg,src){
   if(u.isPlayer)u.lastHit=G.time;
   if(u.isPlayer&&G.god)dmg=0;
   u.hp-=dmg;
+  if(u.kind!=='tank'&&src.dx!==undefined&&src.cause==='bullet'){const kb=Math.min(0.18,dmg*0.004);const nx=u.x+src.dx*kb,ny=u.y+src.dy*kb;if(!blockedAt(nx,ny,0.28)){u.x=nx;u.y=ny}}
+  FLASH.set(u.id,performance.now());
+  if(G.me&&src.owner===G.me&&u!==G.me&&u.side!==G.me.side){HM.t=performance.now();HM.kill=u.hp<=0;sfx(HM.kill?'kill':'hit')}
   if(u.kind!=='tank'){G.fx.push({k:'blood',x:u.x,y:u.y,t:0,life:0.4});if(crnd()<0.5)decal('blood',u.x+(crnd()-.5)*.5,u.y+(crnd()-.5)*.5)}
   if(u.isPlayer){
     const friendly=!!(src.owner&&src.owner.side!=='ger'&&src.owner!==u);
@@ -296,7 +301,8 @@ function kill(u,src){
   const ko=src.owner&&src.owner.isPlayer?src.owner:null;
   if(u.kind==='tank'){u.dead=true;G.kills++;if(ko)ko.kills++;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const tx=(u.x|0)+dx,ty=(u.y|0)+dy;if(get(tx,ty)===GROUND)set(tx,ty,COVER,5)}explode(u.x,u.y,2.5,60,{owner:u,cause:'shell',hurtSov:true,hurtGer:true});logMsg('The Panzer is burning!','good');FIRES.push({x:u.x,y:u.y,big:true});return}
   const b={u,x:u.x,y:u.y,aim:u.aim,uniform:u.uniform,col:u.col,cause:src.cause||'bullet',cal:src.cal,gkind:src.gkind,dirKey:dirKey(src),t:G.time,wave:G.wave,zone:zoneAt(u.x,u.y),inspected:false,inspBy:[],wpn:(u.side==='ger'&&(u.wpn==='mp40'||u.wpn==='kar98'))?u.wpn:null,taken:false,killer:src.owner};
-  G.bodies.push(b);decal('pool',u.x,u.y);
+  if(src.dx!==undefined&&u.kind!=='tank'){for(let k=6;k>0;k--){const nx=b.x+src.dx*0.12*k,ny=b.y+src.dy*0.12*k;if(!blockedAt(nx,ny,0.25)){b.x=nx;b.y=ny;break}}}
+  G.bodies.push(b);decal('pool',b.x,b.y);
   if(u.side==='ger'){G.kills++;if(ko)ko.kills++;return}
   if(u.isCom&&src.owner&&traitor(src.owner)){const sp=src.owner;
     endGame(true,me=>me.isSpy?`You killed ${u.name} — the commissar. Without him the inquiry dies, and nobody will ever know it was you.`:
@@ -985,6 +991,7 @@ function updateFx(dt){
   G.fireT=(G.fireT||0)-dt;if(G.fireT<=0){G.fireT=0.35;for(const f of FIRES)if(crnd()<0.5)G.smoke.push({x:f.x+(crnd()-.5)*.6,y:f.y+(crnd()-.5)*.6,r:0.4,t:0,life:4+crnd()*3,vx:0.5+crnd()*0.3,vy:-0.15+crnd()*0.1})}
   if(G.smoke.length>220)G.smoke.splice(0,G.smoke.length-220);
   G.shake*=Math.pow(0.03,dt);if(G.shake<0.2)G.shake=0;G.kick*=Math.pow(0.001,dt);
+  for(const b2 of BRASS)b2.t+=dt;while(BRASS.length&&BRASS[0].t>0.6)BRASS.shift();
   for(const h of G.hitInd)h.t+=dt;G.hitInd=G.hitInd.filter(h=>h.t<h.life);if(G.dmgFlash>0)G.dmgFlash-=dt;
   G.ambT=(G.ambT||4)-dt;if(G.ambT<=0){G.ambT=6+crnd()*12;if(state==='play'){sfx('distant');G.shake=Math.max(G.shake,REDUCED?0:2)}}
   if(G.banner){G.banner.life-=dt;if(G.banner.life<=0){G.banner=null;$('banner').hidden=true}}}
@@ -1091,7 +1098,7 @@ function render(){
   let p=me;if(playing&&!me.alive){let best=null,bd=1e9;for(const u of G.people)if(u.alive&&u.side==='sov'){const d=dist(u.x,u.y,me.x,me.y);if(d<bd){bd=d;best=u}}if(best)p=best}
   const eye=playing&&me.alive?me:null;const playerSeesPt=(x,y)=>!eye||seesPt(eye,x,y);
   let cx,cy;
-  if(playing){let lx=0,ly=0;if(!eye){}else if(!TOUCH){lx=clamp(((MOUSE.x-VW/2)/TS)*0.28,-5,5);ly=clamp(((MOUSE.y-VH/2)/TS)*0.28,-4,4)}else{lx=Math.cos(p.aim)*3;ly=Math.sin(p.aim)*2}cx=p.x+lx;cy=p.y+ly}
+  if(playing){let lx=0,ly=0;if(!eye){}else if(!TOUCH){lx=clamp(((MOUSE.x-VW/2)/TS)*0.28,-5,5);ly=clamp(((MOUSE.y-VH/2)/TS)*0.28,-4,4)}else{lx=Math.cos(p.aim)*3;ly=Math.sin(p.aim)*2}cx=p.x+lx-(eye?Math.cos(me.aim)*G.kick*1.6:0);cy=p.y+ly-(eye?Math.sin(me.aim)*G.kick*1.6:0)}
   else{const t=tm*0.03;cx=36+Math.sin(t)*12;cy=20+Math.sin(t*1.3)*8}
   const sh=G.shake;camX=cx*TS-VW/2+(sh?(crnd()-.5)*sh:0);camY=cy*TS-VH/2+(sh?(crnd()-.5)*sh:0);
   camX=clamp(camX,-3*TS,W*TS-VW+3*TS);camY=clamp(camY,-3*TS,H*TS-VH+3*TS);
@@ -1107,7 +1114,9 @@ function render(){
   for(const u of G.units){if(u.kind==='tank'&&(u.alive||u.dead)){const [sx,sy]=w2s(u.x,u.y);if(u.dead||vis(u))drawTank(ctx,sx,sy,TS,u)}}
   for(const n of G.nades){const [sx,sy]=w2s(n.x,n.y);if(playing&&!playerSeesPt(n.x,n.y))continue;ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.arc(sx,sy,TS*0.08,0,TAU);ctx.fill();ctx.fillStyle=n.kind==='stick'?'#6b6a5a':'#3d4a32';ctx.beginPath();ctx.arc(sx,sy-n.z*TS*0.9,TS*0.1,0,TAU);ctx.fill();if(n.t>n.T&&Math.sin(tm*30)>0){ctx.strokeStyle='rgba(255,200,120,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,TS*0.28,0,TAU);ctx.stroke()}}
   for(const u of G.units){if(!u.alive||u.kind==='tank'||!vis(u))continue;const [sx,sy]=w2s(u.x,u.y);if(!on(sx,sy,60))continue;drawSoldier(ctx,sx,sy,TS,u);
-    if(u.isPlayer){ctx.strokeStyle=u===me?PAL.paper:'rgba(230,215,181,.45)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,TS*0.53,0,TAU);ctx.stroke()}}
+    if(u.isPlayer){ctx.strokeStyle=u===me?PAL.paper:'rgba(230,215,181,.45)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,TS*0.53,0,TAU);ctx.stroke()}
+    {const ft=FLASH.get(u.id);if(ft){const k=(performance.now()-ft)/110;if(k<1){ctx.fillStyle=`rgba(243,240,231,${0.85*(1-k)})`;ctx.beginPath();ctx.arc(sx,sy,TS*0.38,0,TAU);ctx.fill()}else FLASH.delete(u.id)}}}
+  {const now=performance.now();for(const s2 of BRASS){const k=s2.t;const [bx,by]=w2s(s2.x+s2.vx*k*0.25,s2.y+s2.vy*k*0.25);ctx.save();ctx.translate(bx,by-Math.sin(Math.min(1,k*2.2)*Math.PI)*TS*0.4);ctx.rotate(s2.r+k*14);ctx.fillStyle=PAL.ochre;ctx.fillRect(-TS*0.07,-TS*0.03,TS*0.14,TS*0.06);ctx.restore()}}
   ctx.lineCap='round';for(const pr of G.proj){const [sx,sy]=w2s(pr.x,pr.y);if(!on(sx,sy,40))continue;const L=pr.he?0.5:0.9;ctx.strokeStyle=pr.flame?(pr.dist<3?PAL.ochre:PAL.red):pr.he?PAL.ochre:pr.side==='ger'?'#e7b48a':PAL.paper;ctx.lineWidth=pr.flame?TS*0.35:pr.he?4:pr.at?3:2;ctx.beginPath();ctx.moveTo(sx-pr.dx*TS*L,sy-pr.dy*TS*L);ctx.lineTo(sx,sy);ctx.stroke()}
   for(const f of G.fx){if(f.k==='flare')continue;const [sx,sy]=w2s(f.x,f.y);if(!on(sx,sy,200))continue;const k=f.t/f.life;
     if(f.k==='muz'){ctx.save();ctx.translate(sx,sy);ctx.rotate(f.a);ctx.fillStyle=k<0.5?PAL.ochre:PAL.red;const L=(f.big?0.9:0.38)*TS;ctx.beginPath();ctx.moveTo(0,-L*0.25);ctx.lineTo(L,0);ctx.lineTo(0,L*0.25);ctx.closePath();ctx.fill();ctx.restore()}
@@ -1164,7 +1173,8 @@ function render(){
     if(p.hp<40&&p.alive){const gr=ctx.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*0.3,VW/2,VH/2,Math.max(VW,VH)*0.7);gr.addColorStop(0,'rgba(120,0,0,0)');gr.addColorStop(1,`rgba(120,0,0,${0.35+0.1*Math.sin(tm*4)})`);ctx.fillStyle=gr;ctx.fillRect(0,0,VW,VH)}
     if(!TOUCH&&MOUSE.in){const w=WPN[p.wpn];const d=dist(p.x,p.y,(MOUSE.x+camX)/TS,(MOUSE.y+camY)/TS);const r=6+w.spread*(p.moving?1.6:1)*d*TS*1.5+G.kick*40;ctx.strokeStyle=p.reloadT>0?PAL.ochre:PAL.paper;ctx.lineWidth=1.5;
       for(let i=0;i<4;i++){const a=i*Math.PI/2;ctx.beginPath();ctx.moveTo(MOUSE.x+Math.cos(a)*r,MOUSE.y+Math.sin(a)*r);ctx.lineTo(MOUSE.x+Math.cos(a)*(r+7),MOUSE.y+Math.sin(a)*(r+7));ctx.stroke()}
-      if(p.reloadT>0){ctx.beginPath();ctx.arc(MOUSE.x,MOUSE.y,r+11,-Math.PI/2,-Math.PI/2+TAU*(1-p.reloadT/w.reload));ctx.stroke()}}}}
+      if(p.reloadT>0){ctx.beginPath();ctx.arc(MOUSE.x,MOUSE.y,r+11,-Math.PI/2,-Math.PI/2+TAU*(1-p.reloadT/w.reload));ctx.stroke()}}
+    {const k=(performance.now()-HM.t)/(HM.kill?320:180);if(k<1){const mx=TOUCH?VW/2:MOUSE.x,my=TOUCH?VH/2:MOUSE.y,a0=(HM.kill?11:7)+k*4,a1=a0+(HM.kill?11:7);ctx.strokeStyle=HM.kill?`rgba(196,38,27,${1-k})`:`rgba(243,240,231,${1-k})`;ctx.lineWidth=HM.kill?3.5:2.5;ctx.beginPath();for(const [ux,uy] of [[1,1],[1,-1],[-1,1],[-1,-1]]){ctx.moveTo(mx+ux*a0,my+uy*a0);ctx.lineTo(mx+ux*a1,my+uy*a1)}ctx.stroke()}}}}
 
 // ================= HUD =================
 // weapon silhouettes for the HUD (side view, muzzle right), drawn as flat ink like the rest of the print
@@ -1356,6 +1366,8 @@ function sfx(n,v=1,pan=0){if(!SND.ctx||SND.muted)return;try{const o={pan};switch
   case 'ric':tn(2600,0.18,'sine',0.06*v,{pan,slide:0.35});break;
   case 'throw':nb(0.15,700,'bandpass',0.15*v,o);break;
   case 'reload':nb(0.05,3000,'bandpass',0.3);nb(0.05,2500,'bandpass',0.3,{delay:0.18});break;
+  case 'hit':nb(0.04,2600,'bandpass',0.16);tn(1900,0.035,'square',0.035);break;
+  case 'kill':nb(0.07,1600,'bandpass',0.2);tn(700,0.08,'square',0.05);tn(1250,0.1,'triangle',0.05,{delay:0.035});break;
   case 'empty':tn(1800,0.03,'square',0.06);break;
   case 'hurt':nb(0.15,300,'lowpass',0.5);break;
   case 'page':nb(0.12,4000,'highpass',0.12);break;
