@@ -1096,6 +1096,18 @@ const FLAKES=Array.from({length:170},()=>({x:crnd(),y:crnd(),z:0.4+crnd()*0.8,w:
 function snowfall(tm){const n=REDUCED?60:FLAKES.length;ctx.fillStyle='rgba(243,240,231,.85)';
   for(let i=0;i<n;i++){const f=FLAKES[i];const x=((f.x*VW+tm*18*f.z+Math.sin(tm*0.8+f.w)*12-camX*0.15*f.z)%(VW+20)+VW+20)%(VW+20)-10;const y=((f.y*VH+tm*42*f.z-camY*0.15*f.z)%(VH+20)+VH+20)%(VH+20)-10;
     const r=1+f.z*1.6;ctx.fillRect(x,y,r,r)}}
+// Damage is shown on the screen, not as a bar: red bleeds in from the edges with ink-blot splatter the more hurt
+// you are, and very low health makes you briefly start to black out.
+const BLOTS=Array.from({length:14},(_,i)=>{const side=i%4,t=crnd();return{side,t,r:0.05+crnd()*0.07,th:i/14}});
+let FAINT=0,lastFaintAt=-1e9;
+function damageOverlay(p,tm){if(!p.alive)return;const dmg=clamp(1-p.hp/p.maxhp,0,1)+(G.dmgFlash>0?G.dmgFlash*0.5:0);
+  if(dmg>0.04){const R0=Math.min(VW,VH),gr=ctx.createRadialGradient(VW/2,VH/2,R0*(0.62-dmg*0.3),VW/2,VH/2,Math.max(VW,VH)*0.72);
+    gr.addColorStop(0,'rgba(122,24,16,0)');gr.addColorStop(1,`rgba(140,20,12,${Math.min(0.85,dmg*0.9+(dmg>0.7?0.08*Math.sin(tm*6):0))})`);ctx.fillStyle=gr;ctx.fillRect(0,0,VW,VH);
+    ctx.fillStyle=`rgba(122,24,16,${Math.min(0.8,dmg)})`;
+    for(const b of BLOTS){if(dmg<b.th*0.9+0.08)continue;const s2=R0*b.r*(0.7+dmg*0.6);const x=b.side===0?b.t*VW:b.side===1?VW:b.side===2?b.t*VW:0,y=b.side===0?0:b.side===1?b.t*VH:b.side===2?VH:b.t*VH;
+      ctx.beginPath();for(let q=0;q<9;q++){const a=q/9*TAU,rr=s2*(0.75+0.35*Math.sin(q*2.7+b.t*9));q?ctx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr):ctx.moveTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}ctx.closePath();ctx.fill()}}
+  const now=performance.now();if(p.hp<p.maxhp*0.22&&now-lastFaintAt>6000){lastFaintAt=now;FAINT=now}
+  const fk=(now-FAINT)/700;if(fk>=0&&fk<1){const a=fk<0.3?fk/0.3:1-(fk-0.3)/0.7;ctx.fillStyle=`rgba(29,24,21,${0.8*a})`;ctx.fillRect(0,0,VW,VH);ctx.fillStyle=`rgba(122,24,16,${0.25*a})`;ctx.fillRect(0,0,VW,VH)}}
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=PAL.ink;ctx.fillRect(0,0,VW,VH);
   if(!G||!MAPC)return;const tm=performance.now()/1000;const me=G.me;const playing=!!me&&state!=='title';
@@ -1174,8 +1186,7 @@ function render(){
   if(eye&&state==='play'){const p=me;
     const [px,py]=w2s(p.x,p.y);
     for(const h of G.hitInd){const a=1-h.t/h.life;ctx.strokeStyle=h.friendly?`rgba(214,154,36,${a})`:`rgba(196,38,27,${a})`;ctx.lineWidth=8;ctx.beginPath();ctx.arc(px,py,TS*1.6,h.a-0.35,h.a+0.35);ctx.stroke()}
-    if(G.dmgFlash>0){ctx.fillStyle=`rgba(150,10,5,${G.dmgFlash*0.6})`;ctx.fillRect(0,0,VW,VH)}
-    if(p.hp<40&&p.alive){const gr=ctx.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*0.3,VW/2,VH/2,Math.max(VW,VH)*0.7);gr.addColorStop(0,'rgba(120,0,0,0)');gr.addColorStop(1,`rgba(120,0,0,${0.35+0.1*Math.sin(tm*4)})`);ctx.fillStyle=gr;ctx.fillRect(0,0,VW,VH)}
+    damageOverlay(p,tm)
     if(!TOUCH&&MOUSE.in){const w=WPN[p.wpn];const d=dist(p.x,p.y,(MOUSE.x+camX)/TS,(MOUSE.y+camY)/TS);const r=6+w.spread*(p.moving?1.6:1)*d*TS*1.5+G.kick*40;ctx.strokeStyle=p.reloadT>0?PAL.ochre:PAL.paper;ctx.lineWidth=1.5;
       for(let i=0;i<4;i++){const a=i*Math.PI/2;ctx.beginPath();ctx.moveTo(MOUSE.x+Math.cos(a)*r,MOUSE.y+Math.sin(a)*r);ctx.lineTo(MOUSE.x+Math.cos(a)*(r+7),MOUSE.y+Math.sin(a)*(r+7));ctx.stroke()}
       if(p.reloadT>0){ctx.beginPath();ctx.arc(MOUSE.x,MOUSE.y,r+11,-Math.PI/2,-Math.PI/2+TAU*(1-p.reloadT/w.reload));ctx.stroke()}}
