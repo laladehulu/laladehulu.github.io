@@ -153,7 +153,7 @@ function mkUnit(o){return Object.assign({id:UID++,alive:true,x:0,y:0,aim:Math.PI
 let G=null,state='boot',TS=36,VW=0,VH=0,DPR=1,camX=0,camY=0;
 const cv=$('cv'),ctx=cv.getContext('2d');const fog=document.createElement('canvas'),fctx=fog.getContext('2d');
 const KEYS={},MOUSE={x:0,y:0,down:false,in:false},TCH={mx:0,my:0,ax:0,ay:0,aiming:false,fire:false};
-const VIS=30;
+const VIS=90;// no distance limit: only walls block sight (the map is 64 tiles wide)
 // bots and Germans only fight at close range, well inside the player's view, so the battle happens up close
 const AI_RANGE=14;
 const inDugout=u=>u.x>=54&&u.x<=58&&u.y>=16&&u.y<=24;
@@ -1030,7 +1030,7 @@ function bake(){
 function craterAt(g,x,y,r){g.fillStyle='rgba(212,191,147,.55)';g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.fillStyle='rgba(29,24,21,.6)';g.beginPath();g.arc(x+r*0.08,y+r*0.08,r*0.72,0,TAU);g.fill();g.strokeStyle='rgba(29,24,21,.5)';g.lineWidth=1.3;g.beginPath();g.arc(x,y,r,0,TAU);g.stroke()}
 function decal(k,x,y,r){if(!MG)return;if(k==='crater')craterAt(MG,x*S,y*S,(r||2)*S*0.45);else if(k==='blood'){MG.fillStyle='rgba(122,24,16,.75)';MG.beginPath();MG.arc(x*S,y*S,2+crnd()*3,0,TAU);MG.fill()}else if(k==='pool'){MG.fillStyle='rgba(122,24,16,.65)';MG.beginPath();MG.ellipse(x*S,y*S,10+crnd()*6,7+crnd()*4,crnd()*3,0,TAU);MG.fill()}}
 
-function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=$('app').getBoundingClientRect();VW=r.width;VH=r.height;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);fog.width=cv.width;fog.height=cv.height;TS=clamp(Math.min(VW,VH)/(VW<600?16:23),20,36)}
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=$('app').getBoundingClientRect();VW=r.width;VH=r.height;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);fog.width=cv.width;fog.height=cv.height;TS=clamp(Math.min(VW,VH)/(VW<600?14:20),24,40)}
 window.addEventListener('resize',resize);
 const w2s=(x,y)=>[x*TS-camX,y*TS-camY];
 function star(g,cx,cy,r){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*0.42:r;i?g.lineTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q):g.moveTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q)}g.closePath()}
@@ -1071,7 +1071,7 @@ function drawTank(g,x,y,s,u){g.save();g.translate(x,y);const dead=!!u.dead;
 // halftone screen for the fog of war (ink dots on a dark wash), rebuilt only when the pixel ratio changes
 let FOGP=null,FOGDPR=0;
 function fogPattern(g){if(FOGP&&FOGDPR===DPR)return FOGP;const c=document.createElement('canvas'),n=Math.round(7*DPR);c.width=c.height=n;const q=c.getContext('2d');
-  q.fillStyle='rgba(29,24,21,.38)';q.fillRect(0,0,n,n);q.fillStyle='rgba(29,24,21,.72)';q.beginPath();q.arc(n/2,n/2,n*0.36,0,TAU);q.fill();FOGP=g.createPattern(c,'repeat');FOGDPR=DPR;return FOGP}
+  q.fillStyle='rgba(29,24,21,.24)';q.fillRect(0,0,n,n);q.fillStyle='rgba(29,24,21,.55)';q.beginPath();q.arc(n/2,n/2,n*0.36,0,TAU);q.fill();FOGP=g.createPattern(c,'repeat');FOGDPR=DPR;return FOGP}
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=PAL.ink;ctx.fillRect(0,0,VW,VH);
   if(!G||!MAPC)return;const tm=performance.now()/1000;const me=G.me;const playing=!!me&&state!=='title';
@@ -1114,8 +1114,8 @@ function render(){
   for(const f of FIRES){const [sx,sy]=w2s(f.x,f.y);if(!on(sx,sy,40))continue;const sc=TS*(f.big?1.4:1);for(let i=0;i<3;i++){const a=tm*5+i*2.1+f.x,h=sc*(0.55-i*0.13)*(0.85+0.15*Math.sin(a*1.7));const wd=sc*(0.3-i*0.07);ctx.fillStyle=[PAL.red,PAL.ochre,PAL.paper][i];ctx.beginPath();ctx.moveTo(sx-wd,sy+sc*0.12);ctx.quadraticCurveTo(sx-wd*0.9,sy-h*0.5,sx+Math.sin(a)*wd*0.4,sy-h);ctx.quadraticCurveTo(sx+wd*0.9,sy-h*0.5,sx+wd,sy+sc*0.12);ctx.closePath();ctx.fill()}}
   if(eye){
     fctx.setTransform(DPR,0,0,DPR,0,0);fctx.globalCompositeOperation='source-over';fctx.clearRect(0,0,VW,VH);fctx.fillStyle=fogPattern(fctx);fctx.fillRect(0,0,VW,VH);fctx.globalCompositeOperation='destination-out';
-    const [px,py]=w2s(p.x,p.y);const R=VIS*TS;const gr=fctx.createRadialGradient(px,py,R*0.55,px,py,R);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(1,'rgba(0,0,0,0)');fctx.fillStyle=gr;
-    fctx.beginPath();const N=240;for(let i=0;i<N;i++){const a=i/N*TAU,dx=Math.cos(a),dy=Math.sin(a);let d=0;while(d<VIS){d+=0.14;const xx=p.x+dx*d,yy=p.y+dy*d;if(xx<0||yy<0||xx>=W||yy>=H)break;if(grid[(yy|0)*W+(xx|0)]===WALL){d+=0.4;break}}d=Math.min(d,VIS);const [sx,sy]=w2s(p.x+dx*d,p.y+dy*d);i?fctx.lineTo(sx,sy):fctx.moveTo(sx,sy)}fctx.closePath();fctx.fill();
+    const [px,py]=w2s(p.x,p.y);const R=VIS*TS;fctx.fillStyle='#000';
+    fctx.beginPath();const N=360;for(let i=0;i<N;i++){const a=i/N*TAU,dx=Math.cos(a),dy=Math.sin(a);let d=0;while(d<VIS){d+=0.2;const xx=p.x+dx*d,yy=p.y+dy*d;if(xx<0||yy<0||xx>=W||yy>=H)break;if(grid[(yy|0)*W+(xx|0)]===WALL){d+=0.4;break}}const [sx,sy]=w2s(p.x+dx*d,p.y+dy*d);i?fctx.lineTo(sx,sy):fctx.moveTo(sx,sy)}fctx.closePath();fctx.fill();
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(fog,0,0);ctx.setTransform(DPR,0,0,DPR,0,0)}
   for(const f of G.fx){if(f.k!=='flare')continue;const k=Math.min(1,f.t/1);const x=f.x0+(f.x-f.x0)*k,y=f.y0+(f.y-f.y0)*k;const [sx,sy]=w2s(x,y);const [ox,oy]=w2s(f.x0,f.y0);
     ctx.strokeStyle=`rgba(140,255,150,${0.5*Math.max(0,1-Math.max(0,f.t-2)/3)})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ox,oy);ctx.quadraticCurveTo((ox+sx)/2,Math.min(oy,sy)-TS*4,sx,sy);ctx.stroke();
