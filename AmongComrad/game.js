@@ -147,6 +147,8 @@ let G=null,state='boot',TS=36,VW=0,VH=0,DPR=1,camX=0,camY=0;
 const cv=$('cv'),ctx=cv.getContext('2d');const fog=document.createElement('canvas'),fctx=fog.getContext('2d');
 const KEYS={},MOUSE={x:0,y:0,down:false,in:false},TCH={mx:0,my:0,ax:0,ay:0,aiming:false,fire:false};
 const VIS=17;
+// bots and Germans only fight inside the player's view distance, so every engagement is one a player can see and join
+const AI_RANGE=VIS-1.5;
 const inDugout=u=>u.x>=54&&u.x<=58&&u.y>=16&&u.y<=24;
 
 const SEATS=8;
@@ -219,7 +221,7 @@ function fire(u,ang,o={}){
   if(u.isPlayer&&u.moving)sp*=1.6;
   const a=ang+(rnd()+rnd()-1)*sp*1.5,dx=Math.cos(a),dy=Math.sin(a);
   const tk=!!o.tk||(u.isPlayer&&u.isSpy&&!u.revealed);
-  G.proj.push({x:u.x+dx*0.3,y:u.y+dy*0.3,dx,dy,sp:w.speed,dmg:w.dmg*(o.mul||1),cal:w.cal,owner:u,side:u.side,tk,dist:0,max:w.range*1.3,at:!!w.at,last:-1,he:false});
+  G.proj.push({x:u.x+dx*0.3,y:u.y+dy*0.3,dx,dy,sp:w.speed,dmg:w.dmg*(o.mul||1),cal:w.cal,owner:u,side:u.side,tk,dist:0,max:u.isPlayer?w.range*1.3:Math.min(w.range*1.3,AI_RANGE+3),at:!!w.at,last:-1,he:false});
   u.mag--;u.fireCd=w.rof*(u.isPlayer?1:1+rnd()*0.25);
   const ml=w.len+0.1;G.fx.push({k:'muz',x:u.x+dx*ml,y:u.y+dy*ml,a,t:0,life:0.06});
   sfxAt(w.snd,u.x,u.y);
@@ -318,7 +320,7 @@ function noticedBy(s,ex){const out=[];for(const o of G.units){if(!o.alive||o===s
   const cone=o.target&&o.target.alive?0.6:0.95;
   if(d<2.5||Math.abs(angDiff(o.aim,Math.atan2(s.y-o.y,s.x-o.x)))<cone)out.push(o)}return out}
 function pickTarget(u){
-  const w=WPN[u.wpn];let best=null,bs=1e9;const range=u.kind==='tank'?40:w.range;
+  const w=WPN[u.wpn];let best=null,bs=1e9;const range=Math.min(u.kind==='tank'?40:w.range,AI_RANGE);
   for(const e of G.units){if(!e.alive||e===u)continue;
     let foe=false;if(u.side==='sov')foe=e.side==='ger'||e.side==='traitor';else if(u.side==='ger')foe=e.side==='sov';else if(u.side==='traitor')foe=e.side==='sov';
     if(!foe)continue;const d=dist(u.x,u.y,e.x,e.y);if(d>range)continue;
