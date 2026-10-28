@@ -147,9 +147,9 @@ const SQUAD=[
  {name:'Lebedev',rank:'Intern',col:'#e9e3d1',wpn:'ppsh'},
 ];
 const WAVES=[
- {r:18,s:10,m:1,g:3,t:3,txt:'Scraper bots and a minigun unit pour down Market Street behind three Acquisition Mechs. Man the EMP turrets.'},
- {r:20,s:14,m:2,g:4,t:4,txt:'Enterprise-grade agents and four Acquisition Mechs. Stop the mechs before they reach the lobby.'},
- {r:24,s:18,m:2,g:5,t:5,txt:'Everything Big Tech has. Five Acquisition Mechs lead the final sprint. Leadership is in Tahoe.'},
+ {r:18,s:10,m:1,g:3,t:3,txt:'Scraper bots pour down Market Street behind three Prod Outages. Run the CI pipelines.'},
+ {r:20,s:14,m:2,g:4,t:4,txt:'Enterprise-grade agents and four Prod Outages. Resolve them before they reach the windows.'},
+ {r:24,s:18,m:2,g:5,t:5,txt:'Everything Big Tech has. Five Prod Outages lead the final sprint. Leadership is in Tahoe.'},
 ]
 // Avalon-style sorties between assaults. Team size per sortie (8 soldiers).
 const SORTIES=[
@@ -157,7 +157,7 @@ const SORTIES=[
  {name:'Raid the listening post',x:28,y:33,brief:'Clear the bot listening post in the southern rubble before it calls in the next attack.',ok:'The listening post is gone. The bots will come in blind and fewer.',bad:'The post survived and called in reinforcements.'},
  {name:'Cut the field telephone',x:25,y:20,brief:'Cut the bot field telephone cable that runs under the street.',ok:'The line is cut. The next sprint is badly coordinated.',bad:'The cable was never cut. The bots mass more troops.'},
  {name:'Blow the culvert',x:23,y:12,brief:'Blow the culvert the bots use to bring troops up under cover.',ok:'The culvert is rubble. Fewer bots reach the office.',bad:'The charge was a dud. bots pour through the culvert.'},
- {name:'Mine the street',x:30,y:21,tank:true,brief:'Mine the street before the Acquisition Mech comes. Last chance.',ok:'Mines in the street. The Acquisition Mech will hit them, and fewer bots follow.',bad:'The mines were disarmed. The Acquisition Mech and its infantry come on in full strength.'},
+ {name:'Mine the street',x:30,y:21,tank:true,brief:'Mine the street before the Prod Outage comes. Last chance.',ok:'Mines in the street. The Prod Outage will hit them, and fewer bots follow.',bad:'The mines were disarmed. The Prod Outage and its infantry come on in full strength.'},
 ];
 const TEAM=[3,4,4,5,5];
 // mul: German numbers per assault · spread: German inaccuracy · pdmg: German damage to you · hp: squad toughness
@@ -267,6 +267,17 @@ function fire(u,ang,o={}){
   if(u===G.me){G.kick=Math.min(0.3,G.kick+(w.auto?0.05:0.12));const ea=a+Math.PI/2+(crnd()-.5)*0.6;if(!w.flame)BRASS.push({x:u.x+dx*0.25,y:u.y+dy*0.25,vx:Math.cos(ea)*(2.5+crnd()*1.5),vy:Math.sin(ea)*(2.5+crnd()*1.5),t:0,r:crnd()*TAU});if(BRASS.length>40)BRASS.shift()}
   if(u.mag<=0)startReload(u);
   return true}
+// ================= patching (no guns in this office) =================
+// Hold click to patch the nearest rogue agent in front of you, up close. Damage lands in small chunks so feedback stays readable.
+const PATCH_R=2.4,PATCH_ARC=0.8,PATCH_DPS=70,BUG_DPS=24,GLYPHS='{}<>/;=()[]01';
+function patchTarget(u){let best=null,bs=1e9;for(const e of G.units){if(!e.alive||e.side!=='ger')continue;const er=e.kind==='tank'?1.2:0;const d=dist(u.x,u.y,e.x,e.y)-er;if(d>PATCH_R)continue;
+  const a=Math.abs(angDiff(u.aim,Math.atan2(e.y-u.y,e.x-u.x)));if(a>PATCH_ARC&&d>0.8)continue;const sc=d+a;if(sc<bs&&los(u.x,u.y,e.x,e.y,0.3)){bs=sc;best=e}}return best}
+function patchTick(u,dt,on){if(!on){u.patching=null;return}const T=patchTarget(u);u.patching=T;if(!T){u.patchAcc=0;return}
+  let dps=PATCH_DPS;if(u.x>42&&u.x<53&&((G.effects.crN&&u.y<19)||(G.effects.crS&&u.y>=19)))dps*=0.55;
+  u.patchAcc=(u.patchAcc||0)+dps*dt;u.patchT=(u.patchT||0)+dt;
+  if(u.patchT>=0.2){const d=u.patchAcc;u.patchAcc=0;u.patchT=0;hurt(T,d,{owner:u,cause:'patch'});
+    if(G.me&&dist(u.x,u.y,G.me.x,G.me.y)<VIS)for(let i=0;i<3;i++)pfx({k:'glyph',x:u.x+(crnd()-.5)*0.3,y:u.y+(crnd()-.5)*0.3,tx:T.x+(crnd()-.5)*0.6,ty:T.y+(crnd()-.5)*0.6,life:0.3+crnd()*0.15,ch:GLYPHS[(crnd()*GLYPHS.length)|0]});
+    if(u===G.me)sfx('type')}}
 function startReload(u){if(u.reloadT>0)return;const w=WPN[u.wpn];if(u.isPlayer&&(u.reserve<=0||u.mag>=w.mag))return;u.reloadT=w.reload;if(u.isPlayer){if(u===G.me)sfx('reload')}else if(w.mag>5&&rnd()<0.5)say(u,pick(['Reloading!','Swapping mag!','Cover me, I\'m in a meeting!']),1.4)}
 function canHit(p,u){if(u===p.owner||!u.alive)return false;if(u.kind==='tank')return p.side!=='ger';const s=p.side,t=u.side;
   if(s==='ger')return t==='sov';if(s==='sov')return t==='ger'||t==='traitor'||(t==='sov'&&p.tk);if(s==='traitor')return t==='sov';return false}
@@ -305,9 +316,9 @@ function hurt(u,dmg,src){
   u.hp-=dmg;
   if(u.kind!=='tank'&&src.dx!==undefined&&src.cause==='bullet'){const kb=Math.min(0.18,dmg*0.004);const nx=u.x+src.dx*kb,ny=u.y+src.dy*kb;if(!blockedAt(nx,ny,0.28)){u.x=nx;u.y=ny}}
   FLASH.set(u.id,performance.now());
-  if(G.me&&src.owner===G.me&&u!==G.me&&u.side!==G.me.side){HM.t=performance.now();HM.kill=u.hp<=0;sfx(HM.kill?'kill':'hit');if(HM.kill){pfx({k:'star',x:u.x,y:u.y,life:0.55});G.shake=Math.max(G.shake,REDUCED?0:2.5)}}
-  if(G.me&&dist(u.x,u.y,G.me.x,G.me.y)<VIS){if(u.kind==='tank')burst(u.x,u.y,5,'spark','255,200,90',4,2);else if(src.dx!==undefined)spray(u.x,u.y,src.dx,src.dy,4+Math.min(6,dmg/6|0),'drop','255,110,40',3);else burst(u.x,u.y,6,'drop','255,110,40',2.5,2.5)}
-  if(u.kind!=='tank'){G.fx.push({k:'blood',x:u.x,y:u.y,t:0,life:0.4});if(crnd()<0.5)decal('blood',u.x+(crnd()-.5)*.5,u.y+(crnd()-.5)*.5)}
+  if(G.me&&src.owner===G.me&&u!==G.me&&u.side!==G.me.side){HM.t=performance.now();HM.kill=u.hp<=0;if(HM.kill||src.cause!=='patch')sfx(HM.kill?'kill':'hit');if(HM.kill){pfx({k:'star',x:u.x,y:u.y,life:0.55});G.shake=Math.max(G.shake,REDUCED?0:2.5)}}
+  if(src.cause!=='patch'&&src.cause!=='bug'&&G.me&&dist(u.x,u.y,G.me.x,G.me.y)<VIS){if(u.kind==='tank')burst(u.x,u.y,5,'spark','255,200,90',4,2);else if(src.dx!==undefined)spray(u.x,u.y,src.dx,src.dy,4+Math.min(6,dmg/6|0),'drop','255,110,40',3);else burst(u.x,u.y,6,'drop','255,110,40',2.5,2.5)}
+  if(u.kind!=='tank'&&src.cause!=='patch'&&src.cause!=='bug'){G.fx.push({k:'blood',x:u.x,y:u.y,t:0,life:0.4});if(crnd()<0.5)decal('blood',u.x+(crnd()-.5)*.5,u.y+(crnd()-.5)*.5)}
   if(u.isPlayer){
     const friendly=!!(src.owner&&src.owner.side!=='ger'&&src.owner!==u);
     if(u===G.me){const a=src.dx!==undefined?Math.atan2(-src.dy,-src.dx):0;G.hitInd.push({a,t:0,life:1.2,friendly});G.dmgFlash=0.35;sfx('hurt')}
@@ -326,8 +337,8 @@ function kill(u,src){
   u.alive=false;u.hp=0;u.path=[];if(u.res){u.res.res=null;u.res=null}
   for(const h of G.humans)if(h.arrestHold&&(h.arrestHold.T===u||h===u))h.arrestHold=null;
   const ko=src.owner&&src.owner.isPlayer?src.owner:null;
-  if(u.kind==='tank'){u.dead=true;G.kills++;if(ko)ko.kills++;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const tx=(u.x|0)+dx,ty=(u.y|0)+dy;if(get(tx,ty)===GROUND)set(tx,ty,COVER,5)}burst(u.x,u.y,18,'chip','40,38,34',5,5);burst(u.x,u.y,10,'spark','255,170,60',6,4);explode(u.x,u.y,2.5,60,{owner:u,cause:'shell',hurtSov:true,hurtGer:true});FIRES.push({x:u.x,y:u.y,big:true});return}
-  const b={u,x:u.x,y:u.y,aim:u.aim,uniform:u.uniform,col:u.col,cause:src.cause||'bullet',cal:src.cal,gkind:src.gkind,dirKey:dirKey(src),t:G.time,wave:G.wave,zone:zoneAt(u.x,u.y),inspected:false,inspBy:[],wpn:(u.side==='ger'&&(u.wpn==='mp40'||u.wpn==='kar98'))?u.wpn:null,taken:false,killer:src.owner};
+  if(u.kind==='tank'){u.dead=true;u.gone=true;G.kills++;if(ko)ko.kills++;burst(u.x,u.y,18,'chip','34,211,255',5,5);burst(u.x,u.y,14,'spark','255,90,31',6,4);pfx({k:'ring',x:u.x,y:u.y,life:0.5,s:3});logMsg('Prod outage resolved. Someone write the postmortem.','good');return}
+  const b={u,x:u.x,y:u.y,aim:u.aim,uniform:u.uniform,col:u.col,cause:src.cause||'bullet',cal:src.cal,gkind:src.gkind,dirKey:dirKey(src),t:G.time,wave:G.wave,zone:zoneAt(u.x,u.y),inspected:false,inspBy:[],wpn:null,taken:false,killer:src.owner};
   if(src.dx!==undefined&&u.kind!=='tank'){for(let k=6;k>0;k--){const nx=b.x+src.dx*0.12*k,ny=b.y+src.dy*0.12*k;if(!blockedAt(nx,ny,0.25)){b.x=nx;b.y=ny;break}}}
   G.bodies.push(b);decal('pool',b.x,b.y);
   if(u.side==='ger'){G.kills++;if(ko)ko.kills++;return}
@@ -404,20 +415,17 @@ function sovAI(u,dt){
   combatTick(u,dt)}
 function combatTick(u,dt){
   u.thinkT-=dt;if(u.thinkT<=0){u.thinkT=0.28+rnd()*0.12;u.target=pickTarget(u)}
-  const t=u.target&&u.target.alive?u.target:null;
+  const t=u.target&&u.target.alive&&u.target.side==='ger'?u.target:null;
   const want=t?Math.atan2(t.y-u.y,t.x-u.x):(u.moving?u.moveA:(u.post?u.post.face:Math.PI));
   const d=angDiff(u.aim,want);u.aim+=clamp(d,-8*dt,8*dt);
-  if(!t)return;
-  if(Math.abs(d)<0.15){if(u.burstPause>0)u.burstPause-=dt;
-    else{const w=WPN[u.wpn];const ex=(u.isSpy&&t.side==='ger')?2.8:1;
-      if(fire(u,u.aim,{extra:ex})&&w.auto){u.burst--;if(u.burst<=0){u.burst=3+(rnd()*6|0);u.burstPause=0.3+rnd()*0.7}}}}
-  u.grenCd-=dt;
-  if(u.grenCd<=0&&t.side==='ger'&&G.phase==='wave'){const dd=dist(u.x,u.y,t.x,t.y);if(dd>4&&dd<11&&rnd()<0.6){throwGrenade(u,t.x,t.y,'rgd');say(u,pick(['Kombucha out!','Kombucha out!']),1.4);u.grenCd=16+rnd()*14}else u.grenCd=2}}
+  if(!t){patchTick(u,dt,false);return}
+  const dd=dist(u.x,u.y,t.x,t.y)-(t.kind==='tank'?1.2:0);
+  if(dd>PATCH_R*0.8&&!u.gunner&&u.duty==null&&!u.knife&&!u.recruit&&!u.checkHold&&!u.checkGo&&t.kind!=='tank'&&(dd<5||t.x>=36)){u.chaseT=(u.chaseT||0)-dt;if(u.chaseT<=0){u.chaseT=0.7;if(goTo(u,t.x,t.y)){u.seeking=true;u.seekHold=1.2}}}
+  patchTick(u,dt,dd<=PATCH_R&&Math.abs(d)<0.6)}
 function traitorAI(u,dt){
   if(!u.fleeSet){u.fleeSet=true;u.post=null;if(!goTo(u,0.6,clamp(u.y,2,37)|0))goTo(u,0.6,20.5)}
   if(u.path.length)followPath(u,dt,3.7);else{u.repathT-=dt;if(u.repathT<=0){u.repathT=2;goTo(u,0.6,clamp(u.y+(rnd()-.5)*10,1,38)|0)}}
-  if(u.x<1.2){u.alive=false;u.escaped=true;if(u===G.spy)G.spyFate='escaped';logMsg(`${u.name} reached the rival lab.`,'bad');noteAll(`${u.name}, the mole, escaped to the rival lab.`,'key',LOYAL);return}
-  combatTick(u,dt)}
+  if(u.x<1.2){u.alive=false;u.escaped=true;if(u===G.spy)G.spyFate='escaped';logMsg(`${u.name} reached the rival lab.`,'bad');noteAll(`${u.name}, the mole, escaped to the rival lab.`,'key',LOYAL);return}}
 // the AI spy's best guess at who the hidden commissar is (only acts on a strong guess)
 function comTarget(u){let best=null,bv=0;for(const o of liveSov()){if(o===u)continue;const v=G.comGuess[o.id]||0;if(v>bv){bv=v;best=o}}return bv>=55?best:null}
 function spyAI(u,dt){
@@ -502,10 +510,7 @@ function knifeTick(u,dt){const k=u.knife,T=k.T;u.moving=false;u.aim=Math.atan2(T
   k.t+=dt;if(k.t>=KNIFE_T){u.knife=null;u.knifeCd=u.isPlayer?40:45+rnd()*25;u.seeking=false;G.stabs=(G.stabs||0)+1;
     if(u.isPlayer){logMsg(`You unplug ${T.name}. Not a sound.`,'good',u);if(u===G.me)sfx('throw')}
     T.hp=0;kill(T,{owner:u,cause:'knife',dx:(T.x-u.x)/(dist(u.x,u.y,T.x,T.y)||1),dy:(T.y-u.y)/(dist(u.x,u.y,T.x,T.y)||1)})}}
-function startStab(u,T){
-  const sw=(u.wpn==='ptrd'||(G.wave>=2&&rnd()<0.3))?'mp40':u.wpn;
-  G.stabs=(G.stabs||0)+1;u.stab={T,shots:WPN[sw].auto?4:2,t:0,prevW:u.wpn};u.wpn=sw;u.mag=WPN[sw].mag;u.reloadT=0;u.fireCd=0;u.path=[];
-  for(const h of G.humans)if(h!==u&&seesPt(h,u.x,u.y,10)){noteTo(h,`You saw ${u.name} turn ${sw==='mp40'?'a Bot Blaster':'a weapon'} on ${T===h?'you':T.name}!`,'key');logMsg(`${u.name} is firing at ${T===h?'you':T.name}!`,'bad',h)}}
+function startStab(u,T){const sp=behindSpot(T);if(sp&&goTo(u,sp.x,sp.y)){u.seeking=true;u.seekHold=5}}
 function stabTick(u,dt){const s=u.stab,T=s.T;u.moving=false;
   u.aim=Math.atan2(T.y-u.y,T.x-u.x);s.t-=dt;
   if(s.shots>0&&s.t<=0&&T.alive){u.fireCd=0;u.reloadT=0;if(u.mag<=0)u.mag=WPN[u.wpn].mag;fire(u,u.aim,{tk:true,mul:T.isPlayer?1.0:2.4,extra:0.35});s.shots--;s.t=WPN[u.wpn].auto?0.09:0.6}
@@ -517,10 +522,11 @@ function doFlare(u,tx,ty){
   G.fx.push({k:'flare',x0:u.x,y0:u.y,x:tx,y:ty,t:0,life:9});sfxAt('flare',u.x,u.y);
   G.sched.push({at:G.time+7,k:'barrage',x:tx,y:ty,by:u});
   G.incidents.push({id:++G.incId,type:'flare',t:G.time,x:u.x,y:u.y,zone:zoneAt(u.x,u.y),by:u,wave:G.wave});
-  logMsg('Geotagged selfie! Delivery drones are inbound — get clear!','bad');
+  logMsg('Someone posted a geotagged selfie! A scraper swarm is inbound.','bad');
   for(const b of G.squad){if(b.alive&&b.side==='sov'&&dist(b.x,b.y,tx,ty)<6){const a=rnd()*TAU;for(let k=0;k<12;k++){const x=b.x+Math.cos(a+k)*6,y=b.y+Math.sin(a+k)*6;if(passable(x|0,y|0)&&dist(x,y,tx,ty)>6){goTo(b,(x|0)+0.5,(y|0)+0.5);b.evadeT=12;break}}}}
-  for(const h of G.humans){if(h.isSpy||h===u)continue;let t=`A geotagged selfie went up from the ${zoneAt(u.x,u.y)} — a signal to the bot delivery drones.`;if(seesPt(h,u.x,u.y,12))t+=` You saw ${u.name} fire it.`;noteTo(h,t,'flare')}}
-function barrage(tx,ty,by){for(let i=0;i<6;i++)G.sched.push({at:G.time+i*0.5,k:'shell',x:tx,y:ty,by})}
+  for(const h of G.humans){if(h.isSpy||h===u)continue;let t=`A geotagged selfie went up from the ${zoneAt(u.x,u.y)} — it leaked the office address to the scrapers.`;if(seesPt(h,u.x,u.y,12))t+=` You saw ${u.name} fire it.`;noteTo(h,t,'flare')}}
+function barrage(tx,ty,by){for(let i=0;i<5;i++){let x=tx,y=ty;for(let k=0;k<20;k++){const xx=clamp(tx+(rnd()-.5)*8,1,W-2),yy=clamp(ty+(rnd()-.5)*8,1,H-2);if(passable(xx|0,yy|0)&&!blockedAt(xx,yy,0.3)){x=xx;y=yy;break}}
+  spawnGerman('smg');const u=G.units[G.units.length-1];u.x=x;u.y=y;u.path=[];u.state='assault';u.apt={x:tx,y:ty};u.repathT=0.5;pfx({k:'ring',x,y,life:0.4,s:1})}}
 // scheduled events are plain data (not closures) so they can travel in a snapshot
 function runSched(e){
   if(e.k==='barrage')barrage(e.x,e.y,e.by);
@@ -531,14 +537,12 @@ function runSched(e){
 
 // ================= German AI =================
 function spawnGerman(kind){
-  if(kind==='tank'){const th=Math.round(1300*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Acquisition Mech',hp:th,maxhp:th,wpn:'mg42',mag:75,x:7,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);sfx('tankHorn');return}
+  if(kind==='tank'){const th=Math.round(900*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Prod Outage',hp:th,maxhp:th,wpn:'mg42',mag:75,x:7,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[37,36.2,37.4][ln],holdT:0});G.units.push(u);sfx('tankHorn');return}
   // infantry appear in the ruins just beyond the defenders' sight, so they are in the fight within seconds
   let y=0,x0=0;for(let k=0;k<60;k++){y=1+(rnd()*38|0);x0=22+(rnd()*6|0);if(passable(x0,y)&&passable(x0+1,y))break;x0=0;if(passable(0,y)&&passable(1,y))break}
   const wpn=kind==='smg'?'mp40':kind==='mg'?'mg42':'kar98';
   const u=mkUnit({kind,side:'ger',uniform:'ger',name:'Rogue AI',wpn,mag:WPN[wpn].mag,x:x0+0.5,y:y+0.5,aim:0,hp:(kind==='mg'?140:100)*(G.diff.ghp||1),maxhp:(kind==='mg'?140:100)*(G.diff.ghp||1),grenCd:kind==='gren'?6:30+rnd()*30});
-  G.units.push(u);
-  if(kind==='mg'){const c=CSPOTS.filter(s=>!s.res&&s.x>14&&s.x<27);if(c.length){const s=pick(c);if(goTo(u,s.x,s.y)){s.res=u;u.res=s;u.state='mgmove';return}}}
-  nextMove(u)}
+  G.units.push(u);assault(u)}
 function nextMove(u){
   if(u.res){u.res.res=null;u.res=null}
   if(u.x>=34){assault(u);return}
@@ -559,20 +563,15 @@ function gerAI(u,dt){
     case 'assault':if(u.path.length)followPath(u,dt,sp);else{u.moving=false;u.repathT-=dt;if(u.repathT<=0){u.repathT=2.5;if(!t&&dist(u.x,u.y,u.apt.x,u.apt.y)<2){u.apt=rnd()<0.6?ASSAULT[0]:pick(ASSAULT)}const tg=t||u.apt;if(tg)goTo(u,tg.x+(rnd()-.5),tg.y+(rnd()-.5))}}break;
     default:nextMove(u)}
   const want=t?Math.atan2(t.y-u.y,t.x-u.x):(u.moving?u.moveA:0);const d=angDiff(u.aim,want);u.aim+=clamp(d,-6*dt,6*dt);
-  if(!t)return;const dd=dist(u.x,u.y,t.x,t.y);
-  const canFire=u.state==='engage'||u.state==='mg'||u.state==='hold'||u.state==='assault'||(u.kind==='smg'&&dd<11);
-  if(canFire&&Math.abs(d)<0.2){if(u.burstPause>0)u.burstPause-=dt;else{const w=WPN[u.wpn];if(fire(u,u.aim)&&w.auto){u.burst--;if(u.burst<=0){u.burst=u.kind==='mg'?10+(rnd()*10|0):3+(rnd()*5|0);u.burstPause=u.kind==='mg'?0.8+rnd()*1.2:0.4+rnd()*0.6}}}}
-  u.grenCd-=dt;if(u.grenCd<=0){if(dd>4&&dd<10){throwGrenade(u,t.x,t.y,'stick');say(u,'DEPLOYING CHARGE.',1.3);u.grenCd=u.kind==='gren'?10+rnd()*8:40}else u.grenCd=2}}
+  bugBite(u,dt,1.0,BUG_DPS*(u.kind==='mg'?1.5:1))}
+// a bug that reaches someone latches on and stresses them out
+function bugBite(u,dt,r,dps){let v=null,bd=r;for(const o of G.units){if(!o.alive||o.side!=='sov')continue;const d=dist(u.x,u.y,o.x,o.y);if(d<bd){bd=d;v=o}}
+  if(!v){u.biteT=0;return}u.moving=false;u.path=[];u.biteT=(u.biteT||0)+dt;
+  if(u.biteT>=0.5){u.biteT=0;hurt(v,dps*0.5,{owner:u,cause:'bug',dx:(v.x-u.x)/(bd||1),dy:(v.y-u.y)/(bd||1)});if(G.me&&dist(v.x,v.y,G.me.x,G.me.y)<VIS)for(let i=0;i<2;i++)pfx({k:'glyph',x:u.x,y:u.y,tx:v.x+(crnd()-.5)*0.5,ty:v.y+(crnd()-.5)*0.5,life:0.35,ch:'!',c:'#22d3ff'})}}
 function tankAI(u,dt){
-  // a Panzer left alive too long rolls on to the wire and shells the building at point-blank range
-  if(u.x<u.stopX){u.x+=0.85*dt;u.moving=true;u.phase+=dt*6}else{u.moving=false;u.holdT+=dt;if(u.holdT>60&&u.stopX<34.5){u.stopX=34.5}}
-  u.thinkT-=dt;if(u.thinkT<=0){u.thinkT=0.5;u.target=pickTarget(u)}
-  const t=u.target&&u.target.alive?u.target:null;
-  const want=t?Math.atan2(t.y-u.y,t.x-u.x):0;const d=angDiff(u.turret,want);u.turret+=clamp(d,-1.1*dt,1.1*dt);u.aim=u.turret;
-  u.shellCd-=dt;if(t&&u.shellCd<=0&&Math.abs(d)<0.06){u.shellCd=4.5+rnd()*2;const a=u.turret+(rnd()-.5)*0.04;const dd=dist(u.x,u.y,t.x,t.y)+(rnd()-.5)*1.5;
-    G.proj.push({x:u.x+Math.cos(a)*1.8,y:u.y+Math.sin(a)*1.8,dx:Math.cos(a),dy:Math.sin(a),sp:30,dmg:0,cal:'75 mm',owner:u,side:'ger',dist:0,max:dd-1.8,he:true,last:-1});
-    G.fx.push({k:'muz',x:u.x+Math.cos(a)*2.1,y:u.y+Math.sin(a)*2.1,a,t:0,life:0.12,big:true});sfxAt('cannon',u.x,u.y);G.shake=Math.max(G.shake,REDUCED?2:6)}
-  if(t&&Math.abs(d)<0.3&&dist(u.x,u.y,t.x,t.y)<26){if(u.burstPause>0)u.burstPause-=dt;else if(fire(u,u.turret)){u.burst--;if(u.burst<=0){u.burst=8+(rnd()*8|0);u.burstPause=1+rnd()*1.5}}}}
+  if(u.x<u.stopX){u.x+=0.85*dt;u.moving=true;u.phase+=dt*6}else u.moving=false;
+  u.turret+=dt*0.6;u.aim=u.turret;
+  for(const o of G.units){if(!o.alive||o.side!=='sov')continue;const d=dist(u.x,u.y,o.x,o.y);if(d<3.2){o.outT=(o.outT||0)+dt;if(o.outT>=0.5){o.outT=0;hurt(o,22,{owner:u,cause:'outage',dx:(o.x-u.x)/(d||1),dy:(o.y-u.y)/(d||1)})}}}}
 
 // ================= human players =================
 // Each tick every human contributes one input record (the only thing peers send each other):
@@ -595,7 +594,7 @@ function humanTick(p,I,dt){
   if(p.onGun){}
   else if(l>0.1){const s=(p.crouch?1.7:p.sprint?7.0:p.reloadT>0?3.3:4.0)*Math.min(1,l)/l;moveFree(p,mx*s*dt,my*s*dt);p.moving=true;p.phase+=dt*10;p.moveA=Math.atan2(my,mx)}else p.moving=false;
   const trig=!!(p.btn&1)&&!p.onGun;
-  if(trig){const w=WPN[p.wpn];if(w.auto||!p.semiLock){if(fire(p,p.aim))p.semiLock=true;else if(p.mag<=0&&p.reserve<=0&&!(p.clickT>0)){if(p===G.me)sfx('empty');p.clickT=0.4}}}
+  patchTick(p,dt,trig);
   if(p.clickT>0)p.clickT=Math.max(0,p.clickT-dt);
   if(p.vaultBuf>0){p.vaultBuf-=dt;if(p.moving)vaultTry(p)}
   if(!trig)p.semiLock=false;
@@ -642,11 +641,11 @@ function worldTag(x,y,label,below){ctx.save();const [sx,sy0]=w2s(x,y);const k=Ma
 function faceScore(p,x,y){const d=dist(p.x,p.y,x,y);return (d<0.35?0:Math.abs(angDiff(p.aim,Math.atan2(y-p.y,x-p.x))))+0.35*d}
 function nearestInteract(p){
   if(!p||!p.alive||p.revealed)return null;
-  if(p.onGun)return{k:'gun',label:'Leave the turret',x:p.x,y:p.y};
+  if(p.onGun)return{k:'gun',label:'Leave the console',x:p.x,y:p.y};
   const c=[];
-  if(dist(p.x,p.y,ARMORY.x,ARMORY.y)<1.6)c.push({k:'armory',label:'Supply closet',x:ARMORY.x,y:ARMORY.y});
-  for(let k=0;k<GUNS.length;k++){const cs=crewSpot(k),gc=G.guns[k].crew;if(dist(p.x,p.y,cs.x,cs.y)<1.3&&!(gc&&gc.isPlayer&&gc!==p))c.push({k:'gun',gi:k,label:'Man the turret',x:GUNS[k].x,y:GUNS[k].y})}
-  for(const cr of CRATES)if(dist(p.x,p.y,cr.x,cr.y)<1.6)c.push({k:'crate',label:'Restock',x:cr.x,y:cr.y});
+  if(dist(p.x,p.y,ARMORY.x,ARMORY.y)<1.6)c.push({k:'armory',label:'Coffee',x:ARMORY.x,y:ARMORY.y});
+  for(let k=0;k<GUNS.length;k++){const cs=crewSpot(k),gc=G.guns[k].crew;if(dist(p.x,p.y,cs.x,cs.y)<1.3&&!(gc&&gc.isPlayer&&gc!==p))c.push({k:'gun',gi:k,label:'Run the pipeline',x:GUNS[k].x,y:GUNS[k].y})}
+  for(const cr of CRATES)if(dist(p.x,p.y,cr.x,cr.y)<1.6)c.push({k:'crate',label:'Snacks',x:cr.x,y:cr.y});
   {const cs=nearCasing(p);if(cs&&!p.isSpy)c.push({k:'casing',c:cs,label:`Pick up dart (${cs.cal})`,x:cs.x,y:cs.y})}
   for(const b of G.bodies){if(dist(p.x,p.y,b.x,b.y)>=1.4)continue;
     if(b.uniform==='sov'&&!b.inspBy.includes(p.id)&&!p.isSpy&&b.u!==p)c.push({k:'inspect',b,label:`Inspect ${b.u.name}`,x:b.x,y:b.y});
@@ -697,9 +696,9 @@ function nearestComrade(p,r){let best=null,bd=r;for(const u of G.squad){if(!u.al
 function nearestArrestable(p,r){let best=null,bd=r;for(const u of G.people){if(u===p||!u.alive||u.side!=='sov')continue;const d=dist(p.x,p.y,u.x,u.y);if(d<bd){bd=d;best=u}}return best}
 function doInteract(p){
   const it=ePrompt(p);if(!it||!it.k)return;
-  if(it.k==='armory'){if(p===G.me)openArmory();return}
+  if(it.k==='armory'){if(p.crateCd>0)return;p.crateCd=20;p.hp=p.maxhp;logMsg('Fresh espresso. Energy restored.','good',p);if(p===G.me)sfx('page');return}
   if(it.k==='gun'){if(p.onGun){const g=G.guns[p.onGun-1];if(g.crew===p)g.crew=null;p.onGun=0}else{const g=G.guns[it.gi],c=g.crew;if(c&&!c.isPlayer){c.gunner=0;c.seeking=false}p.onGun=it.gi+1;const cs=crewSpot(it.gi);p.x=cs.x;p.y=cs.y;g.crew=p}return}
-  if(it.k==='crate'){if(p.crateCd>0)return;p.crateCd=1;storeSlot(p);p.slots[0].reserve=Math.max(p.slots[0].reserve,WPN[p.slots[0].wpn].res);if(p.slots[1])p.slots[1].reserve=Math.max(p.slots[1].reserve,WPN[p.slots[1].wpn].res);p.reserve=p.slots[p.slot].reserve;p.grenades=3;if(p===G.me)sfx('reload');logMsg('Restocked: full mags and three cans of kombucha.','good',p)}
+  if(it.k==='crate'){if(p.crateCd>0)return;p.crateCd=8;p.hp=Math.min(p.maxhp,p.hp+60);logMsg('Snack break. Energy up.','good',p);if(p===G.me)sfx('page');return}
   else if(it.k==='inspect'){it.b.inspBy.push(p.id);it.b.inspected=true;const t=inspectText(it.b);noteTo(p,t,'death');speech('You check on them',t,p);if(p===G.me)sfx('page');if(spySees(p))addGuess(p,8)}
   else if(it.k==='casing'){const c=it.c;G.casings.splice(G.casings.indexOf(c),1);const t=`A spent ${c.cal} dart at the ${zoneAt(c.x,c.y)}, fired ${ago(c.t)}. ${SOV_CALS.includes(c.cal)?'One of ours.':'Bot ammo — but it was fired from where you are standing.'}`;noteTo(p,t,'talk');speech('Spent dart',t,p);if(p===G.me)sfx('page')}
   else if(it.k==='take'){it.b.taken=true;storeSlot(p);p.slots[1]={wpn:it.b.wpn,mag:WPN[it.b.wpn].mag,reserve:WPN[it.b.wpn].res};p.slot=1;loadSlot(p);if(p===G.me)sfx('reload');logMsg(`You picked up a bot ${WPN[p.wpn].name}. Press 1 or 2 to switch.`,'',p)}}
@@ -715,9 +714,10 @@ function inspectText0(b){const n=b.u.name;
     const ger=!SOV_CALS.includes(b.cal);return `${n}: a ${b.cal} dart. ${d}${ger&&b.dirKey!=='front'?' Bot ammo, but fired from inside the office.':''}`}
   if(b.cause==='grenade')return `${n}: kombucha shrapnel, ${b.gkind==='rgd'?'from one of our own kombucha cans.':'from a bot charge.'}`;
   if(b.cause==='fire')return `${n}: scalded. An espresso cannon — from our side of the office.`;
-  if(b.cause==='knife')return `${n}: a yanked cable, from behind. No dart, no dart type — whoever did it was standing close enough to touch.`;
+  if(b.cause==='knife')return `${n}: a yanked laptop cable, from behind — whoever did it was standing close enough to touch.`;
   if(b.cause==='mortar')return `${n}: drone debris.`;
-  if(b.cause==='shell')return `${n}: taken out by a mech cannon.`;return `${n}: cause unclear.`}
+  if(b.cause==='shell')return `${n}: taken out by a mech cannon.`;
+  if(b.cause==='bug')return `${n}: burned out — swarmed by rogue agents.`;if(b.cause==='outage')return `${n}: burned out by a prod outage.`;return `${n}: cause unclear.`}
 function doAsk(p){
   if(p.isSpy)return;const u=nearestComrade(p,2.6);if(!u)return;
   const inc=[...G.incidents].reverse().find(i=>i.type==='death'||i.type==='flare'||i.type==='sab');
@@ -772,7 +772,7 @@ function playerFlare(p,tx,ty){
   if(p.flares<=0){logMsg('No selfies left this sprint.','',p);return}
   const w=noticedBy(p,null);p.flares--;doFlare(p,clamp(tx,1,W-2),clamp(ty,1,H-2));
   if(w.length){say(w[0],'Snake!',2.5);reveal(p,'posted a geotagged selfie for the bots',w[0])}}
-function playerGrenade(p,tx,ty){if(p.grenades<=0)return;p.grenades--;throwGrenade(p,tx,ty,'rgd')}
+function playerGrenade(p,tx,ty){return;p.grenades--;throwGrenade(p,tx,ty,'rgd')}
 
 // ================= the AI investigator's suspicion =================
 function addS(u,v){G.susp[u.id]=Math.max(0,(G.susp[u.id]||0)+v)}
@@ -915,7 +915,7 @@ const ago=t=>{const s=G.time-t|0;return s<10?'just now':s<60?`about ${Math.round
 // A crewable gun in the street, the squad's real answer to the Panzers. Anyone can man it (E); bots crew it when a
 // tank is on the field. It is also a sabotage station: a gun with its breechblock gone just clicks — and the click is
 // how the crew finds out.
-const GUNS=[{id:'gunN',name:'north EMP turret',x:40.3,y:12.5},{id:'gunM',name:'street EMP turret',x:40.3,y:20.5},{id:'gunS',name:'south EMP turret',x:40.3,y:28.5}],GUN_CD=3.2,CREW_DX=0.95;
+const GUNS=[{id:'gunN',name:'north CI pipeline',x:40.3,y:12.5},{id:'gunM',name:'street CI pipeline',x:40.3,y:20.5},{id:'gunS',name:'south CI pipeline',x:40.3,y:28.5}],GUN_CD=3.2,CREW_DX=0.95;
 const crewSpot=k=>({x:GUNS[k].x+CREW_DX,y:GUNS[k].y});
 const gunStation=k=>STATIONS.findIndex(s=>s.id===GUNS[k].id);
 function gunTick(dt){const tanks=G.units.filter(u=>u.alive&&u.kind==='tank');
@@ -933,17 +933,18 @@ function gunTick(dt){const tanks=G.units.filter(u=>u.alive&&u.kind==='tank');
     if(g.cd>0)continue;
     if(c.isPlayer?(c.btn&1):Math.abs(d)<0.035)fireGun(k,c)}}
 function fireGun(k,c){const g=G.guns[k],GD=GUNS[k],i=gunStation(k),st=G.st[i];
-  if(st.sab||G.effects[GD.id]){g.cd=2;if(c===G.me)sfx('empty');logMsg(`The ${GD.name} only clicks — the power cell is gone!`,'bad',c);if(st.sab&&!st.found)discover(i,c);return}
-  g.cd=GUN_CD;const a=g.aim+(rnd()-.5)*(c.isPlayer?0.01:0.025),dx=Math.cos(a),dy=Math.sin(a);
-  G.proj.push({x:GD.x+dx*1.1,y:GD.y+dy*1.1,dx,dy,sp:55,dmg:70,cal:'45 mm',owner:c,side:'sov',tk:false,dist:0,max:46,at:true,gun:true,last:-1,he:false});
-  G.fx.push({k:'muz',x:GD.x+dx*1.4,y:GD.y+dy*1.4,a,t:0,life:0.12,big:true});sfxAt('cannon',GD.x,GD.y);if(c===G.me)G.shake=Math.max(G.shake,REDUCED?2:7)}
+  if(st.sab||G.effects[GD.id]){g.cd=2;if(c===G.me)sfx('empty');logMsg(`The ${GD.name} fails the build — someone broke it!`,'bad',c);if(st.sab&&!st.found)discover(i,c);return}
+  g.cd=GUN_CD;const a=g.aim,dx=Math.cos(a),dy=Math.sin(a);let hit=null,hd=46;
+  for(const e of G.units){if(!e.alive||e.side!=='ger')continue;const fx=e.x-GD.x,fy=e.y-GD.y,t=fx*dx+fy*dy;if(t<0||t>hd)continue;const off=Math.abs(fx*dy-fy*dx);if(off<(e.kind==='tank'?1.3:0.6)&&los(GD.x,GD.y,e.x,e.y,0.4)){hd=t;hit=e}}
+  G.fx.push({k:'beam',x:GD.x,y:GD.y,x0:GD.x+dx*0.8,y0:GD.y+dy*0.8,x1:GD.x+dx*hd,y1:GD.y+dy*hd,t:0,life:0.3});sfxAt('deploy',GD.x,GD.y);
+  if(hit)hurt(hit,hit.kind==='tank'?140:200,{owner:c,cause:'deploy'})}
 function drawGun(g,x,y,s,gun){g.save();g.translate(x,y);g.fillStyle='rgba(29,24,21,.55)';g.beginPath();g.ellipse(s*0.1,s*0.12,s*0.8,s*0.55,0,0,TAU);g.fill();
   g.rotate(gun.aim);g.strokeStyle=PAL.ink;g.lineWidth=2;
   g.fillStyle=PAL.ink;g.fillRect(-s*0.2,-s*0.62,s*0.42,s*0.2);g.fillRect(-s*0.2,s*0.42,s*0.42,s*0.2);
-  g.fillStyle='#55602c';g.beginPath();g.moveTo(s*0.25,-s*0.55);g.lineTo(s*0.4,-s*0.5);g.lineTo(s*0.4,s*0.5);g.lineTo(s*0.25,s*0.55);g.closePath();g.fill();g.stroke();
+  g.fillStyle=PAL.feld;g.beginPath();g.moveTo(s*0.25,-s*0.55);g.lineTo(s*0.4,-s*0.5);g.lineTo(s*0.4,s*0.5);g.lineTo(s*0.25,s*0.55);g.closePath();g.fill();g.stroke();
   g.fillRect(-s*0.95,-s*0.08,s*0.95,s*0.16);g.strokeRect(-s*0.95,-s*0.08,s*0.95,s*0.16);
   g.fillStyle=PAL.ink;g.fillRect(s*0.35,-s*0.06,s*0.95,s*0.12);g.fillRect(s*1.2,-s*0.09,s*0.12,s*0.18);
-  g.fillStyle=PAL.red;star(g,s*0.33,0,s*0.12);g.fill();g.restore()}
+  g.fillStyle='#21a65a';g.fillRect(s*0.2,-s*0.12,s*0.2,s*0.24);g.restore()}
 
 // ================= sabotage & duties =================
 // Stations the spy can wreck. Sabotage is silent: nobody knows until a loyal soldier comes close enough to see it,
@@ -952,14 +953,14 @@ function drawGun(g,x,y,s,gun){g.save();g.translate(x,y);g.fillStyle='rgba(29,24,
 const STATIONS=[
  {id:'phone',name:'investor hotline',x:56.5,y:17.6,fx:'No bridge round from the VCs: the sprint comes in a quarter stronger.'},
  {id:'barricade',name:'badge reader',x:57.5,y:20,fx:'The badge reader is down: the agents need only four seconds in the server room to take it.'},
- {id:'lamp',name:'smart speaker',x:46.5,y:12.5,fx:'The smart speaker in the north windows is guiding delivery drones onto the office.'},
- {id:'crN',name:'north dart cabinet',x:51.5,y:11.5,fx:'Jammed darts in the north rooms: every blaster there fires slowly this sprint.'},
- {id:'crS',name:'south dart cabinet',x:51.5,y:28.5,fx:'Jammed darts in the south rooms: every blaster there fires slowly this sprint.'},
- ...GUNS.map(g=>({id:g.id,name:g.name,x:g.x,y:g.y,fx:`The ${g.name} has no power cell: it cannot fire this sprint.`}))];
+ {id:'lamp',name:'smart speaker',x:46.5,y:12.5,fx:'The smart speaker in the north windows keeps leaking our location: scraper swarms keep landing on the office.'},
+ {id:'crN',name:'north Wi-Fi router',x:51.5,y:11.5,fx:'Wi-Fi is down in the north rooms: everyone there patches slowly this sprint.'},
+ {id:'crS',name:'south Wi-Fi router',x:51.5,y:28.5,fx:'Wi-Fi is down in the south rooms: everyone there patches slowly this sprint.'},
+ ...GUNS.map(g=>({id:g.id,name:g.name,x:g.x,y:g.y,fx:`The ${g.name} has a failing build: it cannot deploy this sprint.`}))];
 const SAB_T=3,REP_T=4,SAB_WIN=3;
 const traitor=u=>!!(u&&(u.isSpy||u.turned));
 const clk=t=>{const s=t|0;return`${String(s/60|0).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`};
-function initStations(){G.guns=GUNS.map(()=>({aim:Math.PI,cd:0,crew:null}));G.st=STATIONS.map(()=>({sab:false,found:false,by:null,at:0,lastOk:0,rep:0}));G.sabDone=0;G.effects={};G.overLimit=8;G.dutyT=10}
+function initStations(){G.guns=GUNS.map(()=>({aim:Math.PI,cd:0,crew:null}));G.st=STATIONS.map(()=>({sab:false,found:false,by:null,at:0,lastOk:0,rep:0}));G.sabDone=0;G.effects={};G.overLimit=14;G.dutyT=10}
 function stationAt(u,r){let best=-1,bd=r||1.8;for(let i=0;i<STATIONS.length;i++){const S0=STATIONS[i],d=dist(u.x,u.y,S0.x,S0.y);if(d<bd){bd=d;best=i}}return best}
 function stationsTick(dt){
   for(let i=0;i<G.st.length;i++){const st=G.st[i],S0=STATIONS[i];
@@ -1005,7 +1006,7 @@ function applySabotage(){const fx={};
     banner('Sabotage',S0.fx,'bad',5);noteAll(`Sprint ${G.wave}: the ${S0.name} was still broken when the bots came. ${S0.fx}`,'key');logMsg(`Sabotage: the ${S0.name}!`,'bad');
     st.sab=false;st.found=false;st.rep=0;st.lastOk=G.time}
   for(const u of G.squad)if(u.duty!=null){u.duty=null;u.seeking=false}
-  G.effects=fx;G.overLimit=fx.barricade?4:8;
+  G.effects=fx;G.overLimit=fx.barricade?7:14;
   if(fx.lamp)for(const dtm of [16+rnd()*10,46+rnd()*14])G.sched.push({at:G.time+dtm,k:'barrage',x:44+rnd()*7,y:11+rnd()*17,by:fx.lamp});
   if(G.sabDone>=SAB_WIN)G.sched.push({at:G.time+2,k:'end',sw:true,txt:'sabotage'});
   return fx}
@@ -1014,7 +1015,7 @@ const sabHTML=()=>{let h='';for(let i=0;i<SAB_WIN;i++)h+=`<i class="${i<G.sabDon
 // ================= waves =================
 function startWave(){
   G.wave++;G.phase='wave';const w=WAVES[G.wave-1];const q=[];
-  const sfx0=applySabotage();const md=G.mod||{mul:sfx0.phone?1.25:1};G.mod=null;G.tankMul=md.tank||1;const n=v=>Math.max(0,Math.round(v*md.mul*G.diff.mul));
+  const sfx0=applySabotage();const md=G.mod||{mul:sfx0.phone?1.25:1};G.mod=null;G.tankMul=md.tank||1;const n=v=>Math.max(0,Math.round(v*md.mul*G.diff.mul*0.5));
   for(let i=0;i<n(w.r);i++)q.push('rifle');for(let i=0;i<n(w.s);i++)q.push('smg');for(let i=0;i<n(w.g);i++)q.push('gren');shuffle(q);
   for(let i=0;i<w.m+(md.mg||0);i++)q.splice(1+i*3,0,'mg');for(let i=0;i<w.t;i++)q.splice(Math.min(q.length,Math.floor(q.length*(0.15+i*0.3))),0,'tank');
   G.spawnQ=q;G.spawnT=0;G.arrestDone=false;G.pushed=false;G.lastSpawn=G.time;
@@ -1028,7 +1029,7 @@ function endWave(){
     endGame(false,me=>me.isSpy?'Demo Day. The demo worked and the round closed. Your mission failed.':
       sf==='killed'?'Demo Day. The demo worked, and the mole is gone.':sf==='escaped'?'Demo Day. The demo worked, but the mole got away to the rival lab.':arr?'Demo Day. The demo worked. Somehow.':me.isCom?'Demo Day. The demo worked, but the mole is still on the team — and you never caught them.':'Demo Day. The demo worked, but the mole is still on the team.');return}
   for(const u of G.people)u.checks=1;
-  G.phase='lull';G.phaseT=5;G.effects={};G.overLimit=8;
+  G.phase='lull';G.phaseT=5;G.effects={};G.overLimit=14;
   for(const u of liveSov())u.hp=u.maxhp;
   for(const k in G.comGuess)G.comGuess[k]=Math.max(0,G.comGuess[k]-8);
   banner('Sprint shipped','The main wave is down, but the bots keep probing. Keep the desks staffed.','good',3.5);
@@ -1047,8 +1048,12 @@ function phaseTick(dt){
     if(!G.spawnQ.length){const left=G.units.filter(u=>u.alive&&u.side==='ger');
       if(left.length<=2){if(left.length)logMsg('The last agents get rate-limited and wander off.');for(const u of left){u.alive=false;u.gone=true}endWave()}}}}
 function overrunTick(dt){
+  // bugs heading into the server room pull the nearest free teammates back to defend it
+  G.defT=(G.defT||0)-dt;if(G.defT<=0){G.defT=1;const inv=G.units.filter(u=>u.alive&&u.side==='ger'&&u.kind!=='tank'&&u.x>=50&&u.y>=13&&u.y<=27);
+    if(inv.length){const free=G.squad.filter(u=>u.alive&&u.side==='sov'&&!u.isSpy&&!u.gunner&&!u.knife&&!u.recruit&&!u.checkHold).sort((a,b)=>dist(a.x,a.y,inv[0].x,inv[0].y)-dist(b.x,b.y,inv[0].x,inv[0].y)).slice(0,Math.min(4,inv.length+1));
+      for(const u of free){const t=inv[(rnd()*inv.length)|0];if(goTo(u,t.x,t.y)){u.seeking=true;u.seekHold=3;u.duty=null}}}}
   if(G.units.some(u=>u.alive&&u.side==='ger'&&u.kind!=='tank'&&inDugout(u)))G.overrun+=dt;else G.overrun=Math.max(0,G.overrun-dt*0.5);
-  if(G.overrun>=(G.overLimit||8)){endGame(true,me=>me.isSpy?'The agents took the server room. The startup is dead, and nobody knows it was you. Enjoy the new job.':'The agents took the server room. The startup is dead. We\'re still a family.');return}
+  if(G.overrun>=(G.overLimit||14)){endGame(true,me=>me.isSpy?'The agents took the server room. The startup is dead, and nobody knows it was you. Enjoy the new job.':'The agents took the server room. The startup is dead. We\'re still a family.');return}
   if(!G.people.some(u=>u.alive&&u.side==='sov'&&!u.isSpy))endGame(true,'The last loyal employee is gone. The office belongs to the bots.')}
 
 // ================= update =================
@@ -1109,7 +1114,7 @@ function bake(){
       if(street&&R()<0.5){g.fillStyle='rgba(105,85,60,.22)';g.beginPath();g.ellipse(px+R()*S,py+R()*S,6+R()*8,3+R()*3,R()*3,0,TAU);g.fill()}}}
   // the street's tram rails, then barbed wire along no-man's land
   g.strokeStyle='rgba(29,24,21,.55)';g.lineWidth=2.5;for(const ry of [19.6,20.4]){g.beginPath();g.moveTo(0,ry*S);g.lineTo(42*S,ry*S);g.stroke()}
-  for(let i=0;i<34;i++){const x=(19+R()*18),y=1+R()*38;if(get(x|0,y|0)!==GROUND)continue;craterAt(g,x*S,y*S,(0.6+R()*1.0)*S)}
+  for(let i=0;i<34;i++){const x=(19+R()*18),y=1+R()*38;if(get(x|0,y|0)!==GROUND||i>=8)continue;craterAt(g,x*S,y*S,(0.3+R()*0.4)*S)}
   for(const [y0,y1] of [[1,16],[24,38]]){g.lineWidth=5;g.strokeStyle=PAL.ochre;g.beginPath();g.moveTo(35.6*S,y0*S);g.lineTo(35.6*S,y1*S);g.stroke();g.strokeStyle=PAL.ink;g.lineWidth=5;g.setLineDash([6,8]);g.beginPath();g.moveTo(35.6*S,y0*S);g.lineTo(35.6*S,y1*S);g.stroke();g.setLineDash([])}
   // Market Street clutter: traffic cones and abandoned e-scooters
   for(let i=0;i<60;i++){const x=1+R()*30,y=1+R()*38;if(get(x|0,y|0)!==GROUND)continue;const X=x*S,Y=y*S;
@@ -1146,6 +1151,7 @@ function pfxStep(dt){CAMK.x*=Math.pow(0.0005,dt);CAMK.y*=Math.pow(0.0005,dt);
 function pfxDraw(){for(const q of PFX){const [sx,sy]=w2s(q.x,q.y);if(sx<-30||sy<-30||sx>VW+30||sy>VH+30)continue;const k=q.t/q.life;
     if(q.k==='drop'||q.k==='chip'||q.k==='spark'){const r=Math.max(1.5,q.s*TS);if(q.z>0.05){ctx.fillStyle='rgba(29,24,21,.25)';ctx.fillRect(sx-r/2,sy-r/2,r,r)}
       ctx.fillStyle=`rgba(${q.c},${q.k==='chip'?Math.min(1,(1-k)*3):1-k*0.5})`;ctx.fillRect(sx-r/2,sy-q.z*TS-r/2,r,r)}
+    else if(q.k==='glyph'){const e=k*k*(3-2*k);const [gx,gy]=w2s(q.x+(q.tx-q.x)*e,q.y+(q.ty-q.y)*e);ctx.save();ctx.globalAlpha=1-k*0.6;ctx.fillStyle=q.c||'#21a65a';ctx.font=`700 ${Math.max(11,TS*0.36)|0}px "JetBrains Mono", monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(q.ch,gx,gy-Math.sin(k*Math.PI)*TS*0.3);ctx.restore()}
     else if(q.k==='puff'){ctx.fillStyle=`rgba(${q.c},${0.45*(1-k)})`;ctx.beginPath();ctx.arc(sx,sy,TS*(q.s+k*0.35),0,TAU);ctx.fill()}
     else if(q.k==='ring'){ctx.strokeStyle=`rgba(243,236,220,${0.7*(1-k)})`;ctx.lineWidth=Math.max(1,6*(1-k));ctx.beginPath();ctx.arc(sx,sy,TS*q.s*(0.3+k*1.4),0,TAU);ctx.stroke()}
     else if(q.k==='star'){const e=k<0.25?k/0.25:1,a=1-Math.max(0,(k-0.5)/0.5);ctx.save();ctx.globalAlpha=a;ctx.fillStyle=PAL.red;ctx.strokeStyle=PAL.ink;ctx.lineWidth=2;star(ctx,sx,sy-TS*0.9-k*TS*0.4,TS*0.32*(0.6+0.6*e));ctx.fill();ctx.stroke();ctx.restore()}}}
@@ -1166,9 +1172,10 @@ function drawSoldier(g,x,y,s,u){
   g.strokeStyle=PAL.ink;g.lineWidth=lw;
   g.fillStyle=C.pack;rr(g,-s*0.39,-s*0.17,s*0.17,s*0.34,s*0.04);g.fill();g.stroke();
   g.fillStyle=C.coat;g.beginPath();g.ellipse(0,bob,s*0.21,s*0.34,0,0,TAU);g.fill();g.stroke();
-  const w=WPN[u.wpn]||WPN.ppsh,len=w.len*s;
-  g.fillStyle=PAL.ink;g.fillRect(s*0.05,s*0.06,len*0.45,s*0.09);g.fillRect(s*0.05+len*0.4,s*0.075,len*0.6,s*0.06);g.fillStyle=PAL.red;g.fillRect(s*0.05+len-s*0.07,s*0.06,s*0.08,s*0.09);
-  if(u.wpn==='ppsh'||u.wpn==='dp'||u.wpn==='mg42'){g.beginPath();g.arc(s*0.31,u.wpn==='ppsh'?s*0.15:s*0.06,s*(u.wpn==='ppsh'?0.08:0.1),0,TAU);g.fill()}
+  if(sov){// an open laptop held out in front; the screen lights up green while patching
+    g.fillStyle='#c9ced6';g.fillRect(s*0.16,-s*0.2,s*0.12,s*0.4);g.strokeRect(s*0.16,-s*0.2,s*0.12,s*0.4);
+    g.fillStyle=u.patching?'#21a65a':'#2b2f39';g.fillRect(s*0.28,-s*0.18,s*0.05,s*0.36)}
+  else{g.strokeStyle=PAL.ink;g.lineWidth=lw*1.4;g.beginPath();g.moveTo(s*0.1,-s*0.18);g.lineTo(s*0.38,-s*0.24);g.moveTo(s*0.1,s*0.18);g.lineTo(s*0.38,s*0.24);g.stroke();g.lineWidth=lw}
   g.fillStyle='#d8b48a';g.beginPath();g.arc(s*0.22,s*0.15,s*0.055,0,TAU);g.arc(s*0.42,s*0.1,s*0.05,0,TAU);g.fill();g.stroke();
   g.fillStyle=sov?(u.col||C.helm):C.helm;g.beginPath();g.arc(s*0.02,0,s*(sov?0.2:0.24),0,TAU);g.fill();g.stroke();
   if(sov){g.fillStyle='#e9c9a6';g.beginPath();g.arc(s*0.08,0,s*0.1,0,TAU);g.fill()}else{g.fillStyle='#22d3ff';g.fillRect(s*0.1,-s*0.14,s*0.09,s*0.28);g.fillStyle='rgba(34,211,255,.35)';g.fillRect(s*0.19,-s*0.18,s*0.08,s*0.36)}
@@ -1177,7 +1184,7 @@ function drawBody(g,x,y,s,b){g.save();g.translate(x,y);g.rotate(b.aim+Math.PI/2)
   g.strokeStyle=PAL.ink;g.lineWidth=Math.max(1.5,s*0.05);
   g.fillStyle=C.coat;g.beginPath();g.ellipse(0,s*0.05,s*0.2,s*0.38,0,0,TAU);g.fill();g.stroke();
   g.fillStyle=sov&&b.u&&b.u.col?b.u.col:C.helm;g.beginPath();g.arc(s*0.05,-s*0.42,s*0.17,0,TAU);g.fill();g.stroke();
-  if(!b.taken){g.fillStyle=PAL.ink;g.fillRect(s*0.25,-s*0.1,s*0.07,s*0.6)}
+
   if(sov&&b.u&&b.u.col){g.fillStyle=b.u.col;g.fillRect(-s*0.2,-s*0.12,s*0.4,s*0.07);g.strokeRect(-s*0.2,-s*0.12,s*0.4,s*0.07)}
   g.restore()}
 function drawTank(g,x,y,s,u){g.save();g.translate(x,y);const dead=!!u.dead;
@@ -1240,6 +1247,7 @@ function render(){
       ctx.fillStyle=k<0.5?PAL.ochre:PAL.red;ctx.beginPath();ctx.moveTo(0,-Wd);ctx.lineTo(L*0.35,-Wd*0.45);ctx.lineTo(L*0.3,-Wd*1.6);ctx.lineTo(L*0.55,-Wd*0.3);ctx.lineTo(L,0);ctx.lineTo(L*0.55,Wd*0.3);ctx.lineTo(L*0.3,Wd*1.6);ctx.lineTo(L*0.35,Wd*0.45);ctx.lineTo(0,Wd);ctx.closePath();ctx.fill();
       if(k<0.5){ctx.fillStyle=PAL.paper;ctx.beginPath();ctx.ellipse(L*0.22,0,L*0.22,Wd*0.55,0,0,TAU);ctx.fill()}ctx.restore()}
     else if(f.k==='dust'){ctx.fillStyle=`rgba(212,191,147,${0.7*(1-k)})`;ctx.beginPath();ctx.arc(sx,sy,TS*(0.1+k*0.3),0,TAU);ctx.fill()}
+    else if(f.k==='beam'){const [ax,ay]=w2s(f.x0,f.y0),[bx,by]=w2s(f.x1,f.y1);ctx.save();ctx.strokeStyle=`rgba(33,166,90,${1-k})`;ctx.lineWidth=TS*0.28*(1-k)+2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();ctx.strokeStyle=`rgba(230,255,240,${1-k})`;ctx.lineWidth=2;ctx.stroke();ctx.restore()}
     else if(f.k==='spark'){ctx.fillStyle=k<0.5?PAL.paper:PAL.ochre;for(let i=0;i<(f.n||3);i++){const a=i*2.4+f.x*7;ctx.fillRect(sx+Math.cos(a)*k*TS*0.5,sy+Math.sin(a)*k*TS*0.5,2,2)}}
     else if(f.k==='blood'){ctx.fillStyle=`rgba(255,110,40,${0.85*(1-k)})`;ctx.beginPath();ctx.arc(sx,sy,TS*(0.12+k*0.25),0,TAU);ctx.fill()}
     else if(f.k==='boom'){const R0=(f.r||2.5)*TS*(0.35+k*0.75),n=11;const burst=(rad,col)=>{ctx.beginPath();for(let q=0;q<n*2;q++){const a=q*Math.PI/n+f.x,rr=q%2?rad*0.5:rad*(0.85+0.15*Math.sin(q*7+f.y));q?ctx.lineTo(sx+Math.cos(a)*rr,sy+Math.sin(a)*rr):ctx.moveTo(sx+Math.cos(a)*rr,sy+Math.sin(a)*rr)}ctx.closePath();ctx.fillStyle=col;ctx.fill()};
@@ -1325,11 +1333,11 @@ function hudTick(dt){
   if(G.phase==='lull'){$('waveNum').textContent=G.wave?`${G.wave} / ${WAVES.length}`:'Kickoff';$('waveState').innerHTML=`${ICON.clock}${Math.ceil(G.phaseT)}<small style="font-weight:500;color:var(--dim)">&nbsp;·&nbsp;</small>${ICON.ger}${left}`}
   else{$('waveNum').textContent=`Sprint ${G.wave} / ${WAVES.length}`;$('waveState').innerHTML=`${ICON.ger}${left}`}
   const sh=`${ICON.wrench}<span class="track">${sabHTML()}</span>`;if($('sabStat').innerHTML!==sh)$('sabStat').innerHTML=sh;
-  const ov=$('overrun');if(G.overrun>0.3){ov.hidden=false;ov.textContent=`bots in the server room! ${Math.max(0,(G.overLimit||8)-G.overrun).toFixed(1)}`}else ov.hidden=true;
+  const ov=$('overrun');if(G.overrun>0.3){ov.hidden=false;ov.textContent=`bots in the server room! ${Math.max(0,(G.overLimit||14)-G.overrun).toFixed(1)}`}else ov.hidden=true;
   const w=WPN[p.wpn];
-  if(p.onGun&&p.alive){if($('wName').dataset.w!=='gun45'){$('wName').innerHTML=WSVG.gun45;$('wName').dataset.w='gun45';$('wName').title='EMP turret'}{const gg=G.guns[p.onGun-1];$('ammo').innerHTML=gg.cd>0?`<small>${gg.cd.toFixed(1)} s</small>`:`${ICON.shell}`}}
-  else{const wk=p.alive?p.wpn:'none';if($('wName').dataset.w!==wk){$('wName').dataset.w=wk;$('wName').innerHTML=p.alive?(WSVG[p.wpn]||esc(w.name)):(p.escaped?'Escaped':p.arrested?'Let go':'Burned out');$('wName').title=p.alive?`${w.name} · ${w.cal}`:''}$('ammo').innerHTML=p.alive?`${p.reloadT>0?'—':p.mag} <small>/ ${p.reserve}</small>`:'<small>spectating</small>'}
-  const ex=!p.alive?'':`<span title="Kombucha (G)">${ICON.gren}${p.grenades}</span>`+(p.isSpy?`<span title="Selfies (Q)">${ICON.flare}${p.flares}</span>`:p.isCom?`<span title="Fires (hold F)">${ICON.cuffs}${p.arrestsLeft}</span>`:'');
+  {const wk=p.onGun?'ci':p.alive?'laptop':'none';if($('wName').dataset.w!==wk){$('wName').dataset.w=wk;$('wName').innerHTML=!p.alive?(p.escaped?'Escaped':p.arrested?'Let go':'Burned out'):p.onGun?'CI pipeline':'💻 Laptop'}
+   const am=!p.alive?'<small>spectating</small>':p.onGun?(G.guns[p.onGun-1].cd>0?`<small>deploying ${G.guns[p.onGun-1].cd.toFixed(1)} s</small>`:'<small>click to deploy</small>'):p.patching?'<small style="color:#21a65a">patching…</small>':'<small>hold click</small>';if($('ammo').innerHTML!==am)$('ammo').innerHTML=am}
+  const ex=!p.alive?'':(p.isSpy?`<span title="Selfies (Q)">${ICON.flare}${p.flares}</span>`:p.isCom?`<span title="Firings (hold F)">${ICON.cuffs}${p.arrestsLeft}</span>`:'');
   if($('extra').innerHTML!==ex)$('extra').innerHTML=ex;
   {const sb=$('stamBar');const v=(p.stam===undefined?1.5:p.stam)/1.5;sb.hidden=!p.alive||v>=0.999;sb.firstElementChild.style.width=v*100+'%';sb.classList.toggle('winded',!!p.winded)}
   const hb=$('meHp').firstElementChild;hb.style.width=Math.max(0,p.hp/p.maxhp*100)+'%';hb.style.background=p.hp<p.maxhp*0.3?'var(--red)':'var(--ok)';
@@ -1352,7 +1360,7 @@ function hudTick(dt){
     if(p.isCom&&p.proven){const T=p.proven.find(u=>u.alive&&!u.revealed&&u.side==='sov');if(T)put('H',`Expose ${esc(T.name)} (reveals you)`)}
     {
       const ar=p.isCom&&p.arrestsLeft>0?nearestArrestable(p,1.9):null;if(ar)put('F',`Fire ${esc(ar.name)} (hold)`)}
-    if(p===G.spy&&G.phase==='wave'&&p.flares>0)put('Q','Geotagged selfie at cursor');
+    if(p===G.spy&&G.phase==='wave'&&p.flares>0)put('Q','Selfie: leak this spot');
     if(p.offer)top=`<b>${esc(p.offer.from.name)}'s offer</b> — <kbd>Y</kbd> accept · <kbd>N</kbd> refuse (${Math.ceil(p.offer.t)} s)`;
     if(p.recruit)put('B',`Whispering… ${Math.round(p.recruit.t/REC_T*100)}%`);
     else if(p===G.spy&&(p.recruitLeft||0)>0){const rt=recruitTarget(p);if(rt)put('B',`Whisper to ${esc(rt.name)}`)}
@@ -1361,14 +1369,14 @@ function hudTick(dt){
   const ph=(top?`<div class="ptop">${top}</div>`:'')+`<div class="prow" style="grid-template-columns:repeat(${keys.length},min(var(--pw),calc((100vw - 520px) / ${keys.length})))">`+keys.map(k=>sl[k]?`<span><kbd>${k}</kbd>${sl[k]}</span>`:'<span class="off"></span>').join('')+'</div>';
   if($('prompt').innerHTML!==ph)$('prompt').innerHTML=ph;
   const now=performance.now();if(G.log.some(l=>now-l.at>9000)){G.log=G.log.filter(l=>now-l.at<=9000);renderRadio()}}
-function rosterHTML(withStatus){const p=G.me;let h='<tr><th></th><th>Teammate</th><th>Blaster</th><th>Dart</th><th>Shoe size</th>'+(withStatus?'<th>Status</th>':'')+'</tr>';
+function rosterHTML(withStatus){const p=G.me;let h='<tr><th></th><th>Teammate</th><th>Shoe size</th>'+(withStatus?'<th>Status</th>':'')+'</tr>';
   for(const u of G.people){const w=WPN[primaryW(u)];const st=u.escaped?'escaped':u.revealed?'unmasked':u.arrested?'arrested':u.alive?'alive':'killed';
-    h+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.rank)} ${esc(u.name)}${u===p?' (you)':u.isPlayer?' <small style="color:var(--dim)">player</small>':''}</td><td>${w.name}</td><td class="cal">${w.cal}</td><td>${BOOTS[u.boot]||''}</td>${withStatus?`<td>${st}${withStatus==='end'&&u.isSpy?` · <b style="color:#c4261b">${u.turned?'TURNED':'SPY'}</b>`:''}${u.isCom&&(withStatus==='end'||G.comKnown||u===p)?' · <b style="color:#d8aa4d">HR</b>':''}</td>`:''}</tr>`}return h}
+    h+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.rank)} ${esc(u.name)}${u===p?' (you)':u.isPlayer?' <small style="color:var(--dim)">player</small>':''}</td><td>${BOOTS[u.boot]||''}</td>${withStatus?`<td>${st}${withStatus==='end'&&u.isSpy?` · <b style="color:#c4261b">${u.turned?'TURNED':'SPY'}</b>`:''}${u.isCom&&(withStatus==='end'||G.comKnown||u===p)?' · <b style="color:#d8aa4d">HR</b>':''}</td>`:''}</tr>`}return h}
 function openNotebook(){if(state!=='play'||!G.me)return;state='notebook';$('notebook').hidden=false;$('noteBtn').classList.remove('flash');const me=G.me;
   $('nbEb').textContent=me.isSpy?'Your notes':me.isCom?'HR\'s private Notion':'Your notes';
   $('notes').innerHTML=me.notes.length?[...me.notes].reverse().map(n=>`<div class="note ${n.k}"><time>${n.when}</time>${esc(n.t)}</div>`).join(''):`<p class="empty">${me.isSpy?'HR reviews the evidence after each sprint. Watch #general and the suspicion bars.':'Nothing yet. When a teammate burns out, find them and press E to check on them. Hold T next to someone to vibe-check them.'}</p>`;
   $('nbRoster').innerHTML=rosterHTML(true);
-  $('nbHint').textContent=me.isSpy?'Bot ammo (pellets, bolts) can\'t be traced to you, but a hit from behind still draws attention.':'A hit from behind with one of our dart types narrows it to whoever carries that blaster. The mole may also use a captured Bot Blaster (bot pellets).'}
+  $('nbHint').textContent=me.isSpy?'Unplugging leaves no trace except your footprints and whoever saw you nearby. Walk in other people\'s tracks.':'An unplugged teammate means the mole was standing right behind them. Check the tracks around them and who was nearby.'}
 function closeNotebook(){if(state!=='notebook')return;$('notebook').hidden=true;state='play'}
 
 // ================= sortie council screen (display + input events only) =================
@@ -1417,24 +1425,24 @@ function openArmory(){const el=$('armory');$('armBody').innerHTML=pickerHTML(pri
 function closeArmory(){$('armory').hidden=true;if(state==='armory')state='play'}
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
-function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw kombucha'],['1 · 2','Switch weapon'],['Space','Vault over a desk, window or cover'],['Hold Shift','Run (about 1.5 s of cardio)'],['Hold C','Crouch — behind a desk almost nothing gets through'],['E',role==='spy'?'Use: man an EMP turret, dart cabinet, take a bot weapon':'Use: man an EMP turret, dart cabinet, check on a burned-out teammate or a spent dart, take a bot weapon'],
-  ...(role==='spy'?[['Hold T','Vibe-check like everyone else — you learn if they are HR'],['B','Whisper a 4x-equity offer to the engineer next to you (once per sprint)'],['V','Unplug the engineer in front of you (from behind, unseen)'],['Q','Post a geotagged selfie (calls delivery drones)'],['Hold X','Sabotage the system you are standing at']]:role==='com'?[['Hold T','Vibe-check a teammate (once per sprint) — you learn the truth'],['H','Expose a proven mole (reveals you)'],['Hold F','Let the nearest teammate go (2 firings — reveals you)'],['Hold E','Fix a broken system']]:[['Hold T','Vibe-check a teammate (once per sprint) — a hunch, right 7 times in 10'],['Hold E','Fix a broken system']]),['N','Notes'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
+function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · hold left click near a bug to patch it'],['Space','Vault over a desk, window or cover'],['Hold Shift','Run (about 1.5 s of cardio)'],['Hold C','Crouch — behind a desk almost nothing gets through'],['E',role==='spy'?'Use: run a CI pipeline, grab coffee or snacks':'Use: run a CI pipeline, grab coffee or snacks, check on a burned-out teammate'],
+  ...(role==='spy'?[['Hold T','Vibe-check like everyone else — you learn if they are HR'],['B','Whisper a 4x-equity offer to the engineer next to you (once per sprint)'],['V','Unplug the engineer in front of you (from behind, unseen)'],['Q','Post a geotagged selfie (a scraper swarm lands there)'],['Hold X','Sabotage the system you are standing at']]:role==='com'?[['Hold T','Vibe-check a teammate (once per sprint) — you learn the truth'],['H','Expose a proven mole (reveals you)'],['Hold F','Let the nearest teammate go (2 firings — reveals you)'],['Hold E','Fix a broken system']]:[['Hold T','Vibe-check a teammate (once per sprint) — a hunch, right 7 times in 10'],['Hold E','Fix a broken system']]),['N','Notes'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
 function showBrief(){
   const p=G.me,role=roleOf(p),spy=role==='spy',multi=G.humans.length>1;
-  const sortieP='<p><b>Sabotage.</b> Eight systems keep the startup alive: three EMP turrets along the front windows (press E to man one — they are the only thing that stops an Acquisition Mech), the investor hotline, the server-room badge reader, a smart speaker and two dart cabinets. The mole can break one in three seconds when nobody is looking. Nobody notices until a loyal engineer walks past it — and everyone who walks past a working system proves it was fine at that moment, so each discovery comes with a time window. Hold E to fix it. A system still broken when a sprint starts hurts the whole sprint. <b>Three of those and the startup folds.</b></p>';
-  const tracksP=spy?'<p><b>Tracks.</b> Every sneaker leaves prints that fade over a minute, and every shot drops a spent dart. Walk in other people\'s tracks; when Karl the Fog rolls in after a sprint, everything is wiped.</p>':'<p><b>Tracks.</b> Sneakers leave prints that fade over a minute — the team has small, medium and large shoe sizes, listed in the roster — and every shot drops a spent dart where the shooter stood. Press E on a dart to read its type and how long ago it was fired.</p>';
+  const sortieP='<p><b>Sabotage.</b> Eight systems keep the startup alive: three CI pipeline consoles along the front windows (press E to run one — they deploy hotfixes down the street and are the fastest way to resolve a Prod Outage), the investor hotline, the server-room badge reader, a smart speaker and two Wi-Fi routers. The mole can break one in three seconds when nobody is looking. Nobody notices until a loyal engineer walks past it — and everyone who walks past a working system proves it was fine at that moment, so each discovery comes with a time window. Hold E to fix it. A system still broken when a sprint starts hurts the whole sprint. <b>Three of those and the startup folds.</b></p>';
+  const tracksP=spy?'<p><b>Tracks.</b> Every sneaker leaves prints that fade over a minute. Walk in other people\'s tracks; when Karl the Fog rolls in after a sprint, everything is wiped.</p>':'<p><b>Tracks.</b> Sneakers leave prints that fade over a minute — the team has small, medium and large shoe sizes, listed in the roster. Prints around an unplugged teammate are the best evidence you will get.</p>';
   const others=multi?`<p><b>${G.humans.length} players</b> are on this team${G.squad.length?`, with ${G.squad.length} bots`:''}. Any of them could be the mole or HR.</p>`:'';
   $('briefRole').textContent=spy?'Mole':role==='com'?'Head of People':'Engineer';$('briefRole').className=spy?'spy':'com';
   $('briefSub').textContent=spy?'Rival lab plant, wearing our hoodie':role==='com'?'Undercover HR · three sprints until Demo Day':'Engineer · three sprints until Demo Day';
   $('briefText').innerHTML=tracksP+(spy?
-   `<p>You are ${esc(p.name)}, a plant from a rival lab, wearing our hoodie and drinking our cold brew. Somewhere on the team is an <b>undercover Head of People</b> hunting you. HR reviews every burnout after each sprint: a Mega dart in the back points at the blaster carriers, a captured Bot Blaster hides the dart type, and a geotagged selfie brings delivery drones down on the office. Once per sprint you can stand next to someone, unseen, and press B to offer them <b>4x the equity at the rival lab</b> — an engineer who accepts quietly joins you, but one who refuses will talk, and HR lets you go on the spot. Get behind someone who is looking the other way and press V to unplug them: silent, no dart — but if they turn round, or anyone sees, you are done.</p>${sortieP}<p><b>You win</b> if three broken systems reach a sprint unfixed, if <b>you take out HR</b> (they give themselves away by firing people), or if the server room falls. <b>You lose</b> if you are let go, taken out, or the startup survives to Demo Day.</p>`:
+   `<p>You are ${esc(p.name)}, a plant from a rival lab, wearing our hoodie and drinking our cold brew. Somewhere on the team is an <b>undercover Head of People</b> hunting you. HR reviews every burnout after each sprint, and a geotagged selfie lands a scraper swarm right on top of the team. Once per sprint you can stand next to someone, unseen, and press B to offer them <b>4x the equity at the rival lab</b> — an engineer who accepts quietly joins you, but one who refuses will talk, and HR lets you go on the spot. Get behind someone who is looking the other way and press V to unplug them: silent, no evidence but your footprints — but if they turn round, or anyone sees, you are done.</p>${sortieP}<p><b>You win</b> if three broken systems reach a sprint unfixed, if <b>you take out HR</b> (they give themselves away by firing people), or if the server room falls. <b>You lose</b> if you are let go, taken out, or the startup survives to Demo Day.</p>`:
    role==='com'?
    `<p>You are ${esc(p.name)}, the <b>Head of People</b>, undercover as an engineer. Nobody knows you are HR — keep it that way. Someone on the team is a mole from a rival lab: they shoot teammates in the back, post geotagged selfies for the delivery drones, and break the systems that keep the startup alive.</p><p><b>Check on burned-out teammates</b>, run <b>vibe checks</b> (hold T beside someone, once per sprint — everyone does it, but only you learn the truth), then <b>let the mole go</b> (two firings) or <b>expose</b> them with H from anywhere. Either one reveals you — and <b>the mole's other way to win is to take you out</b>. Watch your cover meter.</p>${sortieP}<p>You lose if you burn out, if three broken systems reach a sprint, or the bots hold the server room for eight seconds.</p>`:
    `<p>You are ${esc(p.name)}, an engineer. Somewhere on the team is a <b>mole</b> from a rival lab — and an <b>undercover Head of People</b> hunting them. You don't know who either of them is. You don't know who your manager is either, but that's normal.</p><p>Hold the office and watch the systems: when one turns up broken, the time window tells you who could have done it. You can check on burned-out teammates, and once per sprint hold T beside someone to vibe-check them — you only get a hunch, right about 7 times in 10. Everyone runs vibe checks, so it gives nobody away. If you work out who HR is, keep them alive — <b>the mole wins by taking out HR.</b> The mole may also try to poach you. If they do, you choose: take the 4x equity and switch sides in secret, or refuse — and now you know who they are.</p>${sortieP}<p>The team wins if the startup survives to Demo Day. You lose if you burn out, three broken systems reach a sprint, HR is taken out, or the server room falls.</p>`)+others;
   $('keysList').innerHTML=keysHTML(role);
   $('wpnPick').innerHTML=pickerHTML(PICKW);bindPicker($('wpnPick'),k=>{PICKW=k;try{localStorage.setItem('ac_wpn',k)}catch(e){}});
   $('briefRoster').innerHTML=rosterHTML(false);
-  $('briefHint').textContent=spy?'Everyone runs one vibe check per sprint — yours tells you whether that person is HR.':'Three dart types on the team: Mega darts (blasters), Elite darts (rifles and the gatling), Railgun slugs (the anti-bot railgun).';
+  $('briefHint').textContent=spy?'Everyone runs one vibe check per sprint — yours tells you whether that person is HR.':'Nobody carries anything but a laptop. Evidence is footprints, timing and who was standing where.';
   $('briefGo').textContent=NET?'Ready':'Start the sprint';$('briefGo').disabled=false;
   $('brief').hidden=false;state='brief'}
 function startPlay(){
@@ -1494,6 +1502,8 @@ function nb(dur,freq,type,gain,o={}){const c=SND.ctx;const t=c.currentTime+(o.de
 function tn(fr,dur,type,gain,o={}){const c=SND.ctx;const t=c.currentTime+(o.delay||0);const os=c.createOscillator();os.type=type;os.frequency.setValueAtTime(fr,t);if(o.slide)os.frequency.exponentialRampToValueAtTime(fr*o.slide,t+dur);const g=c.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(0.0002,gain),t+0.006);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);os.connect(g);g.connect(out(o.pan));os.start(t);os.stop(t+dur+0.05)}
 function sfxAt(n,x,y){if(!SND.ctx||SND.muted||state!=='play'||!G.me)return;const d=dist(x,y,G.me.x,G.me.y);const v=1/(1+d/7);if(v<0.06||SND.budget>9)return;SND.budget++;sfx(n,v,clamp((x-G.me.x)/18,-0.9,0.9))}
 function sfx(n,v=1,pan=0){if(!SND.ctx||SND.muted)return;try{const o={pan};switch(n){
+  case 'type':tn(1400+Math.random()*900,0.025,'square',0.025);nb(0.02,5000,'highpass',0.05);break;
+  case 'deploy':tn(300,0.35,'sawtooth',0.12*v,{pan,slide:5});nb(0.3,3000,'bandpass',0.25*v,o);break;
   case 'smg':nb(0.04,2800,'bandpass',0.3*v,o);tn(700,0.05,'square',0.05*v,{pan,slide:0.45});break;
   case 'flame':nb(0.16,420,'lowpass',0.42*v,o);nb(0.12,1100,'bandpass',0.14*v,{pan,q:0.6});if(Math.random()<0.35)nb(0.03,3200,'highpass',0.1*v,o);break;
   case 'smg2':nb(0.08,1500,'bandpass',0.4*v,o);tn(130,0.06,'triangle',0.13*v,o);break;

@@ -271,7 +271,7 @@ body.touch #room{top:calc(170px + env(safe-area-inset-top,0px))}
     <div id="room"></div><div id="radio"></div>
     <div id="squad" class="box"><table id="squadTbl"></table></div>
     <div id="me" class="box">
-      <div class="row"><span id="wName">Foam Blaster 3000</span><span id="ammo">71 <small>/ 213</small></span></div>
+      <div class="row"><span id="wName">💻 Laptop</span><span id="ammo">71 <small>/ 213</small></span></div>
       <div id="meHp"><i></i></div><div id="stamBar" hidden><i></i></div>
       <div class="row" id="extra"></div>
       <div id="susWrap" hidden><span id="susIc"></span><div id="susMeter"><i></i></div></div>
@@ -284,7 +284,7 @@ body.touch #room{top:calc(170px + env(safe-area-inset-top,0px))}
       <div class="stick" id="stickL"><i></i></div>
       <div class="stick" id="stickR"><i></i></div>
       <div class="tbtns">
-        <button data-k="KeyR">Reload</button><button data-k="KeyG">Kombucha</button><button data-k="KeyE">Use</button><button data-k="Digit2">Swap</button>
+        <button data-k="KeyE">Use</button>
         <button data-k="KeyT">Vibe check</button><button data-k="KeyH" class="cm">Expose</button><button data-k="KeyF" class="cm">Let go</button><button data-k="KeyQ" class="sp">Selfie</button><button data-k="KeyX" class="sp">Sabotage</button><button data-k="KeyV" class="sp">Unplug</button><button data-k="Crouch" id="crouchBtn">Crouch</button><button data-k="Space">Vault</button><button data-k="KeyN">Notes</button>
       </div>
     </div>
@@ -311,7 +311,7 @@ body.touch #room{top:calc(170px + env(safe-area-inset-top,0px))}
     <div class="tbox">
       <p class="ru">Stealth mode · SoMa · pre-revenue</p>
       <h1>Bad <span>Cofounder</span></h1>
-      <p class="lede">San Francisco, the week before Demo Day. Eight engineers hold a SoMa office against three sprints of rogue AI agents, scraper bots and Acquisition Mechs. <strong>One of the eight is a mole from a rival lab. One is the Head of People, undercover as an engineer, hunting them.</strong> Everyone is underpaid.</p>
+      <p class="lede">San Francisco, the week before Demo Day. Eight engineers hold a SoMa office against three sprints of rogue AI agents, scraper bots and Prod Outages. Nobody has a gun; everybody has a laptop. <strong>One of the eight is a mole from a rival lab. One is the Head of People, undercover as an engineer, hunting them.</strong> Everyone is underpaid.</p>
       <div class="menu">
       <div class="field"><span class="lab">Your role</span>
         <div class="seg" id="roleSeg">
@@ -345,13 +345,12 @@ body.touch #room{top:calc(170px + env(safe-area-inset-top,0px))}
       <div class="doc-body">
         <div>
           <div id="briefText"></div>
-          <h4 style="margin-top:14px">Your blaster</h4>
-          <div id="wpnPick"></div>
+          <div id="wpnPick" hidden></div>
           <h4 style="margin-top:14px">Controls</h4>
           <div class="keys" id="keysList"></div>
         </div>
         <div>
-          <h4>The team — who carries what</h4>
+          <h4>The team</h4>
           <div class="tblwrap"><table class="roster" id="briefRoster"></table></div>
           <p style="margin-top:10px;font-size:13px;color:var(--dim)" id="briefHint"></p>
         </div>
@@ -365,7 +364,7 @@ body.touch #room{top:calc(170px + env(safe-area-inset-top,0px))}
       <div class="doc-head"><div><div class="eb" id="nbEb">Your notes</div><h2 style="color:var(--snow)">Receipts</h2></div><button class="sub" id="nbClose">Close <kbd>N</kbd></button></div>
       <div class="doc-body">
         <div><h4>Entries, newest first</h4><div class="notes" id="notes"></div></div>
-        <div><h4>Who carries which dart</h4><div class="tblwrap"><table class="roster" id="nbRoster"></table></div><p style="margin-top:10px;font-size:13px;color:var(--dim)" id="nbHint"></p></div>
+        <div><h4>Shoe sizes</h4><div class="tblwrap"><table class="roster" id="nbRoster"></table></div><p style="margin-top:10px;font-size:13px;color:var(--dim)" id="nbHint"></p></div>
       </div>
     </div>
   </div>
