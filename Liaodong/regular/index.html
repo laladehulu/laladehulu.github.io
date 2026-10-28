@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v121</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v122</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -7255,6 +7255,8 @@ const SW = {
   spear:  { load: 1, back: 0.08, wtw: 0.35, whip: 0.6, tw: 1.2, ln: 0.8, lg: 1.2, sink: 0.3, over: -0.25 }, /* spear thrust: the shaft slides back through the hands then is driven, and recoils a hand's length */
   club:   { load: 1, back: 0.16, wtw: 0.2, whip: 0.95, tw: 1.1, ln: 1.3, lg: 0.9, sink: 1.1, over: 0.5 },  /* a gun as a club: heavy, slow out of the top, carried right round */
   heavy:  { load: 1.25, back: 0.2, wtw: 0.3, whip: 0.95, tw: 1.3, ln: 1.4, lg: 1.25, sink: 1.3, over: 0.55 }, /* the heavy blow: everything bigger and slower */
+  sweep:  { load: 1.4, back: 0.26, wtw: 0.6, whip: 0.55, tw: 1.9, ln: 0.7, lg: 0.5, sink: 0.5, over: 0.9 },  /* 狼筅 sweeping the front: wound right round behind him, then the whole body turns through a half circle and carries on past */
+  cutter: { load: 1.5, back: 0.3, wtw: 0.2, whip: 0.98, tw: 1.1, ln: 1.7, lg: 1.3, sink: 1.8, over: 0.35 }, /* 斬馬刀 the horse-cutter: the blade goes up over the head, both hands, and he drops into his knees behind it */
 };
 // reload paths for the right hand (time 0..1 → chest-local point)
 const POUCH = [-0.26, -0.58, 0.02];
@@ -8584,7 +8586,7 @@ class Renderer {
           if (ev.id === heroId) { this.shake = Math.max(this.shake, 0.9); this.hitQ = { text: 'GUARD BROKEN', t: 1.2, c: '#ff5a4a' }; } break; }
         case 'guardcrush': { this.burstSparks(ev.x, ev.y, ev.z, 20, 7, 1, 0.6, 0.3, 0.5, 0.1); AUDIO.play('clang', ev.x, ev.y, ev.z, 1.5); AUDIO.play('thud', ev.x, ev.y, ev.z, 1);
           if (ev.att === heroId) { this.hitstop = Math.max(this.hitstop, 0.07); this.shake = Math.max(this.shake, 0.45); this.hitQ = { text: 'GUARD CRUSHED', t: 1, c: '#ffb04a' }; } if (ev.by === heroId) { this.shake = Math.max(this.shake, 0.8); this.hitQ = { text: 'Heavy blow — parry it, don\'t block', t: 1.6, c: '#ff5a4a' }; } break; }
-        case 'shove': { AUDIO.play('shield', ev.x, ev.y, ev.z, 1.3); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.1); this.dust(ev.x, ev.y - 0.6, ev.z, 8, 0, 0.8, 0, 1.4, 0.8, 0.3, 1.2);
+        case 'shove': { { const aa = this.anim(ev.by); if (aa) aa.shv = 1; } AUDIO.play('shield', ev.x, ev.y, ev.z, 1.3); AUDIO.play('thud', ev.x, ev.y, ev.z, 1.1); this.dust(ev.x, ev.y - 0.6, ev.z, 8, 0, 0.8, 0, 1.4, 0.8, 0.3, 1.2);
           if (ev.by === heroId) { this.hitQ = { text: '牌 SHIELD SHOVE — he is open', t: 1.1, c: '#ffd36a' }; this.shake = Math.max(this.shake, 0.3); if (this.imp) this.imp.vx -= 2.2; }
           else if (ev.id === heroId) { this.shake = Math.max(this.shake, 0.6); this.hitQ = { text: 'SHOVED BACK', t: 0.9, c: '#ff9a7a' }; } break; }
         case 'brushsweep': { const u = units[ev.id]; AUDIO.play('swish', ev.x, ev.y, ev.z, 1.5); AUDIO.play('entangle', ev.x, ev.y, ev.z, 1); if (u) for (let i = 0; i < 14; i++) { const a2 = u.yaw - 1.1 + i / 13 * 2.2; this.dust(u.x + Math.sin(a2) * 3.2, u.y + 0.4, u.z + Math.cos(a2) * 3.2, 1, Math.sin(a2) * 2, 0.5, Math.cos(a2) * 2, 0.8, 0.5, 0.2, 0.9); }
@@ -8954,6 +8956,13 @@ class Renderer {
       const h = a.hlpBy >= 0 ? this.sim.units[a.hlpBy] : null; const e = Math.min(1, a.hlpL / 0.5) * Math.min(1, (1.6 - a.hlpL) / 0.25 + 0.001);
       if (h && !h.dead) { const rel = wrapA(Math.atan2(h.x - x, h.z - z) - yaw), sd = rel >= 0 ? 1 : -1; roll = 0.2 * sd * e; lean = 0.2 * e; crouch = 0.1 * e; twist = clamp(rel, -0.6, 0.6) * 0.5 * e; a.hlpE = e; a.hlpHs = sd; }
       a.hlpL = Math.max(0, a.hlpL - dt); } else a.hlpE = 0;
+    /* 長槍 the point set: the butt of the shaft planted by his back foot, the body low over it, both hands down the shaft — he is a
+       post with a point on it, and he does not move while a man is coming on */
+    if (u.setT > 0 && !mounted) { const k = Math.min(1, (u.blockT || 0) * 3); crouch += 0.42 * k; stance += 0.5 * k; lean += 0.3 * k; twist += 0.22 * k; rateB = Math.max(rateB, 11); }
+    /* 鎲鈀 his blade caught in the prongs: he hauls back on it, shoulders working, weight going away */
+    if (u.trapT > 0) { const k = Math.min(1, u.trapT * 2.2) * (0.85 + 0.15 * Math.sin(this.time * 34)); lean -= 0.3 * k; crouch += 0.2 * k; twist -= 0.25 * k; rateB = Math.max(rateB, 16); }
+    /* 藤牌 the shove: the shield goes in first with the shoulder behind it (a.shv set on the shove event) */
+    if (a.shv > 0) { a.shv = Math.max(0, a.shv - dt * 4.5); const k = Math.sin(Math.min(1, a.shv) * PI); lean += 0.55 * k; lunge += 0.8 * k; crouch += 0.2 * k; twist += 0.3 * k; rateB = Math.max(rateB, 18); }
     /* helping a friend up (helperPose): the helper kneels by the downed man, takes him under the arm, they rise together, and for the
        first steps the hurt man leans on his shoulder; a.hlp runs 0..1 as the helper goes down and comes up again */
     { const HP = this.helperPose(u, a, dt, x, z, yaw, mounted); if (HP) { lean = HP.lean; twist = HP.twist; crouch = HP.crouch; stance = HP.stance; roll = HP.roll; rateB = 9; rateW = 10;
@@ -9373,6 +9382,8 @@ class Renderer {
   // can read a.kbX/a.kbZ (shove offset), a.hb (bend back, rad, negative = away from the front) and a.hs (twist/side bend) instead
   // which SW weight a man's current blow has (render-only; reads sim state)
   swKind(u, w, clubbing) {
+    if (u.def.brush && (u.heavy || u.aiHeavy) && (u.atkDir === DIR_LEFT || u.atkDir === DIR_RIGHT)) return 'sweep'; /* the brush's held swing clears the front */
+    if (u.def.overhead && u.atkDir === DIR_UP) return 'cutter';
     if (u.heavy || u.aiHeavy || u.cbHeavy) return 'heavy';
     if (clubbing) return 'club';
     if (w === 'yari') return u.atkDir === DIR_DOWN ? 'spear' : (u.atkDir === DIR_LEFT || u.atkDir === DIR_RIGHT) ? 'cut' : 'chop';

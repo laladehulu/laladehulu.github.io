@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>遼東 · Model Lab</title>
+<style>
+:root { --ink: #1b1611; --paper: #efe6d2; --gold: #d8b04a; --red: #a3281f; --panel: rgba(22,17,12,.86); --line: rgba(216,176,74,.35); }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #2a241d; color: var(--paper); font: 14px/1.4 Georgia, 'Songti SC', serif; overflow: hidden; }
+canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+#top { position: fixed; left: 12px; top: 10px; right: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; pointer-events: none; }
+#top h1 { margin: 0 10px 0 0; font-size: 18px; letter-spacing: .12em; color: var(--gold); text-shadow: 0 1px 3px #000; }
+#top .seg { display: flex; gap: 2px; pointer-events: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 2px; }
+#top .seg button { all: unset; cursor: pointer; padding: 5px 10px; border-radius: 4px; font-size: 13px; }
+#top .seg button.on { background: var(--red); color: #fff3e4; }
+#side { position: fixed; left: 12px; top: 56px; width: 270px; max-height: calc(100% - 140px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+#side h3 { margin: 10px 0 6px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+#side h3:first-child { margin-top: 0; }
+#side .list { display: flex; flex-direction: column; gap: 3px; }
+#side .list button { all: unset; cursor: pointer; padding: 5px 8px; border-radius: 4px; border: 1px solid transparent; font-size: 13px; }
+#side .list button:hover { border-color: var(--line); }
+#side .list button.on { background: #3a2a1a; border-color: var(--gold); }
+#side .list small { opacity: .6; display: block; font-size: 11px; }
+#acts { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: min(900px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+#acts button { all: unset; cursor: pointer; padding: 5px 9px; border-radius: 4px; border: 1px solid var(--line); font-size: 12.5px; }
+#acts button:hover { background: #3a2a1a; }
+#acts .sep { width: 1px; background: var(--line); margin: 0 3px; }
+#stats { position: fixed; right: 12px; top: 56px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 12px/1.5 ui-monospace, Menlo, monospace; min-width: 190px; white-space: pre; }
+#grain { position: fixed; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: .5; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(60,40,20,.45) 100%); }
+#clips { display: none; }
+#clips.on { display: flex; }
+#note { position: fixed; right: 12px; bottom: 12px; max-width: 300px; font-size: 11.5px; opacity: .7; text-align: right; }
+#note a { color: var(--gold); }
+#load { position: fixed; inset: 0; display: grid; place-items: center; background: #1b1611; z-index: 9; font-size: 16px; letter-spacing: .1em; }
+@media (max-width: 760px) { #side { width: calc(100% - 24px); max-height: 30%; top: auto; bottom: 120px; } #stats { display: none; } #note { display: none; } }
+</style>
+</head>
+<body>
+<div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Model lab · v122</div>
+<canvas id="c"></canvas>
+<div id="grain"></div>
+<div id="top"><h1>遼東 · MODEL LAB</h1>
+  <div class="seg" id="modes"><button data-m="show" class="on">Showroom</button><button data-m="lineup">Lineup</button><button data-m="duel">Duel</button><button data-m="file">The file</button><button data-m="check">Clipping check</button></div>
+</div>
+<div id="side">
+  <h3>Armor</h3><div class="list" id="armors"></div>
+  <h3>Weapon</h3><div class="list" id="weapons"></div>
+  <h3>Clips</h3><div class="list" id="cliplist"></div>
+</div>
+<div id="acts"></div>
+<div id="stats">loading…</div>
+<div id="note">Body and animations: Quaternius, <a href="https://quaternius.com/packs/universalanimationlibrary.html">Universal Animation Library</a>, CC0. Armor, helmets, weapons and faces are built in this page.</div>
+<div id="load">裝甲中 · loading the model…</div>
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+<script src="SkeletonUtils.js"></script>
+<script src="OrbitControls.js"></script>
+<script src="lab.js"></script>
+</body>
+</html>
