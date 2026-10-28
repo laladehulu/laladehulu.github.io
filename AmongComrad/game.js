@@ -185,6 +185,7 @@ const humans=()=>G.humans;
 const liveHumans=()=>G.humans.filter(h=>h.alive);
 function seesPt(h,x,y,r){return !!(h&&h.alive&&dist(h.x,h.y,x,y)<=(r||VIS)&&los(h.x,h.y,x,y))}
 const roleOf=u=>u.isSpy?'spy':u.isCom?'com':'reg';
+const turnedList=()=>G.people.filter(u=>u.turned).map(u=>u.name);
 function assignPostsList(n){
   const by=c=>shuffle(POSTS.filter(p=>p.c===c));const win=by('win'),side=by('side'),ntr=by('ntr'),str=by('str'),dug=by('dug');
   return shuffle([win[0],win[1],win[4],ntr[0],str[0],dug[0],side[0],win[2]].slice(0,n))}
@@ -284,7 +285,7 @@ function kill(u,src){
   const b={u,x:u.x,y:u.y,aim:u.aim,uniform:u.uniform,col:u.col,cause:src.cause||'bullet',cal:src.cal,gkind:src.gkind,dirKey:dirKey(src),t:G.time,wave:G.wave,zone:zoneAt(u.x,u.y),inspected:false,inspBy:[],wpn:(u.side==='ger'&&(u.wpn==='mp40'||u.wpn==='kar98'))?u.wpn:null,taken:false,killer:src.owner};
   G.bodies.push(b);decal('pool',u.x,u.y);
   if(u.side==='ger'){G.kills++;if(ko)ko.kills++;return}
-  if(u.isCom&&G.spy&&src.owner===G.spy){const sp=G.spy;
+  if(u.isCom&&src.owner&&traitor(src.owner)){const sp=src.owner;
     endGame(true,me=>me.isSpy?`You killed ${u.name} — the commissar. Without him the inquiry dies, and nobody will ever know it was you.`:
       me===u?`${sp.name}, the spy, worked out you were the commissar and killed you at the ${b.zone}.`:`The spy found the commissar first. ${u.name} was killed at the ${b.zone}, and the inquiry died with him.`);return}
   if(u.isCom){G.comKnown=true;logMsg(`${u.name} is down — ${u.name} was the commissar.`,'bad');noteAll(`${u.name} was the secret commissar, and is dead. The ranking officer takes over the inquiry.`,'key',h=>h!==u)}
@@ -292,7 +293,7 @@ function kill(u,src){
     if(u.isSpy)endGame(false,u.revealed?'Cut down by the comrades you betrayed, short of the German lines.':`You were killed at the ${b.zone}.`);
     else endGame(true,`You were killed at the ${b.zone}${src.owner&&src.owner.side!=='ger'?` — by ${src.owner.name}`:''}.`);return}
   if(u.isPlayer)banner('You were killed',`At the ${b.zone}. You can watch the rest of the battle.`,'bad',5,u);
-  if(u.side==='traitor'){G.spyFate='killed';logMsg(`${u.name}, the spy, is dead.`,'good');noteAll(`${u.name} — the spy — was killed before reaching the German lines.`,'key',LOYAL);banner('Spy eliminated',`${u.name} will not reach the Germans.`,'good',3.6,LOYAL);allHumansDown();return}
+  if(u.side==='traitor'){if(u===G.spy)G.spyFate='killed';logMsg(`${u.name}, the spy, is dead.`,'good');noteAll(`${u.name} — the spy — was killed before reaching the German lines.`,'key',LOYAL);banner('Spy eliminated',`${u.name} will not reach the Germans.`,'good',3.6,LOYAL);allHumansDown();return}
   G.lost++;
   const inc={id:++G.incId,type:'death',t:G.time,x:u.x,y:u.y,zone:b.zone,victim:u,victimName:u.name,body:b,wave:G.wave};G.incidents.push(inc);b.inc=inc;
   logMsg(`${u.name} is down — ${b.zone}.`,'bad');
@@ -339,6 +340,7 @@ function sovAI(u,dt){
   if(u.isSpy)spyAI(u,dt);
   if(u.isCom)comAI(u,dt);
   if(u.knife){knifeTick(u,dt);return}
+  if(u.recruit){recruitTick(u,dt);u.moving=false;return}
   if(u.stab){stabTick(u,dt);return}
   const ah=G.humans.find(h=>h.arrestHold&&h.arrestHold.T===u);if(ah){u.moving=false;u.path=[];u.aim=Math.atan2(ah.y-u.y,ah.x-u.x);return}
   if(u.path.length)followPath(u,dt,3.3);else u.moving=false;
@@ -363,13 +365,14 @@ function combatTick(u,dt){
 function traitorAI(u,dt){
   if(!u.fleeSet){u.fleeSet=true;u.post=null;if(!goTo(u,0.6,clamp(u.y,2,37)|0))goTo(u,0.6,20.5)}
   if(u.path.length)followPath(u,dt,3.7);else{u.repathT-=dt;if(u.repathT<=0){u.repathT=2;goTo(u,0.6,clamp(u.y+(rnd()-.5)*10,1,38)|0)}}
-  if(u.x<1.2){u.alive=false;u.escaped=true;G.spyFate='escaped';logMsg(`${u.name} reached the German lines.`,'bad');noteAll(`${u.name}, the spy, escaped to the Germans.`,'key',LOYAL);return}
+  if(u.x<1.2){u.alive=false;u.escaped=true;if(u===G.spy)G.spyFate='escaped';logMsg(`${u.name} reached the German lines.`,'bad');noteAll(`${u.name}, the spy, escaped to the Germans.`,'key',LOYAL);return}
   combatTick(u,dt)}
 // the AI spy's best guess at who the hidden commissar is (only acts on a strong guess)
 function comTarget(u){let best=null,bv=0;for(const o of liveSov()){if(o===u)continue;const v=G.comGuess[o.id]||0;if(v>bv){bv=v;best=o}}return bv>=55?best:null}
 function spyAI(u,dt){
   if(u.revealed)return;
   if(u.knifeCd>0)u.knifeCd-=dt;
+  if(!u.stab&&!u.knife&&spyRecruitAI(u,dt))return;
   if(!u.stab&&!u.knife&&spySabotageAI(u,dt))return;
   const M=G.mission,onSortie=u.sortie&&M&&M.st==='go';
   if(!(G.phase==='wave'&&G.wave>=2)&&!onSortie)return;
@@ -406,6 +409,31 @@ function comSeen(c,T){
     else if(seesPt(h,c.x,c.y,14))noteTo(h,`You saw ${c.name} quietly questioning ${T.name}.${h.isSpy?' Only the commissar asks questions.':''}`,'talk')}}
 function lonelyTarget(u){let best=null,bs=1e9;for(const T of G.squad){if(!T.alive||T===u||T.side!=='sov')continue;let c=0;for(const o of liveSov())if(o!==T&&o!==u&&dist(o.x,o.y,T.x,T.y)<7)c++;const s=c*10+dist(u.x,u.y,T.x,T.y)*0.3+rnd()*4;if(s<bs){bs=s;best=T}}return best}
 function behindSpot(T){for(let k=0;k<20;k++){const x=T.x+2+rnd()*3,y=T.y+(rnd()-.5)*5;if(passable(x|0,y|0)&&los(x,y,T.x,T.y))return{x:(x|0)+0.5,y:(y|0)+0.5}}return null}
+// ---------- recruitment: the spy turns a comrade ----------
+// Once per assault the original spy can whisper an offer to a soldier standing next to him (3 s, unseen by anyone
+// else). The commissar refuses and unmasks him. A bot accepts or refuses on the spot — a refusing bot reports it.
+// A player decides: accept and you secretly join the spy's side; refuse and you now know who the spy is.
+const REC_T=3;
+function startRecruit(u,T){if(!T||u!==G.spy||u.revealed||(u.recruitLeft||0)<=0||u.recruit)return false;u.recruit={T,t:0};u.path=[];return true}
+function recruitTarget(u){let best=null,bd=1.7;for(const T of G.people){if(T===u||!T.alive||T.side!=='sov'||traitor(T)||T.offer)continue;const d=dist(u.x,u.y,T.x,T.y);if(d<bd){bd=d;best=T}}return best}
+function recruitTick(u,dt){const r=u.recruit,T=r.T;
+  if(!T.alive||T.side!=='sov'||dist(u.x,u.y,T.x,T.y)>2.0||u.revealed){u.recruit=null;u.seeking=false;return}
+  const w=noticedBy(u,T);if(w.length){u.recruit=null;u.seeking=false;addS(u,25);if(u.isPlayer)logMsg(`${w[0].name} is watching. Not now.`,'bad',u);return}
+  r.t+=dt;if(r.t<REC_T)return;u.recruit=null;u.seeking=false;u.recruitLeft=0;
+  if(T.isCom){say(T,'You are under arrest, traitor!',2.5);noteTo(T,`${u.name} tried to recruit you for the Germans. ${u.name} is the spy.`,'key');reveal(u,`tried to recruit the commissar`,T);return}
+  if(T.isPlayer){T.offer={from:u,t:12};noteTo(T,`${u.name} took you aside and offered you German papers and a way out of Stalingrad.`,'key');
+    if(u.isPlayer)logMsg(`You make ${T.name} the offer. Now you wait.`,'',u);return}
+  if(rnd()<0.55){turn(T,u)}else{say(T,'Never!',2);addS(u,70);if(u.isPlayer)logMsg(`${T.name} refused — and will talk.`,'bad',u);
+    noteAll(`${T.name} reports that ${u.name} tried to recruit him for the Germans.`,'key',h=>h.isCom&&!traitor(h))}}
+function turn(T,by){T.turned=true;T.isSpy=true;T.sabCd=15+rnd()*15;T.stabCd=G.wave>=2?20+rnd()*20:1e9;T.flareCd=1e9;T.flaresLeft=0;T.duty=null;T.knifeCd=10;
+  if(by.isPlayer)logMsg(`${T.name} takes the offer. You are not alone any more.`,'good',by);
+  if(T.isPlayer){banner('Turned',`You took the German offer. You now win with ${by.name}: wreck stations, knife, let the dugout fall.`,'bad',6,T);noteTo(T,`You took ${by.name}'s offer. You now fight for the Germans, secretly. ${by.name} is the spy.`,'key')}}
+function answerOffer(T,yes){const o=T.offer;if(!o)return;T.offer=null;const u=o.from;
+  if(yes&&u.alive&&!u.revealed)turn(T,u);else{noteTo(T,`You refused ${u.name}'s offer. ${u.name} is the spy.`,'key');if(u.isPlayer)logMsg(`${T.name} refused your offer. Watch out.`,'bad',u)}}
+function spyRecruitAI(u,dt){if(u!==G.spy||(u.recruitLeft||0)<=0||G.wave<1)return false;
+  u.recT=(u.recT===undefined?8:u.recT)-dt;if(u.recT>0)return false;u.recT=6;
+  const T=recruitTarget(u);if(T&&(G.comGuess[T.id]||0)<40&&noticedBy(u,T).length===0&&rnd()<0.5)return startRecruit(u,T);
+  return false}
 // ---------- the knife: a silent kill from behind ----------
 // The spy needs to be within arm's reach, behind the victim (the victim facing away), and unseen. It takes 0.9 s:
 // if the victim turns round or steps away, or anyone loyal sees it, it fails and the spy is exposed.
@@ -511,10 +539,11 @@ function humanTick(p,I,dt){
   if(!trig)p.semiLock=false;
   if(I&&I[4])for(const e of I[4])humanEvent(p,e);
   if(p.knifeCd>0)p.knifeCd-=dt;if(p.knife){knifeTick(p,dt);if(!p.alive||G.over)return}
+  if(p.recruit)recruitTick(p,dt);if(p.offer){p.offer.t-=dt;if(p.offer.t<=0)answerOffer(p,false)}
   if(p.arrestHold){const a=p.arrestHold;if(!a.T.alive||a.T.side!=='sov'||dist(p.x,p.y,a.T.x,a.T.y)>2.2||!(p.btn&2))p.arrestHold=null;else{a.t+=dt;if(a.t>=1.4){p.arrestHold=null;completeArrest(p,a.T)}}}
   if(p.revealed&&p.x<1.4){
     if(G.humans.length===1){endGame('escaped','You made it across no-man\'s land into the German lines, but your cover is gone for good.');return}
-    p.alive=false;p.escaped=true;G.spyFate='escaped';logMsg(`${p.name} reached the German lines.`,'bad');banner('Escaped','You made it to the German lines. You can watch the rest of the battle.','',5,p);allHumansDown()}
+    p.alive=false;p.escaped=true;if(p===G.spy)G.spyFate='escaped';logMsg(`${p.name} reached the German lines.`,'bad');banner('Escaped','You made it to the German lines. You can watch the rest of the battle.','',5,p);allHumansDown()}
   if(traitor(p)&&!p.revealed){p.sabCd=Math.max(0,(p.sabCd||0)-dt);const i=stationAt(p,1.8);
     if(i>=0&&(p.btn&4)&&!G.st[i].sab&&p.sabCd<=0){const w=noticedBy(p,null);if(w.length)sabWitnessed(p,i,w);else{p.sabT=(p.sabT||0)+dt;if(p.sabT>=SAB_T)doSabotage(p,i)}}else p.sabT=0}
   if(p.crateCd>0)p.crateCd-=dt}
@@ -531,6 +560,8 @@ function humanEvent(p,e){
     case 'f':doArrestStart(p);break;
     case 'q':playerFlare(p,(e[1]|0)/100,(e[2]|0)/100);break;
     case 'k':if(traitor(p)&&!p.revealed)startKnife(p,knifeTarget(p));break;
+    case 'c':if(p===G.spy&&!p.revealed){const T=recruitTarget(p);if(!T)logMsg('Nobody close enough to whisper to.','',p);else if((p.recruitLeft||0)<=0)logMsg('You have already made an offer this assault.','',p);else startRecruit(p,T)}break;
+    case 'y':answerOffer(p,true);break;case 'n':answerOffer(p,false);break;
     case 's':switchSlot(p,e[1]);break}}
 function nearestInteract(p){
   if(!p||!p.alive||p.revealed)return null;
@@ -829,6 +860,7 @@ function startWave(){
   assignPosts();
   const sp=G.spy;if(!sp.isPlayer&&sp.alive&&!sp.revealed){sp.flaresLeft=G.wave>=2?1:0;sp.flareCd=25+rnd()*35;sp.stabCd=G.wave>=2?10+rnd()*20:1e9}
   for(const h of G.humans)if(h.isSpy)h.flares=1;
+  if(G.spy&&G.spy.alive&&!G.spy.revealed)G.spy.recruitLeft=1;
   banner(`Assault ${G.wave} of ${WAVES.length}`,w.txt,'',4);if(G.me)sfx('whistleAttack')}
 function endWave(){
   if(G.wave>=WAVES.length){const sf=G.spyFate,arr=G.spy.arrested;
@@ -1082,6 +1114,9 @@ function hudTick(dt){
     if(!p.isSpy){const c=nearestComrade(p,2.6);if(c)pr.push(`<span><kbd>T</kbd> Question ${esc(c.name)}</span>`);
       const ar=p.isCom&&p.arrestsLeft>0?nearestArrestable(p,1.9):null;if(ar)pr.push(`<span><kbd>F</kbd> hold: arrest ${esc(ar.name)} (${p.arrestsLeft} left)</span>`)}
     else if(G.phase==='wave'&&p.flares>0)pr.push('<span><kbd>Q</kbd> Fire green flare at cursor</span>');
+    if(p.offer)pr.unshift(`<span><b>${esc(p.offer.from.name)}'s offer</b> — <kbd>Y</kbd> accept · <kbd>N</kbd> refuse (${Math.ceil(p.offer.t)} s)</span>`);
+    if(p===G.spy&&(p.recruitLeft||0)>0&&!p.recruit){const rt=recruitTarget(p);if(rt)pr.push(`<span><kbd>C</kbd> Whisper an offer to ${esc(rt.name)}</span>`)}
+    if(p.recruit)pr.push(`<span>Whispering to ${esc(p.recruit.T.name)}… ${Math.round(p.recruit.t/REC_T*100)}%</span>`);
     if(traitor(p)&&!p.knife){const kt=knifeTarget(p);if(kt)pr.push((p.knifeCd||0)>0?`<span>Knife ready in ${Math.ceil(p.knifeCd)} s</span>`:`<span><kbd>V</kbd> Knife ${esc(kt.name)} from behind</span>`)}
     const si=stationAt(p,1.8);if(si>=0){const st=G.st[si],nm2=STATIONS[si].name;
       if(traitor(p)){if(!st.sab)pr.push(p.sabCd>0?`<span>${esc(nm2)}: wait ${Math.ceil(p.sabCd)} s</span>`:`<span><kbd>X</kbd> hold: sabotage the ${esc(nm2)}${p.sabT>0?` ${Math.round(p.sabT/SAB_T*100)}%`:''}</span>`);else pr.push(`<span>${esc(nm2)}: wrecked</span>`)}
@@ -1092,7 +1127,7 @@ function hudTick(dt){
   const now=performance.now();if(G.log.some(l=>now-l.at>9000)){G.log=G.log.filter(l=>now-l.at<=9000);renderRadio()}}
 function rosterHTML(withStatus){const p=G.me;let h='<tr><th></th><th>Soldier</th><th>Weapon</th><th>Calibre</th><th>Boots</th>'+(withStatus?'<th>Status</th>':'')+'</tr>';
   for(const u of G.people){const w=WPN[u.isPlayer?'ppsh':u.wpn];const st=u.escaped?'escaped':u.revealed?'unmasked':u.arrested?'arrested':u.alive?'alive':'killed';
-    h+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.rank)} ${esc(u.name)}${u===p?' (you)':u.isPlayer?' <small style="color:var(--dim)">player</small>':''}</td><td>${w.name}</td><td class="cal">${w.cal}</td><td>${BOOTS[u.boot]||''}</td>${withStatus?`<td>${st}${withStatus==='end'&&u.isSpy?' · <b style="color:#ff8a70">SPY</b>':''}${u.isCom&&(withStatus==='end'||G.comKnown||u===p)?' · <b style="color:#d8aa4d">COMMISSAR</b>':''}</td>`:''}</tr>`}return h}
+    h+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.rank)} ${esc(u.name)}${u===p?' (you)':u.isPlayer?' <small style="color:var(--dim)">player</small>':''}</td><td>${w.name}</td><td class="cal">${w.cal}</td><td>${BOOTS[u.boot]||''}</td>${withStatus?`<td>${st}${withStatus==='end'&&u.isSpy?` · <b style="color:#c4261b">${u.turned?'TURNED':'SPY'}</b>`:''}${u.isCom&&(withStatus==='end'||G.comKnown||u===p)?' · <b style="color:#d8aa4d">COMMISSAR</b>':''}</td>`:''}</tr>`}return h}
 function openNotebook(){if(state!=='play'||!G.me)return;state='notebook';$('notebook').hidden=false;$('noteBtn').classList.remove('flash');const me=G.me;
   $('nbEb').textContent=me.isSpy?'Your field notes':me.isCom?'Commissar\'s notebook':'Your notebook';
   $('notes').innerHTML=me.notes.length?[...me.notes].reverse().map(n=>`<div class="note ${n.k}"><time>${n.when}</time>${esc(n.t)}</div>`).join(''):`<p class="empty">${me.isSpy?'The commissar gathers evidence after each assault. Watch the radio log and the suspicion bars.':'Nothing yet. When a comrade falls, find the body and press E to inspect it. Press T next to a comrade to question them.'}</p>`;
@@ -1140,7 +1175,7 @@ function councilUI(){
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
 function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['E',role==='spy'?'Use: ammo crate, take a German weapon':'Use: ammo crate, inspect a body or a spent casing, take a German weapon'],
-  ...(role==='spy'?[['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
+  ...(role==='spy'?[['C','Whisper an offer to the soldier next to you (once per assault)'],['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
 function showBrief(){
   const p=G.me,role=roleOf(p),spy=role==='spy',multi=G.humans.length>1;
   const sortieP='<p><b>Sabotage.</b> Five stations hold the block together: the field telephone, the dugout barricade, a window lamp and two stacks of ammo crates. The spy can wreck one in three seconds when nobody is looking. Nobody notices until a loyal soldier walks past it — and every soldier who passes a working station proves it was fine at that moment, so each discovery comes with a time window. Hold E to repair it. A station still wrecked when an assault starts hurts the squad for that assault. <b>Three of those and the block falls.</b></p>';
@@ -1149,10 +1184,10 @@ function showBrief(){
   $('briefRole').textContent=spy?'Brandenburger':role==='com'?'Commissar':'Soldier';$('briefRole').className=spy?'spy':'com';
   $('briefSub').textContent=spy?'Abwehr special unit, in Red Army uniform':role==='com'?'Secret political officer · five assaults until dawn':'Rifleman · five assaults until dawn';
   $('briefText').innerHTML=tracksP+(spy?
-   `<p>You are ${esc(p.name)}, an Abwehr infiltrator in a Red Army greatcoat. Somewhere in the squad is a <b>secret commissar</b> hunting you. He goes over every body after each assault: a 7.62×25 mm wound in the back points at the PPSh carriers, a captured MP 40 hides the calibre, and a green flare brings German mortars down on the squad. Get behind someone who is looking the other way and press V: the knife is silent and leaves no calibre — but if they turn round, or anyone sees, you are finished.</p>${sortieP}<p><b>You win</b> if three wrecked stations reach an assault unrepaired, if <b>you kill the commissar</b> (he gives himself away by questioning people and making arrests), or if the command dugout falls. <b>You lose</b> if you are arrested, killed, or the line holds until dawn.</p>`:
+   `<p>You are ${esc(p.name)}, an Abwehr infiltrator in a Red Army greatcoat. Somewhere in the squad is a <b>secret commissar</b> hunting you. He goes over every body after each assault: a 7.62×25 mm wound in the back points at the PPSh carriers, a captured MP 40 hides the calibre, and a green flare brings German mortars down on the squad. Once per assault you can stand next to someone, unseen, and press C to offer them German papers — a soldier who accepts joins your side, but one who refuses will talk, and the commissar arrests you on the spot. Get behind someone who is looking the other way and press V: the knife is silent and leaves no calibre — but if they turn round, or anyone sees, you are finished.</p>${sortieP}<p><b>You win</b> if three wrecked stations reach an assault unrepaired, if <b>you kill the commissar</b> (he gives himself away by questioning people and making arrests), or if the command dugout falls. <b>You lose</b> if you are arrested, killed, or the line holds until dawn.</p>`:
    role==='com'?
    `<p>You are Commissar ${esc(p.name)}, wearing a private's coat. Nobody knows what you are — keep it that way. One of the squad is a German infiltrator who shoots comrades in the back, fires green flares for the mortars, and wrecks the stations that hold the block together.</p><p><b>Inspect bodies</b>, <b>question the squad</b>, and <b>arrest</b> the spy (two arrests). But if the spy sees you asking questions he will work out who you are — and <b>his other way to win is to kill you</b>. Watch your cover meter. An arrest reveals you to everyone.</p>${sortieP}<p>You lose if you die, if three wrecked stations reach an assault, or the Germans hold the command dugout for eight seconds.</p>`:
-   `<p>You are Private ${esc(p.name)}. Somewhere in the squad is a German spy — and a <b>secret commissar</b> hunting him. You don't know who either of them is.</p><p>Hold the line and keep an eye on the stations: when one turns up wrecked, the time window tells you who could have done it. You can inspect bodies and question comrades too — but the spy can't tell a curious private from the commissar. If you work out who the commissar is, keep them alive — <b>the spy wins if he kills the commissar.</b></p>${sortieP}<p>The squad wins if the line holds until dawn. You lose if you die, three wrecked stations reach an assault, the commissar is assassinated, or the dugout falls.</p>`)+others;
+   `<p>You are Private ${esc(p.name)}. Somewhere in the squad is a German spy — and a <b>secret commissar</b> hunting him. You don't know who either of them is.</p><p>Hold the line and keep an eye on the stations: when one turns up wrecked, the time window tells you who could have done it. You can inspect bodies and question comrades too — but the spy can't tell a curious private from the commissar. If you work out who the commissar is, keep them alive — <b>the spy wins if he kills the commissar.</b> The spy may also try to turn you. If he does, you choose: take the German offer and switch sides in secret, or refuse — and you know who he is.</p>${sortieP}<p>The squad wins if the line holds until dawn. You lose if you die, three wrecked stations reach an assault, the commissar is assassinated, or the dugout falls.</p>`)+others;
   $('keysList').innerHTML=keysHTML(role);
   $('briefRoster').innerHTML=rosterHTML(false);
   $('briefHint').textContent=spy?'The commissar is one of the others. Watch who asks questions.':'Three calibres on the line: 7.62×25 mm (PPSh), 7.62×54R (rifles and the DP-28), 14.5×114 mm (the PTRD anti-tank rifle).';
@@ -1171,9 +1206,9 @@ function showEnd(){
   ['hud','notebook','speech','council','pause','brief'].forEach(i=>$(i).hidden=true);$('away').hidden=true;
   const spy=me.isSpy,escaped=R.sw==='escaped',win=!escaped&&(R.sw===true)===spy;
   const text=typeof R.text==='function'?R.text(me):R.text;
-  $('endKicker').textContent=(spy?'Brandenburger':me.isCom?'Commissar':'Soldier')+' — debrief';
+  $('endKicker').textContent=(me.turned?'Turned':spy?'Brandenburger':me.isCom?'Commissar':'Soldier')+' — debrief';
   const t=$('endTitle');t.textContent=escaped?'Escaped':win?'Victory':'Defeat';t.className=escaped?'':win?'win':'lose';
-  $('endText').textContent=text+(spy?'':` The spy was ${G.spy.name}.`)+(me.isCom?'':` The commissar was ${G.com.name}.`);
+  const tl=turnedList();$('endText').textContent=text+(me===G.spy?'':` The spy was ${G.spy.name}.`)+(tl.length?` Turned: ${listNames(tl)}.`:'')+(me.isCom?'':` The commissar was ${G.com.name}.`);
   $('endStats').innerHTML=`${G.diff.name} · Assaults reached <b>${G.wave} / ${WAVES.length}</b> · Germans killed <b>${G.kills}</b> (yours <b>${me.kills}</b>) · Comrades lost <b>${G.lost}</b>`+` · Sabotage <b>${G.sabDone} / ${SAB_WIN}</b>`+(me.isCom?` · Arrests used <b>${2-me.arrestsLeft}</b>`:'');
   $('endRoster').innerHTML=rosterHTML('end');
   $('againBtn').textContent=NET?'Back to the lobby':'Fight again';
@@ -1231,10 +1266,10 @@ function collectInput(){
   const r=[q100(clamp(mx,-1,1)),q100(clamp(my,-1,1)),Math.round(aim*1000),b];const ev=EVQ.splice(0);if(ev.length)r.push(ev);return r}
 function press(code){
   if(code==='Escape'){if(state==='notebook')closeNotebook();else if(state==='play'){state='pause';$('pause').hidden=false;$('keysList2').innerHTML=keysHTML(roleOf(G.me))}else if(state==='pause'){state='play';$('pause').hidden=true}return}
-  if(code==='KeyN'){if(state==='notebook')closeNotebook();else openNotebook();return}
+  if(code==='KeyN'){if(state==='play'&&G.me&&G.me.offer){queueEvent(['n']);return}if(state==='notebook')closeNotebook();else openNotebook();return}
   if(state!=='play'||!G.me||!G.me.alive||G.council)return;
   switch(code){case 'KeyR':queueEvent(['r']);break;case 'KeyE':queueEvent(['e']);break;case 'KeyG':{const [x,y]=cursorWorld();queueEvent(['g',q100(x),q100(y)]);break}case 'KeyT':queueEvent(['t']);break;case 'KeyF':queueEvent(['f']);break;
-    case 'KeyQ':{const [x,y]=G.me&&TOUCH?[G.me.x+Math.cos(G.me.aim)*12,G.me.y+Math.sin(G.me.aim)*12]:cursorWorld();queueEvent(['q',q100(x),q100(y)]);break}case 'KeyV':queueEvent(['k']);break;case 'Digit1':queueEvent(['s',0]);break;case 'Digit2':queueEvent(['s',-1]);break}}
+    case 'KeyQ':{const [x,y]=G.me&&TOUCH?[G.me.x+Math.cos(G.me.aim)*12,G.me.y+Math.sin(G.me.aim)*12]:cursorWorld();queueEvent(['q',q100(x),q100(y)]);break}case 'KeyV':queueEvent(['k']);break;case 'KeyC':queueEvent(['c']);break;case 'KeyY':queueEvent(['y']);break;case 'KeyN':break;case 'Digit1':queueEvent(['s',0]);break;case 'Digit2':queueEvent(['s',-1]);break}}
 window.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!KEYS[e.code])press(e.code);KEYS[e.code]=true});
 window.addEventListener('keyup',e=>{KEYS[e.code]=false});
 window.addEventListener('blur',()=>{for(const k in KEYS)KEYS[k]=false;MOUSE.down=false});
