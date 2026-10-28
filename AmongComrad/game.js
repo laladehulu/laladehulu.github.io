@@ -1259,6 +1259,7 @@ const ICON={
   shell:IC('<path d="M6 15V6l2-5 2 5v9Z"/>')};
 let hudT=0;
 function hudTick(dt){
+  {const me=G.me,rn=me&&me.alive&&state==='play'?zoneAt(me.x,me.y):'';const r=rn==='line'?'':rn;if($('room').textContent!==r)$('room').textContent=r}
   hudT-=dt;if(hudT>0)return;hudT=0.12;const p=G.me;if(!p)return;
   const left=G.units.filter(u=>u.alive&&u.side==='ger').length+G.spawnQ.length;
   if(G.phase==='lull'){$('waveNum').textContent=G.wave?`${G.wave} / ${WAVES.length}`:'Dusk';$('waveState').innerHTML=`${ICON.clock}${Math.ceil(G.phaseT)}<small style="font-weight:500;color:var(--dim)">&nbsp;·&nbsp;</small>${ICON.ger}${left}`}
