@@ -159,7 +159,7 @@ const BOT_KEEP=['Kuznetsov','Orlov','Petrova','Morozov','Sokolova','Ivanov','Leb
 function newGame(cfg){
   UID=0;RS=(cfg.seed|0)||1;resetMap();
   const DF=DIFF[cfg.diff]||DIFF.normal;
-  G={diff:DF,diffKey:cfg.diff||'normal',comGuess:{},pub:{},rec:{},track:[],mi:0,mission:null,council:null,fails:0,comKnown:false,aiArrests:3,mod:null,units:[],proj:[],nades:[],fx:[],bodies:[],sched:[],incidents:[],log:[],smoke:[],phase:'lull',phaseT:22,wave:0,time:0,tick:0,spawnQ:[],spawnT:0,overrun:0,
+  G={diff:DF,diffKey:cfg.diff||'normal',comGuess:{},pub:{},rec:{},track:[],mi:0,mission:null,council:null,fails:0,comKnown:false,aiArrests:3,mod:null,units:[],proj:[],nades:[],fx:[],bodies:[],sched:[],incidents:[],log:[],smoke:[],phase:'lull',phaseT:7,wave:0,time:0,tick:0,spawnQ:[],spawnT:0,overrun:0,
     kills:0,lost:0,susp:{},hitInd:[],dmgFlash:0,shake:0,over:false,spyFate:null,incId:0,kick:0,arrestDone:false,banner:null,demo:!!cfg.demo};
   const hs=cfg.demo?[]:cfg.humans;
   G.humans=hs.map((h,i)=>{const p=mkUnit({kind:'player',isPlayer:true,seat:i,name:String(h.name||'Rybakov').trim().slice(0,12)||'Rybakov',rank:'Pvt.',col:HCOL[i%HCOL.length],wpn:'ppsh',mag:71,reserve:213,x:49.5-(i%4)*0.9,y:16.5+(i>>2)*0.9,aim:Math.PI,grenades:3,flares:0,slot:0,notes:[],arrestsLeft:2,crateCd:0,kills:0,away:false});
@@ -168,13 +168,14 @@ function newGame(cfg){
   const bots=SQUAD.filter(s=>keep.has(s.name));const posts=assignPostsList(bots.length);
   bots.forEach((s,i)=>{const u=mkUnit({kind:'sq',name:s.name,rank:s.rank,col:s.col,wpn:s.wpn,mag:WPN[s.wpn].mag,post:posts[i],hp:DF.hp,maxhp:DF.hp});u.x=u.post.x;u.y=u.post.y;u.aim=u.post.face;G.units.push(u)});
   G.squad=G.units.filter(u=>u.kind==='sq');G.people=[...G.humans,...G.squad];
+  {const sz=shuffle(G.people.map((_,i)=>i%3));G.people.forEach((u,i)=>{u.boot=sz[i];u.pd=0;u.foot=0})}G.prints=[];G.casings=[];
   // secret roles: one spy, one commissar, the rest regulars
   let spy,com;const pref=G.humans.length===1?cfg.rolePref:null;let pr=pref==='random'?(()=>{const r=rnd();return r<1/8?'spy':r<2/8?'comrade':'regular'})():pref;
   if(pr==='spy')spy=G.humans[0];else spy=pick(pr?G.squad:G.people);
   if(pr==='comrade')com=G.humans[0];else com=pick((pr?G.squad:G.people).filter(u=>u!==spy));
   spy.isSpy=true;G.spy=spy;if(!spy.isPlayer){spy.stabCd=1e9;spy.flareCd=1e9;spy.flaresLeft=0}
   com.isCom=true;G.com=com;if(!com.isPlayer)com.qCd=8+rnd()*8;
-  initStations();if(!spy.isPlayer)spy.sabCd=35+rnd()*25;
+  initStations();if(!spy.isPlayer)spy.sabCd=20+rnd()*20;
   G.order=shuffle([...G.people]);G.lead=0;
   G.me=G.humans[0]||null}
 // the grid is changed in play (a burnt-out Panzer becomes cover), so every game starts from a pristine copy
@@ -223,7 +224,7 @@ function fire(u,ang,o={}){
   const a=ang+(rnd()+rnd()-1)*sp*1.5,dx=Math.cos(a),dy=Math.sin(a);
   const tk=!!o.tk||(u.isPlayer&&u.isSpy&&!u.revealed);
   G.proj.push({x:u.x+dx*0.3,y:u.y+dy*0.3,dx,dy,sp:w.speed,dmg:w.dmg*(o.mul||1),cal:w.cal,owner:u,side:u.side,tk,dist:0,max:u.isPlayer?w.range*1.3:Math.min(w.range*1.3,AI_RANGE+3),at:!!w.at,last:-1,he:false});
-  u.mag--;u.fireCd=w.rof*(u.isPlayer?1:1+rnd()*0.25);
+  u.mag--;u.fireCd=w.rof*(u.isPlayer?1:1+rnd()*0.25);dropCasing(u,w);
   if(u.side==='sov'&&u.x>42&&u.x<53&&((G.effects.crN&&u.y<19)||(G.effects.crS&&u.y>=19)))u.fireCd*=1.7;
   const ml=w.len+0.1;G.fx.push({k:'muz',x:u.x+dx*ml,y:u.y+dy*ml,a,t:0,life:0.06});
   sfxAt(w.snd,u.x,u.y);
@@ -535,6 +536,7 @@ function nearestInteract(p){
   if(!p||!p.alive||p.revealed)return null;
   for(const c of CRATES)if(dist(p.x,p.y,c.x,c.y)<1.6)return{k:'crate',label:'Resupply ammunition and grenades'};
   let best=null,bd=1.4;
+  {const c=nearCasing(p);if(c&&!p.isSpy){best={k:'casing',c,label:`Pick up the spent casing (${c.cal})`};bd=0.9}}
   for(const b of G.bodies){const d=dist(p.x,p.y,b.x,b.y);if(d>=bd)continue;
     if(b.uniform==='sov'&&!b.inspBy.includes(p.id)&&!p.isSpy&&b.u!==p){best={k:'inspect',b,label:`Inspect ${b.u.name}'s body`};bd=d}
     else if(b.wpn&&!b.taken){best={k:'take',b,label:`Take the ${WPN[b.wpn].name} (${WPN[b.wpn].cal})`};bd=d}}
@@ -547,11 +549,13 @@ function doInteract(p){
   const it=nearestInteract(p);if(!it)return;
   if(it.k==='crate'){if(p.crateCd>0)return;p.crateCd=1;storeSlot(p);p.slots[0].reserve=Math.max(p.slots[0].reserve,213);if(p.slots[1])p.slots[1].reserve=Math.max(p.slots[1].reserve,WPN[p.slots[1].wpn].res);p.reserve=p.slots[p.slot].reserve;p.grenades=3;if(p===G.me)sfx('reload');logMsg('Resupplied: full drums and three RGD-33 grenades.','good',p)}
   else if(it.k==='inspect'){it.b.inspBy.push(p.id);it.b.inspected=true;const t=inspectText(it.b);noteTo(p,t,'death');speech('You inspect the body',t,p);if(p===G.me)sfx('page');if(spySees(p))addGuess(p,8)}
+  else if(it.k==='casing'){const c=it.c;G.casings.splice(G.casings.indexOf(c),1);const t=`A spent ${c.cal} casing at the ${zoneAt(c.x,c.y)}, fired ${ago(c.t)}. ${SOV_CALS.includes(c.cal)?'One of ours.':'A German calibre — but it was fired from where you are standing.'}`;noteTo(p,t,'talk');speech('Spent casing',t,p);if(p===G.me)sfx('page')}
   else if(it.k==='take'){it.b.taken=true;storeSlot(p);p.slots[1]={wpn:it.b.wpn,mag:WPN[it.b.wpn].mag,reserve:WPN[it.b.wpn].res};p.slot=1;loadSlot(p);if(p===G.me)sfx('reload');logMsg(`You picked up a German ${WPN[p.wpn].name}. Press 1 or 2 to switch.`,'',p)}}
 function storeSlot(p){const s=p.slots[p.slot];if(s){s.mag=p.mag;s.reserve=p.reserve}}
 function loadSlot(p){const s=p.slots[p.slot];p.wpn=s.wpn;p.mag=s.mag;p.reserve=s.reserve;p.reloadT=0;p.fireCd=0.25}
 function switchSlot(p,i){if(i===-1||i===undefined)i=p.slot?0:1;if(!p.slots[i]||i===p.slot)return;storeSlot(p);p.slot=i;loadSlot(p);if(p===G.me)sfx('reload')}
-function inspectText(b){const n=b.u.name;
+function inspectText(b){const n=b.u.name,bs=b.u.boot!==undefined?` (${BOOTS[b.u.boot]} boots)`:'';const r=inspectText0(b);return r.replace(n+':',n+bs+':')}
+function inspectText0(b){const n=b.u.name;
   if(b.cause==='bullet'){const d={behind:'The round came from behind — from our side of the line.',front:'Shot from the front, from the German side.',flank:'Shot from the flank.',none:''}[b.dirKey];
     const ger=!SOV_CALS.includes(b.cal);return `${n}: a ${b.cal} round. ${d}${ger&&b.dirKey!=='front'?' A German calibre, but fired from inside our own lines.':''}`}
   if(b.cause==='grenade')return `${n}: grenade fragments, ${b.gkind==='rgd'?'from one of our own RGD-33s.':'from a German stick grenade.'}`;
@@ -735,6 +739,21 @@ function resolveSortie(how){
   G.phaseT=G.wave===0?18:15;
   if(G.fails>=3)G.sched.push({at:G.time+2,k:'end',sw:true,txt:'sorties'})}
 
+// ================= tracks & casings =================
+// Everyone in a Soviet greatcoat leaves boot prints (three boot sizes in the squad) that fade over a minute, and every
+// shot drops a spent casing of that weapon's calibre where the shooter stood. They are the physical evidence:
+// follow a trail from a body, find the casings, compare calibres and boot sizes.
+const PRINT_LIFE=60,CASE_LIFE=150,BOOTS=['small','medium','large'];
+function tracksTick(){
+  for(const u of G.people){if(!u.alive||u.uniform!=='sov'||u.ox===undefined)continue;u.pd+=Math.hypot(u.x-u.ox,u.y-u.oy);
+    if(u.pd>=0.55){u.pd=0;u.foot^=1;const a=u.moving&&u.moveA!==undefined?u.moveA:u.aim,o=u.foot?0.11:-0.11;G.prints.push({x:u.x-Math.sin(a)*o,y:u.y+Math.cos(a)*o,a,t:G.time,b:u.boot})}}
+  if(G.prints.length>1200)G.prints.splice(0,G.prints.length-1200);
+  if(G.prints.length&&G.time-G.prints[0].t>PRINT_LIFE)G.prints=G.prints.filter(p=>G.time-p.t<=PRINT_LIFE);
+  if(G.casings.length&&G.time-G.casings[0].t>CASE_LIFE)G.casings=G.casings.filter(c=>G.time-c.t<=CASE_LIFE)}
+function dropCasing(u,w){if(u.uniform!=='sov')return;u.cc=(u.cc||0)+1;if(w.auto&&u.cc%3)return;const a=u.aim+Math.PI/2;
+  G.casings.push({x:u.x+Math.cos(a)*0.35,y:u.y+Math.sin(a)*0.35,t:G.time,cal:w.cal});if(G.casings.length>500)G.casings.splice(0,G.casings.length-500)}
+function nearCasing(p){let best=null,bd=0.9;for(const c of G.casings){const d=dist(p.x,p.y,c.x,c.y);if(d<bd){bd=d;best=c}}return best}
+const ago=t=>{const s=G.time-t|0;return s<10?'just now':s<60?`about ${Math.round(s/5)*5} s ago`:`about ${Math.round(s/60)} min ago`};
 // ================= sabotage & duties =================
 // Stations the spy can wreck. Sabotage is silent: nobody knows until a loyal soldier comes close enough to see it,
 // and every loyal soldier who passes a working station confirms it — so each discovery comes with a time window
@@ -771,7 +790,7 @@ function dutyAI(u,dt){const i=u.duty,S0=STATIONS[i],st=G.st[i];
   if(u.path.length)return true;
   if(dist(u.x,u.y,S0.x,S0.y)>1.9){u.repathT-=dt;if(u.repathT<=0){u.repathT=1;const sp=nearPass(S0.x,S0.y);if(!goTo(u,sp.x,sp.y)){u.duty=null;u.seeking=false}}return true}
   u.dutyT=(u.dutyT||0)+dt;if(!st.found&&u.dutyT>1.5){u.duty=null;u.seeking=false}return true}
-function doSabotage(u,i){const st=G.st[i];st.sab=true;st.found=false;st.by=u;st.at=G.time;u.sabT=0;u.sabCd=u.isPlayer?25:45+rnd()*30;u.sabTask=null;u.seeking=false;
+function doSabotage(u,i){const st=G.st[i];st.sab=true;st.found=false;st.by=u;st.at=G.time;u.sabT=0;u.sabCd=u.isPlayer?20:30+rnd()*25;u.sabTask=null;u.seeking=false;
   if(u.isPlayer){logMsg(`You wreck the ${STATIONS[i].name}. Nobody saw it.`,'good',u);if(u===G.me)sfx('page')}}
 // someone loyal saw the spy at work: it costs him the attempt and draws suspicion
 function sabWitnessed(u,i,w){u.sabT=0;u.sabTask=null;u.seeking=false;u.sabCd=Math.max(u.sabCd||0,20);addS(u,45);const nm2=STATIONS[i].name;
@@ -815,20 +834,21 @@ function endWave(){
   if(G.wave>=WAVES.length){const sf=G.spyFate,arr=G.spy.arrested;
     endGame(false,me=>me.isSpy?'Dawn. Fresh troops are crossing the Volga and the line held. Your mission failed.':
       sf==='killed'?'Dawn. The line held, and the traitor is dead.':sf==='escaped'?'Dawn. The line held, but the spy got away to the Germans.':arr?'Dawn. The line held.':me.isCom?'Dawn. The line held, but the spy is still among you — and you never caught him.':'Dawn. The line held, but the spy is still among you.');return}
-  G.phase='lull';G.phaseT=26;G.effects={};G.overLimit=8;
+  G.phase='lull';G.phaseT=13;G.effects={};G.overLimit=8;
   for(const u of liveSov())u.hp=u.maxhp;
   for(const k in G.comGuess)G.comGuess[k]=Math.max(0,G.comGuess[k]-8);
   banner('Assault beaten back','The Germans are pulling back. Restock, check the stations, question the squad.','good',3.5);
   processSuspicion();
-  G.bodies=G.bodies.filter(b=>b.uniform==='sov'||G.time-b.t<150||(b.wpn&&!b.taken))}
+  G.bodies=G.bodies.filter(b=>b.uniform==='sov'||G.time-b.t<150||(b.wpn&&!b.taken));
+  if(rnd()<0.5){G.prints=[];logMsg('Fresh snow is falling. The old tracks are gone.');G.snowT=G.time}}
 function phaseTick(dt){
   if(G.phase==='lull'){
-    G.dutyT-=dt;if(G.dutyT<=0){G.dutyT=9+rnd()*8;assignDuty(NM.floor(rnd()*STATIONS.length),false)}
+    G.dutyT-=dt;if(G.dutyT<=0){G.dutyT=5+rnd()*5;assignDuty(NM.floor(rnd()*STATIONS.length),false)}
     G.phaseT-=dt;if(!G.arrestDone&&G.phaseT<5&&G.wave>0){G.arrestDone=true;officerArrest()}if(G.phaseT<=0)startWave()}
-  else{G.spawnT-=dt;if(G.spawnQ.length&&G.spawnT<=0){spawnGerman(G.spawnQ.shift());if(G.spawnQ.length&&G.spawnQ[0]!=='tank'&&rnd()<0.35)spawnGerman(G.spawnQ.shift());G.spawnT=0.6+rnd()*1.0;G.lastSpawn=G.time}
+  else{G.spawnT-=dt;if(G.spawnQ.length&&G.spawnT<=0){spawnGerman(G.spawnQ.shift());if(G.spawnQ.length&&G.spawnQ[0]!=='tank'&&rnd()<0.35)spawnGerman(G.spawnQ.shift());G.spawnT=0.45+rnd()*0.75;G.lastSpawn=G.time}
     const since=G.time-(G.lastSpawn||G.time);
-    if(!G.spawnQ.length&&since>110&&!G.pushed){G.pushed=true;for(const u of G.units)if(u.alive&&u.side==='ger'&&u.kind!=='tank'&&u.kind!=='mg')assault(u)}
-    if(!G.spawnQ.length&&since>200){for(const u of G.units)if(u.alive&&u.side==='ger'){u.alive=false;u.gone=true}logMsg('The last Germans fall back into the ruins.')}
+    if(!G.spawnQ.length&&since>40&&!G.pushed){G.pushed=true;for(const u of G.units)if(u.alive&&u.side==='ger'&&u.kind!=='tank'){if(u.res){u.res.res=null;u.res=null}assault(u)}}
+    if(!G.spawnQ.length&&since>80){for(const u of G.units)if(u.alive&&u.side==='ger'){u.alive=false;u.gone=true}logMsg('The last Germans fall back into the ruins.')}
     if(!G.spawnQ.length&&!G.units.some(u=>u.alive&&u.side==='ger'))endWave()}}
 function overrunTick(dt){
   if(G.units.some(u=>u.alive&&u.side==='ger'&&u.kind!=='tank'&&inDugout(u)))G.overrun+=dt;else G.overrun=Math.max(0,G.overrun-dt*0.5);
@@ -858,7 +878,7 @@ function step(inputs){
   phaseTick(dt);if(G.over||G.council)return;stationsTick(dt);
   for(let i=0;i<G.humans.length;i++){humanTick(G.humans[i],inputs?inputs[i]:null,dt);if(G.over)return}
   for(const u of G.units){if(!u.alive)continue;unitCommon(u,dt);if(u.isPlayer)continue;if(u.kind==='tank')tankAI(u,dt);else if(u.side==='ger')gerAI(u,dt);else sovAI(u,dt);if(G.over)return}
-  separate();updateProj(dt);if(G.over)return;updateNades(dt);if(G.over)return;overrunTick(dt)}
+  separate();tracksTick();updateProj(dt);if(G.over)return;updateNades(dt);if(G.over)return;overrunTick(dt)}
 function updateFx(dt){
   for(const f of G.fx)f.t+=dt;G.fx=G.fx.filter(f=>f.t<f.life);
   for(const s of G.smoke){s.t+=dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.r+=dt*0.35}G.smoke=G.smoke.filter(s=>s.t<s.life);
@@ -968,6 +988,9 @@ function render(){
   {const [wx]=w2s(60,0);if(wx<VW){ctx.save();ctx.globalAlpha=0.2;ctx.strokeStyle=PAL.paper;ctx.lineWidth=1;for(let i=0;i<14;i++){const yy=((i*61+tm*14)%(H*TS))-camY;const xx=wx+((i*37)%(4*TS));ctx.beginPath();ctx.moveTo(xx,yy);ctx.lineTo(xx+TS*0.8,yy);ctx.stroke()}ctx.restore()}}
   const vis=u=>!playing||u===me||playerSeesPt(u.x,u.y);
   const on=(sx,sy,m)=>sx>-m&&sy>-m&&sx<VW+m&&sy<VH+m;
+  if(G.prints){const pz=TS*0.075;for(const pr of G.prints){const [sx,sy]=w2s(pr.x,pr.y);if(!on(sx,sy,10))continue;const a=1-(G.time-pr.t)/PRINT_LIFE;if(a<=0)continue;
+      ctx.fillStyle=`rgba(29,24,21,${0.55*a})`;ctx.save();ctx.translate(sx,sy);ctx.rotate(pr.a);const k=[0.78,0.92,1.08][pr.b]||1;ctx.beginPath();ctx.ellipse(0,0,pz*1.6*k,pz*0.75*k,0,0,TAU);ctx.fill();ctx.restore()}}
+  if(G.casings)for(const c of G.casings){const [sx,sy]=w2s(c.x,c.y);if(!on(sx,sy,10))continue;ctx.fillStyle=SOV_CALS.includes(c.cal)?PAL.ochre:'#9aa3a0';ctx.strokeStyle=PAL.ink;ctx.lineWidth=1;ctx.save();ctx.translate(sx,sy);ctx.rotate(c.x*7+c.y*3);ctx.fillRect(-TS*0.07,-TS*0.03,TS*0.14,TS*0.06);ctx.strokeRect(-TS*0.07,-TS*0.03,TS*0.14,TS*0.06);ctx.restore()}
   for(const b of G.bodies){if(playing&&!playerSeesPt(b.x,b.y))continue;const [sx,sy]=w2s(b.x,b.y);if(!on(sx,sy,50))continue;drawBody(ctx,sx,sy,TS,b);
     if(eye&&b.uniform==='sov'&&!b.inspBy.includes(me.id)&&!me.isSpy&&b.u!==me){ctx.font=`700 ${Math.max(13,TS*0.46)|0}px Oswald, sans-serif`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle=PAL.ink;ctx.strokeText('?',sx,sy-TS*0.55);ctx.fillStyle=PAL.ochre;ctx.fillText('?',sx,sy-TS*0.55)}}
   for(const u of G.units){if(u.kind==='tank'&&(u.alive||u.dead)){const [sx,sy]=w2s(u.x,u.y);if(u.dead||vis(u))drawTank(ctx,sx,sy,TS,u)}}
@@ -1067,9 +1090,9 @@ function hudTick(dt){
   else if(p.alive&&p.revealed)pr.push('<span>Run west to the German lines</span>');
   const ph=pr.join('');if($('prompt').innerHTML!==ph)$('prompt').innerHTML=ph;
   const now=performance.now();if(G.log.some(l=>now-l.at>9000)){G.log=G.log.filter(l=>now-l.at<=9000);renderRadio()}}
-function rosterHTML(withStatus){const p=G.me;let h='<tr><th></th><th>Soldier</th><th>Weapon</th><th>Calibre</th>'+(withStatus?'<th>Status</th>':'')+'</tr>';
+function rosterHTML(withStatus){const p=G.me;let h='<tr><th></th><th>Soldier</th><th>Weapon</th><th>Calibre</th><th>Boots</th>'+(withStatus?'<th>Status</th>':'')+'</tr>';
   for(const u of G.people){const w=WPN[u.isPlayer?'ppsh':u.wpn];const st=u.escaped?'escaped':u.revealed?'unmasked':u.arrested?'arrested':u.alive?'alive':'killed';
-    h+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.rank)} ${esc(u.name)}${u===p?' (you)':u.isPlayer?' <small style="color:var(--dim)">player</small>':''}</td><td>${w.name}</td><td class="cal">${w.cal}</td>${withStatus?`<td>${st}${withStatus==='end'&&u.isSpy?' · <b style="color:#ff8a70">SPY</b>':''}${u.isCom&&(withStatus==='end'||G.comKnown||u===p)?' · <b style="color:#d8aa4d">COMMISSAR</b>':''}</td>`:''}</tr>`}return h}
+    h+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.rank)} ${esc(u.name)}${u===p?' (you)':u.isPlayer?' <small style="color:var(--dim)">player</small>':''}</td><td>${w.name}</td><td class="cal">${w.cal}</td><td>${BOOTS[u.boot]||''}</td>${withStatus?`<td>${st}${withStatus==='end'&&u.isSpy?' · <b style="color:#ff8a70">SPY</b>':''}${u.isCom&&(withStatus==='end'||G.comKnown||u===p)?' · <b style="color:#d8aa4d">COMMISSAR</b>':''}</td>`:''}</tr>`}return h}
 function openNotebook(){if(state!=='play'||!G.me)return;state='notebook';$('notebook').hidden=false;$('noteBtn').classList.remove('flash');const me=G.me;
   $('nbEb').textContent=me.isSpy?'Your field notes':me.isCom?'Commissar\'s notebook':'Your notebook';
   $('notes').innerHTML=me.notes.length?[...me.notes].reverse().map(n=>`<div class="note ${n.k}"><time>${n.when}</time>${esc(n.t)}</div>`).join(''):`<p class="empty">${me.isSpy?'The commissar gathers evidence after each assault. Watch the radio log and the suspicion bars.':'Nothing yet. When a comrade falls, find the body and press E to inspect it. Press T next to a comrade to question them.'}</p>`;
@@ -1116,15 +1139,16 @@ function councilUI(){
 
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
-function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['E',role==='spy'?'Use: ammo crate, take a German weapon':'Use: ammo crate, inspect a body, take a German weapon'],
+function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['E',role==='spy'?'Use: ammo crate, take a German weapon':'Use: ammo crate, inspect a body or a spent casing, take a German weapon'],
   ...(role==='spy'?[['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
 function showBrief(){
   const p=G.me,role=roleOf(p),spy=role==='spy',multi=G.humans.length>1;
   const sortieP='<p><b>Sabotage.</b> Five stations hold the block together: the field telephone, the dugout barricade, a window lamp and two stacks of ammo crates. The spy can wreck one in three seconds when nobody is looking. Nobody notices until a loyal soldier walks past it — and every soldier who passes a working station proves it was fine at that moment, so each discovery comes with a time window. Hold E to repair it. A station still wrecked when an assault starts hurts the squad for that assault. <b>Three of those and the block falls.</b></p>';
+  const tracksP=spy?'<p><b>Tracks.</b> Every boot leaves prints that fade over a minute, and every shot drops a casing. Walk in other men\'s tracks, and fresh snow after an assault covers everything.</p>':'<p><b>Tracks.</b> Boots leave prints that fade over a minute — the squad has small, medium and large boots, listed in the roster — and every shot drops a spent casing where the shooter stood. Press E on a casing to read its calibre and how long ago it was fired.</p>';
   const others=multi?`<p><b>${G.humans.length} players</b> are in this squad${G.squad.length?`, with ${G.squad.length} bots`:''}. Any of them could be the spy or the commissar.</p>`:'';
   $('briefRole').textContent=spy?'Brandenburger':role==='com'?'Commissar':'Soldier';$('briefRole').className=spy?'spy':'com';
   $('briefSub').textContent=spy?'Abwehr special unit, in Red Army uniform':role==='com'?'Secret political officer · five assaults until dawn':'Rifleman · five assaults until dawn';
-  $('briefText').innerHTML=(spy?
+  $('briefText').innerHTML=tracksP+(spy?
    `<p>You are ${esc(p.name)}, an Abwehr infiltrator in a Red Army greatcoat. Somewhere in the squad is a <b>secret commissar</b> hunting you. He goes over every body after each assault: a 7.62×25 mm wound in the back points at the PPSh carriers, a captured MP 40 hides the calibre, and a green flare brings German mortars down on the squad. Get behind someone who is looking the other way and press V: the knife is silent and leaves no calibre — but if they turn round, or anyone sees, you are finished.</p>${sortieP}<p><b>You win</b> if three wrecked stations reach an assault unrepaired, if <b>you kill the commissar</b> (he gives himself away by questioning people and making arrests), or if the command dugout falls. <b>You lose</b> if you are arrested, killed, or the line holds until dawn.</p>`:
    role==='com'?
    `<p>You are Commissar ${esc(p.name)}, wearing a private's coat. Nobody knows what you are — keep it that way. One of the squad is a German infiltrator who shoots comrades in the back, fires green flares for the mortars, and wrecks the stations that hold the block together.</p><p><b>Inspect bodies</b>, <b>question the squad</b>, and <b>arrest</b> the spy (two arrests). But if the spy sees you asking questions he will work out who you are — and <b>his other way to win is to kill you</b>. Watch your cover meter. An arrest reveals you to everyone.</p>${sortieP}<p>You lose if you die, if three wrecked stations reach an assault, or the Germans hold the command dugout for eight seconds.</p>`:
