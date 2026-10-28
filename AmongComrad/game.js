@@ -145,7 +145,8 @@ const SORTIES=[
 ];
 const TEAM=[3,4,4,5,5];
 // mul: German numbers per assault · spread: German inaccuracy · pdmg: German damage to you · hp: squad toughness
-const DIFF={easy:{mul:0.7,spread:2.5,pdmg:0.65,hp:190,name:'Easy'},normal:{mul:1,spread:1.85,pdmg:0.85,hp:165,name:'Normal'},hard:{mul:1.3,spread:1.6,pdmg:1,hp:140,name:'Hard'}};
+// mul: German numbers · spread: German inaccuracy · pdmg/bdmg: German damage to players/bots · ghp: German toughness · hp: bot health
+const DIFF={easy:{mul:0.8,spread:3.4,pdmg:0.3,bdmg:0.5,ghp:0.35,hp:190,name:'Easy'},normal:{mul:1,spread:3.0,pdmg:0.42,bdmg:0.6,ghp:0.45,hp:165,name:'Normal'},hard:{mul:1.25,spread:2.4,pdmg:0.6,bdmg:0.8,ghp:0.6,hp:140,name:'Hard'}};
 let UID=0;
 function mkUnit(o){return Object.assign({id:UID++,alive:true,x:0,y:0,aim:Math.PI,hp:100,maxhp:100,path:[],moving:false,phase:0,fireCd:0,reloadT:0,burst:4,burstPause:0,thinkT:rnd()*0.3,target:null,state:'idle',timer:0,bark:null,grenCd:8+rnd()*12,side:'sov',uniform:'sov',isSpy:false,revealed:false,arrested:false,sight:{},plog:[],logT:0,sightT:rnd()*0.4,repathT:0,mag:0,kind:'sq',moveA:0},o)}
 
@@ -268,7 +269,7 @@ function impact(x,y){if(!G.me||dist(x,y,G.me.x,G.me.y)>VIS+4)return;G.fx.push({k
 function dirKey(s){if(s.cause!=='bullet'||s.dx===undefined)return'none';if(s.dx<-0.35)return'behind';if(s.dx>0.35)return'front';return'flank'}
 function hurt(u,dmg,src){
   if(!u.alive)return;
-  if(u.isPlayer&&src.owner&&src.owner.side==='ger')dmg*=G.diff.pdmg;
+  if(src.owner&&src.owner.side==='ger'&&u.side!=='ger')dmg*=u.isPlayer?G.diff.pdmg:(G.diff.bdmg||1);
   // players never die to one hit: a bullet takes at most a third of full health, a blast at most 55
   if(u.isPlayer&&src.cause!=='knife')dmg=Math.min(dmg,src.cause==='bullet'?28:50);
   if(u.isPlayer)u.lastHit=G.time;
@@ -499,7 +500,7 @@ function spawnGerman(kind){
   // infantry appear in the ruins just beyond the defenders' sight, so they are in the fight within seconds
   let y=0,x0=0;for(let k=0;k<60;k++){y=1+(rnd()*38|0);x0=22+(rnd()*6|0);if(passable(x0,y)&&passable(x0+1,y))break;x0=0;if(passable(0,y)&&passable(1,y))break}
   const wpn=kind==='smg'?'mp40':kind==='mg'?'mg42':'kar98';
-  const u=mkUnit({kind,side:'ger',uniform:'ger',name:'German',wpn,mag:WPN[wpn].mag,x:x0+0.5,y:y+0.5,aim:0,hp:kind==='mg'?140:100,maxhp:kind==='mg'?140:100,grenCd:kind==='gren'?6:30+rnd()*30});
+  const u=mkUnit({kind,side:'ger',uniform:'ger',name:'German',wpn,mag:WPN[wpn].mag,x:x0+0.5,y:y+0.5,aim:0,hp:(kind==='mg'?140:100)*(G.diff.ghp||1),maxhp:(kind==='mg'?140:100)*(G.diff.ghp||1),grenCd:kind==='gren'?6:30+rnd()*30});
   G.units.push(u);
   if(kind==='mg'){const c=CSPOTS.filter(s=>!s.res&&s.x>14&&s.x<27);if(c.length){const s=pick(c);if(goTo(u,s.x,s.y)){s.res=u;u.res=s;u.state='mgmove';return}}}
   nextMove(u)}
@@ -565,7 +566,7 @@ function humanTick(p,I,dt){
     p.alive=false;p.escaped=true;if(p===G.spy)G.spyFate='escaped';logMsg(`${p.name} reached the German lines.`,'bad');banner('Escaped','You made it to the German lines. You can watch the rest of the battle.','',5,p);allHumansDown()}
   if(traitor(p)&&!p.revealed){p.sabCd=Math.max(0,(p.sabCd||0)-dt);const i=stationAt(p,1.8);
     if(i>=0&&(p.btn&4)&&!G.st[i].sab&&p.sabCd<=0){const w=noticedBy(p,null);if(w.length)sabWitnessed(p,i,w);else{p.sabT=(p.sabT||0)+dt;if(p.sabT>=SAB_T)doSabotage(p,i)}}else p.sabT=0}
-  if(p.hp<p.maxhp&&G.time-(p.lastHit||-99)>4)p.hp=Math.min(p.maxhp,p.hp+7*dt);
+  if(p.hp<p.maxhp&&G.time-(p.lastHit||-99)>2.5)p.hp=Math.min(p.maxhp,p.hp+32*dt);
   if(p.crateCd>0)p.crateCd-=dt}
 function humanEvent(p,e){
   if(!Array.isArray(e))return;const k=e[0];
@@ -765,7 +766,7 @@ function launchSortie(){
   const M=G.mission={i:C.i,def:C.def,st:'go',team:C.team.filter(u=>u.alive&&u.side==='sov'),prog:0,sab:0,sabBy:[],decided:[],sabT:{},tLeft:80,hist:C.hist};
   M.obj=nearPass(M.def.x,M.def.y);
   const n=2+M.i;for(let k=0;k<n;k++){let x=M.obj.x+(rnd()-.5)*6,y=M.obj.y+(rnd()-.5)*6;const sp=nearPass(clamp(x,12,34),clamp(y,1,38));const kind=rnd()<0.4?'smg':'rifle',wpn=kind==='smg'?'mp40':'kar98';
-    G.units.push(mkUnit({kind,side:'ger',uniform:'ger',name:'German',wpn,mag:WPN[wpn].mag,x:sp.x,y:sp.y,aim:0,hp:100,maxhp:100,state:'hold',sentry:true,grenCd:12+rnd()*20}))}
+    G.units.push(mkUnit({kind,side:'ger',uniform:'ger',name:'German',wpn,mag:WPN[wpn].mag,x:sp.x,y:sp.y,aim:0,hp:100*(G.diff.ghp||1),maxhp:100*(G.diff.ghp||1),state:'hold',sentry:true,grenCd:12+rnd()*20}))}
   M.team.forEach((u,k)=>{u.sortie=true;if(u.isPlayer)return;const a=k/M.team.length*TAU;u.spot=nearPass(M.obj.x+1+Math.cos(a)*1.4,M.obj.y+Math.sin(a)*1.4);u.seeking=false;u.q=null;u.repathT=0;u.path=[];
     if(u.isSpy)u.stabCd=Math.min(u.stabCd,8+rnd()*8)});
   const onT=h=>M.team.includes(h);
