@@ -197,9 +197,9 @@ function resetMap(){if(!GRID0){GRID0=grid.slice();CK0=ck.slice()}grid.set(GRID0)
 const humans=()=>G.humans;
 const liveHumans=()=>G.humans.filter(h=>h.alive);
 // players see a 120° cone where they aim, plus a small ring around them (also what counts when they witness something)
-const CONE=Math.PI*7/18,NEAR=1.8;// 140° forward cone
-function inCone(h,x,y){const d=dist(h.x,h.y,x,y);return d<=NEAR||Math.abs(angDiff(h.aim,Math.atan2(y-h.y,x-h.x)))<=CONE}
-function seesPt(h,x,y,r){return !!(h&&h.alive&&dist(h.x,h.y,x,y)<=(r||VIS)&&(!h.isPlayer||inCone(h,x,y))&&los(h.x,h.y,x,y))}
+// Among Us style sight: a steady circle around you (doesn't swing with your aim), cut by walls, soft at the edge
+const EYE=10;
+function seesPt(h,x,y,r){return !!(h&&h.alive&&dist(h.x,h.y,x,y)<=(r||VIS)&&(!h.isPlayer||dist(h.x,h.y,x,y)<=EYE)&&los(h.x,h.y,x,y))}
 const roleOf=u=>u.isSpy?'spy':u.isCom?'com':'reg';
 const turnedList=()=>G.people.filter(u=>u.turned).map(u=>u.name);
 function assignPostsList(n){
@@ -1160,8 +1160,8 @@ function render(){
   for(const f of FIRES){const [sx,sy]=w2s(f.x,f.y);if(!on(sx,sy,40))continue;const sc=TS*(f.big?1.4:1);for(let i=0;i<3;i++){const a=tm*5+i*2.1+f.x,h=sc*(0.55-i*0.13)*(0.85+0.15*Math.sin(a*1.7));const wd=sc*(0.3-i*0.07);ctx.fillStyle=[PAL.red,PAL.ochre,PAL.paper][i];ctx.beginPath();ctx.moveTo(sx-wd,sy+sc*0.12);ctx.quadraticCurveTo(sx-wd*0.9,sy-h*0.5,sx+Math.sin(a)*wd*0.4,sy-h);ctx.quadraticCurveTo(sx+wd*0.9,sy-h*0.5,sx+wd,sy+sc*0.12);ctx.closePath();ctx.fill()}}
   if(eye){
     fctx.setTransform(DPR,0,0,DPR,0,0);fctx.globalCompositeOperation='source-over';fctx.clearRect(0,0,VW,VH);fctx.fillStyle=fogPattern(fctx);fctx.fillRect(0,0,VW,VH);fctx.globalCompositeOperation='destination-out';
-    const [px,py]=w2s(p.x,p.y);const R=VIS*TS;fctx.fillStyle='#000';
-    fctx.beginPath();const N=360;for(let i=0;i<N;i++){const a=i/N*TAU,dx=Math.cos(a),dy=Math.sin(a),lim=Math.abs(angDiff(p.aim,a))<=CONE?VIS:NEAR;let d=0;while(d<lim){d+=0.2;const xx=p.x+dx*d,yy=p.y+dy*d;if(xx<0||yy<0||xx>=W||yy>=H)break;if(grid[(yy|0)*W+(xx|0)]===WALL){d+=0.4;break}}d=Math.min(d,lim);const [sx,sy]=w2s(p.x+dx*d,p.y+dy*d);i?fctx.lineTo(sx,sy):fctx.moveTo(sx,sy)}fctx.closePath();fctx.fill();
+    const [px,py]=w2s(p.x,p.y);const R=EYE*TS;{const gr=fctx.createRadialGradient(px,py,0,px,py,R);gr.addColorStop(0,'#000');gr.addColorStop(0.72,'#000');gr.addColorStop(1,'rgba(0,0,0,0)');fctx.fillStyle=gr}
+    fctx.beginPath();const N=360;for(let i=0;i<N;i++){const a=i/N*TAU,dx=Math.cos(a),dy=Math.sin(a),lim=EYE;let d=0;while(d<lim){d+=0.2;const xx=p.x+dx*d,yy=p.y+dy*d;if(xx<0||yy<0||xx>=W||yy>=H)break;if(grid[(yy|0)*W+(xx|0)]===WALL){d+=0.4;break}}d=Math.min(d,lim);const [sx,sy]=w2s(p.x+dx*d,p.y+dy*d);i?fctx.lineTo(sx,sy):fctx.moveTo(sx,sy)}fctx.closePath();fctx.fill();
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(fog,0,0);ctx.setTransform(DPR,0,0,DPR,0,0)}
   for(const f of G.fx){if(f.k!=='flare')continue;const k=Math.min(1,f.t/1);const x=f.x0+(f.x-f.x0)*k,y=f.y0+(f.y-f.y0)*k;const [sx,sy]=w2s(x,y);const [ox,oy]=w2s(f.x0,f.y0);
     ctx.strokeStyle=`rgba(140,255,150,${0.5*Math.max(0,1-Math.max(0,f.t-2)/3)})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ox,oy);ctx.quadraticCurveTo((ox+sx)/2,Math.min(oy,sy)-TS*4,sx,sy);ctx.stroke();
