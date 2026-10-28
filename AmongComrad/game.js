@@ -102,6 +102,11 @@ function smooth(sx,sy,path){const out=[];let cx=sx,cy=sy,i=0;while(i<path.length
 function goTo(u,x,y){const p=bfs(u.x|0,u.y|0,x|0,y|0);if(!p){u.path=[];return false}if(p.length)p[p.length-1]={x,y};else p.push({x,y});u.path=smooth(u.x,u.y,p);return true}
 function followPath(u,dt,sp){let rem=sp*dt;u.moving=u.path.length>0;while(rem>0&&u.path.length){const n=u.path[0];const dx=n.x-u.x,dy=n.y-u.y;const d=Math.hypot(dx,dy);if(d<=rem){u.x=n.x;u.y=n.y;u.path.shift();rem-=d}else{u.x+=dx/d*rem;u.y+=dy/d*rem;rem=0;u.moveA=Math.atan2(dy,dx)}}if(u.moving)u.phase+=dt*10}
 function moveFree(u,dx,dy){const r=0.3;const nx=u.x+dx;if(!blockedAt(nx,u.y,r))u.x=nx;const ny=u.y+dy;if(!blockedAt(u.x,ny,r))u.y=ny}
+function vaultTry(p){if(p.onGun||p.knife||p.recruit||p.vault)return;const c=[];
+  if(p.moving&&p.moveA!==undefined){const cx=Math.cos(p.moveA),cy=Math.sin(p.moveA);const ax=[Math.abs(cx)>0.3?(cx>0?0:Math.PI):null,Math.abs(cy)>0.3?(cy>0?Math.PI/2:-Math.PI/2):null].filter(v=>v!==null);
+    if(Math.abs(cy)>Math.abs(cx))ax.reverse();c.push(...ax,p.moveA)}
+  c.push(p.aim,Math.round(p.aim/(Math.PI/2))*(Math.PI/2));
+  for(const a of c)if(tryVault(p,a)){p.vaultBuf=0;if(p===G.me)sfx('throw');return}}
 // vault: hop over a window sill or low cover (sandbags, rubble) that is right in front of you
 function tryVault(u,a){const dx=Math.cos(a),dy=Math.sin(a);let hit=-1;
   for(let d=0.35;d<=1.3;d+=0.1){const t=get(Math.floor(u.x+dx*d),Math.floor(u.y+dy*d));if(t===WALL||t===WATER||t===CRATE)return false;if(t===WIN||t===COVER){hit=d;break}}
@@ -583,6 +588,7 @@ function humanTick(p,I,dt){
   const trig=!!(p.btn&1)&&!p.onGun;
   if(trig){const w=WPN[p.wpn];if(w.auto||!p.semiLock){if(fire(p,p.aim))p.semiLock=true;else if(p.mag<=0&&p.reserve<=0&&!(p.clickT>0)){if(p===G.me)sfx('empty');p.clickT=0.4}}}
   if(p.clickT>0)p.clickT=Math.max(0,p.clickT-dt);
+  if(p.vaultBuf>0){p.vaultBuf-=dt;if(p.moving)vaultTry(p)}
   if(!trig)p.semiLock=false;
   if(I&&I[4])for(const e of I[4])humanEvent(p,e);
   if(p.knifeCd>0)p.knifeCd-=dt;if(p.knife){knifeTick(p,dt);if(!p.alive||G.over)return}
@@ -608,7 +614,7 @@ function humanEvent(p,e){
     case 'f':doArrestStart(p);break;
     case 'q':playerFlare(p,(e[1]|0)/100,(e[2]|0)/100);break;
     case 'k':if(traitor(p)&&!p.revealed)startKnife(p,knifeTarget(p));break;
-    case 'j':if(!p.onGun&&!p.knife&&!p.recruit&&!p.vault){const mv=p.moving&&p.moveA!==undefined;if(!tryVault(p,mv?p.moveA:p.aim)&&mv)tryVault(p,p.aim);if(p.vault&&p===G.me)sfx('throw')}break;
+    case 'j':p.vaultBuf=0.3;vaultTry(p);break;
     case 'c':if(p===G.spy&&!p.revealed){const T=recruitTarget(p);if(!T)logMsg('Nobody close enough to whisper to.','',p);else if((p.recruitLeft||0)<=0)logMsg('You have already made an offer this assault.','',p);else startRecruit(p,T)}break;
     case 'y':answerOffer(p,true);break;case 'n':answerOffer(p,false);break;
     case 's':switchSlot(p,e[1]);break;
