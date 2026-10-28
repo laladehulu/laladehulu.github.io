@@ -1268,20 +1268,24 @@ function hudTick(dt){
   for(const u of G.people){const st=u.escaped?'<span class="st tr">fled</span>':u.revealed&&u.alive?'<span class="st tr">traitor</span>':u.arrested?'<span class="st arr">held</span>':!u.alive?'<span class="st kia">KIA</span>':`<div class="hpb"><i style="width:${Math.max(0,u.hp/u.maxhp*100)}%"></i></div>`;
     html+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.name)}${u===p?' ◂':''}${u.isCom&&(G.comKnown||u===p)?' ★':''}${u.isPlayer&&NET&&NET.away_(u.seat)?' <span class="st arr">away</span>':''}</td><td>${st}</td>${p.isSpy?`<td><div class="sus" title="suspicion"><i style="width:${Math.min(100,(G.susp[u.id]||0)/80*100)}%"></i></div></td>`:''}</tr>`}
   if($('squadTbl').innerHTML!==html)$('squadTbl').innerHTML=html;
-  const pr=[];if(p.alive&&!p.revealed&&!G.council){const it=nearestInteract(p);if(it)pr.push(`<span><kbd>E</kbd> ${esc(it.label)}</span>`);
-    if(!p.isSpy){const c=nearestComrade(p,2.6);if(c)pr.push(`<span><kbd>T</kbd> Question ${esc(c.name)}</span>`);
-      const ar=p.isCom&&p.arrestsLeft>0?nearestArrestable(p,1.9):null;if(ar)pr.push(`<span><kbd>F</kbd> hold: arrest ${esc(ar.name)} (${p.arrestsLeft} left)</span>`)}
-    else if(G.phase==='wave'&&p.flares>0)pr.push('<span><kbd>Q</kbd> Fire green flare at cursor</span>');
-    if(p.offer)pr.unshift(`<span><b>${esc(p.offer.from.name)}'s offer</b> — <kbd>Y</kbd> accept · <kbd>N</kbd> refuse (${Math.ceil(p.offer.t)} s)</span>`);
-    if(p===G.spy&&(p.recruitLeft||0)>0&&!p.recruit){const rt=recruitTarget(p);if(rt)pr.push(`<span><kbd>B</kbd> Whisper an offer to ${esc(rt.name)}</span>`)}
-    if(p.recruit)pr.push(`<span>Whispering to ${esc(p.recruit.T.name)}… ${Math.round(p.recruit.t/REC_T*100)}%</span>`);
-    if(traitor(p)&&!p.knife){const kt=knifeTarget(p);if(kt)pr.push((p.knifeCd||0)>0?`<span>Knife ready in ${Math.ceil(p.knifeCd)} s</span>`:`<span><kbd>V</kbd> Knife ${esc(kt.name)} from behind</span>`)}
+  // key prompts sit in fixed slots (one per key your role can use) so they never shuffle as hints come and go
+  const keys=['E'];if(!p.isSpy)keys.push('T');if(p.isCom)keys.push('F');if(traitor(p))keys.push('X','V');if(p===G.spy)keys.push('B','Q');
+  const sl={};const put=(k,txt)=>{if(!sl[k])sl[k]=txt};let top='';
+  if(p.alive&&!p.revealed&&!G.council){
     const si=stationAt(p,1.8);if(si>=0){const st=G.st[si],nm2=STATIONS[si].name;
-      if(traitor(p)){if(!st.sab)pr.push(p.sabCd>0?`<span>${esc(nm2)}: wait ${Math.ceil(p.sabCd)} s</span>`:`<span><kbd>X</kbd> hold: sabotage the ${esc(nm2)}${p.sabT>0?` ${Math.round(p.sabT/SAB_T*100)}%`:''}</span>`);else pr.push(`<span>${esc(nm2)}: wrecked</span>`)}
-      else if(st.found)pr.push(`<span><kbd>E</kbd> hold: repair the ${esc(nm2)}${st.rep>0?` ${Math.round(st.rep/REP_T*100)}%`:''}</span>`);
-      else pr.push(`<span>${esc(nm2)}: working</span>`)}}
-  else if(p.alive&&p.revealed)pr.push('<span>Run west to the German lines</span>');
-  const ph=pr.join('');if($('prompt').innerHTML!==ph)$('prompt').innerHTML=ph;
+      if(traitor(p)){put('X',st.sab?`${esc(nm2)}: wrecked`:p.sabCd>0?`${esc(nm2)}: wait ${Math.ceil(p.sabCd)} s`:`Sabotage ${esc(nm2)}${p.sabT>0?` ${Math.round(p.sabT/SAB_T*100)}%`:''}`)}
+      else if(st.found)put('E',`Repair ${esc(nm2)}${st.rep>0?` ${Math.round(st.rep/REP_T*100)}%`:''}`)}
+    const it=nearestInteract(p);if(it)put('E',esc(it.label));
+    if(!p.isSpy){const c=nearestComrade(p,2.6);if(c)put('T',`Question ${esc(c.name)}`);
+      const ar=p.isCom&&p.arrestsLeft>0?nearestArrestable(p,1.9):null;if(ar)put('F',`Arrest ${esc(ar.name)} (hold)`)}
+    if(p===G.spy&&G.phase==='wave'&&p.flares>0)put('Q','Green flare at cursor');
+    if(p.offer)top=`<b>${esc(p.offer.from.name)}'s offer</b> — <kbd>Y</kbd> accept · <kbd>N</kbd> refuse (${Math.ceil(p.offer.t)} s)`;
+    if(p.recruit)put('B',`Whispering… ${Math.round(p.recruit.t/REC_T*100)}%`);
+    else if(p===G.spy&&(p.recruitLeft||0)>0){const rt=recruitTarget(p);if(rt)put('B',`Whisper to ${esc(rt.name)}`)}
+    if(traitor(p)&&!p.knife){const kt=knifeTarget(p);if(kt)put('V',(p.knifeCd||0)>0?`Knife in ${Math.ceil(p.knifeCd)} s`:`Knife ${esc(kt.name)}`)}}
+  else if(p.alive&&p.revealed)top='Run west to the German lines';
+  const ph=(top?`<div class="ptop">${top}</div>`:'')+`<div class="prow" style="grid-template-columns:repeat(${keys.length},var(--pw))">`+keys.map(k=>sl[k]?`<span><kbd>${k}</kbd>${sl[k]}</span>`:'<span class="off"></span>').join('')+'</div>';
+  if($('prompt').innerHTML!==ph)$('prompt').innerHTML=ph;
   const now=performance.now();if(G.log.some(l=>now-l.at>9000)){G.log=G.log.filter(l=>now-l.at<=9000);renderRadio()}}
 function rosterHTML(withStatus){const p=G.me;let h='<tr><th></th><th>Soldier</th><th>Weapon</th><th>Calibre</th><th>Boots</th>'+(withStatus?'<th>Status</th>':'')+'</tr>';
   for(const u of G.people){const w=WPN[primaryW(u)];const st=u.escaped?'escaped':u.revealed?'unmasked':u.arrested?'arrested':u.alive?'alive':'killed';

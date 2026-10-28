@@ -70,8 +70,13 @@ kbd{font:500 12px/1 var(--display);color:var(--paper);background:var(--ink);padd
 #extra b{color:var(--ink);font-weight:700}
 #susMeter{height:8px;background:var(--paper2);border:2px solid var(--ink);position:relative}
 #susMeter i{position:absolute;inset:0 auto 0 0;background:var(--red)}
-#prompt{position:absolute;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 600px);min-width:240px}
-#prompt span{background:var(--paper);border:2px solid var(--ink);padding:6px 10px;font-size:14px;white-space:nowrap;box-shadow:3px 3px 0 rgba(29,24,21,.7)}
+#prompt{position:absolute;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);--pw:190px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+#prompt .prow{display:grid;gap:8px}
+#prompt .prow span,#prompt .ptop{background:var(--paper);border:2px solid var(--ink);padding:6px 8px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:3px 3px 0 rgba(29,24,21,.7)}
+#prompt .prow span kbd{margin-right:6px}
+#prompt .prow span.off{visibility:hidden}
+#prompt .ptop{position:absolute;bottom:calc(100% + 6px);max-width:none}
+@media (max-width:1100px){#prompt{--pw:150px}}
 #speech{position:absolute;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(560px,calc(100vw - 32px));padding:10px 14px;font-size:15px;line-height:1.45;border-left:8px solid var(--ochre)}
 #speech b{display:block;font:700 14px/1.2 var(--display);text-transform:uppercase;color:var(--red);margin-bottom:3px}
 #noteBtn{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:9px 12px;color:var(--ink);font:700 16px var(--display);text-transform:uppercase;display:flex;gap:8px;align-items:center}
@@ -227,7 +232,7 @@ body.touch #radio{width:calc(100vw - 32px);top:calc(200px + env(safe-area-inset-
 #me #extra{justify-content:flex-start;gap:12px;font:700 14px/1 var(--display);color:var(--ink)}
 #extra span{display:inline-flex;align-items:center;gap:3px}
 #susWrap{display:flex;align-items:center;gap:6px}#susWrap .ic{color:var(--red)}#susMeter{flex:1;height:6px}
-#prompt span{font-size:13px;padding:4px 8px}
+#prompt .prow span,#prompt .ptop{font-size:13px;padding:4px 8px}
 #noteBtn{padding:6px 8px;gap:6px}#noteBtn .ic{width:18px;height:18px}
 #banner h2{font-size:clamp(28px,5vw,52px)}
 @media (max-width:820px){
