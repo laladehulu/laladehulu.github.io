@@ -317,7 +317,7 @@ function kill(u,src){
   u.alive=false;u.hp=0;u.path=[];if(u.res){u.res.res=null;u.res=null}
   for(const h of G.humans)if(h.arrestHold&&(h.arrestHold.T===u||h===u))h.arrestHold=null;
   const ko=src.owner&&src.owner.isPlayer?src.owner:null;
-  if(u.kind==='tank'){u.dead=true;G.kills++;if(ko)ko.kills++;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const tx=(u.x|0)+dx,ty=(u.y|0)+dy;if(get(tx,ty)===GROUND)set(tx,ty,COVER,5)}explode(u.x,u.y,2.5,60,{owner:u,cause:'shell',hurtSov:true,hurtGer:true});logMsg('The Panzer is burning!','good');FIRES.push({x:u.x,y:u.y,big:true});return}
+  if(u.kind==='tank'){u.dead=true;G.kills++;if(ko)ko.kills++;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const tx=(u.x|0)+dx,ty=(u.y|0)+dy;if(get(tx,ty)===GROUND)set(tx,ty,COVER,5)}explode(u.x,u.y,2.5,60,{owner:u,cause:'shell',hurtSov:true,hurtGer:true});FIRES.push({x:u.x,y:u.y,big:true});return}
   const b={u,x:u.x,y:u.y,aim:u.aim,uniform:u.uniform,col:u.col,cause:src.cause||'bullet',cal:src.cal,gkind:src.gkind,dirKey:dirKey(src),t:G.time,wave:G.wave,zone:zoneAt(u.x,u.y),inspected:false,inspBy:[],wpn:(u.side==='ger'&&(u.wpn==='mp40'||u.wpn==='kar98'))?u.wpn:null,taken:false,killer:src.owner};
   if(src.dx!==undefined&&u.kind!=='tank'){for(let k=6;k>0;k--){const nx=b.x+src.dx*0.12*k,ny=b.y+src.dy*0.12*k;if(!blockedAt(nx,ny,0.25)){b.x=nx;b.y=ny;break}}}
   G.bodies.push(b);decal('pool',b.x,b.y);
@@ -520,7 +520,7 @@ function runSched(e){
 
 // ================= German AI =================
 function spawnGerman(kind){
-  if(kind==='tank'){const th=Math.round(1300*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:th,wpn:'mg42',mag:75,x:7,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);logMsg(G.tankMul<1?'Tank! The Panzer hit our mines — it is damaged, but still coming!':'Tank! A Panzer is coming down the street!','bad');sfx('tankHorn');return}
+  if(kind==='tank'){const th=Math.round(1300*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:th,wpn:'mg42',mag:75,x:7,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);sfx('tankHorn');return}
   // infantry appear in the ruins just beyond the defenders' sight, so they are in the fight within seconds
   let y=0,x0=0;for(let k=0;k<60;k++){y=1+(rnd()*38|0);x0=22+(rnd()*6|0);if(passable(x0,y)&&passable(x0+1,y))break;x0=0;if(passable(0,y)&&passable(1,y))break}
   const wpn=kind==='smg'?'mp40':kind==='mg'?'mg42':'kar98';
@@ -554,7 +554,7 @@ function gerAI(u,dt){
   u.grenCd-=dt;if(u.grenCd<=0){if(dd>4&&dd<10){throwGrenade(u,t.x,t.y,'stick');say(u,'Granate!',1.3);u.grenCd=u.kind==='gren'?10+rnd()*8:40}else u.grenCd=2}}
 function tankAI(u,dt){
   // a Panzer left alive too long rolls on to the wire and shells the building at point-blank range
-  if(u.x<u.stopX){u.x+=0.85*dt;u.moving=true;u.phase+=dt*6}else{u.moving=false;u.holdT+=dt;if(u.holdT>60&&u.stopX<34.5){u.stopX=34.5;logMsg('A Panzer is rolling up to the wire!','bad')}}
+  if(u.x<u.stopX){u.x+=0.85*dt;u.moving=true;u.phase+=dt*6}else{u.moving=false;u.holdT+=dt;if(u.holdT>60&&u.stopX<34.5){u.stopX=34.5}}
   u.thinkT-=dt;if(u.thinkT<=0){u.thinkT=0.5;u.target=pickTarget(u)}
   const t=u.target&&u.target.alive?u.target:null;
   const want=t?Math.atan2(t.y-u.y,t.x-u.x):0;const d=angDiff(u.turret,want);u.turret+=clamp(d,-1.1*dt,1.1*dt);u.aim=u.turret;
