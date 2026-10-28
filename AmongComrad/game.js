@@ -192,7 +192,7 @@ function newGame(cfg){
   const nb=cfg.demo?SQUAD.length:Math.max(0,SEATS-hs.length);const keep=new Set(BOT_KEEP.slice(0,nb));
   const bots=SQUAD.filter(s=>keep.has(s.name));const posts=assignPostsList(bots.length);
   bots.forEach((s,i)=>{const u=mkUnit({kind:'sq',name:s.name,rank:s.rank,col:s.col,wpn:s.wpn,mag:WPN[s.wpn].mag,post:posts[i],hp:DF.hp,maxhp:DF.hp});u.x=u.post.x;u.y=u.post.y;u.aim=u.post.face;G.units.push(u)});
-  G.squad=G.units.filter(u=>u.kind==='sq');G.people=[...G.humans,...G.squad];G.people.forEach((u,i)=>{u.col=HCOL[i%HCOL.length];u.sname=u.name;u.name=CNAME[i%CNAME.length];u.bot=!u.isPlayer});
+  G.squad=G.units.filter(u=>u.kind==='sq');G.people=[...G.humans,...G.squad];G.people.forEach((u,i)=>{u.checks=1;u.checked={};u.col=HCOL[i%HCOL.length];u.sname=u.name;u.name=CNAME[i%CNAME.length];u.bot=!u.isPlayer});
   // everyone musters together in the back room, then the squad heads out to its posts
   {const sp=[];for(const [x,y] of [[49,21],[51,21],[48,22],[50,22],[49,23],[51,23],[48,20],[50,20],[48,21],[49,22],[51,22],[50,23],[49,20],[51,20],[48,23]])if(passable(x,y)&&!blockedAt(x+.5,y+.5,0.35))sp.push({x:x+.5,y:y+.5});
    if(sp.length)G.people.forEach((u,i)=>{const s=sp[i%sp.length],k=Math.floor(i/sp.length);u.x=s.x+(k?0.3*(k%2?1:-1):0);u.y=s.y;u.aim=Math.PI})}
@@ -384,6 +384,7 @@ function pickTarget(u){
 // ================= Soviet AI =================
 function sovAI(u,dt){
   if(u.revealed){traitorAI(u,dt);return}
+  botCheck(u,dt);
   if(u.isSpy)spyAI(u,dt);
   if(u.isCom)comAI(u,dt);
   if(u.gunner&&!u.path.length&&dist(u.x,u.y,crewSpot(u.gunner-1).x,crewSpot(u.gunner-1).y)<0.7){u.moving=false;u.crouch=true;return}
@@ -601,6 +602,7 @@ function humanTick(p,I,dt){
   if(I&&I[4])for(const e of I[4])humanEvent(p,e);
   if(p.knifeCd>0)p.knifeCd-=dt;if(p.knife){knifeTick(p,dt);if(!p.alive||G.over)return}
   if(p.recruit)recruitTick(p,dt);if(p.offer){p.offer.t-=dt;if(p.offer.t<=0)answerOffer(p,false)}
+  checkTick(p,dt,!!(p.btn&64));
   if(p.arrestHold){const a=p.arrestHold;if(!a.T.alive||a.T.side!=='sov'||dist(p.x,p.y,a.T.x,a.T.y)>2.2||!(p.btn&2))p.arrestHold=null;else{a.t+=dt;if(a.t>=1.4){p.arrestHold=null;completeArrest(p,a.T)}}}
   if(p.revealed&&p.x<1.4){
     if(G.humans.length===1){endGame('escaped','You made it across no-man\'s land into the German lines, but your cover is gone for good.');return}
@@ -618,7 +620,8 @@ function humanEvent(p,e){
     case 'r':startReload(p);break;
     case 'e':doInteract(p);break;
     case 'g':playerGrenade(p,(e[1]|0)/100,(e[2]|0)/100);break;
-    case 't':doAsk(p);break;
+    case 't':startCheck(p);break;
+    case 'h':doDenounce(p);break;
     case 'f':doArrestStart(p);break;
     case 'q':playerFlare(p,(e[1]|0)/100,(e[2]|0)/100);break;
     case 'k':if(traitor(p)&&!p.revealed)startKnife(p,knifeTarget(p));break;
@@ -650,6 +653,44 @@ function nearestInteract(p){
     else if(b.wpn&&!b.taken)c.push({k:'take',b,label:`Take ${WPN[b.wpn].name}`,x:b.x,y:b.y})}
   let best=null,bs=1e9;for(const o of c){const sc=faceScore(p,o.x,o.y);if(sc<bs){bs=sc;best=o}}
   if(best)best.score=bs;return best}
+// ================= papers checks =================
+// Once per assault anyone may hold T beside a comrade for a few seconds to check their papers. Everyone does it, so doing it
+// gives nothing away — but what you learn depends on who you are: the commissar learns the truth, a private only gets a hunch
+// (right about 7 times in 10), and the spy learns whether this is the commissar.
+const CHECK_T=3,CHECK_R=2.2;
+function checkTarget(p){let best=null,bd=CHECK_R;for(const u of G.people){if(u===p||!u.alive||u.side!=='sov'||u.arrested||(p.checked&&p.checked[u.id]))continue;const d=dist(p.x,p.y,u.x,u.y);if(d<bd){bd=d;best=u}}return best}
+function startCheck(p){if(p.checkHold||!p.alive||p.revealed)return;if((p.checks||0)<=0){logMsg('You have already checked papers this assault.','',p);return}
+  const T=checkTarget(p);if(!T)return;p.checkHold={T,t:0,grace:0.25};
+  if(T.isPlayer)logMsg(`${p.name} is checking your papers.`,'',T);else say(T,pick(['Papers? Here, comrade.','All in order, comrade.','Again?']),1.8)}
+function checkTick(p,dt,holding){const c=p.checkHold;if(!c)return;const T=c.T;if(!holding&&c.grace>0){c.grace-=dt;return}
+  if(!holding||!p.alive||!T.alive||T.side!=='sov'||dist(p.x,p.y,T.x,T.y)>CHECK_R+0.3){p.checkHold=null;return}
+  c.t+=dt;if(c.t>=CHECK_T){p.checkHold=null;completeCheck(p,T)}}
+function completeCheck(p,T){p.checks=Math.max(0,(p.checks||0)-1);(p.checked=p.checked||{})[T.id]=true;
+  noteTo(T,`${p.name} checked your papers at the ${zoneAt(T.x,T.y)}.`,'talk');
+  if(p.isCom){const bad=traitor(T);const what=!bad?'loyal':T.turned?'TURNED — working for the spy':'THE GERMAN SPY';
+    noteTo(p,`Papers check: ${T.name} is ${what}.`,'key');logMsg(`${T.name} is ${what}.`,bad?'bad':'good',p);
+    if(bad)(p.proven=p.proven||[]).push(T);
+    if(!p.isPlayer){if(bad)addS(T,400);else G.susp[T.id]=0}
+    if(p===G.me&&bad)sfx('alarm');return}
+  if(traitor(p)){const isC=T.isCom;noteTo(p,`Papers check: ${T.name} is ${isC?'THE COMMISSAR':'not the commissar'}.`,'key');logMsg(isC?`${T.name} is the commissar.`:`${T.name} is not the commissar.`,isC?'bad':'',p);
+    G.comGuess[T.id]=isC?100:0;return}
+  const truth=traitor(T),shown=rnd()<0.7?truth:!truth;
+  noteTo(p,`Papers check (a hunch — you could be wrong): ${T.name}'s papers ${shown?'look forged':'look in order'}.`,shown?'key':'talk');
+  logMsg(`Hunch: ${T.name}'s papers ${shown?'look forged':'look in order'}.`,shown?'bad':'',p);
+  if(!p.isPlayer)addS(T,shown?20:-10)}
+// the commissar can denounce someone he has proven to be a traitor — from anywhere, at the cost of his own cover
+function doDenounce(p){if(!p.isCom||!p.proven)return;const T=p.proven.find(u=>u.alive&&!u.revealed&&u.side==='sov');if(!T)return;
+  if(!G.comKnown){G.comKnown=true;G.comGuess[p.id]=100;logMsg(`${p.name} is the commissar.`,'bad')}reveal(T,'was denounced by the commissar',p)}
+// bots check papers too, so the action itself means nothing
+function botCheck(u,dt){if(u.revealed||u.knife||u.arrested||u.gunner)return;
+  if(u.checkHold){u.path=[];u.aim=Math.atan2(u.checkHold.T.y-u.y,u.checkHold.T.x-u.x);checkTick(u,dt,true);if(!u.checkHold)u.seeking=false;return}
+  const g=u.checkGo;
+  if(g){g.time-=dt;const T=g.T;if(!T.alive||T.side!=='sov'||g.time<=0||(u.checks||0)<=0){u.checkGo=null;u.seeking=false;return}
+    if(dist(u.x,u.y,T.x,T.y)<CHECK_R-0.4){u.checkGo=null;u.path=[];u.checkHold={T,t:0,grace:0};if(!T.isPlayer)say(u,'Papers, comrade.',1.6);else logMsg(`${u.name} is checking your papers.`,'',T);return}
+    g.rp-=dt;if(g.rp<=0||!u.path.length){g.rp=1;goTo(u,T.x,T.y)}return}
+  if((u.checks||0)<=0||rnd()>dt*0.04)return;
+  const c=G.people.filter(o=>o!==u&&o.alive&&o.side==='sov'&&!o.arrested&&!(u.checked&&u.checked[o.id])&&dist(u.x,u.y,o.x,o.y)<10);
+  if(c.length){u.checkGo={T:pick(c),time:14,rp:0};u.seeking=true;u.seekHold=14}}
 // AI soldiers you can question
 function nearestComrade(p,r){let best=null,bd=r;for(const u of G.squad){if(!u.alive||u.side!=='sov')continue;const d=dist(p.x,p.y,u.x,u.y);if(d<bd){bd=d;best=u}}return best}
 // anyone the commissar can arrest, other players included
@@ -986,6 +1027,7 @@ function endWave(){
   if(G.wave>=WAVES.length){const sf=G.spyFate,arr=G.spy.arrested;
     endGame(false,me=>me.isSpy?'Dawn. Fresh troops are crossing the Volga and the line held. Your mission failed.':
       sf==='killed'?'Dawn. The line held, and the traitor is dead.':sf==='escaped'?'Dawn. The line held, but the spy got away to the Germans.':arr?'Dawn. The line held.':me.isCom?'Dawn. The line held, but the spy is still among you — and you never caught him.':'Dawn. The line held, but the spy is still among you.');return}
+  for(const u of G.people)u.checks=1;
   G.phase='lull';G.phaseT=5;G.effects={};G.overLimit=8;
   for(const u of liveSov())u.hp=u.maxhp;
   for(const k in G.comGuess)G.comGuess[k]=Math.max(0,G.comGuess[k]-8);
@@ -1244,6 +1286,7 @@ function render(){
     if(u.uniform==='sov'&&u!==me){ctx.font=`700 ${Math.max(11,TS*0.34)|0}px Oswald, sans-serif`;ctx.lineWidth=3.5;ctx.strokeStyle=PAL.ink;const lab=(u.revealed?`${u.name} — TRAITOR`:u.isCom&&G.comKnown?`${u.name} — COMMISSAR`:u.name)+(u.bot?' · bot':'');ctx.strokeText(lab,sx,sy-TS*0.62);ctx.fillStyle=u.revealed?'#ff6a50':u.col;ctx.fillText(lab,sx,sy-TS*0.62);
       const hpw=TS*0.8;if(u.hp<u.maxhp){ctx.fillStyle=PAL.ink;ctx.fillRect(sx-hpw/2-1,sy+TS*0.52-1,hpw+2,6);ctx.fillStyle=PAL.olive;ctx.fillRect(sx-hpw/2,sy+TS*0.52,hpw*u.hp/u.maxhp,4)}}
     if(u.bark){ctx.font=`700 ${Math.max(12,TS*0.34)|0}px Oswald, sans-serif`;const tw=ctx.measureText(u.bark.t).width+14;const by=sy-TS*(u.uniform==='sov'&&u!==me?1.2:0.8);const ger=u.side==='ger';ctx.fillStyle=ger?PAL.feld:PAL.paper;ctx.strokeStyle=PAL.ink;ctx.lineWidth=2;ctx.fillRect(sx-tw/2,by-TS*0.38,tw,TS*0.48);ctx.strokeRect(sx-tw/2,by-TS*0.38,tw,TS*0.48);ctx.fillStyle=ger?PAL.paper:PAL.ink;ctx.fillText(u.bark.t,sx,by-TS*0.03)}}
+  if(eye&&me.checkHold){const A=me.checkHold;const [sx,sy]=w2s(A.T.x,A.T.y);ctx.strokeStyle=PAL.ochre;ctx.lineWidth=5;ctx.beginPath();ctx.arc(sx,sy,TS*0.72,-Math.PI/2,-Math.PI/2+TAU*A.t/CHECK_T);ctx.stroke()}
   if(eye&&me.arrestHold){const A=me.arrestHold;const [sx,sy]=w2s(A.T.x,A.T.y);ctx.strokeStyle=PAL.red;ctx.lineWidth=5;ctx.beginPath();ctx.arc(sx,sy,TS*0.72,-Math.PI/2,-Math.PI/2+TAU*A.t/1.4);ctx.stroke()}
   snowfall(tm);
   if(eye&&state==='play'&&!me.revealed&&!G.council){const e=ePrompt(me);if(e)worldTag(e.x,e.y,e.label,me.y<e.y-0.2)}
@@ -1309,12 +1352,15 @@ function hudTick(dt){
     html+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.name)}${u.bot?' <span class="st bot">bot</span>':u.isPlayer&&G.humans.length>1?` <small>${esc(u.sname)}</small>`:''}${u===p?' ◂':''}${u.isCom&&(G.comKnown||u===p)?' ★':''}${u.isPlayer&&NET&&NET.away_(u.seat)?' <span class="st arr">away</span>':''}</td><td>${st}</td>${p.isSpy?`<td><div class="sus" title="suspicion"><i style="width:${Math.min(100,(G.susp[u.id]||0)/80*100)}%"></i></div></td>`:''}</tr>`}
   if($('squadTbl').innerHTML!==html)$('squadTbl').innerHTML=html;
   // key prompts sit in fixed slots (one per key your role can use) so they never shuffle as hints come and go
-  const keys=[];if(!p.isSpy)keys.push('T');if(p.isCom)keys.push('F');if(traitor(p))keys.push('X','V');if(p===G.spy)keys.push('B','Q');
+  const keys=['T'];if(p.isCom)keys.push('F','H');if(traitor(p))keys.push('X','V');if(p===G.spy)keys.push('B','Q');
   const sl={};const put=(k,txt)=>{if(!sl[k])sl[k]=txt};let top='';
   if(p.alive&&!p.revealed&&!G.council){
     const si=stationAt(p,1.8);if(si>=0){const st=G.st[si],nm2=STATIONS[si].name;
       if(traitor(p))put('X',st.sab?`${esc(nm2)}: wrecked`:p.sabCd>0?`${esc(nm2)}: wait ${Math.ceil(p.sabCd)} s`:`Sabotage ${esc(nm2)}${p.sabT>0?` ${Math.round(p.sabT/SAB_T*100)}%`:''}`)}
-    if(!p.isSpy){const c=nearestComrade(p,2.6);if(c)put('T',`Question ${esc(c.name)}`);
+    if(p.checkHold)put('T',`Checking ${esc(p.checkHold.T.name)}… ${Math.round(p.checkHold.t/CHECK_T*100)}%`);
+    else{const c=checkTarget(p);if(c&&(p.checks||0)>0)put('T',`Check ${esc(c.name)}'s papers (hold)`);else if(c)put('T','Papers checked this assault')}
+    if(p.isCom&&p.proven){const T=p.proven.find(u=>u.alive&&!u.revealed&&u.side==='sov');if(T)put('H',`Denounce ${esc(T.name)} (reveals you)`)}
+    {
       const ar=p.isCom&&p.arrestsLeft>0?nearestArrestable(p,1.9):null;if(ar)put('F',`Arrest ${esc(ar.name)} (hold)`)}
     if(p===G.spy&&G.phase==='wave'&&p.flares>0)put('Q','Green flare at cursor');
     if(p.offer)top=`<b>${esc(p.offer.from.name)}'s offer</b> — <kbd>Y</kbd> accept · <kbd>N</kbd> refuse (${Math.ceil(p.offer.t)} s)`;
@@ -1322,7 +1368,7 @@ function hudTick(dt){
     else if(p===G.spy&&(p.recruitLeft||0)>0){const rt=recruitTarget(p);if(rt)put('B',`Whisper to ${esc(rt.name)}`)}
     if(traitor(p)&&!p.knife){const kt=knifeTarget(p);if(kt)put('V',(p.knifeCd||0)>0?`Knife in ${Math.ceil(p.knifeCd)} s`:`Knife ${esc(kt.name)}`)}}
   else if(p.alive&&p.revealed)top='Run west to the German lines';
-  if(!keys.length)keys.push('T');const ph=(top?`<div class="ptop">${top}</div>`:'')+`<div class="prow" style="grid-template-columns:repeat(${keys.length},var(--pw))">`+keys.map(k=>sl[k]?`<span><kbd>${k}</kbd>${sl[k]}</span>`:'<span class="off"></span>').join('')+'</div>';
+  const ph=(top?`<div class="ptop">${top}</div>`:'')+`<div class="prow" style="grid-template-columns:repeat(${keys.length},min(var(--pw),calc((100vw - 520px) / ${keys.length})))">`+keys.map(k=>sl[k]?`<span><kbd>${k}</kbd>${sl[k]}</span>`:'<span class="off"></span>').join('')+'</div>';
   if($('prompt').innerHTML!==ph)$('prompt').innerHTML=ph;
   const now=performance.now();if(G.log.some(l=>now-l.at>9000)){G.log=G.log.filter(l=>now-l.at<=9000);renderRadio()}}
 function rosterHTML(withStatus){const p=G.me;let h='<tr><th></th><th>Soldier</th><th>Weapon</th><th>Calibre</th><th>Boots</th>'+(withStatus?'<th>Status</th>':'')+'</tr>';
@@ -1382,7 +1428,7 @@ function closeArmory(){$('armory').hidden=true;if(state==='armory')state='play'}
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
 function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['Space','Vault over a window or cover'],['Hold Shift','Sprint (about 1.5 s of breath)'],['Hold C','Crouch — behind cover almost nothing gets through'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
-  ...(role==='spy'?[['B','Whisper an offer to the soldier next to you (once per assault)'],['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
+  ...(role==='spy'?[['Hold T','Check papers like everyone else — you learn if they are the commissar'],['B','Whisper an offer to the soldier next to you (once per assault)'],['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['Hold T','Check a comrade\'s papers (once per assault) — you learn the truth'],['H','Denounce a proven traitor (reveals you)'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['Hold T','Check a comrade\'s papers (once per assault) — a hunch, right 7 times in 10'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
 function showBrief(){
   const p=G.me,role=roleOf(p),spy=role==='spy',multi=G.humans.length>1;
   const sortieP='<p><b>Sabotage.</b> Eight stations hold the block together: three 45 mm anti-tank guns dug in along the front (press E to man one — they are the answer to the Panzers), the field telephone, the dugout barricade, a window lamp and two stacks of ammo crates. The spy can wreck one in three seconds when nobody is looking. Nobody notices until a loyal soldier walks past it — and every soldier who passes a working station proves it was fine at that moment, so each discovery comes with a time window. Hold E to repair it. A station still wrecked when an assault starts hurts the squad for that assault. <b>Three of those and the block falls.</b></p>';
@@ -1393,12 +1439,12 @@ function showBrief(){
   $('briefText').innerHTML=tracksP+(spy?
    `<p>You are ${esc(p.name)}, an Abwehr infiltrator in a Red Army greatcoat. Somewhere in the squad is a <b>secret commissar</b> hunting you. He goes over every body after each assault: a 7.62×25 mm wound in the back points at the PPSh carriers, a captured MP 40 hides the calibre, and a green flare brings German mortars down on the squad. Once per assault you can stand next to someone, unseen, and press B to offer them German papers — a soldier who accepts joins your side, but one who refuses will talk, and the commissar arrests you on the spot. Get behind someone who is looking the other way and press V: the knife is silent and leaves no calibre — but if they turn round, or anyone sees, you are finished.</p>${sortieP}<p><b>You win</b> if three wrecked stations reach an assault unrepaired, if <b>you kill the commissar</b> (he gives himself away by questioning people and making arrests), or if the command dugout falls. <b>You lose</b> if you are arrested, killed, or the line holds until dawn.</p>`:
    role==='com'?
-   `<p>You are Commissar ${esc(p.name)}, wearing a private's coat. Nobody knows what you are — keep it that way. One of the squad is a German infiltrator who shoots comrades in the back, fires green flares for the mortars, and wrecks the stations that hold the block together.</p><p><b>Inspect bodies</b>, <b>question the squad</b>, and <b>arrest</b> the spy (two arrests). But if the spy sees you asking questions he will work out who you are — and <b>his other way to win is to kill you</b>. Watch your cover meter. An arrest reveals you to everyone.</p>${sortieP}<p>You lose if you die, if three wrecked stations reach an assault, or the Germans hold the command dugout for eight seconds.</p>`:
-   `<p>You are Private ${esc(p.name)}. Somewhere in the squad is a German spy — and a <b>secret commissar</b> hunting him. You don't know who either of them is.</p><p>Hold the line and keep an eye on the stations: when one turns up wrecked, the time window tells you who could have done it. You can inspect bodies and question comrades too — but the spy can't tell a curious private from the commissar. If you work out who the commissar is, keep them alive — <b>the spy wins if he kills the commissar.</b> The spy may also try to turn you. If he does, you choose: take the German offer and switch sides in secret, or refuse — and you know who he is.</p>${sortieP}<p>The squad wins if the line holds until dawn. You lose if you die, three wrecked stations reach an assault, the commissar is assassinated, or the dugout falls.</p>`)+others;
+   `<p>You are Commissar ${esc(p.name)}, wearing a private's coat. Nobody knows what you are — keep it that way. One of the squad is a German infiltrator who shoots comrades in the back, fires green flares for the mortars, and wrecks the stations that hold the block together.</p><p><b>Inspect bodies</b>, <b>check papers</b> (hold T beside a comrade, once per assault — everyone does it, but only you learn the truth), then <b>arrest</b> the spy (two arrests) or <b>denounce</b> him with H from anywhere. Either one reveals you — and <b>his other way to win is to kill you</b>. Watch your cover meter. An arrest reveals you to everyone.</p>${sortieP}<p>You lose if you die, if three wrecked stations reach an assault, or the Germans hold the command dugout for eight seconds.</p>`:
+   `<p>You are Private ${esc(p.name)}. Somewhere in the squad is a German spy — and a <b>secret commissar</b> hunting him. You don't know who either of them is.</p><p>Hold the line and keep an eye on the stations: when one turns up wrecked, the time window tells you who could have done it. You can inspect bodies, and once per assault hold T beside a comrade to check their papers — you only get a hunch, right about 7 times in 10. Everyone checks papers, so it gives nobody away. If you work out who the commissar is, keep them alive — <b>the spy wins if he kills the commissar.</b> The spy may also try to turn you. If he does, you choose: take the German offer and switch sides in secret, or refuse — and you know who he is.</p>${sortieP}<p>The squad wins if the line holds until dawn. You lose if you die, three wrecked stations reach an assault, the commissar is assassinated, or the dugout falls.</p>`)+others;
   $('keysList').innerHTML=keysHTML(role);
   $('wpnPick').innerHTML=pickerHTML(PICKW);bindPicker($('wpnPick'),k=>{PICKW=k;try{localStorage.setItem('ac_wpn',k)}catch(e){}});
   $('briefRoster').innerHTML=rosterHTML(false);
-  $('briefHint').textContent=spy?'The commissar is one of the others. Watch who asks questions.':'Three calibres on the line: 7.62×25 mm (PPSh), 7.62×54R (rifles and the DP-28), 14.5×114 mm (the PTRD anti-tank rifle).';
+  $('briefHint').textContent=spy?'Everyone checks papers once per assault — your check tells you whether that soldier is the commissar.':'Three calibres on the line: 7.62×25 mm (PPSh), 7.62×54R (rifles and the DP-28), 14.5×114 mm (the PTRD anti-tank rifle).';
   $('briefGo').textContent=NET?'Ready':'Take position';$('briefGo').disabled=false;
   $('brief').hidden=false;state='brief'}
 function startPlay(){
@@ -1498,14 +1544,14 @@ function collectInput(){
   if(live){if(KEYS.KeyW||KEYS.ArrowUp)my-=1;if(KEYS.KeyS||KEYS.ArrowDown)my+=1;if(KEYS.KeyA||KEYS.ArrowLeft)mx-=1;if(KEYS.KeyD||KEYS.ArrowRight)mx+=1;if(TOUCH){mx+=TCH.mx;my+=TCH.my}}
   let aim=p?p.aim:Math.PI;
   if(live){if(TOUCH){if(TCH.aiming)aim=Math.atan2(TCH.ay,TCH.ax);else if(Math.hypot(mx,my)>0.1)aim=Math.atan2(my,mx)}else if(MOUSE.in)aim=Math.atan2((MOUSE.y+camY)/TS-p.y,(MOUSE.x+camX)/TS-p.x)}
-  let b=0;if(live){if(TOUCH?TCH.fire:MOUSE.down)b|=1;if(KEYS.KeyF)b|=2;if(KEYS.KeyX)b|=4;if(KEYS.KeyE)b|=8;if(KEYS.KeyC||TCH.crouch)b|=16;if(KEYS.ShiftLeft||KEYS.ShiftRight)b|=32}
+  let b=0;if(live){if(TOUCH?TCH.fire:MOUSE.down)b|=1;if(KEYS.KeyF)b|=2;if(KEYS.KeyX)b|=4;if(KEYS.KeyE)b|=8;if(KEYS.KeyC||TCH.crouch)b|=16;if(KEYS.ShiftLeft||KEYS.ShiftRight)b|=32;if(KEYS.KeyT)b|=64}
   const r=[q100(clamp(mx,-1,1)),q100(clamp(my,-1,1)),Math.round(aim*1000),b];const ev=EVQ.splice(0);if(ev.length)r.push(ev);return r}
 function press(code){
   if(code==='Escape'&&state==='armory'){closeArmory();return}
   if(code==='Escape'){if(state==='notebook')closeNotebook();else if(state==='play'){state='pause';$('pause').hidden=false;$('keysList2').innerHTML=keysHTML(roleOf(G.me))}else if(state==='pause'){state='play';$('pause').hidden=true}return}
   if(code==='KeyN'){if(state==='play'&&G.me&&G.me.offer){queueEvent(['n']);return}if(state==='notebook')closeNotebook();else openNotebook();return}
   if(state!=='play'||!G.me||!G.me.alive||G.council)return;
-  switch(code){case 'KeyR':queueEvent(['r']);break;case 'KeyE':queueEvent(['e']);break;case 'KeyG':{const [x,y]=cursorWorld();queueEvent(['g',q100(x),q100(y)]);break}case 'KeyT':queueEvent(['t']);break;case 'KeyF':queueEvent(['f']);break;
+  switch(code){case 'KeyR':queueEvent(['r']);break;case 'KeyE':queueEvent(['e']);break;case 'KeyG':{const [x,y]=cursorWorld();queueEvent(['g',q100(x),q100(y)]);break}case 'KeyT':queueEvent(['t']);break;case 'KeyH':queueEvent(['h']);break;case 'KeyF':queueEvent(['f']);break;
     case 'KeyQ':{const [x,y]=G.me&&TOUCH?[G.me.x+Math.cos(G.me.aim)*12,G.me.y+Math.sin(G.me.aim)*12]:cursorWorld();queueEvent(['q',q100(x),q100(y)]);break}case 'KeyV':queueEvent(['k']);break;case 'Space':queueEvent(['j']);break;case 'KeyB':queueEvent(['c']);break;case 'KeyY':queueEvent(['y']);break;case 'KeyN':break;case 'Digit1':queueEvent(['s',0]);break;case 'Digit2':queueEvent(['s',-1]);break}}
 window.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!KEYS[e.code])press(e.code);KEYS[e.code]=true});
 window.addEventListener('keyup',e=>{KEYS[e.code]=false});
