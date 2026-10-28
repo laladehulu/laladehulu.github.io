@@ -1161,7 +1161,7 @@ function render(){
   ctx.restore();
   for(const f of FIRES){const [sx,sy]=w2s(f.x,f.y);if(!on(sx,sy,40))continue;const sc=TS*(f.big?1.4:1);for(let i=0;i<3;i++){const a=tm*5+i*2.1+f.x,h=sc*(0.55-i*0.13)*(0.85+0.15*Math.sin(a*1.7));const wd=sc*(0.3-i*0.07);ctx.fillStyle=[PAL.red,PAL.ochre,PAL.paper][i];ctx.beginPath();ctx.moveTo(sx-wd,sy+sc*0.12);ctx.quadraticCurveTo(sx-wd*0.9,sy-h*0.5,sx+Math.sin(a)*wd*0.4,sy-h);ctx.quadraticCurveTo(sx+wd*0.9,sy-h*0.5,sx+wd,sy+sc*0.12);ctx.closePath();ctx.fill()}}
   if(eye){
-    fctx.setTransform(DPR,0,0,DPR,0,0);fctx.globalCompositeOperation='source-over';fctx.clearRect(0,0,VW,VH);fctx.fillStyle=fogPattern(fctx);fctx.fillRect(0,0,VW,VH);fctx.globalCompositeOperation='destination-out';
+    fctx.setTransform(DPR,0,0,DPR,0,0);fctx.globalCompositeOperation='source-over';fctx.clearRect(0,0,VW,VH);fctx.fillStyle='rgba(26,30,40,.58)';fctx.fillRect(0,0,VW,VH);fctx.globalCompositeOperation='destination-out';
     const [px,py]=w2s(p.x,p.y);const R=EYE*TS;fctx.fillStyle='#000';
     fctx.beginPath();const N=360;for(let i=0;i<N;i++){const a=i/N*TAU,dx=Math.cos(a),dy=Math.sin(a),lim=VIS;let d=0,ind=0;while(d<lim){d+=0.2;const xx=p.x+dx*d,yy=p.y+dy*d;if(xx<0||yy<0||xx>=W||yy>=H)break;if(roofed(xx,yy)&&(ind+=0.2)>EYE)break;if(grid[(yy|0)*W+(xx|0)]===WALL){d+=0.4;break}}d=Math.min(d,lim);const [sx,sy]=w2s(p.x+dx*d,p.y+dy*d);i?fctx.lineTo(sx,sy):fctx.moveTo(sx,sy)}fctx.closePath();fctx.fill();
     ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(fog,0,0);ctx.setTransform(DPR,0,0,DPR,0,0)}
