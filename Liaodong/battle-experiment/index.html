@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v129</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v130</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -11573,11 +11573,18 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
   }
   const eligible = (u) => u && !u.dead && !u.inactive && u.type !== 'horse' && !u.mounted && !(u.mount >= 0) && u.def && u.def.ai !== 'cannon' && u.weapon !== 'gatling' && u.weapon !== 'cannon';
 
+  // the field's sky, for armour and helmets to reflect (the scene has none: without it every metal goes black, and the new men
+  // stood darker than the old figures beside them)
+  function envOf(r) { if (NM.env) return NM.env; const es = new THREE.Scene(), geo = new THREE.SphereGeometry(10, 24, 12), col = [], P = geo.attributes.position, top = new THREE.Color(0xb4bcc4), hor = new THREE.Color(0xd8d0c0), low = new THREE.Color(0x6a5c48), c = new THREE.Color();
+    for (let i = 0; i < P.count; i++) { const y = P.getY(i) / 10; if (y > 0) c.copy(hor).lerp(top, Math.pow(y, 0.6)); else c.copy(hor).lerp(low, Math.min(1, -y * 3)); col.push(c.r, c.g, c.b); }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); es.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide }))); const pm = new THREE.PMREMGenerator(r.renderer); NM.env = pm.fromScene(es, 0.03).texture; pm.dispose(); return NM.env; }
+  function lit(r, m) { const env = envOf(r); const fix = (mat) => { if (!mat || !mat.isMeshStandardMaterial || mat.userData.nmLit) return; mat.envMap = env; mat.envMapIntensity = 1.15; mat.userData.nmLit = true; mat.needsUpdate = true; };
+    for (const s of m.meshes) fix(s.material); m.root.traverse(o => { if (o.isMesh) fix(o.material); }); }
   function take(r, u) {
     const k = kitOf(u, r.sim), key = k.set + '|' + k.wpn; let m = null;
     const i = NM.pool.findIndex(p => p.key === key); if (i >= 0) { m = NM.pool[i]; NM.pool.splice(i, 1); }
     else { m = new RIG.Man(k.set, k.wpn, r.scene); m.key = key; for (const s of m.meshes) { s.castShadow = false; } } /* the realism edition's men throw an ink drop, not a shadow-map shade */
-    m.root.visible = true; m.anim.revive(); m.anim.os.forEach(e => e.a.stop()); m.anim.os = []; m.anim.one = null; m.anim.chain = null; m.unit = u.id; m.lastW = u.windupId; m.lastSt = u.st; m.px = u.x; m.pz = u.z; m.sp = 0;
+    lit(r, m); m.groundAt = (gx, gz) => S.terrainH(gx, gz); m.root.visible = true; m.anim.revive(); m.anim.os.forEach(e => e.a.stop()); m.anim.os = []; m.anim.one = null; m.anim.chain = null; m.unit = u.id; m.lastW = u.windupId; m.lastSt = u.st; m.px = u.x; m.pz = u.z; m.sp = 0;
     NM.men.set(u.id, m); return m;
   }
   function give(id) { const m = NM.men.get(id); if (!m) return; NM.men.delete(id); m.root.visible = false; m.unit = -1; if (NM.pool.length < CAP + 10) NM.pool.push(m); else m.dispose(); }

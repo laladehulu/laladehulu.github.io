@@ -43,13 +43,14 @@ function stepMover(m, dt) {
   const sp = Math.hypot(vx, vz); v.sp = lerp(v.sp || 0, sp, Math.min(1, dt * 8)); m.anim.speed = v.sp; if (sp > 0.05) { const fx = Math.sin(v.yaw), fz = Math.cos(v.yaw), lx = Math.cos(v.yaw), lz = -Math.sin(v.yaw); m.anim.ang = Math.atan2(vx * lx + vz * lz, vx * fx + vz * fz); }
 }
 function turnTo(a, b, k) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return a + d * Math.min(1, k); }
-function clear() { for (const m of men) m.dispose(); men = []; sel = null; duel = null; file = null; check = null; }
+function clear() { for (const m of men) m.dispose(); men = []; sel = null; duel = null; file = null; check = null; if (crowd) { crowd.C.dispose(); crowd = null; } }
 function setMode(mm) {
   mode = mm; clear(); for (const b of document.querySelectorAll('#modes button')) b.classList.toggle('on', b.dataset.m === mm);
   if (mm === 'show' || mm === 'check') { const m = new Man(cur.set, cur.wpn, scene); mover(m, 0, 0, 0); men.push(m); sel = m; camera.position.set(1.5, 1.5, 3.6); orbit.target.set(0, 1.0, 0); if (mm === 'check') startCheck(); }
   if (mm === 'lineup') { const keys = Object.keys(ARMOR).filter(k => k !== 'bare'), W = ['dao', 'spear', 'shield', 'dao', 'dao', 'spear', 'bow', 'dao']; keys.forEach((k, i) => { const m = new Man(k, W[i % W.length], scene); mover(m, (i - (keys.length - 1) / 2) * 1.3, 0, 0); men.push(m); }); sel = men[0]; camera.position.set(0, 2.2, 9.5); orbit.target.set(0, 1.0, 0); }
   if (mm === 'duel') startDuel();
   if (mm === 'file') startFile();
+  if (mm === 'crowd') startCrowd();
   buildSide(); buildActs();
 }
 // ---- the duel: two men at measure, a step in with a chain, a guard or a hit taken on the side the blade came from, until one falls
@@ -82,6 +83,23 @@ function fileThink(dt) { if (!file) return; file.t += dt; const F = file;
   if (F.st === 'march') { for (const m of men) { m.mv.to = { x: m.mv.x, z: m.mv.z + 2, speed: 1.4 }; m.mv.face = 0; } if (men[0].mv.z > 2) { F.st = 'ready'; F.t = 0; for (const m of men) { m.mv.to = null; m.anim.combat = true; } } }
   else if (F.st === 'ready') { if (F.t > 1.5 && !F.struck) { F.struck = true; men.forEach((m, i) => setTimeout(() => m.anim.attack('lianhuan'), i * 60 + Math.random() * 120)); } if (F.t > 4.2) { F.st = 'back'; F.t = 0; F.struck = false; } }
   else if (F.st === 'back') { for (const m of men) { m.mv.to = { x: m.mv.x, z: m.mv.z - 2, speed: 1.1, keepFace: true }; m.mv.face = 0; } if (men[0].mv.z < -6) { F.st = 'march'; F.t = 0; for (const m of men) m.anim.combat = false; } } }
+// ---- the crowd: two armies on the baked poses (rig.js Crowd), every man a few numbers, posed on the graphics card
+let crowd = null;
+function startCrowd() { const C = new RIG.Crowd(scene, 220), M = [];
+  const ming = ['ming_studded', 'ming_jacket', 'ming_studded', 'ming_robe', 'ming_mail', 'qi_rattan'], jin = ['jin_yellow', 'jin_white', 'jin_blue_b', 'jin_red'];
+  for (const side of [0, 1]) for (let r = 0; r < 8; r++) for (let c = 0; c < 20; c++) { const set = side ? jin[(c / 5 | 0) % 4] : ming[(r * 3 + c) % ming.length], wpn = side ? (r < 3 ? 'spear' : r < 6 ? 'dao' : 'bow') : set === 'qi_rattan' ? 'shield' : r < 2 ? 'spear' : r < 5 ? 'dao' : 'gun';
+    const x = (c - 9.5) * 1.15 + (rnd() - 0.5) * 0.2, z = (side ? 1 : -1) * (14 + r * 1.3), F = RIG.crowdState(wpn); F.seed = rnd(); M.push({ set, wpn, x, z, yaw: side ? Math.PI : 0, side, F, hp: 3, cd: 1 + rnd() * 3, ctl: {} }); }
+  crowd = { C, M, t: 0 }; camera.position.set(16, 7, 22); orbit.target.set(0, 1, 0); }
+function crowdThink(dt) { if (!crowd) return; crowd.t += dt; const { C, M } = crowd;
+  for (const u of M) { const c = u.ctl; c.hit = null; c.release = false; c.kick = false; if (u.hp <= 0) { c.dead = true; continue; }
+    const front = u.side ? 1.0 : -1.0, stop = front * (0.9 + (Math.abs(u.z) - 14) * 0) ; const want = u.side ? 0.95 + (u.r0 = u.r0 || (Math.abs(u.z) - 14)) : -0.95 - (u.r0 = u.r0 || (Math.abs(u.z) - 14));
+    const dz = want - u.z, sp = Math.abs(dz) > 0.1 ? Math.min(u.wpn === 'bow' || u.wpn === 'gun' ? 1.3 : 2.8, Math.abs(dz) * 2) : 0; u.z += Math.sign(dz) * sp * dt; c.speed = sp; c.ang = 0; c.combat = crowd.t > 4;
+    const engaged = Math.abs(u.z) < 2.6 + 0.1; u.cd -= dt;
+    if ((u.wpn === 'gun' || u.wpn === 'bow') && crowd.t > 6) { c.aim = (crowd.t + u.F.seed * 5) % 5 < 3; }
+    if (engaged && u.cd <= 0) { u.cd = 1.4 + rnd() * 2.2; c.windup = (c.windup || 0) + 1; c.dir = 'RLUD'[(rnd() * 4) | 0]; c.wd = 0.3 + rnd() * 0.4; if (u.wpn === 'spear') c.release = true;
+      const foes = M.filter(o => o.side !== u.side && o.hp > 0 && Math.abs(o.x - u.x) < 1.4 && Math.abs(o.z) < 2.8); const o = foes[(rnd() * foes.length) | 0]; if (o && rnd() < 0.5) setTimeout(() => { if (o.ctl.block) return; o.hp--; o.ctl.hit = 'LRUF'[(rnd() * 4) | 0]; }, 300); }
+    c.block = engaged && (crowd.t * 0.7 + u.F.seed * 9) % 4 < 0.9; c.downed = false; }
+  C.begin(); for (const u of M) { RIG.crowdStep(u.F, dt, u.ctl); u.ctl.hit = null; C.add(u.set, u.wpn, u.x, 0, u.z, u.yaw, u.F); } C.end(); }
 // ---- the clipping check: the covered body drawn over the armor in pure red, only where it would be seen in front of it
 const RED = new THREE.MeshBasicMaterial({ color: 0xff0000, skinning: true, toneMapped: false, fog: false });
 function overlay(m, on) { if (m.red) { m.red.parent.remove(m.red); m.red = null; } if (!on || !m.hidGeo) return;
@@ -138,16 +156,16 @@ function resize() { const w = window.innerWidth, h = window.innerHeight; rendere
 let last = performance.now(), fpsA = 60;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt; fpsA = lerp(fpsA, 1 / Math.max(dt, 0.001), 0.05);
-  duelThink(dt); fileThink(dt);
+  duelThink(dt); fileThink(dt); crowdThink(dt);
   if (check && !check.pause) { check.t += dt; const m = men[0], name = m.clipName, c = BODY.clips[name]; if (c && check.t > Math.max(2.4, c.duration * 2)) { check.t = 0; check.i = (check.i + 1) % CLIPS().length; playClip(m, CLIPS()[check.i], true); } }
   for (const m of men) { stepMover(m, dt); m.update(dt); }
   if (mode === 'show' && men[0]) { const p = men[0].root.position; orbit.target.lerp(new V3(p.x, 1.0, p.z), Math.min(1, dt * 3)); }
   sun.position.set(orbit.target.x + 5, 9, orbit.target.z + 6); sun.target.position.copy(orbit.target);
   orbit.update(); renderer.render(scene, camera);
-  if (!window.LAB.lastMeasure || mode !== 'check') { const info = renderer.info.render, s = sel || men[0]; $('stats').textContent = `fps ${fpsA.toFixed(0)}\ndraw calls ${info.calls}\ntriangles ${(info.triangles / 1000).toFixed(1)}k\nmen ${men.length}\n` + (s ? `\n${ARMOR[s.setKey].name}\n${WEAPON[s.wpnKey].name}\nclip ${s.anim.one ? s.anim.one.name : s.anim.base || ''}${s.anim.chain ? '\nchain ' + CHAINS[s.anim.chain].zh + ' ' + (s.anim.step + 1) + '/' + CHAINS[s.anim.chain].steps.length : ''}` : ''); }
+  if (!window.LAB.lastMeasure || mode !== 'check') { const info = renderer.info.render, s = sel || men[0]; $('stats').textContent = `fps ${fpsA.toFixed(0)}\ndraw calls ${info.calls}\ntriangles ${(info.triangles / 1000).toFixed(1)}k\nmen ${men.length + (crowd ? crowd.M.length : 0)}\n` + (s ? `\n${ARMOR[s.setKey].name}\n${WEAPON[s.wpnKey].name}\nclip ${s.anim.one ? s.anim.one.name : s.anim.base || ''}${s.anim.chain ? '\nchain ' + CHAINS[s.anim.chain].zh + ' ' + (s.anim.step + 1) + '/' + CHAINS[s.anim.chain].steps.length : ''}` : ''); }
   if (!Qs.has('noloop')) requestAnimationFrame(frame);
 }
-window.LAB = { get BODY() { return BODY; }, setMode, measureAll, get men() { return men; }, renderer, scene, camera, orbit, ARMOR, WEAPON, CHAINS, SPEED, step: (dt) => { for (const m of men) { stepMover(m, dt); m.update(dt); } duelThink(dt); fileThink(dt); orbit.update(); renderer.render(scene, camera); }, countRed, overlay };
+window.LAB = { get BODY() { return BODY; }, setMode, measureAll, get men() { return men; }, renderer, scene, camera, orbit, ARMOR, WEAPON, CHAINS, SPEED, step: (dt) => { for (const m of men) { stepMover(m, dt); m.update(dt); } duelThink(dt); fileThink(dt); crowdThink(dt); orbit.update(); renderer.render(scene, camera); }, countRed, overlay };
 new THREE.GLTFLoader().load('man.glb', (g) => {
   BODY = analyse(g); resize(); setMode(Qs.get('mode') || 'show'); $('load').remove(); window.LAB.ready = true; requestAnimationFrame((t) => { last = t; frame(t); });
 }, undefined, (err) => { $('load').textContent = 'could not load the model: ' + (err && err.message || err); window.LAB.error = String(err && err.message || err); });

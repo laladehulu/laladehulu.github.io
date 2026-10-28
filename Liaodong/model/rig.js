@@ -520,7 +520,21 @@ const IDLES = ['Idle_Loop', 'Idle_LookAround_Loop', 'Idle_Tired_Loop'];
 const SPEED = { Walk_Fwd_Loop: 1.01, Jog_Fwd_Loop: 5.36, Sprint_Loop: 8.25, Sprint_Shield_Loop: 7.5, Walk_Bwd_Loop: 1.05, Jog_Bwd_Loop: 3.21, Walk_L_Loop: 0.68, Jog_Left_Loop: 3.21, Walk_R_Loop: 0.6, Jog_Right_Loop: 3.21, Crawl_Fwd_Loop: 0.6 };
 const GAITS = { fwd: ['Walk_Fwd_Loop', 'Jog_Fwd_Loop', 'Sprint_Loop'], back: ['Walk_Bwd_Loop', 'Jog_Bwd_Loop'], left: ['Walk_L_Loop', 'Jog_Left_Loop'], right: ['Walk_R_Loop', 'Jog_Right_Loop'] };
 // the one-shots that travel (their root motion, metres in his own frame: +x to his left, +z ahead)
+// the moves in which the legs do their own work (a roll, a kick, a fall): the planted feet let go
+const LEGFREE = /^(Roll|Dodge|Kick|Death|IdleToLay|LayToIdle|Celebration|PickUp|Jump|Crawl|Melee_Knee|Sword_Dash|Shield_Dash|KipUp|GroundSit|Fixing|Crouch)/;
+// where in each walk and run clip the left foot comes down (its lowest point), found once, so the clip can be held to the legs' phase
+const CONTACT = {};
+function contactT(name) { if (CONTACT[name] !== undefined) return CONTACT[name]; const c = BODY.clips[name]; if (!c) return 0; const sc = new THREE.Scene(), m = new Man('bare', 'none', sc), a = m.mixer.clipAction(c); a.play(); let best = 1e9, bt = 0;
+  for (let i = 0; i < 48; i++) { const t = c.duration * i / 48; a.time = t; m.mixer.update(0); m.root.updateMatrixWorld(true); const y = m.bones.foot_l.getWorldPosition(new V3()).y - m.bones.foot_r.getWorldPosition(new V3()).y; if (y < best) { best = y; bt = t; } }
+  m.dispose(); return (CONTACT[name] = bt); }
+const CLIPV = {};
+function clipInfo(name) { if (CLIPV[name]) return CLIPV[name]; const c = BODY.clips[name]; if (!c) return { v: 1, low: 0.125 }; const sc = new THREE.Scene(), m = new Man('bare', 'none', sc), a = m.mixer.clipAction(c); a.play(); const N = 60, S = [], v = []; let mn = 9;
+  for (let i = 0; i <= N; i++) { a.time = c.duration * i / N; m.mixer.update(0); m.root.updateMatrixWorld(true); const l = m.bones.foot_l.getWorldPosition(new V3()), r = m.bones.foot_r.getWorldPosition(new V3()); S.push([l, r]); mn = Math.min(mn, l.y, r.y); }
+  const low = mn + 0.04; for (let i = 1; i <= N; i++) for (const k of [0, 1]) { const p = S[i][k], q = S[i - 1][k]; if (p.y < low && q.y < low) v.push(Math.hypot(p.x - q.x, p.z - q.z) / (c.duration / N)); }
+  v.sort((x, y) => x - y); m.dispose(); return (CLIPV[name] = { v: Math.max(0.4, v.length ? v[(v.length * 0.5) | 0] : 1), low }); } /* the clip's own ground speed (its planted foot sweeping back) and the height its ankle is down at */
+function clipSpeedOf(name) { return clipInfo(name).v; }
 // gait bands, in the game's own speeds (m/s): [clip, the top of its band, the pace it looks right at]
+const GAIT_ALT = { Walk_Loop: 1 };
 const GAITBAND = { fwd: [['Walk_Fwd_Loop', 1.9, 1.3], ['Jog_Fwd_Loop', 4.6, 3.4], ['Sprint_Loop', 99, 5.6]], back: [['Walk_Bwd_Loop', 2.2, 1.2], ['Jog_Bwd_Loop', 99, 3.0]],
   left: [['Walk_L_Loop', 2.0, 1.1], ['Jog_Left_Loop', 99, 3.0]], right: [['Walk_R_Loop', 2.0, 1.1], ['Jog_Right_Loop', 99, 3.0]] };
 const TRAVEL = { Dodge_Left: [2.0, 0], Dodge_Right: [-2.0, 0], Roll: [0, 5.0], Sword_Dash: [0, 3.7], Shield_Dash: [0, 1.0] };
@@ -572,20 +586,21 @@ class Animator {
     const dir = Math.abs(ang) > 2.3 ? 'back' : ang > 0.8 ? 'left' : ang < -0.8 ? 'right' : 'fwd'; for (const d in this.dirW) this.dirW[d] += ((d === dir ? 1 : 0) - this.dirW[d]) * Math.min(1, dt * 7);
     // one gait clip per direction, chosen by speed band, each at its own natural pace (no stride matching: a little foot
     // slide is better than legs slowed down and smeared between a walk and a jog); the change of gait is a short crossfade
-    const pick = (d) => { const B = GAITBAND[d]; let k = 0; while (k < B.length - 1 && sp > B[k][1]) k++; return B[k]; };
+    const pick = (d) => { const B = GAITBAND[d]; let k = 0; while (k < B.length - 1 && sp > B[k][1]) k++; const r = B[k]; return d === 'fwd' && k === 0 && this.style && this.style.altWalk ? ['Walk_Loop', r[1], r[2]] : r; };
     this.gaitTS = this.gaitTS || {};
     for (const d in this.dirW) { const w0 = this.dirW[d] * loco; if (w0 < 0.002) continue; const [n, , ref] = pick(d); if (!BODY.clips[n]) continue; tgt[n] = (tgt[n] || 0) + w0; this.gaitTS[n] = clamp(sp / ref, 0.8, 1.3); }
     for (const n in tgt) if (!(n in this.bw)) this.bw[n] = 0;
     let sum = 0; for (const n in this.bw) { const g = tgt[n] || 0; this.bw[n] += (g - this.bw[n]) * Math.min(1, dt * 9); if (this.bw[n] < 0.002 && !g) { const a = this.A(n); a.stop(); delete this.bw[n]; continue; } sum += this.bw[n]; }
     const baseShare = Math.max(0, 1 - Math.min(1, oneW)), norm = sum > 0 ? baseShare / sum : 0, oneNorm = oneW > 1 ? 1 / oneW : 1;
     for (const n in this.bw) { const a = this.A(n); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(this.bw[n] * norm);
-      a.timeScale = SPEED[n] ? (this.gaitTS[n] || 1) : 1; }
+      if (SPEED[n] || GAIT_ALT[n]) { a.timeScale = 0; const C = a.getClip(), off = contactT(n); a.time = ((((this.legs ? this.legs.ph : 0) + (off / C.duration)) % 1) + 1) % 1 * C.duration; } else a.timeScale = 1; } /* the walk and run clips are held to the legs' own phase, so the arms swing against the feet at any pace */
     for (const e of this.os) e.a.setEffectiveWeight(e.w * oneNorm);
-    { let tot = 0; for (const a of m.mixer._actions) if (a.isRunning() || (a.enabled && a.paused)) tot += a.getEffectiveWeight(); /* never less than a whole body: whatever is missing the stance fills, so no frame falls back to the bind pose */
+    { let tot = 0; for (const a of m.mixer._actions) if (a.enabled && m.mixer._isActiveAction(a)) tot += a.getEffectiveWeight(); /* active, whether running, paused, or held still on the legs' phase */ /* never less than a whole body: whatever is missing the stance fills, so no frame falls back to the bind pose */
       if (tot < 0.995) { const a = this.A(st); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(a.getEffectiveWeight() + 1 - tot); this.bw[st] = this.bw[st] || 0.001; } }
     if (IDLES.includes(st) && loco < 0.5) { this.idleT -= dt; if (this.idleT <= 0) { this.idleT = 8 + Math.random() * 9; this.idle = IDLES[(IDLES.indexOf(this.idle) + 1 + ((Math.random() * 2) | 0)) % IDLES.length]; } }
     m.mixer.update(dt); m.root.updateMatrixWorld(true);
     if (this.hands) { const pt = this.pointW > 0.4; poseHand(m, 'r', this.hands.r, 1); poseHand(m, 'l', pt ? 'point' : this.hands.l, 1); }
+    this.legIK(dt);
     if (m.spear && !this.dead && !this.down) this.spearIK(dt);
     if (this.orderT > 0) { this.orderT -= dt; if (this.orderT <= 0) { this.pointAt = null; this.look = null; this.man.setExpr('calm'); } }
     this.pointW += ((this.pointAt && !this.dead && !this.down ? 1 : 0) - this.pointW) * Math.min(1, dt * 7);
@@ -596,6 +611,35 @@ class Animator {
   }
   // ---- two-handed spear: the shaft is placed by the body (rear hand at the right hip, front hand ahead on the centre line,
   // point at chest height), driven out and back for a thrust, and both arms are solved onto it
+  // ---- the legs: the clip moves them (knee lift, heel kick, timing are the animation's own), at a cadence suited to his speed;
+  // each foot's reach before and behind the hips is stretched so the stride covers the ground he really travels; and a foot the
+  // clip has put down is pinned where it landed until the clip lifts it, the leg reaching it by IK with the clip's own knee and
+  // foot angle. The animation, with the slide taken out. Every man has his own cadence, stride and lean.
+  legIK(dt) {
+    const m = this.man, R = m.root; if (!this.style) { const h = Math.random; this.style = { cad: 0.93 + 0.14 * h(), stride: 0.92 + 0.16 * h(), lean: 0.02 + 0.07 * h(), altWalk: h() < 0.4 }; }
+    const L = this.legs || (this.legs = { ph: Math.random(), w: 0, last: R.position.clone(), v: new V3(), feet: [0, 1].map(() => ({ lock: null, rel: 0 })) });
+    const off = this.dead || this.down || (this.one && LEGFREE.test(this.one.name)); L.w += ((off ? 0 : 1) - L.w) * Math.min(1, dt * 8); if (L.w < 0.01) { L.last.copy(R.position); for (const f of L.feet) f.lock = null; return; }
+    if (dt > 0) { const v = R.position.clone().sub(L.last).divideScalar(dt); v.y = 0; if (v.length() > 12) v.set(0, 0, 0); L.v.lerp(v, Math.min(1, dt * 10)); } L.last.copy(R.position);
+    const sp = L.v.length(), S = this.style, up = new V3(0, 1, 0), fwd = new V3(0, 0, 1).applyQuaternion(R.quaternion), left = new V3(1, 0, 0).applyQuaternion(R.quaternion);
+    // the cadence: the gait clip that leads the blend sets it (played a little faster or slower for his speed), the stretch makes up the rest
+    let lead = null, lw = 0; for (const n in this.bw) if ((SPEED[n] || GAIT_ALT[n]) && this.bw[n] > lw) { lw = this.bw[n]; lead = n; }
+    let k = 1; if (lead && sp > 0.12) { const vc = clipSpeedOf(lead), dur = BODY.clips[lead].duration, ts = clamp(sp / vc, 0.8, 1.3) * S.cad; L.ph = (L.ph + dt * ts / dur) % 1; k = clamp(sp / (vc * ts), 0.45, 1.7) * S.stride; } L.low = lead ? clipInfo(lead).low : 0.125;
+    if (sp > 0.12 && !(this.one && this.one.attack)) rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(left, S.lean * clamp(sp / 4, 0, 1) * L.w));
+    const gy = (x, z) => m.groundAt ? m.groundAt(x, z) : R.position.y, base = R.position.y;
+    for (let i = 0; i < 2; i++) { const F = L.feet[i], side = i === 0 ? 'l' : 'r', th = m.bones['thigh_' + side], ca = m.bones['calf_' + side], ft = m.bones['foot_' + side];
+      const hip = th.getWorldPosition(new V3()), A = ft.getWorldPosition(new V3()), knee = ca.getWorldPosition(new V3()), fq = ft.getWorldQuaternion(new Q()), h = A.y - base;
+      // the clip's foot, its reach from under the hip stretched along his travel
+      const d = A.clone().sub(hip); d.y = 0; const along = L.v.lengthSq() > 0.01 ? L.v.clone().normalize() : fwd, a = d.dot(along); const want = hip.clone().add(d).add(along.clone().multiplyScalar(a * (k - 1))); want.y = gy(want.x, want.z) + h;
+      // pinned while the clip has it down
+      const down = h < (L.low || 0.125); let target;
+      if (down) { if (!F.lock || F.rel > 0) { F.lock = want.clone(); F.rel = 0; } F.lock.y = gy(F.lock.x, F.lock.z) + h; if (F.lock.distanceTo(want) > 0.45) { F.rel = 1; } target = F.lock.clone(); }
+      else { if (F.lock && F.rel === 0) F.rel = 1e-3; F.rel = Math.min(1, F.rel + dt / 0.12); target = F.lock && F.rel < 1 ? F.lock.clone().lerp(want, sm(F.rel)) : want; if (F.rel >= 1) F.lock = null; }
+      if (F.rel >= 1 && down) target = want;
+      const save = [th.quaternion.clone(), ca.quaternion.clone(), ft.quaternion.clone()];
+      ik2(th, ca, ft, target, knee.clone().add(knee.clone().sub(hip.clone().lerp(A, 0.5)).multiplyScalar(2))); /* the knee keeps the way the clip bent it */
+      ft.parent.getWorldQuaternion(_q2); ft.quaternion.copy(_q2.invert().multiply(fq)); ft.updateMatrixWorld(true); /* and the foot its angle */
+      if (L.w < 0.999) { [th, ca, ft].forEach((b, kk) => { const qq = b.quaternion.clone(); b.quaternion.copy(save[kk]).slerp(qq, L.w); }); th.updateMatrixWorld(true); } }
+  }
   spearIK(dt) {
     const m = this.man, R = m.root, fwd = new V3(0, 0, 1).applyQuaternion(R.quaternion), left = new V3(1, 0, 0).applyQuaternion(R.quaternion), up = new V3(0, 1, 0);
     let k = 0; if (this.spearT >= 0) { this.spearT += dt; const t = this.spearT; k = t < 0.18 ? -0.35 * sm(t / 0.18) : t < 0.32 ? lerp(-0.35, 1, sm((t - 0.18) / 0.14)) : t < 0.7 ? lerp(1, 0, sm((t - 0.32) / 0.38)) : 0; if (t > 0.75) { this.spearT = -1; m.setExpr('calm'); } }
@@ -657,5 +701,113 @@ function handTo(m, side, axisW, knuckW) {
   const L = new M4().makeBasis(fL, aL, new V3().crossVectors(fL, aL)), W = new M4().makeBasis(fW, aW, new V3().crossVectors(fW, aW));
   const qW = new Q().setFromRotationMatrix(W.multiply(L.transpose())); const bone = m.bones['hand_' + side]; bone.parent.getWorldQuaternion(_q2); bone.quaternion.copy(_q2.invert().multiply(qW)); bone.updateMatrixWorld(true);
 }
-window.RIG = { GRIME, analyse, Man, Animator, ARMOR, WEAPON, CHAINS, HITS, IDLES, SPEED, TRAVEL, SKIN, setGeo, bodyBoxes, get BODY() { return BODY; } };
+// =====================================================================================================================
+// the crowd: the whole army on the new soldier, posed on the graphics card. Every clip a man far off needs is played once
+// at load and every bone's pose (its skinning matrix, the hierarchy already resolved) saved for every frame into a texture:
+// a row a frame, three texels a bone. A man in the crowd is then only a few numbers: where he stands, which rows of the
+// table he is between, and a crossfade from the clip before. Each kit (an armour set, a weapon) is one instanced draw per
+// material, and the vertex shader fetches the pose itself: no skeleton and no animation work on the CPU for him at all.
+// The blocks are rigid on one bone each, so a vertex needs one bone, not four.
+// =====================================================================================================================
+const BAKE_FPS = 24;
+const BAKE_LIST = { blade: ['Idle_Loop', 'Sword_Idle', 'Idle_Shield_Loop', 'Walk_Fwd_Loop', 'Jog_Fwd_Loop', 'Sprint_Loop', 'Walk_Bwd_Loop', 'Jog_Bwd_Loop', 'Walk_L_Loop', 'Walk_R_Loop', 'Jog_Left_Loop', 'Jog_Right_Loop',
+    'Sword_Regular_A', 'Sword_Regular_B', 'Sword_Regular_C', 'Sword_Heavy_A', 'Sword_Light_A', 'Sword_Block', 'Hit_Chest', 'Hit_Shoulder_L', 'Hit_Shoulder_R', 'Hit_Head', 'Hit_Knockback', 'Death01', 'Death02', 'IdleToLay', 'LayToIdle', 'Kick', 'Bow_Aim_Neutral', 'Bow_Notch', 'Celebration'],
+  pole: ['Idle_Loop', 'Walk_Fwd_Loop', 'Jog_Fwd_Loop', 'Sprint_Loop', 'Walk_Bwd_Loop', 'Walk_L_Loop', 'Walk_R_Loop', 'Jog_Left_Loop', 'Jog_Right_Loop', '*Spear_Thrust', '*Gun_Aim', 'Hit_Chest', 'Death01', 'Death02', 'IdleToLay', 'LayToIdle', 'Kick'] };
+let BAKED = null;
+function bake() {
+  if (BAKED) return BAKED; const sc = new THREE.Scene(), m = new Man('bare', 'none', sc), bones = m.skel.bones, nb = bones.length, W = nb * 3; const body = m.body[0], bi = new M4().copy(body.bindMatrix).invert();
+  const plan = []; let H = 0;
+  for (const v in BAKE_LIST) for (const raw of BAKE_LIST[v]) { const synth = raw[0] === '*', name = synth ? raw.slice(1) : raw; const base = synth ? BODY.clips.Idle_Loop : BODY.clips[name]; if (!base) continue;
+    const dur = name === 'Spear_Thrust' ? 0.75 : name === 'Gun_Aim' ? 1.0 : base.duration, n = Math.max(2, Math.round(dur * BAKE_FPS) + 1); plan.push({ v, name, base, dur, n, row: H, loop: /_Loop$/.test(name) || name === 'Sword_Idle' || name === 'Gun_Aim' }); H += n; }
+  const data = new Float32Array(W * H * 4), M = new M4(); const A = m.anim;
+  for (const P of plan) { m.mixer.stopAllAction(); const act = m.mixer.clipAction(P.base); act.reset(); act.setLoop(P.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity); act.clampWhenFinished = true; act.setEffectiveWeight(1); act.play();
+    m.wpnKey = P.v === 'pole' ? (P.name === 'Gun_Aim' ? 'gun' : 'spear') : 'none'; A.aimOn = P.name === 'Gun_Aim';
+    for (let f = 0; f < P.n; f++) { const t = P.dur * f / (P.n - 1); act.time = Math.min(t, P.base.duration - 1e-4); m.mixer.update(0); m.root.updateMatrixWorld(true);
+      poseHand(m, 'r', 'fist', 1); poseHand(m, 'l', P.v === 'pole' || /Shield|Bow/.test(P.name) ? 'fist' : 'relax', 1); m.root.updateMatrixWorld(true);
+      if (P.v === 'pole') { A.spearT = P.name === 'Spear_Thrust' ? t : -1; A.spearIK(0); m.root.updateMatrixWorld(true); }
+      for (let b = 0; b < nb; b++) { M.multiplyMatrices(body.matrixWorld, bi).multiply(bones[b].matrixWorld).multiply(m.skel.boneInverses[b]).multiply(body.bindMatrix); /* exactly what skinning and the mesh's own placement do to a bind-pose point */ const e = M.elements, o = ((P.row + f) * W + b * 3) * 4;
+        data[o] = e[0]; data[o + 1] = e[4]; data[o + 2] = e[8]; data[o + 3] = e[12]; data[o + 4] = e[1]; data[o + 5] = e[5]; data[o + 6] = e[9]; data[o + 7] = e[13]; data[o + 8] = e[2]; data[o + 9] = e[6]; data[o + 10] = e[10]; data[o + 11] = e[14]; } } }
+  A.spearT = -1; A.aimOn = false; m.dispose();
+  const tex = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.needsUpdate = true;
+  const clips = {}; for (const P of plan) clips[P.v + ':' + P.name] = { row: P.row, n: P.n, dur: P.dur, loop: P.loop };
+  return (BAKED = { tex, W, H, clips, uniforms: { uBones: { value: tex }, uBSize: { value: new THREE.Vector2(W, H) } } });
+}
+// the vertex shader's half: fetch the pose (two clips, each between two frames), apply it to the bind-pose block
+const CROWD_VS = `
+attribute vec4 skinIndex; attribute vec4 aA; attribute vec4 aB; uniform sampler2D uBones; uniform vec2 uBSize;
+mat4 cBone(float row, float b) { float x = b * 3.0, y = (row + 0.5) / uBSize.y;
+  vec4 r0 = texture2D(uBones, vec2((x + 0.5) / uBSize.x, y)), r1 = texture2D(uBones, vec2((x + 1.5) / uBSize.x, y)), r2 = texture2D(uBones, vec2((x + 2.5) / uBSize.x, y));
+  return mat4(r0.x, r1.x, r2.x, 0.0, r0.y, r1.y, r2.y, 0.0, r0.z, r1.z, r2.z, 0.0, r0.w, r1.w, r2.w, 1.0); }
+mat4 cPose() { float b = skinIndex.x; mat4 a = cBone(aA.x, b) * (1.0 - aA.z) + cBone(aA.y, b) * aA.z;
+  if (aB.w < 0.002) return a; mat4 c = cBone(aB.x, b) * (1.0 - aB.z) + cBone(aB.y, b) * aB.z; return a * (1.0 - aB.w) + c * aB.w; }`;
+function crowdify(mat, U) { const prev = mat.onBeforeCompile; mat.skinning = false;
+  mat.onBeforeCompile = (sh) => { if (prev) prev(sh); Object.assign(sh.uniforms, BAKED.uniforms, U || {});
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + CROWD_VS).replace('void main() {', 'void main() {\n  mat4 cM = cPose();')
+      .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = mat3(cM) * objectNormal;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed = (cM * vec4(position, 1.0)).xyz;'); };
+  const k = mat.customProgramCacheKey ? mat.customProgramCacheKey() : ''; mat.customProgramCacheKey = () => 'crowd' + k; return mat; }
+// the crowd's own dirt: one battle-wide level (the near men keep their own)
+const CROWD_GRIME = { uDust: { value: 0.35 }, uMud: { value: 0.2 }, uBlood: { value: 0 }, uSeed: { value: 3.7 } };
+function rigidGeo(obj, bone, preM) { // a weapon's meshes (made in the hand's grip frame) in the bind pose's own space, on one bone
+  const out = []; obj.updateMatrixWorld(true); obj.traverse(o => { if (!o.isMesh || o.userData.ink) return; const g = o.geometry.clone(); const M = new M4().multiplyMatrices(preM, o.matrixWorld); g.applyMatrix4(M);
+    const n = g.attributes.position.count, si = new Uint16Array(n * 4); for (let i = 0; i < n; i++) si[i * 4] = BODY.bi[bone]; g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); out.push({ geo: g, mat: o.material }); }); return out; }
+function weaponParts(wpnKey) { const W = WEAPON[wpnKey], out = []; if (!W) return out;
+  if (W.hand) { const F = gripFrame(W.hand), o = W.build(); if (o) out.push(...rigidGeo(o, 'hand_' + W.hand, F.m)); }
+  if (W.shield) { const sh = shieldMesh(), a = BODY.bpos('lowerarm_l'), b = BODY.bpos('hand_l'), F = gripFrame('l'), back = F.palm.clone().negate(); const H = new THREE.Group(); H.add(sh); H.position.copy(a.clone().lerp(b, 0.62).add(back.clone().multiplyScalar(0.075))); H.quaternion.setFromUnitVectors(new V3(0, 1, 0), back); out.push(...rigidGeo(H, 'lowerarm_l', new M4())); }
+  return out; }
+class Crowd {
+  constructor(scene, cap) { bake(); this.scene = scene; this.cap = cap || 256; this.groups = new Map(); this.faceGeoS = null; }
+  group(key, build) { let g = this.groups.get(key); if (g) return g; const cap = this.cap;
+    g = { n: 0, cap, im: new THREE.InstancedBufferAttribute(new Float32Array(cap * 16), 16), aA: new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4), aB: new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4), meshes: [] };
+    for (const a of [g.im, g.aA, g.aB]) a.setUsage(THREE.DynamicDrawUsage);
+    for (const { geo, mat } of build()) { const G = geo.clone(); G.setAttribute('aA', g.aA); G.setAttribute('aB', g.aB); const mesh = new THREE.InstancedMesh(G, mat, cap); mesh.instanceMatrix = g.im; mesh.frustumCulled = false; mesh.count = 0; this.scene.add(mesh); g.meshes.push(mesh); }
+    this.groups.set(key, g); return g; }
+  setGroup(setKey) { return this.group('set:' + setKey, () => { const S = ARMOR[setKey], G = setGeo(setKey), out = [];
+      out.push({ geo: G.skin, mat: crowdify(grimeMat(solid(SKIN[S.face] || '#c8946a', 0.75), CROWD_GRIME)) }); for (const P of G.parts) out.push({ geo: P.geo, mat: crowdify(grimeMat(matOf(P.k), CROWD_GRIME)) });
+      out.push({ geo: G.line, mat: crowdify(new THREE.MeshBasicMaterial({ color: 0x15100b, side: THREE.BackSide })) });
+      if (!this.faceGeoS) { const f = faceGeo().clone(), n = f.attributes.position.count, si = new Uint16Array(n * 4); for (let i = 0; i < n; i++) si[i * 4] = BODY.bi.Head; f.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); this.faceGeoS = f; }
+      out.push({ geo: this.faceGeoS, mat: crowdify(new THREE.MeshStandardMaterial({ map: faceTex(S.face, 'calm'), transparent: true, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false })) }); return out; }); }
+  wpnGroup(wpnKey) { return this.group('wpn:' + wpnKey, () => weaponParts(wpnKey).map(p => ({ geo: p.geo, mat: crowdify(p.mat.clone()) }))); }
+  begin() { for (const g of this.groups.values()) g.n = 0; }
+  // one man: where, facing, and his animation state F (crowdStep keeps it)
+  add(setKey, wpnKey, x, y, z, yaw, F) { const cs = Math.cos(yaw), sn = Math.sin(yaw);
+    for (const g of [this.setGroup(setKey), wpnKey !== 'none' ? this.wpnGroup(wpnKey) : null]) { if (!g || g.n >= g.cap) continue; const i = g.n++, e = g.im.array, o = i * 16;
+      e[o] = cs; e[o + 1] = 0; e[o + 2] = -sn; e[o + 3] = 0; e[o + 4] = 0; e[o + 5] = 1; e[o + 6] = 0; e[o + 7] = 0; e[o + 8] = sn; e[o + 9] = 0; e[o + 10] = cs; e[o + 11] = 0; e[o + 12] = x; e[o + 13] = y; e[o + 14] = z; e[o + 15] = 1;
+      rowsOf(F.cur, g.aA.array, i * 4, 1); rowsOf(F.prev, g.aB.array, i * 4, F.prev ? 1 - F.w : 0); } }
+  end() { for (const g of this.groups.values()) { for (const m of g.meshes) m.count = g.n; g.im.needsUpdate = g.aA.needsUpdate = g.aB.needsUpdate = true; } }
+  dispose() { for (const g of this.groups.values()) for (const m of g.meshes) this.scene.remove(m); this.groups.clear(); }
+}
+function rowsOf(c, arr, o, w) { if (!c || !c.k) { arr[o] = arr[o + 1] = arr[o + 2] = 0; arr[o + 3] = 0; return; } const K = c.k, u = clamp(c.t / K.dur, 0, 1) * (K.n - 1), f = Math.floor(u);
+  arr[o] = K.row + f; arr[o + 1] = K.row + Math.min(K.n - 1, f + 1); arr[o + 2] = u - f; arr[o + 3] = w; }
+// ---- a man in the crowd: a small state machine on the baked clips. ctl = { speed, ang, windup (an id; changes when a new
+// cut starts), wd (its wind-up time), dir ('U','R','L','D'), release (true on the tick a spear goes in), hit (a side),
+// block, aim, kick, downed, dead }
+function crowdState(wpnKey) { return { v: wpnKey === 'spear' || wpnKey === 'gun' ? 'pole' : 'blade', wpn: wpnKey, cur: null, prev: null, w: 1, lastW: undefined, dead: false }; }
+function clipK(F, name) { return BAKED.clips[F.v + ':' + name] || BAKED.clips['blade:' + name] || null; }
+function cPlay(F, name, o) { const k = clipK(F, name); if (!k) return; o = o || {}; if (F.cur && F.cur.name === name && !o.restart) { if (o.ts) F.cur.ts = o.ts; return; }
+  F.prev = F.cur; F.w = F.prev ? 0 : 1; F.fade = o.fade || 0.18; F.cur = { name, k, t: o.t0 || 0, ts: o.ts || 1, loop: k.loop && !o.once, hold: o.hold, once: !!o.once }; }
+function crowdStep(F, dt, c) {
+  const cur = F.cur, busy = cur && cur.once && cur.t < cur.k.dur - 0.02;
+  if (c.dead) { if (!F.dead) { F.dead = true; cPlay(F, F.seed < 0.5 ? 'Death01' : 'Death02', { once: true, restart: true, fade: 0.1 }); } }
+  else if (c.downed) { if (!cur || cur.name !== 'IdleToLay') cPlay(F, 'IdleToLay', { once: true, restart: true, fade: 0.15 }); }
+  else if (cur && cur.name === 'IdleToLay') cPlay(F, 'LayToIdle', { once: true, restart: true, fade: 0.15 });
+  else {
+    if (c.hit) cPlay(F, c.hit === 'L' ? 'Hit_Shoulder_L' : c.hit === 'R' ? 'Hit_Shoulder_R' : c.hit === 'U' ? 'Hit_Head' : 'Hit_Chest', { once: true, restart: true, fade: 0.06 });
+    else if (c.windup !== undefined && c.windup !== F.lastW) { F.lastW = c.windup;
+      if (F.v === 'blade' && F.wpn !== 'bow' && F.wpn !== 'none') { const n = c.dir === 'U' ? 'Sword_Heavy_A' : c.dir === 'L' ? 'Sword_Regular_B' : c.dir === 'D' ? 'Sword_Light_A' : (F.alt = !F.alt) ? 'Sword_Regular_A' : 'Sword_Regular_C'; const k = clipK(F, n); if (k) cPlay(F, n, { once: true, restart: true, fade: 0.1, ts: clamp(0.4 * k.dur / ((c.wd || 0.35) + 0.06), 0.6, 2.2) }); } }
+    else if (c.release && F.wpn === 'spear') cPlay(F, 'Spear_Thrust', { once: true, restart: true, fade: 0.06 });
+    else if (c.kick && !(cur && cur.name === 'Kick')) cPlay(F, 'Kick', { once: true, restart: true });
+    else if (!busy) {
+      const sp = c.speed || 0, a = c.ang || 0, d = Math.abs(a) > 2.3 ? 'back' : a > 0.8 ? 'left' : a < -0.8 ? 'right' : 'fwd'; let name, ts = 1;
+      if (sp > 0.35) { const B = GAITBAND[d]; let k = 0; while (k < B.length - 1 && sp > B[k][1]) k++; name = B[k][0]; ts = clamp(sp / B[k][2], 0.8, 1.3); }
+      else if (c.aim) name = F.wpn === 'gun' ? 'Gun_Aim' : F.wpn === 'bow' ? 'Bow_Aim_Neutral' : 'Idle_Loop';
+      else if (c.block && F.v === 'blade') { name = 'Sword_Block'; }
+      else name = F.wpn === 'shield' ? 'Idle_Shield_Loop' : c.combat && F.v === 'blade' && F.wpn !== 'bow' && F.wpn !== 'none' ? 'Sword_Idle' : 'Idle_Loop';
+      cPlay(F, name, { ts, hold: name === 'Sword_Block' ? 0.42 : undefined, once: name === 'Sword_Block' }); } }
+  // time
+  for (const C of [F.cur, F.prev]) { if (!C) continue; C.t += dt * C.ts; const D = C.k.dur; if (C.hold !== undefined) C.t = Math.min(C.t, D * C.hold); if (C.loop) C.t %= D; else C.t = Math.min(C.t, D); }
+  if (F.prev) { F.w = Math.min(1, F.w + dt / F.fade); if (F.w >= 1) F.prev = null; }
+}
+
+window.RIG = { Crowd, crowdState, crowdStep, bake, CROWD_GRIME, GRIME, analyse, Man, Animator, ARMOR, WEAPON, CHAINS, HITS, IDLES, SPEED, TRAVEL, SKIN, setGeo, bodyBoxes, get BODY() { return BODY; } };
 })();
