@@ -620,7 +620,7 @@ class Animator {
   // a blow lands on him: he is thrown and bent away from it (a spring, so he comes back), his head whips, and he is shoved
   // (the feet then step to catch him: the legs see the shove as travel)
   impulse(dirW, k, heavy) { const X = this.rx, d = dirW.clone(); d.y = 0; if (d.lengthSq() < 1e-6) return; d.normalize(); X.ax.copy(new V3(0, 1, 0).cross(d)).normalize();
-    X.v += (4.5 + (heavy ? 4 : 0)) * k; X.hv += (8 + (heavy ? 6 : 0)) * k; X.ov.add(d.multiplyScalar((0.8 + (heavy ? 1.1 : 0)) * k)); }
+    X.kv = (X.kv || 0) + (4.5 + (heavy ? 4 : 0)) * k; X.khv = (X.khv || 0) + (8 + (heavy ? 6 : 0)) * k; X.kov = (X.kov || new V3()).add(d.multiplyScalar((0.8 + (heavy ? 1.1 : 0)) * k)); } /* given over a few frames: a jolt, not a one-frame jump */
   // his blade bites: the cut drags for a moment before it follows through
   bite(t) { this.biteT = Math.max(this.biteT, t || 0.1); }
   hit(dir, heavy) { if (this.dead || this.down) return; const name = heavy ? HITS.heavy : (HITS[dir] || HITS.F); if (this.one && /^Hit_/.test(this.one.name) && this.one.a.time < this.one.a.getClip().duration * 0.45) return; /* already reeling: the spring takes the new blow */
@@ -661,7 +661,8 @@ class Animator {
     mixUpdate(m.mixer, dt); m.root.updateMatrixWorld(true);
     if (this.hands) { const pt = this.pointW > 0.4; poseHand(m, 'r', this.hands.r, 1); poseHand(m, 'l', pt ? 'point' : this.hands.l, 1); }
     // the blow taken: spring the bend and the shove back; the cut given: load, drive and follow through with the whole trunk; the guard turned to the side it covers
-    { const X = this.rx; X.v += (-110 * X.a - 14 * X.v) * dt; X.a += X.v * dt; X.hv += (-170 * X.h - 16 * X.hv) * dt; X.h += X.hv * dt;
+    { const X = this.rx; if (X.kv || X.khv || (X.kov && X.kov.lengthSq() > 1e-8)) { const f = Math.min(1, dt * 22); X.v += (X.kv || 0) * f; X.kv = (X.kv || 0) * (1 - f); X.hv += (X.khv || 0) * f; X.khv = (X.khv || 0) * (1 - f); if (X.kov) { X.ov.addScaledVector(X.kov, f); X.kov.multiplyScalar(1 - f); } if (Math.abs(X.kv) < 1e-3) X.kv = 0; if (Math.abs(X.khv) < 1e-3) X.khv = 0; }
+      X.v += (-110 * X.a - 14 * X.v) * dt; X.a += X.v * dt; X.hv += (-170 * X.h - 16 * X.hv) * dt; X.h += X.hv * dt;
       X.ov.addScaledVector(X.o, -55 * dt).multiplyScalar(Math.max(0, 1 - 8 * dt)); X.o.addScaledVector(X.ov, dt);
       if (!this.dead && !this.down) { if (X.o.lengthSq() > 1e-6) { m.root.position.add(X.o); m.root.updateMatrixWorld(true); }
         if (Math.abs(X.a) > 1e-3) { rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(X.ax, X.a * 0.4)); rotWorld(m.bones.spine_03, new Q().setFromAxisAngle(X.ax, X.a * 0.35)); }
@@ -673,7 +674,9 @@ class Animator {
       if (dip) rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(new V3(1, 0, 0).applyQuaternion(m.root.quaternion), dip)); }
     if (this.blockOn && !m.spear) { const bd = this.blockDir, upv = new V3(0, 1, 0); if (bd === 'L' || bd === 'R') rotWorld(m.bones.spine_02, new Q().setFromAxisAngle(upv, bd === 'L' ? 0.4 : -0.4)); else if (bd === 'U') rotWorld(m.bones.spine_03, new Q().setFromAxisAngle(new V3(1, 0, 0).applyQuaternion(m.root.quaternion), -0.22)); }
     this.legIK(dt);
-    if (m.spear && !this.dead && !this.down && !(this.one && this.one.attack)) this.spearIK(dt);
+    { const want = m.spear && !this.dead && !this.down && !(this.one && this.one.attack) ? 1 : 0; this.ikW = (this.ikW === undefined ? want : this.ikW) + (want - (this.ikW === undefined ? want : this.ikW)) * Math.min(1, dt * 8);
+      if (m.spear && this.ikW > 0.01) { const arms = ['upperarm_l', 'lowerarm_l', 'hand_l', 'upperarm_r', 'lowerarm_r', 'hand_r', 'spine_02'].map(n => m.bones[n]), save = arms.map(b => b.quaternion.clone()); this.spearIK(want ? dt : 0);
+        if (this.ikW < 0.999) { arms.forEach((b, i) => { const q = b.quaternion.clone(); b.quaternion.copy(save[i]).slerp(q, this.ikW); }); m.root.updateMatrixWorld(true); } } } /* the two-hand grip eases on and off (a gun swung as a club, a fall): no pop of the arms */
     if (this.orderT > 0) { this.orderT -= dt; if (this.orderT <= 0) { this.pointAt = null; this.look = null; this.man.setExpr('calm'); } }
     this.pointW += ((this.pointAt && !this.dead && !this.down ? 1 : 0) - this.pointW) * Math.min(1, dt * 7);
     if (this.raiseT > 0 && !this.dead && !this.down) { this.raiseT -= dt; const w = sm(clamp(Math.min(this.raiseT, (this.raiseD || 1.5) - this.raiseT) * 4, 0, 1)); const fw2 = new V3(0, 0, 1).applyQuaternion(m.root.quaternion); aimArm(m, 'r', fw2.multiplyScalar(0.2).add(new V3(0, 1, 0)), w * 0.95, 0.1); if (this.raiseT <= 0) m.setExpr('calm'); } /* the arm up: hold, or give fire */
@@ -749,7 +752,7 @@ class Animator {
   }
   lookAt(dt) { // the chest and the head turn toward what he is watching (yaw only), sharing the turn
     const m = this.man, fwd = new V3(0, 0, 1).applyQuaternion(m.root.quaternion), hp = m.bones.Head.getWorldPosition(new V3()), to = this.look.clone().sub(hp); to.y = 0; if (to.lengthSq() < 0.01) return; to.normalize();
-    let a = Math.atan2(fwd.x * to.z - fwd.z * to.x, fwd.x * to.x + fwd.z * to.z); a = clamp(-a, -0.9, 0.9); this.lookW += ((this.one && this.one.attack ? 0.3 : 1) - this.lookW) * Math.min(1, dt * 5);
+    let a = Math.atan2(fwd.x * to.z - fwd.z * to.x, fwd.x * to.x + fwd.z * to.z); a = clamp(-a, -0.9, 0.9); this.lookA = this.lookA === undefined ? a : this.lookA + (a - this.lookA) * Math.min(1, dt * 6); a = this.lookA; /* a new target is turned to, not snapped to */ this.lookW += ((this.one && this.one.attack ? 0.3 : 1) - this.lookW) * Math.min(1, dt * 5);
     const up = new V3(0, 1, 0); rotWorld(m.bones.spine_03, new Q().setFromAxisAngle(up, a * 0.35 * this.lookW)); rotWorld(m.bones.Head, new Q().setFromAxisAngle(up, a * 0.6 * this.lookW));
   }
 }

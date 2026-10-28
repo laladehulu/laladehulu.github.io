@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v137</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v138</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
 <title>New Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -11609,9 +11609,9 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
 
   // ---- one man's frame: his place, his travel, his state; then he is posed at once, so he is never drawn unposed
   function drive(r, m, u, x, y, z, yaw, dt) {
-    const A = m.anim; m.root.position.set(x, y, z); m.root.rotation.y = yaw;
+    const A = m.anim; m.root.position.set(x, y, z); { let d = yaw - (m.vyaw === undefined ? yaw : m.vyaw); d -= Math.PI * 2 * Math.round(d / (Math.PI * 2)); m.vyaw = (m.vyaw === undefined ? yaw : m.vyaw) + d * Math.min(1, dt * 16); m.root.rotation.y = m.vyaw; } /* his facing eased a touch: the game turns a fighter sharply */
     const vx = (x - m.px) / Math.max(dt, 1e-3), vz = (z - m.pz) / Math.max(dt, 1e-3); m.px = x; m.pz = z; const sp = Math.min(9, Math.hypot(vx, vz)); m.sp += (sp - m.sp) * Math.min(1, dt * 8);
-    A.speed = m.sp; if (sp > 0.15) { const fx = Math.sin(yaw), fz = Math.cos(yaw), lx = Math.cos(yaw), lz = -Math.sin(yaw); A.ang = Math.atan2(vx * lx + vz * lz, vx * fx + vz * fz); }
+    A.speed = m.sp; if (sp > 0.6) { /* the way he moves is only trusted once he is really moving: at a creep it is noise */ const fx = Math.sin(yaw), fz = Math.cos(yaw), lx = Math.cos(yaw), lz = -Math.sin(yaw); A.ang = Math.atan2(vx * lx + vz * lz, vx * fx + vz * fz); }
     const sq = u.squad >= 0 ? r.sim.squads[u.squad] : null, routing = !!(sq && sq.routing);
     // down and up again; the man who hauls him up kneels to it
     if (u.downed && !A.down) A.wound(); else if (!u.downed && A.down) A.rise();
@@ -11621,7 +11621,7 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
     if (u.st === ST_WINDUP && u.windupId !== m.lastW) { m.lastW = u.windupId;
       if (m.wpnKey === 'dao' || m.wpnKey === 'shield' || (m.wpnKey === 'gun' && (u.club || u.ctrl < 0))) {
         const wd = u.ctrl >= 0 && !u.amK ? (u.cbFast ? 0.2 : (u.heavy || u.cbHeavy) ? 0.4 : 0.28) : Math.min(1.1, (u.def.windup || 0.4) * (u.aiHeavy ? 1.9 : 1) * (u.wMul || 1));
-        const C = cutFor(u, m), clip = RIG.BODY.clips[C.name] ? C.name : 'Sword_Regular_A', dur = RIG.BODY.clips[clip].duration; A.cut(clip, Math.max(0.6, Math.min(2.2, 0.4 * dur / (wd + RELEASE_LEAD))), C.side, C.pow); } }
+        const C = cutFor(u, m), clip = RIG.BODY.clips[C.name] ? C.name : 'Sword_Regular_A', dur = RIG.BODY.clips[clip].duration; A.cut(clip, Math.max(0.7, Math.min(1.6, 0.4 * dur / (wd + RELEASE_LEAD))), C.side, C.pow); } }
     if (m.wpnKey === 'spear' && u.st === ST_RELEASE && m.lastSt !== ST_RELEASE) { if (brushOf(u)) A.sweep(); else A.thrust({ h: u.atkDir === DIR_UP ? 0.3 : u.atkDir === DIR_DOWN ? -0.22 : 0, k: (u.heavy || u.aiHeavy || u.lunge) ? 1.45 : 1, flurry: (u.cbN || 0) > 0 }); }
     if (u.st === ST_KICK && m.lastSt !== ST_KICK) A.play(hash(u.id, 13) < 0.6 ? 'Kick' : 'Melee_Knee', { expr: 'shout' });
     if (u.st === ST_STUN && m.lastSt !== ST_STUN && !(A.one && /^Hit_/.test(A.one.name))) A.play((u.stunDur || 0) > 0.6 ? 'Hit_Knockback' : 'Hit_Chest', { fade: 0.06, expr: 'pain' });
@@ -11631,7 +11631,7 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
     if (m.wpnKey === 'bow') { if (m.wasAim && !aiming) A.play('Bow_Shoot', { fade: 0.05 }); A.hold = A.hold || (aiming ? 'Bow_Aim_Neutral' : u.st === ST_RELOAD ? 'Bow_Notch' : null); }
     m.wasAim = aiming; m.lastSt = u.st;
     A.block(!!u.blocking && u.st === ST_IDLE); A.blockDir = u.blockDir === DIR_LEFT ? 'L' : u.blockDir === DIR_RIGHT ? 'R' : u.blockDir === DIR_UP ? 'U' : 'F';
-    A.combat = !routing && (u.st !== ST_IDLE || !!u.blocking || (u.target >= 0 && m.wpnKey !== 'gun' && m.wpnKey !== 'bow')); A.keepCombat = A.combat;
+    { const hot = !routing && (u.st !== ST_IDLE || !!u.blocking || (u.target >= 0 && m.wpnKey !== 'gun' && m.wpnKey !== 'bow')); m.hotT = hot ? 3 : Math.max(0, (m.hotT || 0) - dt); A.combat = !routing && m.hotT > 0; A.keepCombat = A.combat; } /* the guard is kept a few seconds once a fight has touched him: no flicker between idle and guard */
     A.idle = (u.fat || 0) > 70 ? 'Idle_Tired_Loop' : A.idle === 'Idle_Tired_Loop' ? 'Idle_Loop' : A.idle;
     // his dirt: the field's dust and mud build through the battle; a fall puts him in the mud; every blow he took shows
     const D = NM.dirt.get(u.id) || { b: 0, m: 0 }; NM.dirt.set(u.id, D); if (u.downed) D.m = Math.min(1, D.m + dt * 0.5);

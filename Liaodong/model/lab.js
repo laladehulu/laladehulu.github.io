@@ -40,7 +40,7 @@ function stepMover(m, dt) {
   m.root.position.set(v.x, 0, v.z); m.root.rotation.y = v.yaw;
   { const o = m.anim.one, tr = o && TRAVEL[o.name]; if (tr && o.a.time < o.a.getClip().duration - 0.05) { const d = o.a.getClip().duration, k = Math.sin(clamp(o.a.time / d, 0, 1) * Math.PI) * Math.PI / 2 / d; /* the root motion of a dodge, roll or dash: most of it in the middle of the move */
       const lx = Math.cos(v.yaw), lz = -Math.sin(v.yaw), fx = Math.sin(v.yaw), fz = Math.cos(v.yaw); v.x += (lx * tr[0] + fx * tr[1]) * k * dt; v.z += (lz * tr[0] + fz * tr[1]) * k * dt; m.root.position.set(v.x, 0, v.z); } }
-  const sp = Math.hypot(vx, vz); v.sp = lerp(v.sp || 0, sp, Math.min(1, dt * 8)); m.anim.speed = v.sp; if (sp > 0.05) { const fx = Math.sin(v.yaw), fz = Math.cos(v.yaw), lx = Math.cos(v.yaw), lz = -Math.sin(v.yaw); m.anim.ang = Math.atan2(vx * lx + vz * lz, vx * fx + vz * fz); }
+  const sp = Math.hypot(vx, vz); v.sp = lerp(v.sp || 0, sp, Math.min(1, dt * 8)); m.anim.speed = v.sp; if (sp > 0.6) { const fx = Math.sin(v.yaw), fz = Math.cos(v.yaw), lx = Math.cos(v.yaw), lz = -Math.sin(v.yaw); m.anim.ang = Math.atan2(vx * lx + vz * lz, vx * fx + vz * fz); }
 }
 function turnTo(a, b, k) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return a + d * Math.min(1, k); }
 function clear() { for (const m of men) m.dispose(); men = []; sel = null; duel = null; file = null; check = null; if (crowd) { crowd.C.dispose(); crowd = null; } }
