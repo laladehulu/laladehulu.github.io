@@ -118,21 +118,16 @@ body.touch #room{top:calc(170px + env(safe-area-inset-top,0px))}
 
 /* the poster: title screen */
 #title{justify-content:flex-start;align-items:stretch;padding:0;overflow:auto;
-  background:
-    radial-gradient(circle at 1px 1px,rgba(23,23,28,.16) 1.1px,transparent 1.6px) 0 0/7px 7px,
-    var(--grain),
-    repeating-conic-gradient(from -8deg at 100% 100%,var(--red) 0deg 7deg,#d8401f 7deg 14deg),
-    var(--red)}
-#title::before{content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(118deg,var(--paper) 0 42%,transparent 42.2%);mix-blend-mode:normal}
+  background:radial-gradient(circle at 1px 1px,rgba(23,23,28,.13) 1px,transparent 1.5px) 0 0/22px 22px,#eeeeea}
+#title::before{content:none}
 #title .art{position:absolute;right:0;bottom:0;height:min(96vh,880px);width:auto;pointer-events:none}
 .tbox{position:relative;z-index:1;max-width:560px;width:100%;margin:0;padding:clamp(22px,5vh,56px) clamp(18px,4vw,64px) 32px;box-sizing:border-box}
 .ru{font:700 clamp(15px,1.6vw,19px)/1 var(--display);letter-spacing:.18em;color:var(--red);margin:0 0 10px}
-.tbox h1{font:700 clamp(58px,10.5vw,132px)/.84 var(--display);margin:0 0 6px;color:var(--ink);text-transform:uppercase;letter-spacing:-.01em;transform:rotate(-4deg);transform-origin:left bottom}
-.tbox h1 span{display:block;color:var(--red);text-shadow:4px 4px 0 var(--ink)}
+.tbox h1{font:700 clamp(54px,9vw,116px)/.9 var(--display);margin:0 0 6px;color:var(--ink);letter-spacing:-.04em}
+.tbox h1 span{display:block;color:var(--red)}
 .lede{font-size:16px;line-height:1.5;color:var(--ink);margin:22px 0 18px;max-width:46ch}
 .lede strong{color:var(--ox)}
-.menu{background:var(--paper) var(--grain);border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);padding:14px 16px 16px;max-width:470px}
+.menu{background:#fff;border:1.5px solid var(--ink);border-radius:14px;box-shadow:0 10px 30px rgba(23,23,28,.10);padding:14px 16px 16px;max-width:470px}
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
 .lab{font:500 13px/1 var(--display);color:var(--dim);letter-spacing:.02em}
 .seg{display:flex;border:2px solid var(--ink);width:max-content;max-width:100%;flex-wrap:wrap;background:var(--paper)}
@@ -257,6 +252,15 @@ body.touch #room{top:calc(170px + env(safe-area-inset-top,0px))}
 #radio div::before{content:'#general  ';color:var(--faint)}
 #radio div.bad::before,#radio div.good::before{color:inherit;opacity:.7}
 .tbox h1 span{color:var(--red)}
+/* landing-page controls: pills and soft cards instead of printed slips */
+.seg{border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;background:#fff}
+.seg button{text-transform:none;font:600 14px/1 var(--display);padding:9px 14px}
+.seg button + button{border-left:1.5px solid var(--ink)}
+.go{border:0;border-radius:999px;text-transform:none;font:700 19px/1 var(--display);letter-spacing:-.01em;padding:14px 26px;box-shadow:0 6px 18px rgba(255,90,31,.35)}
+.go:hover{background:#ff6f3a}.go:active{transform:translateY(1px);box-shadow:0 2px 8px rgba(255,90,31,.35)}
+.sub{border:1.5px solid var(--ink);border-radius:999px;text-transform:none;font:600 14px var(--display)}
+#nameIn,#codeIn{border:1.5px solid var(--ink);border-radius:10px;background:#fff}
+.ru{letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -288,22 +292,21 @@ body.touch #room{top:calc(170px + env(safe-area-inset-top,0px))}
 
   <div id="title" class="screen" hidden>
     <svg class="art" viewBox="0 0 640 900" preserveAspectRatio="xMaxYMax meet" aria-hidden="true">
-      <defs><g id="fig" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M286 306 L392 298 L448 474 L326 484 Z"/>
-        <path d="M326 470 L452 464 L534 708 L252 702 Z"/>
-        <path d="M372 650 L262 790 L230 905" stroke-width="64" fill="none"/>
-        <path d="M440 640 L512 782 L582 880" stroke-width="64" fill="none"/>
-        <path d="M384 318 L432 418 L462 486" stroke-width="40" fill="none"/>
-        <path d="M302 318 L252 290" stroke-width="38" fill="none"/>
-        <path d="M486 512 L190 228" stroke-width="34" fill="none"/>
-        <path d="M190 228 L140 180" stroke-width="16" fill="none"/>
-        <rect x="330" y="372" width="70" height="44" rx="8" transform="rotate(44 365 394)"/>
-        <path d="M304 270 L336 312" stroke-width="34" fill="none"/>
-        <circle cx="314" cy="252" r="34"/>
-        <path d="M258 282 C246 196 296 166 330 168 C376 170 400 210 394 270 C390 300 352 318 314 316 C284 314 262 302 258 282 Z"/>
-      </g></defs>
-      <use href="#fig" transform="translate(14 10)" fill="#a8360c" stroke="#a8360c"/>
-      <use href="#fig" fill="#17171c" stroke="#17171c"/>
+      <g fill="none" stroke="#17171c" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M80 640 C190 630 260 580 330 490 C390 410 440 280 540 140"/>
+        <path d="M486 142 H540 V196"/>
+      </g>
+      <g stroke="#17171c" stroke-width="8" stroke-linejoin="round">
+        <rect x="120" y="430" width="380" height="250" rx="22" fill="#fff"/>
+        <path d="M70 700 H550 L520 730 H100 Z" fill="#17171c"/>
+      </g>
+      <path d="M310 470 C316 520 330 534 380 540 C330 546 316 560 310 610 C304 560 290 546 240 540 C290 534 304 520 310 470 Z" fill="#ff5a1f"/>
+      <path d="M400 470 C402 488 406 492 424 494 C406 496 402 500 400 518 C398 500 394 496 376 494 C394 492 398 488 400 470 Z" fill="#ff5a1f"/>
+      
+      <g font-family="JetBrains Mono, monospace" font-size="22" fill="#17171c">
+        <rect x="150" y="780" width="300" height="48" rx="24" fill="#17171c"/>
+        <text x="300" y="811" text-anchor="middle" fill="#f4f4f1">Join the waitlist →</text>
+      </g>
     </svg>
     <div class="tbox">
       <p class="ru">Stealth mode · SoMa · pre-revenue</p>
