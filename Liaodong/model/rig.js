@@ -143,7 +143,7 @@ function analyse(gltf) {
   const head = new THREE.Box3(), hinv = new M4().copy(skel.boneInverses[bi.Head]); const tmp = new V3();
   for (const p of parts) for (let i = 0; i < p.n; i++) if (p.vreg[i] === 'head' && p.P.getY(i) > 1.6) head.expandByPoint(tmp.set(p.P.getX(i), p.P.getY(i), p.P.getZ(i)).applyMatrix4(hinv));
   const headModel = new THREE.Box3(); for (const p of parts) for (let i = 0; i < p.n; i++) if (p.vreg[i] === 'head') headModel.expandByPoint(tmp.set(p.P.getX(i), p.P.getY(i), p.P.getZ(i)));
-  BODY = { gltf, parts, bones: bones.map(b => b.name), bi, bindWorld, bpos, head, headModel, clips: {}, restQ: Object.fromEntries(bones.map(b => [b.name, b.quaternion.clone()])) };
+  BODY = { gltf, parts, bones: bones.map(b => b.name), bi, bindWorld, bpos, head, headModel, clips: {}, restQ: Object.fromEntries(bones.map(b => [b.name, b.quaternion.clone()])), restP: Object.fromEntries(bones.map(b => [b.name, b.position.clone()])) };
   for (const c of gltf.animations) BODY.clips[c.name] = c;
   return BODY;
 }
@@ -598,6 +598,7 @@ class Animator {
     { let tot = 0; for (const a of m.mixer._actions) if (a.enabled && m.mixer._isActiveAction(a)) tot += a.getEffectiveWeight(); /* active, whether running, paused, or held still on the legs' phase */ /* never less than a whole body: whatever is missing the stance fills, so no frame falls back to the bind pose */
       if (tot < 0.995) { const a = this.A(st); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(a.getEffectiveWeight() + 1 - tot); this.bw[st] = this.bw[st] || 0.001; } }
     if (IDLES.includes(st) && loco < 0.5) { this.idleT -= dt; if (this.idleT <= 0) { this.idleT = 8 + Math.random() * 9; this.idle = IDLES[(IDLES.indexOf(this.idle) + 1 + ((Math.random() * 2) | 0)) % IDLES.length]; } }
+    for (const b of m.skel.bones) { b.quaternion.copy(BODY.restQ[b.name]); b.position.copy(BODY.restP[b.name]); } /* every bone from rest, every frame: a bone a clip does not move must not keep what was done to it last frame (the turned torso wound round and round) */
     m.mixer.update(dt); m.root.updateMatrixWorld(true);
     if (this.hands) { const pt = this.pointW > 0.4; poseHand(m, 'r', this.hands.r, 1); poseHand(m, 'l', pt ? 'point' : this.hands.l, 1); }
     this.legIK(dt);
