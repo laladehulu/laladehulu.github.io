@@ -195,6 +195,30 @@ body.touch #radio{width:calc(100vw - 32px);top:calc(200px + env(safe-area-inset-
 .hist{font:500 13px/1.5 var(--display);color:var(--dim);margin-top:8px}
 #objBar{margin-top:6px;height:8px;background:var(--paper2);border:2px solid var(--ink);position:relative}
 #objBar i{position:absolute;inset:0 auto 0 0;background:var(--ochre)}
+
+/* compact HUD: icons and numbers, no captions */
+.ic{display:inline-flex;width:16px;height:16px;vertical-align:-3px}.ic svg{width:100%;height:100%}
+#wavePanel{display:flex;align-items:center;gap:12px;padding:5px 10px 5px 10px;border-left-width:6px;max-width:none;flex-wrap:wrap}
+#waveNum{font:700 15px/1 var(--display)}
+.stat{display:inline-flex;align-items:center;gap:5px;font:700 14px/1 var(--display);color:var(--ink);white-space:nowrap}
+#waveState{color:var(--ink)} #waveState .ic{color:var(--red)}
+#sabStat .track i{width:12px;height:12px;font-size:8px;border-width:1.5px}
+#overrun{flex-basis:100%;margin-top:2px;font-size:13px;padding:3px 6px}
+#radio{gap:4px;width:min(440px,calc(100vw - 380px))}
+#radio div{font-size:12px;padding:3px 8px;box-shadow:2px 2px 0 rgba(29,24,21,.7)}
+#squad{padding:5px 7px}
+#squadTbl{font-size:11px}#squadTbl td{padding:1px 3px}
+#squadTbl .hpb{width:34px;height:5px}#squadTbl .sus{width:28px;height:5px}
+#me{min-width:0;width:190px;padding:6px 9px;gap:4px}
+#wName{font:500 13px/1 var(--display);color:var(--dim)}
+#ammo{font-size:24px}#ammo small{font-size:13px}
+#meHp{height:7px}
+#me #extra{justify-content:flex-start;gap:12px;font:700 14px/1 var(--display);color:var(--ink)}
+#extra span{display:inline-flex;align-items:center;gap:3px}
+#susWrap{display:flex;align-items:center;gap:6px}#susWrap .ic{color:var(--red)}#susMeter{flex:1;height:6px}
+#prompt span{font-size:13px;padding:4px 8px}
+#noteBtn{padding:6px 8px;gap:6px}#noteBtn .ic{width:18px;height:18px}
+#banner h2{font-size:clamp(28px,5vw,52px)}
 @media (max-width:820px){
   .doc-body{grid-template-columns:1fr}
   #radio{width:calc(100vw - 32px);top:calc(96px + env(safe-area-inset-top,0px))}
@@ -210,19 +234,19 @@ body.touch #radio{width:calc(100vw - 32px);top:calc(200px + env(safe-area-inset-
 <div id="app">
   <canvas id="cv" aria-label="Top-down view of the battle"></canvas>
   <div id="hud" hidden>
-    <div id="wavePanel" class="box"><div class="wv"><span id="waveNum">Before dusk</span><span id="waveState"></span></div><div id="waveSub"></div><div id="objWrap" hidden><div id="objBar"><i></i></div></div><div class="trk"><span>Sabotage</span><span class="track" id="hudTrack"></span></div><div id="overrun" hidden></div></div>
+    <div id="wavePanel" class="box"><span id="waveNum">Before dusk</span><span class="stat" id="waveState"></span><span class="stat" id="sabStat" title="Stations wrecked when an assault began (3 and the block falls)"></span><div id="overrun" hidden></div></div>
     <div id="radio"></div>
-    <div id="squad" class="box"><h3>Squad <span id="squadHead">calibre</span></h3><table id="squadTbl"></table></div>
+    <div id="squad" class="box"><table id="squadTbl"></table></div>
     <div id="me" class="box">
-      <div class="row"><span id="wName">PPSh-41</span><span id="wCal">7.62×25 mm</span></div>
-      <div class="row"><span id="ammo">71 <small>/ 213</small></span><span id="extra"></span></div>
+      <div class="row"><span id="wName">PPSh-41</span><span id="ammo">71 <small>/ 213</small></span></div>
       <div id="meHp"><i></i></div>
-      <div id="susWrap" hidden><div class="row" style="font:11px var(--mono);color:var(--dim)"><span id="susLab">Suspicion on you</span><span id="susTxt"></span></div><div id="susMeter"><i></i></div></div>
+      <div class="row" id="extra"></div>
+      <div id="susWrap" hidden><span id="susIc"></span><div id="susMeter"><i></i></div></div>
     </div>
     <div id="prompt"></div>
     <div id="speech" class="box" hidden></div>
-    <button id="noteBtn" class="box hp">Notebook <kbd>N</kbd></button>
-    <div id="banner" hidden><h2></h2><p></p></div>
+    <button id="noteBtn" class="box hp" aria-label="Notebook (N)"><span id="noteIc"></span><kbd>N</kbd></button>
+    <div id="banner" hidden><h2></h2><p hidden></p></div>
     <div id="touch" hidden>
       <div class="stick" id="stickL"><i></i></div>
       <div class="stick" id="stickR"><i></i></div>

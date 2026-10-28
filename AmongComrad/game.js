@@ -1128,31 +1128,40 @@ function render(){
       if(p.reloadT>0){ctx.beginPath();ctx.arc(MOUSE.x,MOUSE.y,r+11,-Math.PI/2,-Math.PI/2+TAU*(1-p.reloadT/w.reload));ctx.stroke()}}}}
 
 // ================= HUD =================
+// HUD icons: small original glyphs drawn in the ink colour, so the HUD needs numbers instead of captions
+const IC=(d,vb)=>`<i class="ic" aria-hidden="true"><svg viewBox="${vb||'0 0 16 16'}" fill="currentColor">${d}</svg></i>`;
+const ICON={
+  ger:IC('<path d="M2 11 Q2 3.5 8 3.5 Q13 3.5 13.5 9 L15 10 L15 12 L1 12 L1 11 Z"/>'),
+  clock:IC('<path d="M8 1.5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13Zm0 2a4.5 4.5 0 1 1 0 9a4.5 4.5 0 1 1 0-9Z"/><path d="M7.2 4.5h1.6v3.2l2.3 1.5-.9 1.3-3-2Z"/>'),
+  gren:IC('<rect x="6.6" y="1" width="2.8" height="7" rx=".6"/><rect x="4" y="7" width="8" height="8" rx="1.6"/><rect x="5" y="9" width="6" height="1.2" fill="#e6d7b5"/>'),
+  cuffs:IC('<path d="M4.5 6a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7Zm0 1.8a1.7 1.7 0 1 1 0 3.4a1.7 1.7 0 1 1 0-3.4Z"/><path d="M11.5 3a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7Zm0 1.8a1.7 1.7 0 1 1 0 3.4a1.7 1.7 0 1 1 0-3.4Z"/><rect x="6.5" y="7" width="3" height="1.6" transform="rotate(-35 8 8)"/>'),
+  flare:IC('<path d="M8 1 L10 5 L9 5 L9 11 L7 11 L7 5 L6 5 Z"/><path d="M5 12 L8 15 L11 12 Z"/>'),
+  wrench:IC('<path d="M11.5 1a3.5 3.5 0 0 0-3.3 4.6L1.6 12.2a1.5 1.5 0 0 0 2.1 2.1l6.6-6.6A3.5 3.5 0 0 0 15 4.4l-2.2 2.2-2-.6-.6-2L12.4 1.8A3.5 3.5 0 0 0 11.5 1Z"/>'),
+  eye:IC('<path d="M8 3C4 3 1.3 6 .5 8c.8 2 3.5 5 7.5 5s6.7-3 7.5-5C14.7 6 12 3 8 3Zm0 2.2a2.8 2.8 0 1 1 0 5.6a2.8 2.8 0 1 1 0-5.6Z"/>'),
+  book:IC('<path d="M2 2h5a2 2 0 0 1 2 2v10a2 2 0 0 0-2-2H2Z"/><path d="M14 2H9.6A2.6 2.6 0 0 1 10 3.4V13a2 2 0 0 1 2-1h2Z"/>'),
+  shell:IC('<path d="M6 15V6l2-5 2 5v9Z"/>')};
 let hudT=0;
 function hudTick(dt){
   hudT-=dt;if(hudT>0)return;hudT=0.12;const p=G.me;if(!p)return;
-  $('waveNum').textContent=G.wave?`Assault ${G.wave} / ${WAVES.length}`:'Before dusk';
-  const M=G.mission,onS=M&&M.st==='go';
-  if(onS){const mine=M.team.includes(p)&&p.alive;$('waveNum').textContent=`Sortie ${M.i+1}: ${M.def.name}`;$('waveState').textContent=`${Math.ceil(Math.max(0,M.tLeft))} s`;
-    $('waveSub').textContent=(M.contested?'Germans at the objective — clear them out. ':M.prog>0?'Work under way. ':'')+(mine?(p.isSpy&&!M.sabBy.includes(p)?'Hold X at the objective to sabotage it.':'Hold the yellow marker.'):`Team: ${M.team.map(u=>u.name).join(', ')}.`)}
-  else if(G.council){$('waveState').textContent='sortie council';$('waveSub').textContent='The squad is choosing a sortie team.'}
-  else if(G.phase==='lull'){$('waveNum').textContent=G.wave?`Skirmish · ${G.wave} / ${WAVES.length} held`:'Before dusk';$('waveState').textContent=`main assault in ${Math.ceil(G.phaseT)} s`;$('waveSub').textContent=G.wave===0?'Get to a firing position. Probes are already coming in.':traitor(p)?'They keep probing. Wreck a station while the posts are busy.':'They keep probing. Keep the posts manned — and someone has to check the stations.'}
-  else{const left=G.units.filter(u=>u.alive&&u.side==='ger').length+G.spawnQ.length;$('waveState').textContent=`${left} Germans left`;$('waveSub').textContent=WAVES[G.wave-1].txt}
-  $('objWrap').hidden=!onS;if(onS)$('objBar').firstElementChild.style.width=Math.min(100,M.prog*100)+'%';
-  const th=sabHTML();if($('hudTrack').innerHTML!==th)$('hudTrack').innerHTML=th;
-  const ov=$('overrun');if(G.overrun>0.3){ov.hidden=false;ov.textContent=`Germans in the command dugout! ${Math.max(0,(G.overLimit||8)-G.overrun).toFixed(1)} s`}else ov.hidden=true;
-  const w=WPN[p.wpn];if(p.onGun&&p.alive){$('wName').textContent='45 mm anti-tank gun';$('wCal').textContent='45 mm';$('ammo').innerHTML=G.gun.cd>0?`<small>loading… ${G.gun.cd.toFixed(1)} s</small>`:'READY'}else{$('wName').textContent=p.alive?w.name:p.escaped?'Escaped':p.arrested?'Arrested':'Killed';$('wCal').textContent=p.alive?w.cal:'';
-  $('ammo').innerHTML=p.alive?`${p.reloadT>0?'—':p.mag} <small>/ ${p.reserve}</small>`:'<small>spectating</small>'}
-  $('extra').innerHTML=!p.alive?'':`Grenades <b>${p.grenades}</b>`+(p.isSpy?` · Flares <b>${p.flares}</b>`:p.isCom?` · Arrests <b>${p.arrestsLeft}</b>`:'');
+  const left=G.units.filter(u=>u.alive&&u.side==='ger').length+G.spawnQ.length;
+  if(G.phase==='lull'){$('waveNum').textContent=G.wave?`${G.wave} / ${WAVES.length}`:'Dusk';$('waveState').innerHTML=`${ICON.clock}${Math.ceil(G.phaseT)}<small style="font-weight:500;color:var(--dim)">&nbsp;·&nbsp;</small>${ICON.ger}${left}`}
+  else{$('waveNum').textContent=`Assault ${G.wave} / ${WAVES.length}`;$('waveState').innerHTML=`${ICON.ger}${left}`}
+  const sh=`${ICON.wrench}<span class="track">${sabHTML()}</span>`;if($('sabStat').innerHTML!==sh)$('sabStat').innerHTML=sh;
+  const ov=$('overrun');if(G.overrun>0.3){ov.hidden=false;ov.textContent=`Germans in the dugout! ${Math.max(0,(G.overLimit||8)-G.overrun).toFixed(1)}`}else ov.hidden=true;
+  const w=WPN[p.wpn];
+  if(p.onGun&&p.alive){$('wName').textContent='45 mm gun';$('ammo').innerHTML=G.gun.cd>0?`<small>${G.gun.cd.toFixed(1)} s</small>`:`${ICON.shell}`}
+  else{$('wName').textContent=p.alive?w.name:p.escaped?'Escaped':p.arrested?'Arrested':'Killed';$('ammo').innerHTML=p.alive?`${p.reloadT>0?'—':p.mag} <small>/ ${p.reserve}</small>`:'<small>spectating</small>'}
+  const ex=!p.alive?'':`<span title="Grenades (G)">${ICON.gren}${p.grenades}</span>`+(p.isSpy?`<span title="Flares (Q)">${ICON.flare}${p.flares}</span>`:p.isCom?`<span title="Arrests (hold F)">${ICON.cuffs}${p.arrestsLeft}</span>`:'');
+  if($('extra').innerHTML!==ex)$('extra').innerHTML=ex;
   const hb=$('meHp').firstElementChild;hb.style.width=Math.max(0,p.hp)+'%';hb.style.background=p.hp<40?'var(--red)':'var(--ok)';
-  if(p.isSpy){$('susWrap').hidden=false;$('susLab').textContent='Suspicion on you';const v=G.susp[p.id]||0;$('susMeter').firstElementChild.style.width=Math.min(100,v/80*100)+'%';$('susTxt').textContent=v>=80?'arrest likely':v>=40?'watched':'low'}
-  else if(p.isCom){$('susWrap').hidden=false;$('susLab').textContent='Your cover as commissar';const v=G.comGuess[p.id]||0;$('susMeter').firstElementChild.style.width=Math.min(100,v/55*100)+'%';$('susTxt').textContent=G.comKnown||v>=55?'blown — watch your back':v>=30?'thin':'intact'}
+  if(p.isSpy||p.isCom){$('susWrap').hidden=false;const v=p.isSpy?Math.min(1,(G.susp[p.id]||0)/80):(G.comKnown?1:Math.min(1,(G.comGuess[p.id]||0)/55));
+    $('susWrap').title=p.isSpy?'Suspicion on you':'How close the spy is to knowing you are the commissar';if(!$('susIc').innerHTML)$('susIc').innerHTML=ICON.eye;$('susMeter').firstElementChild.style.width=v*100+'%'}
   else $('susWrap').hidden=true;
+  if(!$('noteIc').innerHTML)$('noteIc').innerHTML=ICON.book;
   let html='';
-  for(const u of G.people){const st=u.escaped?'<span class="st tr">escaped</span>':u.revealed&&u.alive?'<span class="st tr">TRAITOR</span>':u.arrested?'<span class="st arr">arrested</span>':!u.alive?'<span class="st kia">KIA</span>':`<div class="hpb"><i style="width:${Math.max(0,u.hp/u.maxhp*100)}%"></i></div>`;
-    const ww=WPN[u.isPlayer?'ppsh':u.wpn];
-    html+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.name)}${u===p?' (you)':u.isPlayer?' ●':''}${u.isCom&&(G.comKnown||u===p)?' ★':''}${u.isPlayer&&u.away?' <span class="st arr">away</span>':''}</td><td class="cal">${ww.cal}</td><td>${st}</td>${p.isSpy?`<td><div class="sus" title="suspicion"><i style="width:${Math.min(100,(G.susp[u.id]||0)/80*100)}%"></i></div></td>`:''}</tr>`}
-  if($('squadTbl').innerHTML!==html)$('squadTbl').innerHTML=html;$('squadHead').textContent=p.isSpy?'calibre · suspicion':'calibre';
+  for(const u of G.people){const st=u.escaped?'<span class="st tr">fled</span>':u.revealed&&u.alive?'<span class="st tr">traitor</span>':u.arrested?'<span class="st arr">held</span>':!u.alive?'<span class="st kia">KIA</span>':`<div class="hpb"><i style="width:${Math.max(0,u.hp/u.maxhp*100)}%"></i></div>`;
+    html+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.name)}${u===p?' ◂':''}${u.isCom&&(G.comKnown||u===p)?' ★':''}${u.isPlayer&&NET&&NET.away_(u.seat)?' <span class="st arr">away</span>':''}</td><td>${st}</td>${p.isSpy?`<td><div class="sus" title="suspicion"><i style="width:${Math.min(100,(G.susp[u.id]||0)/80*100)}%"></i></div></td>`:''}</tr>`}
+  if($('squadTbl').innerHTML!==html)$('squadTbl').innerHTML=html;
   const pr=[];if(p.alive&&!p.revealed&&!G.council){const it=nearestInteract(p);if(it)pr.push(`<span><kbd>E</kbd> ${esc(it.label)}</span>`);
     if(!p.isSpy){const c=nearestComrade(p,2.6);if(c)pr.push(`<span><kbd>T</kbd> Question ${esc(c.name)}</span>`);
       const ar=p.isCom&&p.arrestsLeft>0?nearestArrestable(p,1.9):null;if(ar)pr.push(`<span><kbd>F</kbd> hold: arrest ${esc(ar.name)} (${p.arrestsLeft} left)</span>`)}
