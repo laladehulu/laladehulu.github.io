@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v134</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v135</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2533,7 +2533,8 @@ class Sim {
     if (canBlock && (omni || def_.blockDir === counterDir(dir) || shieldBlock)) {
       const perfect = def_.blockT < (def_.def.parry || 0.16) * (omni ? 1.15 : 1) && (omni || def_.blockDir === counterDir(dir));
       if (perfect) { // a true parry: the attacker's balance is wrecked and the defender gets the initiative
-        att.st = ST_STUN; att.stT = 0; att.stunDur = heavy ? 1.0 : 0.8; def_.counterT = 0.9; this.posture(att, heavy ? 55 : 38, def_);
+        if (att.ctrl >= 0) { att.st = ST_IDLE; att.stT = 0; att.relQ = false; } else { att.st = ST_STUN; att.stT = 0; att.stunDur = heavy ? 1.0 : 0.8; } /* the player is not frozen when parried (owner: no pause): his cut is simply turned and he acts at once; a parried AI man still reels */
+        def_.counterT = 0.9; this.posture(att, heavy ? 55 : 38, def_);
         this.events.push({ t: 'block', x: hx, y: hy, z: hz, perfect, by: def_.id, att: att.id, heavy }); att.heavy = false; return; }
       if (heavy && !def_.def.shield) { // a heavy blow crushes an ordinary guard: half comes through and the defender reels
         this.posture(def_, dmg * 1.4, att); def_.blocking = false; def_.flinchT = 0.45; this.events.push({ t: 'guardcrush', x: hx, y: hy, z: hz, by: def_.id, att: att.id });
