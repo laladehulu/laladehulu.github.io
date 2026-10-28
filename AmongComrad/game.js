@@ -108,11 +108,17 @@ const WPN={
  svt:{name:'SVT-40',cal:'7.62×54R',dmg:55,rof:0.45,mag:10,res:60,reload:2.6,spread:0.022,range:34,speed:58,auto:false,len:0.85,snd:'rifle'},
  dp:{name:'DP-28',cal:'7.62×54R',dmg:36,rof:0.11,mag:47,res:188,reload:4.2,spread:0.05,range:34,speed:58,auto:true,len:0.9,snd:'lmg'},
  ptrd:{name:'PTRD-41',cal:'14.5×114 mm',dmg:120,rof:0.3,mag:1,res:30,reload:2.3,spread:0.012,range:44,speed:70,auto:false,len:1.2,snd:'ptrd',at:true},
+ pps43:{name:'PPS-43',cal:'7.62×25 mm',dmg:21,rof:0.085,mag:35,res:210,reload:2.2,spread:0.055,range:16,speed:42,auto:true,len:0.5,snd:'smg'},
+ mosinS:{name:'Mosin sniper',cal:'7.62×54R',dmg:105,rof:1.5,mag:5,res:45,reload:3.4,spread:0.005,range:46,speed:66,auto:false,len:0.95,snd:'rifle'},
+ roks:{name:'ROKS-3 flamethrower',cal:'fuel',dmg:9,rof:0.05,mag:60,res:120,reload:3.5,spread:0.2,range:6.5,speed:14,auto:true,len:0.6,snd:'smg2',flame:true},
  mp40:{name:'MP 40',cal:'9×19 mm',dmg:20,rof:0.11,mag:32,res:96,reload:2.5,spread:0.08,range:16,speed:40,auto:true,len:0.55,snd:'smg2'},
  kar98:{name:'Kar98k',cal:'7.92×57 mm',dmg:52,rof:1.6,mag:5,res:40,reload:3,spread:0.03,range:36,speed:60,auto:false,len:0.88,snd:'rifle2'},
  mg42:{name:'MG 42',cal:'7.92×57 mm',dmg:22,rof:0.05,mag:75,res:999,reload:4.5,spread:0.07,range:38,speed:60,auto:true,len:0.95,snd:'mg42'},
 };
-const SOV_CALS=['7.62×25 mm','7.62×54R','14.5×114 mm'];
+const SOV_CALS=['7.62×25 mm','7.62×54R','14.5×114 mm','fuel'];
+// what a player may draw at the start or from the armoury
+const ISSUE=['ppsh','pps43','svt','mosin','mosinS','dp','ptrd','roks'];
+const primaryW=u=>u.isPlayer?((u.slots&&u.slots[0]&&u.slots[0].wpn)||'ppsh'):u.wpn;
 const SQUAD=[
  {name:'Orlov',rank:'Jr. Lt.',col:'#45b5aa',wpn:'svt'},
  {name:'Ivanov',rank:'Sgt.',col:'#5a84d6',wpn:'ppsh'},
@@ -153,7 +159,7 @@ const AI_RANGE=VIS-1.5;
 const inDugout=u=>u.x>=54&&u.x<=58&&u.y>=16&&u.y<=24;
 
 const SEATS=8;
-const HCOL=['#ef5a3c','#4fc3f7','#f06292','#c6e57a','#ffb74d','#b388ff','#4db6ac','#fff176'];
+const HCOL=['#e8231a','#1f6fe0','#2fa84f','#ff8c00','#9b4dd6','#f2d000','#f4f1e8','#e0409a'];// red blue green orange purple yellow white pink
 // which AI soldiers stay when humans take seats (the PTRD gunner is kept longest — the line needs him for the Panzer)
 const BOT_KEEP=['Kuznetsov','Orlov','Petrova','Morozov','Sokolova','Ivanov','Lebedev'];
 // cfg: {seed, diff, humans:[{name}], rolePref?(single player: 'comrade'|'regular'|'spy'|'random'), demo?}
@@ -168,7 +174,7 @@ function newGame(cfg){
   const nb=cfg.demo?SQUAD.length:Math.max(0,SEATS-hs.length);const keep=new Set(BOT_KEEP.slice(0,nb));
   const bots=SQUAD.filter(s=>keep.has(s.name));const posts=assignPostsList(bots.length);
   bots.forEach((s,i)=>{const u=mkUnit({kind:'sq',name:s.name,rank:s.rank,col:s.col,wpn:s.wpn,mag:WPN[s.wpn].mag,post:posts[i],hp:DF.hp,maxhp:DF.hp});u.x=u.post.x;u.y=u.post.y;u.aim=u.post.face;G.units.push(u)});
-  G.squad=G.units.filter(u=>u.kind==='sq');G.people=[...G.humans,...G.squad];
+  G.squad=G.units.filter(u=>u.kind==='sq');G.people=[...G.humans,...G.squad];G.people.forEach((u,i)=>u.col=HCOL[i%HCOL.length]);
   {const sz=shuffle(G.people.map((_,i)=>i%3));G.people.forEach((u,i)=>{u.boot=sz[i];u.pd=0;u.foot=0})}G.prints=[];G.casings=[];
   // secret roles: one spy, one commissar, the rest regulars
   let spy,com;const pref=G.humans.length===1?cfg.rolePref:null;let pr=pref==='random'?(()=>{const r=rnd();return r<1/8?'spy':r<2/8?'comrade':'regular'})():pref;
@@ -225,7 +231,7 @@ function fire(u,ang,o={}){
   if(u.isPlayer&&u.moving)sp*=1.6;if(u.crouch)sp*=0.65;
   const a=ang+(rnd()+rnd()-1)*sp*1.5,dx=Math.cos(a),dy=Math.sin(a);
   const tk=!!o.tk||(u.isPlayer&&u.isSpy&&!u.revealed);
-  G.proj.push({x:u.x+dx*0.3,y:u.y+dy*0.3,dx,dy,sp:w.speed,dmg:w.dmg*(o.mul||1),cal:w.cal,owner:u,side:u.side,tk,dist:0,max:u.isPlayer?w.range*1.3:Math.min(w.range*1.3,AI_RANGE+3),at:!!w.at,last:-1,he:false});
+  G.proj.push({x:u.x+dx*0.3,y:u.y+dy*0.3,dx,dy,sp:w.speed,dmg:w.dmg*(o.mul||1),cal:w.cal,owner:u,side:u.side,tk,flame:!!w.flame,dist:0,max:u.isPlayer?w.range*1.3:Math.min(w.range*1.3,AI_RANGE+3),at:!!w.at,last:-1,he:false});
   u.mag--;u.fireCd=w.rof*(u.isPlayer?1:1+rnd()*0.25);dropCasing(u,w);
   if(u.side==='sov'&&u.x>42&&u.x<53&&((G.effects.crN&&u.y<19)||(G.effects.crS&&u.y>=19)))u.fireCd*=1.7;
   const ml=w.len+0.1;G.fx.push({k:'muz',x:u.x+dx*ml,y:u.y+dy*ml,a,t:0,life:0.06});
@@ -244,7 +250,7 @@ function updateProj(dt){
       if(best){const hx=p.x+p.dx*st*bt,hy=p.y+p.dy*st*bt;p.dead=true;
         if(best.kind==='tank'){if(p.at){hurt(best,p.gun?330:90,{owner:p.owner,cause:'bullet',cal:p.cal,dx:p.dx,dy:p.dy});G.fx.push({k:'spark',x:hx,y:hy,t:0,life:0.3,n:8})}else{G.fx.push({k:'spark',x:hx,y:hy,t:0,life:0.15,n:3});if(crnd()<0.3)sfxAt('ric',hx,hy)}}
         else if(p.he)explode(hx,hy,2.2,95,{owner:p.owner,cause:'shell',hurtSov:true,hurtGer:false});
-        else hurt(best,p.dmg,{owner:p.owner,cause:'bullet',cal:p.cal,dx:p.dx,dy:p.dy,tk:p.tk,at:p.at});
+        else hurt(best,p.dmg,{owner:p.owner,cause:p.flame?'fire':'bullet',cal:p.cal,dx:p.dx,dy:p.dy,tk:p.tk,at:p.at});
         break}
       p.x=nx;p.y=ny;p.dist+=st;
       if(nx<0||ny<0||nx>=W||ny>=H){p.dead=true;break}
@@ -576,10 +582,12 @@ function humanEvent(p,e){
     case 'k':if(traitor(p)&&!p.revealed)startKnife(p,knifeTarget(p));break;
     case 'c':if(p===G.spy&&!p.revealed){const T=recruitTarget(p);if(!T)logMsg('Nobody close enough to whisper to.','',p);else if((p.recruitLeft||0)<=0)logMsg('You have already made an offer this assault.','',p);else startRecruit(p,T)}break;
     case 'y':answerOffer(p,true);break;case 'n':answerOffer(p,false);break;
-    case 's':switchSlot(p,e[1]);break}}
+    case 's':switchSlot(p,e[1]);break;
+    case 'w':issueWeapon(p,String(e[1]||''));break}}
 function nearestInteract(p){
   if(!p||!p.alive||p.revealed)return null;
   if(p.onGun)return{k:'gun',label:'Leave the gun'};
+  if(dist(p.x,p.y,ARMORY.x,ARMORY.y)<1.6)return{k:'armory',label:'Open the armoury'};
   for(let k=0;k<GUNS.length;k++){const cs=crewSpot(k),gc=G.guns[k].crew;if(dist(p.x,p.y,cs.x,cs.y)<1.3&&!(gc&&gc.isPlayer&&gc!==p))return{k:'gun',gi:k,label:`Man the ${GUNS[k].name}`}}
   for(const c of CRATES)if(dist(p.x,p.y,c.x,c.y)<1.6)return{k:'crate',label:'Resupply ammunition and grenades'};
   let best=null,bd=1.4;
@@ -594,11 +602,15 @@ function nearestComrade(p,r){let best=null,bd=r;for(const u of G.squad){if(!u.al
 function nearestArrestable(p,r){let best=null,bd=r;for(const u of G.people){if(u===p||!u.alive||u.side!=='sov')continue;const d=dist(p.x,p.y,u.x,u.y);if(d<bd){bd=d;best=u}}return best}
 function doInteract(p){
   const it=nearestInteract(p);if(!it)return;
+  if(it.k==='armory'){if(p===G.me)openArmory();return}
   if(it.k==='gun'){if(p.onGun){const g=G.guns[p.onGun-1];if(g.crew===p)g.crew=null;p.onGun=0}else{const g=G.guns[it.gi],c=g.crew;if(c&&!c.isPlayer){c.gunner=0;c.seeking=false}p.onGun=it.gi+1;const cs=crewSpot(it.gi);p.x=cs.x;p.y=cs.y;g.crew=p}return}
-  if(it.k==='crate'){if(p.crateCd>0)return;p.crateCd=1;storeSlot(p);p.slots[0].reserve=Math.max(p.slots[0].reserve,213);if(p.slots[1])p.slots[1].reserve=Math.max(p.slots[1].reserve,WPN[p.slots[1].wpn].res);p.reserve=p.slots[p.slot].reserve;p.grenades=3;if(p===G.me)sfx('reload');logMsg('Resupplied: full drums and three RGD-33 grenades.','good',p)}
+  if(it.k==='crate'){if(p.crateCd>0)return;p.crateCd=1;storeSlot(p);p.slots[0].reserve=Math.max(p.slots[0].reserve,WPN[p.slots[0].wpn].res);if(p.slots[1])p.slots[1].reserve=Math.max(p.slots[1].reserve,WPN[p.slots[1].wpn].res);p.reserve=p.slots[p.slot].reserve;p.grenades=3;if(p===G.me)sfx('reload');logMsg('Resupplied: full drums and three RGD-33 grenades.','good',p)}
   else if(it.k==='inspect'){it.b.inspBy.push(p.id);it.b.inspected=true;const t=inspectText(it.b);noteTo(p,t,'death');speech('You inspect the body',t,p);if(p===G.me)sfx('page');if(spySees(p))addGuess(p,8)}
   else if(it.k==='casing'){const c=it.c;G.casings.splice(G.casings.indexOf(c),1);const t=`A spent ${c.cal} casing at the ${zoneAt(c.x,c.y)}, fired ${ago(c.t)}. ${SOV_CALS.includes(c.cal)?'One of ours.':'A German calibre — but it was fired from where you are standing.'}`;noteTo(p,t,'talk');speech('Spent casing',t,p);if(p===G.me)sfx('page')}
   else if(it.k==='take'){it.b.taken=true;storeSlot(p);p.slots[1]={wpn:it.b.wpn,mag:WPN[it.b.wpn].mag,reserve:WPN[it.b.wpn].res};p.slot=1;loadSlot(p);if(p===G.me)sfx('reload');logMsg(`You picked up a German ${WPN[p.wpn].name}. Press 1 or 2 to switch.`,'',p)}}
+const ARMORY={x:49.5,y:27.5};
+function issueWeapon(p,k){if(!ISSUE.includes(k)||p.onGun)return;if(G.wave>0&&dist(p.x,p.y,ARMORY.x,ARMORY.y)>2.2)return;
+  storeSlot(p);p.slots[0]={wpn:k,mag:WPN[k].mag,reserve:WPN[k].res};p.slot=0;loadSlot(p);if(p===G.me)sfx('reload');if(G.wave>0)logMsg(`You draw a ${WPN[k].name} from the armoury.`,'good',p)}
 function storeSlot(p){const s=p.slots[p.slot];if(s){s.mag=p.mag;s.reserve=p.reserve}}
 function loadSlot(p){const s=p.slots[p.slot];p.wpn=s.wpn;p.mag=s.mag;p.reserve=s.reserve;p.reloadT=0;p.fireCd=0.25}
 function switchSlot(p,i){if(i===-1||i===undefined)i=p.slot?0:1;if(!p.slots[i]||i===p.slot)return;storeSlot(p);p.slot=i;loadSlot(p);if(p===G.me)sfx('reload')}
@@ -607,6 +619,7 @@ function inspectText0(b){const n=b.u.name;
   if(b.cause==='bullet'){const d={behind:'The round came from behind — from our side of the line.',front:'Shot from the front, from the German side.',flank:'Shot from the flank.',none:''}[b.dirKey];
     const ger=!SOV_CALS.includes(b.cal);return `${n}: a ${b.cal} round. ${d}${ger&&b.dirKey!=='front'?' A German calibre, but fired from inside our own lines.':''}`}
   if(b.cause==='grenade')return `${n}: grenade fragments, ${b.gkind==='rgd'?'from one of our own RGD-33s.':'from a German stick grenade.'}`;
+  if(b.cause==='fire')return `${n}: burned. A flamethrower — from our side of the line.`;
   if(b.cause==='knife')return `${n}: a blade, from behind. No round, no calibre — whoever did it was standing close enough to touch.`;
   if(b.cause==='mortar')return `${n}: mortar shrapnel.`;
   if(b.cause==='shell')return `${n}: killed by a tank shell.`;return `${n}: cause unclear.`}
@@ -669,13 +682,14 @@ function playerGrenade(p,tx,ty){if(p.grenades<=0)return;p.grenades--;throwGrenad
 // ================= the AI investigator's suspicion =================
 function addS(u,v){G.susp[u.id]=Math.max(0,(G.susp[u.id]||0)+v)}
 function sightNear(x,y,t,win,r,val){for(const B of liveSquad()){for(const X of liveSov()){if(X===B)continue;const S=B.sight[X.id]||[];if(S.some(s=>Math.abs(s.t-t)<=win&&dist(s.x,s.y,x,y)<r))addS(X,val)}}}
-function carriers(cal){return liveSov().filter(x=>WPN[x.isPlayer?'ppsh':x.wpn].cal===cal)}
+function carriers(cal){return liveSov().filter(x=>WPN[primaryW(x)].cal===cal)}
 function processSuspicion(){
   const off=investigator();if(!off)return;const tag=off.isCom&&!G.comKnown?'The commissar\'s inquiry':off.name;
   for(const i of G.incidents){if(i.processed)continue;i.processed=true;
     if(i.type==='death'){const b=i.body;let said=null;
       if(b.cause==='bullet'&&b.dirKey!=='front'&&SOV_CALS.includes(b.cal)){const car=carriers(b.cal);car.forEach(x=>addS(x,60/Math.max(1,car.length)));said=`${i.victimName} took a ${b.cal} round from behind. Only ${listNames(car.map(x=>x.name))||'the dead'} carry that.`}
       else if(b.cause==='bullet'&&b.dirKey==='behind'){for(const h of G.humans)if(h.seenCaptured&&h.alive)addS(h,45);liveSov().forEach(x=>addS(x,5));said=`${i.victimName} was shot from behind with a German ${b.cal} round. Someone is using a captured gun.`}
+      else if(b.cause==='fire'){const car=carriers('fuel');car.forEach(x=>addS(x,70/Math.max(1,car.length)));said=`${i.victimName} was burned to death. Only ${listNames(car.map(x=>x.name))||'the dead'} carry a flamethrower.`}
       else if(b.cause==='knife'){sightNear(i.x,i.y,i.t,4,3.5,40);said=`${i.victimName} was knifed from behind. It was one of us.`}
       else if(b.cause==='grenade'&&b.gkind==='rgd'){liveSov().forEach(x=>addS(x,8));said=`${i.victimName} was killed by one of our own grenades.`}
       if(said){sightNear(i.x,i.y,i.t,6,7,22);logMsg(`${tag}: ${said}`,'bad')}}
@@ -798,7 +812,7 @@ function tracksTick(){
   if(G.prints.length>1200)G.prints.splice(0,G.prints.length-1200);
   if(G.prints.length&&G.time-G.prints[0].t>PRINT_LIFE)G.prints=G.prints.filter(p=>G.time-p.t<=PRINT_LIFE);
   if(G.casings.length&&G.time-G.casings[0].t>CASE_LIFE)G.casings=G.casings.filter(c=>G.time-c.t<=CASE_LIFE)}
-function dropCasing(u,w){if(u.uniform!=='sov')return;u.cc=(u.cc||0)+1;if(w.auto&&u.cc%3)return;const a=u.aim+Math.PI/2;
+function dropCasing(u,w){if(u.uniform!=='sov'||w.flame)return;u.cc=(u.cc||0)+1;if(w.auto&&u.cc%3)return;const a=u.aim+Math.PI/2;
   G.casings.push({x:u.x+Math.cos(a)*0.35,y:u.y+Math.sin(a)*0.35,t:G.time,cal:w.cal});if(G.casings.length>500)G.casings.splice(0,G.casings.length-500)}
 function nearCasing(p){let best=null,bd=0.9;for(const c of G.casings){const d=dist(p.x,p.y,c.x,c.y);if(d<bd){bd=d;best=c}}return best}
 const ago=t=>{const s=G.time-t|0;return s<10?'just now':s<60?`about ${Math.round(s/5)*5} s ago`:`about ${Math.round(s/60)} min ago`};
@@ -1082,7 +1096,7 @@ function render(){
   for(const n of G.nades){const [sx,sy]=w2s(n.x,n.y);if(playing&&!playerSeesPt(n.x,n.y))continue;ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.arc(sx,sy,TS*0.08,0,TAU);ctx.fill();ctx.fillStyle=n.kind==='stick'?'#6b6a5a':'#3d4a32';ctx.beginPath();ctx.arc(sx,sy-n.z*TS*0.9,TS*0.1,0,TAU);ctx.fill();if(n.t>n.T&&Math.sin(tm*30)>0){ctx.strokeStyle='rgba(255,200,120,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,TS*0.28,0,TAU);ctx.stroke()}}
   for(const u of G.units){if(!u.alive||u.kind==='tank'||!vis(u))continue;const [sx,sy]=w2s(u.x,u.y);if(!on(sx,sy,60))continue;drawSoldier(ctx,sx,sy,TS,u);
     if(u.isPlayer){ctx.strokeStyle=u===me?PAL.paper:'rgba(230,215,181,.45)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx,sy,TS*0.53,0,TAU);ctx.stroke()}}
-  ctx.lineCap='round';for(const pr of G.proj){const [sx,sy]=w2s(pr.x,pr.y);if(!on(sx,sy,40))continue;const L=pr.he?0.5:0.9;ctx.strokeStyle=pr.he?PAL.ochre:pr.side==='ger'?'#e7b48a':PAL.paper;ctx.lineWidth=pr.he?4:pr.at?3:2;ctx.beginPath();ctx.moveTo(sx-pr.dx*TS*L,sy-pr.dy*TS*L);ctx.lineTo(sx,sy);ctx.stroke()}
+  ctx.lineCap='round';for(const pr of G.proj){const [sx,sy]=w2s(pr.x,pr.y);if(!on(sx,sy,40))continue;const L=pr.he?0.5:0.9;ctx.strokeStyle=pr.flame?(pr.dist<3?PAL.ochre:PAL.red):pr.he?PAL.ochre:pr.side==='ger'?'#e7b48a':PAL.paper;ctx.lineWidth=pr.flame?TS*0.35:pr.he?4:pr.at?3:2;ctx.beginPath();ctx.moveTo(sx-pr.dx*TS*L,sy-pr.dy*TS*L);ctx.lineTo(sx,sy);ctx.stroke()}
   for(const f of G.fx){if(f.k==='flare')continue;const [sx,sy]=w2s(f.x,f.y);if(!on(sx,sy,200))continue;const k=f.t/f.life;
     if(f.k==='muz'){ctx.save();ctx.translate(sx,sy);ctx.rotate(f.a);ctx.fillStyle=k<0.5?PAL.ochre:PAL.red;const L=(f.big?0.9:0.38)*TS;ctx.beginPath();ctx.moveTo(0,-L*0.25);ctx.lineTo(L,0);ctx.lineTo(0,L*0.25);ctx.closePath();ctx.fill();ctx.restore()}
     else if(f.k==='dust'){ctx.fillStyle=`rgba(212,191,147,${0.7*(1-k)})`;ctx.beginPath();ctx.arc(sx,sy,TS*(0.1+k*0.3),0,TAU);ctx.fill()}
@@ -1107,6 +1121,7 @@ function render(){
     ctx.strokeStyle=`rgba(140,255,150,${0.5*Math.max(0,1-Math.max(0,f.t-2)/3)})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ox,oy);ctx.quadraticCurveTo((ox+sx)/2,Math.min(oy,sy)-TS*4,sx,sy);ctx.stroke();
     if(f.t>1){const a=Math.max(0,1-Math.max(0,f.t-6)/3);ctx.fillStyle=`rgba(170,255,170,${a})`;ctx.beginPath();ctx.arc(sx,sy-TS*0.3+Math.sin(tm*5)*2,TS*0.22,0,TAU);ctx.fill();ctx.fillStyle=`rgba(90,255,120,${0.25*a})`;ctx.beginPath();ctx.arc(sx,sy,TS*0.9,0,TAU);ctx.fill()}
     if(on(ox,oy,0)&&f.t<6){ctx.strokeStyle='rgba(140,255,150,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(ox,oy,TS*0.6+Math.sin(tm*8)*2,0,TAU);ctx.stroke()}}
+  {const [ax,ay]=w2s(ARMORY.x,ARMORY.y);if(on(ax,ay,40)){const z=TS*0.42;ctx.fillStyle=PAL.ochre;ctx.strokeStyle=PAL.ink;ctx.lineWidth=2;ctx.fillRect(ax-z,ay-z*0.5,z*2,z);ctx.strokeRect(ax-z,ay-z*0.5,z*2,z);ctx.fillStyle=PAL.ink;for(let q=0;q<4;q++)ctx.fillRect(ax-z*0.8+q*z*0.48,ay-z*0.9,z*0.14,z*1.8)}}
   if(G.guns)for(let k=0;k<GUNS.length;k++){const [gx,gy]=w2s(GUNS[k].x,GUNS[k].y);if(on(gx,gy,60))drawGun(ctx,gx,gy,TS,G.guns[k])}
   if(G.st)for(let i=0;i<STATIONS.length;i++){const S0=STATIONS[i],st=G.st[i];if(S0.id.startsWith('gun')&&!st.found&&!(st.sab&&me&&traitor(me)))continue;const [sx,sy]=w2s(S0.x,S0.y);if(!on(sx,sy,40))continue;const z=TS*0.32;
     ctx.lineWidth=2;ctx.strokeStyle=PAL.ink;
@@ -1150,6 +1165,9 @@ const WSVG={
   ptrd:WS('<path d="M1 11 L12 9 L18 9.5 L18 13.5 L12 14 L2 16Z"/><rect x="17" y="8.5" width="16" height="6" rx="1.5"/><rect x="32" y="10" width="58" height="2.6"/><rect x="89" y="8.8" width="9" height="5"/><path d="M40 12.6 L36 22 M42 12.6 L46 22" stroke="currentColor" stroke-width="1.6"/><path d="M24 14.5 L26 18 L28 18 L27 14.5Z"/>','0 0 100 24'),
   mp40:WS('<path d="M4 8 L26 8 L26 9.6 L6 9.6 L6 14 L4 14Z"/><rect x="26" y="7.2" width="34" height="5.8" rx="1"/><rect x="59" y="8.8" width="20" height="2.6"/><rect x="78" y="8.2" width="4" height="3.8"/><rect x="41" y="12.8" width="4.6" height="10"/><path d="M30 13 L28 19 L32 19 L34 13Z"/>'),
   kar98:WS('<path d="M1 11.5 L28 8.8 L38 9.6 L38 13.2 L29 14.4 L3 17.4 Z"/><rect x="37" y="8.6" width="15" height="4" rx="1"/><rect x="40" y="11" width="30" height="3"/><rect x="51" y="9.6" width="45" height="1.9"/><circle cx="48" cy="6" r="1.6"/><path d="M39 13.6 L42 17 L44 17 L43 13.6Z"/>'),
+  pps43:WS('<path d="M6 8 L24 8 L24 9.8 L8 9.8 L8 13 L6 13Z"/><rect x="24" y="7" width="28" height="6" rx="1"/><rect x="51" y="7.8" width="24" height="4.4"/>'+HOLES(54,4,10)+'<rect x="74" y="8.8" width="6" height="2.4"/><path d="M40 13 L44 22 L48 21 L45 13Z"/><path d="M28 13 L27 18 L31 18 L32 13Z"/>'),
+  mosinS:WS('<path d="M1 11 L28 8.6 L38 9.4 L38 13 L29 14.2 L3 17 Z"/><rect x="37" y="8.4" width="16" height="4" rx="1"/><rect x="40" y="11" width="34" height="3"/><rect x="52" y="9.4" width="46" height="2"/><rect x="38" y="3" width="20" height="3.4" rx="1.5"/><path d="M43 6.4h2v2h-2zM51 6.4h2v2h-2z"/><path d="M39 13.5 L42 17 L44 17 L43 13.5Z"/>'),
+  roks:WS('<rect x="2" y="4" width="9" height="16" rx="4"/><rect x="12" y="4" width="9" height="16" rx="4"/><path d="M20 15 Q30 15 32 11" stroke="currentColor" stroke-width="2" fill="none"/><rect x="31" y="9" width="40" height="4" rx="1"/><rect x="70" y="8" width="8" height="6"/><path d="M40 13 L38 19 L42 19 L44 13Z"/>'),
   gun45:WS('<circle cx="34" cy="17" r="6.5"/><circle cx="34" cy="17" r="2.5" fill="#e6d7b5"/><path d="M26 4 L40 3 L40 15 L26 15Z"/><rect x="38" y="8" width="56" height="3.4"/><rect x="92" y="7" width="6" height="5.4"/><path d="M30 18 L4 22 L4 20 L30 15Z"/>')};
 // HUD icons: small original glyphs drawn in the ink colour, so the HUD needs numbers instead of captions
 const IC=(d,vb)=>`<i class="ic" aria-hidden="true"><svg viewBox="${vb||'0 0 16 16'}" fill="currentColor">${d}</svg></i>`;
@@ -1201,7 +1219,7 @@ function hudTick(dt){
   const ph=pr.join('');if($('prompt').innerHTML!==ph)$('prompt').innerHTML=ph;
   const now=performance.now();if(G.log.some(l=>now-l.at>9000)){G.log=G.log.filter(l=>now-l.at<=9000);renderRadio()}}
 function rosterHTML(withStatus){const p=G.me;let h='<tr><th></th><th>Soldier</th><th>Weapon</th><th>Calibre</th><th>Boots</th>'+(withStatus?'<th>Status</th>':'')+'</tr>';
-  for(const u of G.people){const w=WPN[u.isPlayer?'ppsh':u.wpn];const st=u.escaped?'escaped':u.revealed?'unmasked':u.arrested?'arrested':u.alive?'alive':'killed';
+  for(const u of G.people){const w=WPN[primaryW(u)];const st=u.escaped?'escaped':u.revealed?'unmasked':u.arrested?'arrested':u.alive?'alive':'killed';
     h+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.rank)} ${esc(u.name)}${u===p?' (you)':u.isPlayer?' <small style="color:var(--dim)">player</small>':''}</td><td>${w.name}</td><td class="cal">${w.cal}</td><td>${BOOTS[u.boot]||''}</td>${withStatus?`<td>${st}${withStatus==='end'&&u.isSpy?` · <b style="color:#c4261b">${u.turned?'TURNED':'SPY'}</b>`:''}${u.isCom&&(withStatus==='end'||G.comKnown||u===p)?' · <b style="color:#d8aa4d">COMMISSAR</b>':''}</td>`:''}</tr>`}return h}
 function openNotebook(){if(state!=='play'||!G.me)return;state='notebook';$('notebook').hidden=false;$('noteBtn').classList.remove('flash');const me=G.me;
   $('nbEb').textContent=me.isSpy?'Your field notes':me.isCom?'Commissar\'s notebook':'Your notebook';
@@ -1247,6 +1265,13 @@ function councilUI(){
       `</div><p><b style="color:${C.ok?'var(--ok)':'var(--red)'}">${C.ok?'Approved':'Rejected'} ${C.yes}–${C.no}.</b> ${C.ok?'The team moves out.':'Leadership passes to the next soldier.'}</p>`}
     $('cFoot').innerHTML=`<span style="color:var(--dim)">${C.ok?'Moving out':'Next proposal'} in ${secs} s</span>`}}
 
+// ---------- weapon picker (briefing and armoury) ----------
+let PICKW='ppsh';try{const w=localStorage.getItem('ac_wpn');if(ISSUE.includes(w))PICKW=w}catch(e){}
+const WROLE={ppsh:'Submachine gun · 71-round drum',pps43:'Light submachine gun',svt:'Semi-automatic rifle',mosin:'Bolt-action rifle',mosinS:'Sniper rifle · scoped',dp:'Light machine gun',ptrd:'Anti-tank rifle · cracks Panzers',roks:'Flamethrower · short range, no casings'};
+function pickerHTML(cur){return '<div class="wpick">'+ISSUE.map(k=>`<button data-w="${k}" aria-pressed="${k===cur}"><span class="wsil">${WSVG[k]||''}</span><b>${esc(WPN[k].name)}</b><small>${WROLE[k]} · ${WPN[k].cal}</small></button>`).join('')+'</div>'}
+function bindPicker(root,onPick){root.querySelectorAll('.wpick button').forEach(b=>b.onclick=()=>{onPick(b.dataset.w);root.querySelectorAll('.wpick button').forEach(x=>x.setAttribute('aria-pressed',x===b))})}
+function openArmory(){const el=$('armory');$('armBody').innerHTML=pickerHTML(primaryW(G.me));bindPicker(el,k=>{queueEvent(['w',k]);closeArmory()});el.hidden=false;if(state==='play')state='armory'}
+function closeArmory(){$('armory').hidden=true;if(state==='armory')state='play'}
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
 function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['Hold Shift','Crouch — behind cover almost nothing gets through'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
@@ -1264,6 +1289,7 @@ function showBrief(){
    `<p>You are Commissar ${esc(p.name)}, wearing a private's coat. Nobody knows what you are — keep it that way. One of the squad is a German infiltrator who shoots comrades in the back, fires green flares for the mortars, and wrecks the stations that hold the block together.</p><p><b>Inspect bodies</b>, <b>question the squad</b>, and <b>arrest</b> the spy (two arrests). But if the spy sees you asking questions he will work out who you are — and <b>his other way to win is to kill you</b>. Watch your cover meter. An arrest reveals you to everyone.</p>${sortieP}<p>You lose if you die, if three wrecked stations reach an assault, or the Germans hold the command dugout for eight seconds.</p>`:
    `<p>You are Private ${esc(p.name)}. Somewhere in the squad is a German spy — and a <b>secret commissar</b> hunting him. You don't know who either of them is.</p><p>Hold the line and keep an eye on the stations: when one turns up wrecked, the time window tells you who could have done it. You can inspect bodies and question comrades too — but the spy can't tell a curious private from the commissar. If you work out who the commissar is, keep them alive — <b>the spy wins if he kills the commissar.</b> The spy may also try to turn you. If he does, you choose: take the German offer and switch sides in secret, or refuse — and you know who he is.</p>${sortieP}<p>The squad wins if the line holds until dawn. You lose if you die, three wrecked stations reach an assault, the commissar is assassinated, or the dugout falls.</p>`)+others;
   $('keysList').innerHTML=keysHTML(role);
+  $('wpnPick').innerHTML=pickerHTML(PICKW);bindPicker($('wpnPick'),k=>{PICKW=k;try{localStorage.setItem('ac_wpn',k)}catch(e){}});
   $('briefRoster').innerHTML=rosterHTML(false);
   $('briefHint').textContent=spy?'The commissar is one of the others. Watch who asks questions.':'Three calibres on the line: 7.62×25 mm (PPSh), 7.62×54R (rifles and the DP-28), 14.5×114 mm (the PTRD anti-tank rifle).';
   $('briefGo').textContent=NET?'Ready':'Take position';$('briefGo').disabled=false;
@@ -1272,6 +1298,7 @@ function startPlay(){
   $('brief').hidden=true;$('hud').hidden=false;state='play';G.log=[];renderRadio();const me=G.me;
   document.querySelectorAll('#touch .ask').forEach(b=>b.hidden=me.isSpy);document.querySelectorAll('#touch .cm').forEach(b=>b.hidden=!me.isCom);document.querySelectorAll('#touch .sp').forEach(b=>b.hidden=!me.isSpy);
   $('touch').hidden=!TOUCH;$('banner').hidden=true;$('speech').hidden=true;
+  if(PICKW!=='ppsh'&&G.wave===0)queueEvent(['w',PICKW]);
   logMsg('Dusk. The Germans will attack soon. Pick a firing position.');
   if(me.isSpy)logMsg('Nobody suspects you yet. Keep it that way.');else if(me.isCom)logMsg('Nobody knows you are the commissar. Keep it that way.')}
 // sw: true = the spy's side won, false = the squad won, 'escaped' = single-player spy got away
@@ -1340,6 +1367,7 @@ function collectInput(){
   let b=0;if(live){if(TOUCH?TCH.fire:MOUSE.down)b|=1;if(KEYS.KeyF)b|=2;if(KEYS.KeyX)b|=4;if(KEYS.KeyE)b|=8;if(KEYS.ShiftLeft||KEYS.ShiftRight||TCH.crouch)b|=16}
   const r=[q100(clamp(mx,-1,1)),q100(clamp(my,-1,1)),Math.round(aim*1000),b];const ev=EVQ.splice(0);if(ev.length)r.push(ev);return r}
 function press(code){
+  if(code==='Escape'&&state==='armory'){closeArmory();return}
   if(code==='Escape'){if(state==='notebook')closeNotebook();else if(state==='play'){state='pause';$('pause').hidden=false;$('keysList2').innerHTML=keysHTML(roleOf(G.me))}else if(state==='pause'){state='play';$('pause').hidden=true}return}
   if(code==='KeyN'){if(state==='play'&&G.me&&G.me.offer){queueEvent(['n']);return}if(state==='notebook')closeNotebook();else openNotebook();return}
   if(state!=='play'||!G.me||!G.me.alive||G.council)return;
@@ -1365,7 +1393,7 @@ document.querySelectorAll('#touch .tbtns button:not(#crouchBtn)').forEach(b=>{b.
 // ================= single player loop =================
 let RALPHA=1,lastStepAt=0;
 function doStep(inputs){step(inputs);lastStepAt=performance.now()}
-const Solo={acc:0,pump(dt){if(NET||state!=='play'||!G||G.over){this.acc=0;return}this.acc+=dt;let n=0;while(this.acc>=DT&&n<6){this.acc-=DT;n++;doStep([collectInput()])}if(n>=6)this.acc=0}};
+const Solo={acc:0,pump(dt){if(NET||(state!=='play'&&state!=='armory')||!G||G.over){this.acc=0;return}this.acc+=dt;let n=0;while(this.acc>=DT&&n<6){this.acc-=DT;n++;doStep([collectInput()])}if(n>=6)this.acc=0}};
 // draw units and bullets part-way between the last two ticks, so a 30 Hz simulation looks smooth at any frame rate
 function withLerp(fn){const a=RALPHA;if(!G||a>=1){fn();return}const sv=[];
   for(const L of [G.units,G.proj])for(const u of L)if(u.ox!==undefined){sv.push(u,u.x,u.y);u.x=u.ox+(u.x-u.ox)*a;u.y=u.oy+(u.y-u.oy)*a}
@@ -1564,6 +1592,7 @@ function awayUI(){const el=$('away');let txt='';
   if(txt!==awayKey){awayKey=txt;el.hidden=!txt;if(txt)$('awayTxt').textContent=txt}}
 
 // ================= buttons =================
+$('armClose').onclick=()=>closeArmory();
 $('noteBtn').onclick=()=>openNotebook();$('nbClose').onclick=()=>closeNotebook();
 $('roleSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;ROLE=b.dataset.role;document.querySelectorAll('#roleSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'))});
 $('diffSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;DIFFSEL=b.dataset.diff;try{localStorage.setItem('ac_diff',DIFFSEL)}catch(e){}document.querySelectorAll('#diffSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'))});

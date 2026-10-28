@@ -98,6 +98,15 @@ body.touch #radio{width:calc(100vw - 32px);top:calc(200px + env(safe-area-inset-
 .screen{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;overflow:auto;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
 #brief,#end,#pause,#notebook,#lobby{background:rgba(29,24,21,.9)}
 #council{background:rgba(29,24,21,.84)}
+#armory{background:rgba(29,24,21,.7)}
+.wpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.wpick button{display:grid;gap:2px;justify-items:start;text-align:left;background:var(--paper);color:var(--ink);border:2px solid var(--ink);padding:6px 8px;border-radius:0}
+.wpick button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.wpick button[aria-pressed="true"] small{color:var(--ochre)}
+.wpick .wsil svg{height:20px;width:100px}
+.doc-body .wpick b{font:700 14px/1.1 var(--display);color:var(--ink)}
+.doc-body .wpick button[aria-pressed="true"] b{color:var(--paper)}
+.wpick small{font:500 11px/1.2 var(--display);color:var(--dim)}
 
 /* the poster: title screen */
 #title{justify-content:flex-start;align-items:stretch;padding:0;overflow:auto;
@@ -313,6 +322,8 @@ body.touch #radio{width:calc(100vw - 32px);top:calc(200px + env(safe-area-inset-
       <div class="doc-body">
         <div>
           <div id="briefText"></div>
+          <h4 style="margin-top:14px">Your weapon</h4>
+          <div id="wpnPick"></div>
           <h4 style="margin-top:14px">Controls</h4>
           <div class="keys" id="keysList"></div>
         </div>
@@ -356,6 +367,13 @@ body.touch #radio{width:calc(100vw - 32px);top:calc(200px + env(safe-area-inset-
       <div class="doc-head"><div><div class="eb" id="cEb"></div><h2 id="cTitle" style="color:var(--snow)"></h2></div><div class="track" id="cTrack"></div></div>
       <div class="doc-body" style="grid-template-columns:1fr"><div><p id="cText"></p><div id="cBody"></div><div class="hist" id="cHist"></div></div></div>
       <div class="doc-foot" id="cFoot"></div>
+    </div>
+  </div>
+
+  <div id="armory" class="screen" hidden>
+    <div class="doc" style="width:min(720px,100%)">
+      <div class="doc-head"><div><div class="eb">Back rooms</div><h2>Armoury</h2></div><button class="sub" id="armClose">Close <kbd>Esc</kbd></button></div>
+      <div class="doc-body" style="grid-template-columns:1fr"><div id="armBody"></div></div>
     </div>
   </div>
 
