@@ -136,6 +136,7 @@ function seg(bone, A, B, w, d, e0, e1, o) { // a box along a bone, A to B, overr
   const a1 = B.clone().sub(A), L = a1.length(); a1.normalize(); let ref = (o && o.ref) || Z; if (Math.abs(ref.dot(a1)) > 0.9) ref = Y;
   const a2 = ref.clone().sub(a1.clone().multiplyScalar(ref.dot(a1))).normalize(), a0 = new V3().crossVectors(a1, a2);
   const c = A.clone().add(a1.clone().multiplyScalar((L + e1 - e0) / 2)); if (o && o.off) c.add(o.off); return mkBox(bone, c, [a0, a1, a2], [w / 2, (L + e0 + e1) / 2, d / 2], o); }
+function joint(bone, P, r) { return mkBox(bone, P.clone(), [X, Y, Z], [r, r, r], { ch: r * 0.55, bev: r * 0.45 }); }
 function grow(b, t, o) { const f = FL(o && o.flare); return Object.assign({}, b, { h: [b.h[0] + t, b.h[1] + t, b.h[2] + t], flare: [b.flare[0] + f[0], b.flare[1] + f[1]], ch: b.ch ? b.ch + t * 0.4 : 0 }); } /* the chamfer grows less than the box: every face of the armor stands outside the body's */
 function rel(b, along, h, o) { // a box on the same bone, placed along another box's long axis (along: -1 its near end .. +1 its far end)
   const c = b.c.clone().addScaledVector(b.ax[1], along * b.h[1]); if (o && o.out) c.addScaledVector(b.ax[2], o.out); return Object.assign({}, b, { c, h, flare: FL(o && o.flare), flareN: [0, 0], ch: o && o.ch !== undefined ? o.ch : b.ch }); }
@@ -171,14 +172,16 @@ function bodyBoxes() {
   add('neck', aabb('neck_01', [-0.058, 1.43, -0.07], [0.058, 1.575, 0.045], { ch: 0.018, flareN: [0.03, 0.01] }));
   add('head', aabb('Head', [-0.118, 1.545, -0.125], [0.118, 1.83, 0.122], { ch: 0.042, bev: 0.035, bevN: 0.05, flareN: [-0.022, -0.012] })); /* one cut block: brow and crown bevelled, the jaw drawn in to the chin */
   for (const s of ['l', 'r']) { const S = s.toUpperCase(), b = (n) => P(n + '_' + s);
-    const ua = seg('upperarm_' + s, b('upperarm'), b('lowerarm'), 0.112, 0.115, 0.03, 0.03, { hem: 1, ch: 0.03, flare: [-0.022, -0.025] }); add('uarm' + S, ua);
-    add('uarm' + S, rel(ua, -0.62, [0.075, 0.075, 0.072], { ch: 0.03, flare: [-0.012, -0.01] })); /* the shoulder, a block of its own over the joint */
-    add('farm' + S, seg('lowerarm_' + s, b('lowerarm'), b('hand'), 0.112, 0.106, 0.035, 0.0, { hem: 1, ch: 0.028, flare: [-0.035, -0.03] }));
+    const ua = seg('upperarm_' + s, b('upperarm'), b('lowerarm'), 0.112, 0.115, 0.0, 0.03, { hem: 1, ch: 0.03, flare: [-0.022, -0.025], bev: 0.03, bevN: 0 }); add('uarm' + S, ua);
+    { const J = joint('upperarm_' + s, b('upperarm').add(new V3(0, -0.005, 0.0)), 0.082); J.h = [0.084, 0.08, 0.082]; add('uarm' + S, J); } /* the shoulder: a cut cap round the joint itself, over the chest's corner, so the arm turns out of the trunk through it */
+    add('farm' + S, seg('lowerarm_' + s, b('lowerarm'), b('hand'), 0.112, 0.106, 0.035, 0.0, { hem: 1, ch: 0.028, flare: [-0.035, -0.03], bevN: 0.03, bev: 0 }));
+    add('farm' + S, joint('lowerarm_' + s, b('lowerarm'), 0.05)); /* the elbow: a cut knuckle on the forearm's bone, so a bent arm turns a corner instead of showing the end of a block */
     add('hand' + S, seg('hand_' + s, b('hand'), b('middle_01'), 0.052, 0.108, 0.008, 0.006, { off: new V3(0, 0, -0.006), ch: 0.012, bev: 0.01 }));
     for (const f of ['index', 'middle', 'ring', 'pinky']) for (let k = 1; k <= 3; k++) add('hand' + S, seg(f + '_0' + k + '_' + s, b(f + '_0' + k), k < 3 ? b(f + '_0' + (k + 1)) : b(f + '_04_leaf'), 0.03, 0.025, 0.006, 0.003, { ch: 0.006 }));
     for (let k = 1; k <= 3; k++) add('hand' + S, seg('thumb_0' + k + '_' + s, b('thumb_0' + k), k < 3 ? b('thumb_0' + (k + 1)) : b('thumb_04_leaf'), 0.032, 0.032, 0.008, 0.003, { ch: 0.007 }));
-    add('thigh' + S, seg('thigh_' + s, b('thigh'), b('calf'), 0.17, 0.18, 0.05, 0.035, { hem: 1, ch: 0.04, flare: [-0.04, -0.035] }));
-    add('calf' + S, seg('calf_' + s, b('calf'), b('foot'), 0.14, 0.15, 0.03, 0.0, { hem: -1, ch: 0.035, flare: [-0.055, -0.06] }));
+    add('thigh' + S, seg('thigh_' + s, b('thigh'), b('calf'), 0.17, 0.18, 0.05, 0.035, { hem: 1, ch: 0.04, flare: [-0.04, -0.035], bev: 0.035, bevN: 0 }));
+    add('calf' + S, seg('calf_' + s, b('calf'), b('foot'), 0.14, 0.15, 0.03, 0.0, { hem: -1, ch: 0.035, flare: [-0.055, -0.06], bevN: 0.035, bev: 0 }));
+    add('calf' + S, joint('calf_' + s, b('calf'), 0.062)); /* the knee */
     const x = b('foot').x; add('foot' + S, aabb('foot_' + s, [x - 0.062, 0, -0.11], [x + 0.062, 0.15, 0.12], { ch: 0.02, flare: [-0.006, -0.02], bev: 0.015, bevN: 0 })); add('foot' + S, aabb('ball_' + s, [x - 0.06, 0, 0.12], [x + 0.06, 0.072, 0.218], { ch: 0.018, flare: [-0.004, -0.02], bev: 0.02, bevN: 0 })); }
   return (BODY.boxes = R);
 }
@@ -220,7 +223,8 @@ function setGeo(setKey) {
   let torsoT = 0.02;
   for (const P of S.pieces) { const T = typeof P.t === 'object' ? P.t : { t0: P.t, flare: 0 }, K = ['p', P.kind, P.col, P.col2], RK = P.rim ? ['p', P.rim[0], P.rim[1], P.rim[2]] : null; if (P.regions.includes('chest')) torsoT = T.t0;
     for (const r of P.regions) for (const b of BB[r]) { const a = grow(b, T.t0, { flare: T.flare }); show(K, a);
-      if (RK && b.hem) { const f = b.hem > 0 ? a.flare : a.flareN; show(RK, rel(a, b.hem, [a.h[0] + f[0] + 0.006, 0.02, a.h[2] + f[1] + 0.006], { flare: 0 })); /* the hem or cuff: a border band round the end of the piece */ }
+      const NEXT = { uarm: 'farm', farm: 'hand', thigh: 'calf', calf: 'thigh', hips: 'thigh' }, rr = /^(uarm|farm|thigh|calf|hips)(L|R)?$/.exec(r), nx = rr && NEXT[rr[1]], cont = nx && (rr[1] === 'hips' ? P.regions.includes('thighL') : P.regions.includes(nx + rr[2]));
+      if (RK && b.hem && !cont && !b.joint) { const f = b.hem > 0 ? a.flare : a.flareN; show(RK, rel(a, b.hem, [a.h[0] + f[0] + 0.006, 0.02, a.h[2] + f[1] + 0.006], { flare: 0 })); /* the hem or cuff: a border band round the end of the piece */ }
       if (T.pauldron && /^uarm/.test(r) && b === BB[r][0]) { const cap = rel(a, -1, [a.h[0] + 0.022, 0.085, a.h[2] + 0.022], { flare: 0.02 }); cap.c = cap.c.clone().addScaledVector(a.ax[1], 0.075); show(K, cap); if (RK) show(RK, rel(cap, 1, [cap.h[0] + 0.02 + 0.006, 0.016, cap.h[2] + 0.02 + 0.006], { ch: cap.ch })); } /* 披膊: a shoulder guard over the top of the arm */ } }
   if (S.mirror) { const c3 = BB.chest[1]; show(S.mirror, aabb('spine_03', [-0.065, 1.33, c3.c.z + c3.h[2] + torsoT], [0.065, 1.44, c3.c.z + c3.h[2] + torsoT + 0.012])); } /* 護心鏡: the round mirror plate over the heart, here squared */
   for (const [k, b] of S.helmet ? helmetBoxes(S.helmet) : helmetBoxes(null, true)) show(k, b);
@@ -623,7 +627,7 @@ function measureAll(setKey, views) { // every clip, eight moments each, from sev
     for (const name of CLIPS()) { const c = BODY.clips[name]; m.mixer.stopAllAction(); const a = m.mixer.clipAction(c); a.reset().setLoop(THREE.LoopRepeat, Infinity).setEffectiveWeight(1).play();
       for (let i = 0; i < 8; i++) { m.mixer.setTime(c.duration * i / 8); m.root.updateMatrixWorld(true); for (const cp of cams) { camera.position.set(cp[0], cp[1], cp[2]); camera.lookAt(0, 0.9, 0); renderer.render(scene, camera); const n = countRed(); res.total += n; res.frames++; if (n > worst) { worst = n; at = name + '@' + i + '/8 view' + cams.indexOf(cp); } } } }
     res.sets[k] = { worst, at }; if (worst > res.worst) { res.worst = worst; res.worstAt = k + ' ' + at; } }
-  m.equip(cur.set); overlay(m, true); m.mixer.stopAllAction(); m.anim.one = null; m.anim.base = null; camera.position.set(1.5, 1.5, 3.6); orbit.target.set(0, 1.0, 0); return res;
+  m.equip(cur.set); overlay(m, true); m.mixer.stopAllAction(); m.anim.one = null; m.anim.os = []; m.anim.bw = {}; camera.position.set(1.5, 1.5, 3.6); orbit.target.set(0, 1.0, 0); return res;
 }
 // ---- the side panel and the action bar
 function buildSide() {
