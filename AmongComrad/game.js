@@ -1156,7 +1156,7 @@ class Lock{
 // (inputs after T are sent again: the host keeps the first copy it got for a tick, and a reloaded host has none)
 
 // ================= peer-to-peer rooms (PeerJS) =================
-const PREFIX='among-comrades-v1-',CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',MAXH=8,CHUNK=48000;
+const PREFIX='among-comrades-v1-',CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',MAXH=8,CHUNK=12000;// PeerJS's JSON channel drops any message of 16,300 bytes or more
 const genCode=()=>{let c='';for(let i=0;i<5;i++)c+=CODE_CHARS[NM.floor(crnd()*CODE_CHARS.length)];return c};
 const genTok=()=>crnd().toString(36).slice(2)+crnd().toString(36).slice(2);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
@@ -1179,7 +1179,7 @@ class Room{
     peer.on('error',e=>{if(e.type==='unavailable-id'&&!opened){try{peer.destroy()}catch(_){}
         if(this.recovering&&tries<20){setTimeout(()=>this.openHost(cb,tries+1),2500);return}if(!this.started){this.code=genCode();this.openHost(cb,tries+1);return}}
       if(!opened)cb(e)});
-    peer.on('connection',c=>{c.on('data',m=>this.hostData(c,m));c.on('close',()=>this.hostClose(c));c.on('error',()=>{})});
+    peer.on('connection',c=>{c.on('data',m=>this.hostData(c,m));c.on('close',()=>this.hostClose(c));c.on('error',e=>console.warn('connection error',e&&e.type))});
     peer.on('disconnected',()=>{if(!this.closed)try{peer.reconnect()}catch(_){}})}
   seatOf(c){return this.seats.findIndex(s=>s.conn===c)}
   sendTo(i,m){const s=this.seats[i];if(s&&s.conn&&s.connected)try{s.conn.send(m)}catch(e){}}
@@ -1225,7 +1225,7 @@ class Room{
     for(const [i,h] of mm)if(h!==hh){this.desyncs++;console.warn(`desync with ${this.seats[i].name} at tick ${k}; sending a snapshot`);this.snapTo([i])}
     this.peerH.delete(k);for(const kk of this.hostH.keys())if(kk<k-600)this.hostH.delete(kk)}
   async snapTo(list){list=list.filter(i=>!this.snapping.has(i));if(!list.length||!G)return;list.forEach(i=>this.snapping.add(i));
-    const k=this.lock?this.lock.exec:G.tick;const str=serialize();const pk=await packStr(str);const id=genTok();const n=Math.ceil(pk.s.length/CHUNK)||1;
+    const k=this.lock?this.lock.exec:G.tick;let str,pk;try{str=serialize();pk=await packStr(str)}catch(e){console.warn('snap build failed',e&&e.stack);list.forEach(i=>this.snapping.delete(i));return}const id=genTok();const n=Math.ceil(pk.s.length/CHUNK)||1;
     for(let j=0;j<n;j++)for(const i of list)this.sendTo(i,{t:'snap',id,k,j,n,z:pk.z,s:pk.s.slice(j*CHUNK,(j+1)*CHUNK)});
     setTimeout(()=>list.forEach(i=>this.snapping.delete(i)),3000)}
   // the host reloaded: rebuild the game from the first returning player's copy, then bring everyone onto it
@@ -1247,7 +1247,6 @@ class Room{
     setTimeout(()=>{if(this.joinCb&&!this.host&&!this.started){const f=this.joinCb;this.joinCb=null;f(new Error('No answer from that room code. Check the code and that the host is still there.'))}},12000)}
   send(m){if(this.host)try{this.host.send(m)}catch(e){}}
   clientData(m){if(!m||typeof m!=='object')return;this.lastMsg=performance.now();
-    if(window.__acTrace&&m.t!=='b'&&m.t!=='wait')window.__acTrace.push(m.t+(m.t==='snap'?':'+m.j+'/'+m.n:''));
     switch(m.t){
       case 'welcome':this.seat=m.seat;if(this.joinCb){const f=this.joinCb;this.joinCb=null;f(null)}lobbyUI();return;
       case 'lobby':this.lobby=m;this.diff=m.diff;lobbyUI();return;
