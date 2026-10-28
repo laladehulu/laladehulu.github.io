@@ -1132,12 +1132,24 @@ function render(){
       if(p.reloadT>0){ctx.beginPath();ctx.arc(MOUSE.x,MOUSE.y,r+11,-Math.PI/2,-Math.PI/2+TAU*(1-p.reloadT/w.reload));ctx.stroke()}}}}
 
 // ================= HUD =================
+// weapon silhouettes for the HUD (side view, muzzle right), drawn as flat ink like the rest of the print
+const WS=(d,vb)=>`<svg viewBox="${vb||'0 0 100 24'}" fill="currentColor" aria-hidden="true">${d}</svg>`;
+const HOLES=(x0,n,y)=>Array.from({length:n},(_,i)=>`<circle cx="${x0+i*5}" cy="${y}" r="1" fill="#e6d7b5"/>`).join('');
+const WSVG={
+  ppsh:WS('<path d="M2 10 L24 7.5 L30 8 L30 13.5 L23 14.5 L5 18.5 Z"/><rect x="29" y="7" width="30" height="6.5" rx="1"/><rect x="58" y="7.8" width="27" height="4.6"/>'+HOLES(61,5,10.1)+'<rect x="84" y="8.9" width="6" height="2.4"/><circle cx="45" cy="17" r="6.3"/><path d="M33 13.5 L36 18 L38 18 L37 13.5Z"/>'),
+  mosin:WS('<path d="M1 11 L28 8.6 L38 9.4 L38 13 L29 14.2 L3 17 Z"/><rect x="37" y="8.4" width="16" height="4" rx="1"/><rect x="40" y="11" width="34" height="3"/><rect x="52" y="9.4" width="46" height="2"/><path d="M46 8.4 L48 4.5 L50 4.5 L49 8.4Z"/><path d="M39 13.5 L42 17 L44 17 L43 13.5Z"/>'),
+  svt:WS('<path d="M2 11 L27 8.6 L36 9.4 L36 13 L28 14.2 L4 17 Z"/><rect x="35" y="8.2" width="20" height="4.4" rx="1"/><rect x="38" y="11" width="28" height="3"/><rect x="54" y="9.2" width="34" height="2.2"/><rect x="87" y="8.4" width="5" height="3.8"/><rect x="44" y="12.6" width="6" height="6"/>'),
+  dp:WS('<path d="M2 12 L24 9.6 L32 10 L32 14 L25 15 L4 18 Z"/><rect x="31" y="9.2" width="22" height="5" rx="1"/><rect x="52" y="9.4" width="30" height="4.6"/>'+HOLES(55,5,11.7)+'<rect x="81" y="10.6" width="15" height="2.2"/><ellipse cx="42" cy="6.4" rx="12" ry="2.8"/><path d="M76 13 L72 22 M78 13 L82 22" stroke="currentColor" stroke-width="1.6"/>'),
+  ptrd:WS('<path d="M1 11 L12 9 L18 9.5 L18 13.5 L12 14 L2 16Z"/><rect x="17" y="8.5" width="16" height="6" rx="1.5"/><rect x="32" y="10" width="58" height="2.6"/><rect x="89" y="8.8" width="9" height="5"/><path d="M40 12.6 L36 22 M42 12.6 L46 22" stroke="currentColor" stroke-width="1.6"/><path d="M24 14.5 L26 18 L28 18 L27 14.5Z"/>','0 0 100 24'),
+  mp40:WS('<path d="M4 8 L26 8 L26 9.6 L6 9.6 L6 14 L4 14Z"/><rect x="26" y="7.2" width="34" height="5.8" rx="1"/><rect x="59" y="8.8" width="20" height="2.6"/><rect x="78" y="8.2" width="4" height="3.8"/><rect x="41" y="12.8" width="4.6" height="10"/><path d="M30 13 L28 19 L32 19 L34 13Z"/>'),
+  kar98:WS('<path d="M1 11.5 L28 8.8 L38 9.6 L38 13.2 L29 14.4 L3 17.4 Z"/><rect x="37" y="8.6" width="15" height="4" rx="1"/><rect x="40" y="11" width="30" height="3"/><rect x="51" y="9.6" width="45" height="1.9"/><circle cx="48" cy="6" r="1.6"/><path d="M39 13.6 L42 17 L44 17 L43 13.6Z"/>'),
+  gun45:WS('<circle cx="34" cy="17" r="6.5"/><circle cx="34" cy="17" r="2.5" fill="#e6d7b5"/><path d="M26 4 L40 3 L40 15 L26 15Z"/><rect x="38" y="8" width="56" height="3.4"/><rect x="92" y="7" width="6" height="5.4"/><path d="M30 18 L4 22 L4 20 L30 15Z"/>')};
 // HUD icons: small original glyphs drawn in the ink colour, so the HUD needs numbers instead of captions
 const IC=(d,vb)=>`<i class="ic" aria-hidden="true"><svg viewBox="${vb||'0 0 16 16'}" fill="currentColor">${d}</svg></i>`;
 const ICON={
   ger:IC('<path d="M2 11 Q2 3.5 8 3.5 Q13 3.5 13.5 9 L15 10 L15 12 L1 12 L1 11 Z"/>'),
   clock:IC('<path d="M8 1.5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13Zm0 2a4.5 4.5 0 1 1 0 9a4.5 4.5 0 1 1 0-9Z"/><path d="M7.2 4.5h1.6v3.2l2.3 1.5-.9 1.3-3-2Z"/>'),
-  gren:IC('<rect x="6.6" y="1" width="2.8" height="7" rx=".6"/><rect x="4" y="7" width="8" height="8" rx="1.6"/><rect x="5" y="9" width="6" height="1.2" fill="#e6d7b5"/>'),
+  gren:IC('<rect x="6.9" y=".5" width="2.2" height="8" rx=".5"/><rect x="4.2" y="7.5" width="7.6" height="8" rx="1"/><path d="M4.2 10h7.6M4.2 12.6h7.6" stroke="#e6d7b5" stroke-width=".9"/><rect x="9.6" y="3" width="1.6" height="4" rx=".4"/>'),
   cuffs:IC('<path d="M4.5 6a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7Zm0 1.8a1.7 1.7 0 1 1 0 3.4a1.7 1.7 0 1 1 0-3.4Z"/><path d="M11.5 3a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7Zm0 1.8a1.7 1.7 0 1 1 0 3.4a1.7 1.7 0 1 1 0-3.4Z"/><rect x="6.5" y="7" width="3" height="1.6" transform="rotate(-35 8 8)"/>'),
   flare:IC('<path d="M8 1 L10 5 L9 5 L9 11 L7 11 L7 5 L6 5 Z"/><path d="M5 12 L8 15 L11 12 Z"/>'),
   wrench:IC('<path d="M11.5 1a3.5 3.5 0 0 0-3.3 4.6L1.6 12.2a1.5 1.5 0 0 0 2.1 2.1l6.6-6.6A3.5 3.5 0 0 0 15 4.4l-2.2 2.2-2-.6-.6-2L12.4 1.8A3.5 3.5 0 0 0 11.5 1Z"/>'),
@@ -1153,8 +1165,8 @@ function hudTick(dt){
   const sh=`${ICON.wrench}<span class="track">${sabHTML()}</span>`;if($('sabStat').innerHTML!==sh)$('sabStat').innerHTML=sh;
   const ov=$('overrun');if(G.overrun>0.3){ov.hidden=false;ov.textContent=`Germans in the dugout! ${Math.max(0,(G.overLimit||8)-G.overrun).toFixed(1)}`}else ov.hidden=true;
   const w=WPN[p.wpn];
-  if(p.onGun&&p.alive){$('wName').textContent='45 mm gun';{const gg=G.guns[p.onGun-1];$('ammo').innerHTML=gg.cd>0?`<small>${gg.cd.toFixed(1)} s</small>`:`${ICON.shell}`}}
-  else{$('wName').textContent=p.alive?w.name:p.escaped?'Escaped':p.arrested?'Arrested':'Killed';$('ammo').innerHTML=p.alive?`${p.reloadT>0?'—':p.mag} <small>/ ${p.reserve}</small>`:'<small>spectating</small>'}
+  if(p.onGun&&p.alive){if($('wName').dataset.w!=='gun45'){$('wName').innerHTML=WSVG.gun45;$('wName').dataset.w='gun45';$('wName').title='45 mm anti-tank gun'}{const gg=G.guns[p.onGun-1];$('ammo').innerHTML=gg.cd>0?`<small>${gg.cd.toFixed(1)} s</small>`:`${ICON.shell}`}}
+  else{const wk=p.alive?p.wpn:'none';if($('wName').dataset.w!==wk){$('wName').dataset.w=wk;$('wName').innerHTML=p.alive?(WSVG[p.wpn]||esc(w.name)):(p.escaped?'Escaped':p.arrested?'Arrested':'Killed');$('wName').title=p.alive?`${w.name} · ${w.cal}`:''}$('ammo').innerHTML=p.alive?`${p.reloadT>0?'—':p.mag} <small>/ ${p.reserve}</small>`:'<small>spectating</small>'}
   const ex=!p.alive?'':`<span title="Grenades (G)">${ICON.gren}${p.grenades}</span>`+(p.isSpy?`<span title="Flares (Q)">${ICON.flare}${p.flares}</span>`:p.isCom?`<span title="Arrests (hold F)">${ICON.cuffs}${p.arrestsLeft}</span>`:'');
   if($('extra').innerHTML!==ex)$('extra').innerHTML=ex;
   const hb=$('meHp').firstElementChild;hb.style.width=Math.max(0,p.hp/p.maxhp*100)+'%';hb.style.background=p.hp<p.maxhp*0.3?'var(--red)':'var(--ok)';
