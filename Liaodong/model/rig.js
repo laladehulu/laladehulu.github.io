@@ -172,7 +172,8 @@ function bodyBoxes() {
   add('neck', aabb('neck_01', [-0.058, 1.43, -0.07], [0.058, 1.575, 0.045], { ch: 0.018, flareN: [0.03, 0.01] }));
   add('head', aabb('Head', [-0.118, 1.545, -0.125], [0.118, 1.83, 0.122], { ch: 0.042, bev: 0.035, bevN: 0.05, flareN: [-0.022, -0.012] })); /* one cut block: brow and crown bevelled, the jaw drawn in to the chin */
   for (const s of ['l', 'r']) { const S = s.toUpperCase(), b = (n) => P(n + '_' + s);
-    const ua = seg('upperarm_' + s, b('upperarm'), b('lowerarm'), 0.1, 0.104, 0.035, 0.03, { hem: 1, ch: 0.03, flare: [-0.016, -0.018], bev: 0.03, bevN: 0.035 }); /* the top of the arm cut back, so it meets the chest at the shoulder without a hard corner */ add('uarm' + S, ua);
+    const ua = seg('upperarm_' + s, b('upperarm'), b('lowerarm'), 0.112, 0.115, 0.03, 0.03, { hem: 1, ch: 0.03, flare: [-0.022, -0.025], bev: 0.03, bevN: 0 }); add('uarm' + S, ua);
+    add('uarm' + S, rel(ua, -0.62, [0.072, 0.072, 0.07], { ch: 0.03, flare: [-0.012, -0.01], bev: 0.015 })); /* the shoulder, a block of its own over the joint, its edges eased where it meets the chest */
     add('farm' + S, seg('lowerarm_' + s, b('lowerarm'), b('hand'), 0.112, 0.106, 0.035, 0.0, { hem: 1, ch: 0.028, flare: [-0.035, -0.03], bevN: 0.03, bev: 0 }));
     add('farm' + S, joint('lowerarm_' + s, b('lowerarm'), 0.05)); /* the elbow: a cut knuckle on the forearm's bone, so a bent arm turns a corner instead of showing the end of a block */
     add('hand' + S, seg('hand_' + s, b('hand'), b('middle_01'), 0.052, 0.108, 0.008, 0.006, { off: new V3(0, 0, -0.006), ch: 0.012, bev: 0.01 }));
