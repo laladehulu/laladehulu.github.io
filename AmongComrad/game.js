@@ -142,12 +142,10 @@ const SQUAD=[
  {name:'Lebedev',rank:'Pvt.',col:'#e9e3d1',wpn:'ppsh'},
 ];
 const WAVES=[
- {r:12,s:5,m:0,g:2,t:2,txt:'Riflemen pour through the ruins behind two Panzers. Man the 45 mm guns.'},
- {r:14,s:10,m:1,g:3,t:2,txt:'Assault troops behind two Panzers.'},
- {r:16,s:12,m:2,g:4,t:3,txt:'Two MG 42 teams and three Panzers. Stop the tanks before they reach the wire.'},
- {r:18,s:14,m:2,g:5,t:3,txt:'A heavy assault on both flanks with three Panzers. Watch the trenches.'},
- {r:20,s:18,m:2,g:5,t:4,txt:'Everything they have. Four Panzers lead the last assault.'},
-];
+ {r:18,s:10,m:1,g:3,t:3,txt:'Riflemen and an MG team pour through the ruins behind three Panzers. Man the 45 mm guns.'},
+ {r:20,s:14,m:2,g:4,t:4,txt:'Assault troops and four Panzers. Stop the tanks before they reach the wire.'},
+ {r:24,s:18,m:2,g:5,t:5,txt:'Everything they have. Five Panzers lead the last assault.'},
+]
 // Avalon-style sorties between assaults. Team size per sortie (8 soldiers).
 const SORTIES=[
  {name:'Wire the northern approach',x:31,y:7,brief:'Crawl out and lay wire and mines across the northern approach.',ok:'Wire and mines are down. The next assault will be thinner.',bad:'The mines were wired to fail. The next assault walks straight through.'},
@@ -494,7 +492,7 @@ function knifeTick(u,dt){const k=u.knife,T=k.T;u.moving=false;u.aim=Math.atan2(T
     if(u.isPlayer){logMsg(`You knife ${T.name}. Not a sound.`,'good',u);if(u===G.me)sfx('throw')}
     T.hp=0;kill(T,{owner:u,cause:'knife',dx:(T.x-u.x)/(dist(u.x,u.y,T.x,T.y)||1),dy:(T.y-u.y)/(dist(u.x,u.y,T.x,T.y)||1)})}}
 function startStab(u,T){
-  const sw=(u.wpn==='ptrd'||(G.wave>=3&&rnd()<0.3))?'mp40':u.wpn;
+  const sw=(u.wpn==='ptrd'||(G.wave>=2&&rnd()<0.3))?'mp40':u.wpn;
   G.stabs=(G.stabs||0)+1;u.stab={T,shots:WPN[sw].auto?4:2,t:0,prevW:u.wpn};u.wpn=sw;u.mag=WPN[sw].mag;u.reloadT=0;u.fireCd=0;u.path=[];
   for(const h of G.humans)if(h!==u&&seesPt(h,u.x,u.y,10)){noteTo(h,`You saw ${u.name} turn ${sw==='mp40'?'a German MP 40':'a weapon'} on ${T===h?'you':T.name}!`,'key');logMsg(`${u.name} is firing at ${T===h?'you':T.name}!`,'bad',h)}}
 function stabTick(u,dt){const s=u.stab,T=s.T;u.moving=false;
@@ -522,7 +520,7 @@ function runSched(e){
 
 // ================= German AI =================
 function spawnGerman(kind){
-  if(kind==='tank'){const th=Math.round(800*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:800,wpn:'mg42',mag:75,x:7,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);logMsg(G.tankMul<1?'Tank! The Panzer hit our mines — it is damaged, but still coming!':'Tank! A Panzer is coming down the street!','bad');sfx('tankHorn');return}
+  if(kind==='tank'){const th=Math.round(1300*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:th,wpn:'mg42',mag:75,x:7,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);logMsg(G.tankMul<1?'Tank! The Panzer hit our mines — it is damaged, but still coming!':'Tank! A Panzer is coming down the street!','bad');sfx('tankHorn');return}
   // infantry appear in the ruins just beyond the defenders' sight, so they are in the fight within seconds
   let y=0,x0=0;for(let k=0;k<60;k++){y=1+(rnd()*38|0);x0=22+(rnd()*6|0);if(passable(x0,y)&&passable(x0+1,y))break;x0=0;if(passable(0,y)&&passable(1,y))break}
   const wpn=kind==='smg'?'mp40':kind==='mg'?'mg42':'kar98';
@@ -978,7 +976,7 @@ function endWave(){
   if(G.wave>=WAVES.length){const sf=G.spyFate,arr=G.spy.arrested;
     endGame(false,me=>me.isSpy?'Dawn. Fresh troops are crossing the Volga and the line held. Your mission failed.':
       sf==='killed'?'Dawn. The line held, and the traitor is dead.':sf==='escaped'?'Dawn. The line held, but the spy got away to the Germans.':arr?'Dawn. The line held.':me.isCom?'Dawn. The line held, but the spy is still among you — and you never caught him.':'Dawn. The line held, but the spy is still among you.');return}
-  G.phase='lull';G.phaseT=20;G.effects={};G.overLimit=8;
+  G.phase='lull';G.phaseT=5;G.effects={};G.overLimit=8;
   for(const u of liveSov())u.hp=u.maxhp;
   for(const k in G.comGuess)G.comGuess[k]=Math.max(0,G.comGuess[k]-8);
   banner('Assault beaten back','The main attack is broken, but they keep probing. Keep the posts manned.','good',3.5);
@@ -994,7 +992,8 @@ function phaseTick(dt){
     const since=G.time-(G.lastSpawn||G.time);
     if(!G.spawnQ.length&&since>40&&!G.pushed){G.pushed=true;for(const u of G.units)if(u.alive&&u.side==='ger'&&u.kind!=='tank'){if(u.res){u.res.res=null;u.res=null}assault(u)}}
     if(!G.spawnQ.length&&since>80){for(const u of G.units)if(u.alive&&u.side==='ger'){u.alive=false;u.gone=true}logMsg('The last Germans fall back into the ruins.')}
-    if(!G.spawnQ.length&&!G.units.some(u=>u.alive&&u.side==='ger'))endWave()}}
+    if(!G.spawnQ.length){const left=G.units.filter(u=>u.alive&&u.side==='ger');
+      if(left.length<=2){if(left.length)logMsg('The last Germans fall back into the ruins.');for(const u of left){u.alive=false;u.gone=true}endWave()}}}}
 function overrunTick(dt){
   if(G.units.some(u=>u.alive&&u.side==='ger'&&u.kind!=='tank'&&inDugout(u)))G.overrun+=dt;else G.overrun=Math.max(0,G.overrun-dt*0.5);
   if(G.overrun>=(G.overLimit||8)){endGame(true,me=>me.isSpy?'The Germans stormed the command dugout. The position has fallen, and nobody knows it was you.':'The Germans stormed the command dugout. The position has fallen.');return}
@@ -1362,7 +1361,7 @@ function showBrief(){
   const tracksP=spy?'<p><b>Tracks.</b> Every boot leaves prints that fade over a minute, and every shot drops a casing. Walk in other men\'s tracks, and fresh snow after an assault covers everything.</p>':'<p><b>Tracks.</b> Boots leave prints that fade over a minute — the squad has small, medium and large boots, listed in the roster — and every shot drops a spent casing where the shooter stood. Press E on a casing to read its calibre and how long ago it was fired.</p>';
   const others=multi?`<p><b>${G.humans.length} players</b> are in this squad${G.squad.length?`, with ${G.squad.length} bots`:''}. Any of them could be the spy or the commissar.</p>`:'';
   $('briefRole').textContent=spy?'Brandenburger':role==='com'?'Commissar':'Soldier';$('briefRole').className=spy?'spy':'com';
-  $('briefSub').textContent=spy?'Abwehr special unit, in Red Army uniform':role==='com'?'Secret political officer · five assaults until dawn':'Rifleman · five assaults until dawn';
+  $('briefSub').textContent=spy?'Abwehr special unit, in Red Army uniform':role==='com'?'Secret political officer · three assaults until dawn':'Rifleman · three assaults until dawn';
   $('briefText').innerHTML=tracksP+(spy?
    `<p>You are ${esc(p.name)}, an Abwehr infiltrator in a Red Army greatcoat. Somewhere in the squad is a <b>secret commissar</b> hunting you. He goes over every body after each assault: a 7.62×25 mm wound in the back points at the PPSh carriers, a captured MP 40 hides the calibre, and a green flare brings German mortars down on the squad. Once per assault you can stand next to someone, unseen, and press B to offer them German papers — a soldier who accepts joins your side, but one who refuses will talk, and the commissar arrests you on the spot. Get behind someone who is looking the other way and press V: the knife is silent and leaves no calibre — but if they turn round, or anyone sees, you are finished.</p>${sortieP}<p><b>You win</b> if three wrecked stations reach an assault unrepaired, if <b>you kill the commissar</b> (he gives himself away by questioning people and making arrests), or if the command dugout falls. <b>You lose</b> if you are arrested, killed, or the line holds until dawn.</p>`:
    role==='com'?
