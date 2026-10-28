@@ -255,7 +255,7 @@ function fire(u,ang,o={}){
   u.mag--;u.fireCd=w.rof*(u.isPlayer?1:1+rnd()*0.25);dropCasing(u,w);
   if(u.side==='sov'&&u.x>42&&u.x<53&&((G.effects.crN&&u.y<19)||(G.effects.crS&&u.y>=19)))u.fireCd*=1.7;
   const ml=w.len+0.1;G.fx.push({k:'muz',x:u.x+dx*ml,y:u.y+dy*ml,src:u,ml,a,t:0,life:0.04,mid:!w.auto&&w.len>0.7});
-  sfxAt(w.snd,u.x,u.y);
+  if(w.flame)flameSnd(u);else sfxAt(w.snd,u.x,u.y);
   if(u===G.me){G.kick=Math.min(0.3,G.kick+(w.auto?0.05:0.12));const ea=a+Math.PI/2+(crnd()-.5)*0.6;if(!w.flame)BRASS.push({x:u.x+dx*0.25,y:u.y+dy*0.25,vx:Math.cos(ea)*(2.5+crnd()*1.5),vy:Math.sin(ea)*(2.5+crnd()*1.5),t:0,r:crnd()*TAU});if(BRASS.length>40)BRASS.shift()}
   if(u.mag<=0)startReload(u);
   return true}
@@ -1402,6 +1402,30 @@ function audioInit(){if(SND.ctx)return;try{const AC=window.AudioContext||window.
   const len=SND.ctx.sampleRate*2;const b=SND.ctx.createBuffer(1,len,SND.ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;SND.noise=b;
   const src=SND.ctx.createBufferSource();src.buffer=b;src.loop=true;const f=SND.ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=300;const gn=SND.ctx.createGain();gn.gain.value=0.05;src.connect(f);f.connect(gn);gn.connect(SND.master);src.start()}catch(e){SND.ctx=null}}
 function out(pan){if(pan&&SND.ctx.createStereoPanner){const p=SND.ctx.createStereoPanner();p.pan.value=pan;p.connect(SND.master);return p}return SND.master}
+// flamethrower: one continuous roaring voice per flamethrower while the trigger is held, not a burst per tick
+const FLV=new Map();
+function flameSnd(u){if(!SND.ctx||SND.muted||state!=='play'||!G.me)return;const c=SND.ctx,now=c.currentTime;
+  const d=dist(u.x,u.y,G.me.x,G.me.y),vol=1/(1+d/6);if(vol<0.05)return;const pan=clamp((u.x-G.me.x)/12,-1,1);
+  let V=FLV.get(u.id);
+  if(!V){const src=c.createBufferSource();src.buffer=SND.noise;src.loop=true;src.loopStart=Math.random();
+    const lo=c.createBiquadFilter();lo.type='lowpass';lo.frequency.value=380;lo.Q.value=1.4;
+    const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=900;bp.Q.value=0.7;
+    const gl=c.createGain(),gb=c.createGain();gl.gain.value=1;gb.gain.value=0.22;
+    const g=c.createGain();g.gain.setValueAtTime(0.0001,now);
+    const pn=c.createStereoPanner?c.createStereoPanner():null;
+    src.connect(lo);lo.connect(gl);gl.connect(g);src.connect(bp);bp.connect(gb);gb.connect(g);if(pn){g.connect(pn);pn.connect(SND.master)}else g.connect(SND.master);
+    src.start(now,Math.random()*1.5);V={src,lo,bp,g,pn,last:0,start:now};FLV.set(u.id,V);
+    // ignition: a soft 'whoomp' as the fuel catches
+    nb(0.35,160,'lowpass',0.5*vol,{pan});tn(70,0.3,'sine',0.25*vol,{pan,slide:0.6});nb(0.12,2400,'highpass',0.08*vol,{pan})}
+  V.last=now;const tgt=0.55*vol;V.g.gain.cancelScheduledValues(now);V.g.gain.setTargetAtTime(tgt,now,0.04);
+  if(V.pn)V.pn.pan.setTargetAtTime(pan,now,0.05);
+  // the roar breathes and gutters
+  V.lo.frequency.setTargetAtTime(300+Math.random()*260,now,0.06);V.bp.frequency.setTargetAtTime(700+Math.random()*700,now,0.08);
+  if(Math.random()<0.25)nb(0.025+Math.random()*0.03,1800+Math.random()*2500,'bandpass',(0.06+Math.random()*0.08)*vol,{pan,q:3})}
+function flameSndTick(){if(!SND.ctx||!FLV.size)return;const now=SND.ctx.currentTime;
+  for(const [id,V] of FLV){if(now-V.last>0.12&&!V.off){V.off=now;V.g.gain.cancelScheduledValues(now);V.g.gain.setTargetAtTime(0.0001,now,0.09);nb(0.2,250,'lowpass',0.12,{})}
+    if(V.off&&V.last>V.off){V.off=0}
+    if(V.off&&now-V.off>0.6){try{V.src.stop()}catch(e){}FLV.delete(id)}}}
 function nb(dur,freq,type,gain,o={}){const c=SND.ctx;const t=c.currentTime+(o.delay||0);const s=c.createBufferSource();s.buffer=SND.noise;const f=c.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=o.q||0.8;const g=c.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(0.0002,gain),t+0.004);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);s.connect(f);f.connect(g);g.connect(out(o.pan));s.start(t,Math.random()*1.5);s.stop(t+dur+0.05)}
 function tn(fr,dur,type,gain,o={}){const c=SND.ctx;const t=c.currentTime+(o.delay||0);const os=c.createOscillator();os.type=type;os.frequency.setValueAtTime(fr,t);if(o.slide)os.frequency.exponentialRampToValueAtTime(fr*o.slide,t+dur);const g=c.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(0.0002,gain),t+0.006);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);os.connect(g);g.connect(out(o.pan));os.start(t);os.stop(t+dur+0.05)}
 function sfxAt(n,x,y){if(!SND.ctx||SND.muted||state!=='play'||!G.me)return;const d=dist(x,y,G.me.x,G.me.y);const v=1/(1+d/7);if(v<0.06||SND.budget>9)return;SND.budget++;sfx(n,v,clamp((x-G.me.x)/18,-0.9,0.9))}
@@ -1702,7 +1726,7 @@ $('againBtn').onclick=()=>{if(NET&&NET.isHost)store.del('ac_host_'+NET.code);lea
 
 // ================= boot =================
 let last=performance.now();
-function frame(now){const dt=Math.min(0.25,(now-last)/1000);last=now;SND.budget=0;
+function frame(now){const dt=Math.min(0.25,(now-last)/1000);last=now;SND.budget=0;flameSndTick();
   try{if(window.__acFreeze){requestAnimationFrame(frame);return}if(NET&&NET.lock)NET.lock.pump(dt);else Solo.pump(dt);
     if(G&&G.over&&G.result&&state!=='over'&&state!=='title')showEnd();
     RALPHA=clamp((now-lastStepAt)/(DT*1000),0,1);
