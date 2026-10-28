@@ -280,9 +280,9 @@ function setGeo(setKey) {
     show(K4, mkBox('spine_03', new V3(0.15, 1.47, c3.c.z), [new V3(0, 0, 1), new V3(1, 0.2, 0).normalize(), new V3(0, 0, 1).cross(new V3(1, 0.2, 0).normalize()).normalize()], [c3.h[2] + torsoT + 0.02, 0.07, 0.03], { ch: 0.02 })); } /* over the left shoulder, down across the chest and the back to the right hip */
   if (S.scarf) { const c3 = BB.chest[1], z = c3.c.z + c3.h[2] + torsoT; const K3 = ['p', 'cloth', S.scarf]; show(K3, aabb('spine_03', [-0.1, 1.42, z - 0.02], [0.1, 1.47, z + 0.03], { ch: 0.015 })); show(K3, aabb('spine_03', [-0.035, 1.25, z], [0.035, 1.43, z + 0.03], { ch: 0.01, flareN: [0.015, 0] })); } /* the neckerchief, knotted at the throat */
   if (S.belt) { const bl = BB.belly[0], a = grow(bl, torsoT + 0.008); show(['s', S.belt, 0.7], rel(a, -0.8, [a.h[0] + 0.004, 0.022, a.h[2] + 0.004], { ch: a.ch })); } /* the belt over the coat */
-  for (const [k, b] of S.helmet ? helmetBoxes(S.helmet) : helmetBoxes(null, true)) show(k, b);
+  const HG = new Map(), hl = acc(); for (const [k, b] of S.helmet ? helmetBoxes(S.helmet) : helmetBoxes(null, true)) { if (!S.helmet) { show(k, b); continue; } const key = k.join('|'); if (!HG.has(key)) HG.set(key, { k, A: acc() }); emit(HG.get(key).A, b); emit(hl, b, INK); } /* a helmet is its own mesh: it can be knocked off */
   if (S.face === 'jin') for (const [k, b] of queueBoxes()) show(k, b);
-  return (SETGEO[setKey] = { skin: toGeo(skin), hid: hid.pos.length ? toGeo(hid) : null, line: toGeo(line), parts: [...G.values()].map(e => ({ k: e.k, geo: toGeo(e.A) })), tris: (skin.idx.length + line.idx.length + [...G.values()].reduce((s, e) => s + e.A.idx.length, 0)) / 3 });
+  return (SETGEO[setKey] = { helmet: [...HG.values()].map(e => ({ k: e.k, geo: toGeo(e.A) })), helmetLine: hl.pos.length ? toGeo(hl) : null, skin: toGeo(skin), hid: hid.pos.length ? toGeo(hid) : null, line: toGeo(line), parts: [...G.values()].map(e => ({ k: e.k, geo: toGeo(e.A) })), tris: (skin.idx.length + line.idx.length + [...G.values()].reduce((s, e) => s + e.A.idx.length, 0)) / 3 });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -457,6 +457,24 @@ diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.02, 0.015), gBl * 0.8);`)
     .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 1.0, clamp(gDust * 0.7 + gMud, 0.0, 1.0)); roughnessFactor = mix(roughnessFactor, 0.35, gBl * 0.6);')
     .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - clamp(gDust * 0.55 + gMud, 0.0, 0.9);'); };
   m.customProgramCacheKey = () => 'grime'; return m; }
+// ---- loose things on the field (a helmet knocked off, a weapon dropped): fall, bounce, tumble, lie, and in time sink away
+const LOOSE = [];
+function loose(obj, vel, groundAt, rest) { const L = { obj, v: vel.clone(), w: new V3((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 9), t: 0, rest: rest || 0.05, groundAt }; LOOSE.push(L); return L; }
+function stepLoose(dt) { for (let i = LOOSE.length - 1; i >= 0; i--) { const L = LOOSE[i], o = L.obj; L.t += dt; const gy = (L.groundAt ? L.groundAt(o.position.x, o.position.z) : 0) + L.rest;
+    if (!L.still) { L.v.y -= 9.8 * dt; o.position.addScaledVector(L.v, dt); const wl = L.w.length(); if (wl > 1e-3) o.quaternion.premultiply(new Q().setFromAxisAngle(L.w.clone().divideScalar(wl), wl * dt));
+      if (o.position.y < gy) { o.position.y = gy; L.v.y = Math.abs(L.v.y) * 0.3; L.v.x *= 0.55; L.v.z *= 0.55; L.w.multiplyScalar(0.5); if (Math.abs(L.v.y) < 0.4 && Math.hypot(L.v.x, L.v.z) < 0.3) L.still = true; } }
+    if (L.t > 40) { o.position.y -= dt * 0.05; if (L.t > 46) { o.parent && o.parent.remove(o); LOOSE.splice(i, 1); } } } }
+// ---- a dead man laid on the game's own ragdoll: seven points (head, chest, pelvis, hands, feet) carry the body; the trunk is
+// set by the chest over the pelvis and the line of the hands, the limbs reach their points by IK, the head is turned to its point
+function poseRag(m, p) { const P = (i) => new V3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]), head = P(0), chest = P(1), pel = P(2), hL = P(3), hR = P(4), fL = P(5), fR = P(6);
+  for (const b of m.skel.bones) { b.quaternion.copy(BODY.restQ[b.name]); b.position.copy(BODY.restP[b.name]); }
+  const up = chest.clone().sub(pel).normalize(); let lf = hL.clone().sub(hR); lf.sub(up.clone().multiplyScalar(lf.dot(up))); if (lf.lengthSq() < 1e-4) lf = m.ragLeft || new V3(1, 0, 0); lf.normalize(); m.ragLeft = lf.clone(); const fw = new V3().crossVectors(lf, up).normalize();
+  const R = new M4().makeBasis(lf, up, fw); m.root.quaternion.setFromRotationMatrix(R); const pb = BODY.bpos('pelvis'); m.root.position.copy(pel).sub(pb.applyQuaternion(m.root.quaternion)); m.root.updateMatrixWorld(true);
+  aimBone(m.bones.neck_01, m.bones.Head.getWorldPosition(new V3()), head);
+  ik2(m.bones.upperarm_l, m.bones.lowerarm_l, m.bones.hand_l, hL, hL.clone().add(fw.clone().multiplyScalar(-0.3)).add(up.clone().multiplyScalar(-0.3)));
+  ik2(m.bones.upperarm_r, m.bones.lowerarm_r, m.bones.hand_r, hR, hR.clone().add(fw.clone().multiplyScalar(-0.3)).add(up.clone().multiplyScalar(-0.3)));
+  for (const [s, f] of [['l', fL], ['r', fR]]) { const t = f.clone().add(up.clone().multiplyScalar(0.0)); ik2(m.bones['thigh_' + s], m.bones['calf_' + s], m.bones['foot_' + s], t, m.bones['thigh_' + s].getWorldPosition(new V3()).add(fw.clone().multiplyScalar(0.6))); }
+  poseHand(m, 'r', m.wpnDropped ? 'relax' : 'fist', 1); poseHand(m, 'l', 'relax', 1); m.root.updateMatrixWorld(true); }
 class Man {
   constructor(setKey, wpnKey, scene) {
     this.root = THREE.SkeletonUtils.clone(BODY.gltf.scene); this.root.userData.man = this; this.scene = scene; scene.add(this.root);
@@ -475,6 +493,7 @@ class Man {
     const sk = this.skinned(G.skin, this.gm(solid(SKIN[S.face] || '#c8946a', 0.75))); sk.castShadow = sk.receiveShadow = true;
     for (const P of G.parts) { const m = this.skinned(P.geo, this.gm(matOf(P.k))); m.castShadow = m.receiveShadow = true; }
     this.skinned(G.line, LINE); this.hidGeo = G.hid;
+    this.helm = []; for (const H of G.helmet) { const hm = this.skinned(H.geo, this.gm(matOf(H.k))); hm.castShadow = true; this.helm.push({ mesh: hm, k: H.k }); } if (G.helmetLine) this.helm.push({ mesh: this.skinned(G.helmetLine, LINE), line: true });
     for (const w of this.attached.filter(a => a.userData.headgear)) w.parent.remove(w); this.attached = this.attached.filter(a => !a.userData.headgear);
     this.faceKind = S.face; this.faceMat = new THREE.MeshStandardMaterial({ map: faceTex(S.face, 'calm'), transparent: true, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false });
     const fw = onBone(this, 'Head', new THREE.Mesh(faceGeo(), this.faceMat)); fw.userData.headgear = true; this.attached.push(fw); this.expr = 'calm';
@@ -492,6 +511,15 @@ class Man {
   setExpr(e) { if (e === this.expr) return; this.expr = e; this.faceMat.map = faceTex(this.faceKind, e); this.faceMat.needsUpdate = true; }
   update(dt) { this.anim.update(dt); }
   dispose() { this.scene.remove(this.root); this.mixer.stopAllAction(); }
+  // the helmet knocked off, flying from where it sat: a loose copy (unskinned, placed by the head's own transform) given to loose()
+  dropHelmet(vel) { if (!this.helm || !this.helm.length || this.helmOff) return null; this.helmOff = true; const head = this.bones.Head, M = new M4().multiplyMatrices(head.matrixWorld, this.skel.boneInverses[BODY.bi.Head]).multiply(this.body[0].bindMatrix), g = new THREE.Group();
+    for (const h of this.helm) { h.mesh.visible = false; const mat = h.line ? new THREE.MeshBasicMaterial({ color: 0x15100b, side: THREE.BackSide }) : (() => { const c = matOf(h.k).clone(); c.skinning = false; return c; })(); g.add(new THREE.Mesh(h.mesh.geometry, mat)); }
+    M.decompose(g.position, g.quaternion, g.scale); this.scene.add(g); return loose(g, vel, this.groundAt, 0.18); }
+  putHelmetOn() { if (!this.helm) return; this.helmOff = false; for (const h of this.helm) h.mesh.visible = true; }
+  // the weapon let go: it leaves the hand where it is and falls
+  dropWeapon(vel) { const w = this.attached.find(a => a.userData.weapon); if (!w) return null; this.attached = this.attached.filter(a => a !== w); const g = new THREE.Group(); w.updateMatrixWorld(true); g.matrix.copy(w.matrixWorld); g.matrix.decompose(g.position, g.quaternion, g.scale);
+    w.parent.remove(w); w.matrix.identity(); w.position.set(0, 0, 0); w.quaternion.identity(); w.scale.set(1, 1, 1); w.matrixAutoUpdate = true; g.add(w); this.scene.add(g); this.wpnDropped = true; return loose(g, vel, this.groundAt, 0.05); }
+  rearm() { if (this.wpnDropped) { this.wpnDropped = false; this.arm(this.wpnKey); } this.putHelmetOn(); }
 }
 // the ink line round a rigid piece (a weapon, a shield): its own back faces, pushed out along their normals
 const RIG_LINE = new THREE.MeshBasicMaterial({ color: 0x15100b, side: THREE.BackSide });
@@ -534,13 +562,14 @@ function clipInfo(name) { if (CLIPV[name]) return CLIPV[name]; const c = BODY.cl
   v.sort((x, y) => x - y); m.dispose(); return (CLIPV[name] = { v: Math.max(0.4, v.length ? v[(v.length * 0.5) | 0] : 1), low }); } /* the clip's own ground speed (its planted foot sweeping back) and the height its ankle is down at */
 function clipSpeedOf(name) { return clipInfo(name).v; }
 // gait bands, in the game's own speeds (m/s): [clip, the top of its band, the pace it looks right at]
-const GAIT_ALT = { Walk_Loop: 1 };
+const GAIT_ALT = { Walk_Loop: 1, Sprint_Shield_Loop: 1 };
 const GAITBAND = { fwd: [['Walk_Fwd_Loop', 1.9, 1.3], ['Jog_Fwd_Loop', 4.6, 3.4], ['Sprint_Loop', 99, 5.6]], back: [['Walk_Bwd_Loop', 2.2, 1.2], ['Jog_Bwd_Loop', 99, 3.0]],
   left: [['Walk_L_Loop', 2.0, 1.1], ['Jog_Left_Loop', 99, 3.0]], right: [['Walk_R_Loop', 2.0, 1.1], ['Jog_Right_Loop', 99, 3.0]] };
 const TRAVEL = { Dodge_Left: [2.0, 0], Dodge_Right: [-2.0, 0], Roll: [0, 5.0], Sword_Dash: [0, 3.7], Shield_Dash: [0, 1.0] };
 class Animator {
   constructor(man) { this.man = man; this.bw = {}; this.os = []; this.one = null; this.phase = Math.random(); this.speed = 0; this.ang = 0; this.combat = false; this.idle = IDLES[(Math.random() * 3) | 0]; this.idleT = 6 + Math.random() * 8;
-    this.chain = null; this.step = 0; this.pending = false; this.hold = null; this.dead = false; this.down = false; this.look = null; this.lookW = 0; this.spearT = -1; this.blockOn = false; this.cbT = 0; this.dirW = { fwd: 1, back: 0, left: 0, right: 0 }; this.pointAt = null; this.pointW = 0; this.orderT = 0; }
+    this.chain = null; this.step = 0; this.pending = false; this.hold = null; this.dead = false; this.down = false; this.look = null; this.lookW = 0; this.spearT = -1; this.blockOn = false; this.cbT = 0; this.dirW = { fwd: 1, back: 0, left: 0, right: 0 }; this.pointAt = null; this.pointW = 0; this.orderT = 0;
+    this.rx = { a: 0, v: 0, ax: new V3(1, 0, 0), o: new V3(), ov: new V3(), h: 0, hv: 0 }; this.thrustH = 0; this.thrustK = 1; this.thrustRate = 1; this.sweepT = -1; this.reloadOn = false; this.blockDir = 'F'; this.atkSide = 1; this.atkPow = 1; this.biteT = 0; }
   A(name) { const m = this.man; if (!m.acts[name]) { const c = BODY.clips[name]; if (!c) return null; m.acts[name] = m.mixer.clipAction(c); } return m.acts[name]; }
   armed() { const k = this.man.wpnKey; this.combat = k !== 'none'; this.hands = { r: ['dao', 'shield', 'spear', 'gun'].includes(k) ? 'fist' : 'relax', l: ['spear', 'shield', 'bow', 'gun'].includes(k) ? 'fist' : 'relax' }; }
   // 衝: the order to charge: the weapon goes up, the off hand points the way, the head turns to it, and he shouts
@@ -552,7 +581,7 @@ class Animator {
     for (const e of this.os) e.target = 0, e.rate = 1 / f;
     const prev = this.os.find(e => e.a === a); if (prev) this.os = this.os.filter(e => e.a !== a); /* the same clip again: it takes over its own fading entry, which must not stop it when it fades out (that left no clip on the body: the T-pose) */
     a.reset(); a.enabled = true; a.setLoop(o.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity); a.clampWhenFinished = true; a.timeScale = o.ts || 1; a.setEffectiveWeight(0); a.play();
-    this.os.push({ a, w: prev ? prev.w * 0.5 : 0, target: 1, rate: 1 / f }); this.one = { name, a, then: o.then === undefined ? null : o.then, chainAt: o.chainAt || 0.62, attack: !!o.attack, freezeAt: o.freezeAt, hold: !!o.hold || !!o.loop };
+    this.os.push({ a, w: prev ? prev.w * 0.5 : 0, target: 1, rate: 1 / f }); this.one = { ts: o.ts || 1, name, a, then: o.then === undefined ? null : o.then, chainAt: o.chainAt || 0.62, attack: !!o.attack, freezeAt: o.freezeAt, hold: !!o.hold || !!o.loop };
     if (o.expr) this.man.setExpr(o.expr); return a; }
   endOne() { for (const e of this.os) { e.target = 0; e.rate = 1 / 0.18; } this.one = null; }
   attack(key) {
@@ -564,9 +593,19 @@ class Animator {
   }
   chainStep(i, fade) { const C = CHAINS[this.chain]; this.step = i; this.pending = false; const name = C.steps[i];
     this.play(name, { fade, attack: true, expr: 'shout', ts: this.atkTS || 1, then: () => { if (this.pending && this.step + 1 < C.steps.length) return this.chainStep(this.step + 1, 0.08); const r = BODY.clips[name + '_Rec'] ? name + '_Rec' : null; this.chain = null; if (r) this.play(r, { fade: 0.08, expr: 'calm' }); else { this.man.setExpr('calm'); this.endOne(); } } }); }
-  thrust() { if (this.spearT >= 0 && this.spearT < 0.45) return; this.spearT = 0; this.combat = true; this.man.setExpr('shout'); }
+  cut(name, ts, side, pow) { if (this.dead || this.down || !BODY.clips[name]) return; this.combat = true; this.cbT = 4; this.atkSide = side || 1; this.atkPow = pow || 1; this.chain = null;
+    this.play(name, { fade: 0.1, attack: true, expr: 'shout', ts: ts || 1, then: () => { this.man.setExpr('calm'); this.endOne(); } }); }
+  raise(dur) { this.raiseT = this.raiseD = dur || 1.5; this.man.setExpr('shout'); }
+  thrust(o) { o = o || {}; if (this.spearT >= 0 && this.spearT < (o.flurry ? 0.2 : 0.45)) return; this.spearT = 0; this.thrustH = o.h || 0; this.thrustK = o.k || 1; this.thrustRate = o.flurry ? 1.7 : 1; this.combat = true; this.man.setExpr('shout'); }
+  sweep() { if (this.sweepT >= 0) return; this.sweepT = 0; this.combat = true; this.man.setExpr('shout'); }
   block(on) { if (this.dead || this.down) return; if (on && !this.blockOn) { this.blockOn = true; if (this.man.spear) return; this.play(this.man.shield ? 'Idle_Shield_Break' : 'Sword_Block', { fade: 0.08, freezeAt: this.man.shield ? 0.18 : 0.42, hold: true }); }
     else if (!on && this.blockOn) { this.blockOn = false; if (this.one && this.one.hold) this.endOne(); } }
+  // a blow lands on him: he is thrown and bent away from it (a spring, so he comes back), his head whips, and he is shoved
+  // (the feet then step to catch him: the legs see the shove as travel)
+  impulse(dirW, k, heavy) { const X = this.rx, d = dirW.clone(); d.y = 0; if (d.lengthSq() < 1e-6) return; d.normalize(); X.ax.copy(new V3(0, 1, 0).cross(d)).normalize();
+    X.v += (4.5 + (heavy ? 4 : 0)) * k; X.hv += (8 + (heavy ? 6 : 0)) * k; X.ov.add(d.multiplyScalar((0.8 + (heavy ? 1.1 : 0)) * k)); }
+  // his blade bites: the cut drags for a moment before it follows through
+  bite(t) { this.biteT = Math.max(this.biteT, t || 0.1); }
   hit(dir, heavy) { if (this.dead || this.down) return; this.blockOn = false; this.chain = null; this.pending = false; this.play(heavy ? HITS.heavy : (HITS[dir] || HITS.F), { fade: 0.06, expr: 'pain', then: () => { this.man.setExpr('calm'); this.endOne(); } }); }
   die() { this.blockOn = false; this.chain = null; this.dead = true; this.play(Math.random() < 0.5 ? 'Death01' : 'Death02', { fade: 0.1, force: true, expr: 'pain', then: () => {} }); }
   wound() { this.dead = false; this.down = true; this.play('IdleToLay', { fade: 0.15, force: true, expr: 'pain', then: () => {} }); }
@@ -588,7 +627,8 @@ class Animator {
     // slide is better than legs slowed down and smeared between a walk and a jog); the change of gait is a short crossfade
     const pick = (d) => { const B = GAITBAND[d]; let k = 0; while (k < B.length - 1 && sp > B[k][1]) k++; const r = B[k]; return d === 'fwd' && k === 0 && this.style && this.style.altWalk ? ['Walk_Loop', r[1], r[2]] : r; };
     this.gaitTS = this.gaitTS || {};
-    for (const d in this.dirW) { const w0 = this.dirW[d] * loco; if (w0 < 0.002) continue; const [n, , ref] = pick(d); if (!BODY.clips[n]) continue; tgt[n] = (tgt[n] || 0) + w0; this.gaitTS[n] = clamp(sp / ref, 0.8, 1.3); }
+    if (!this.style) this.makeStyle(); const MX = this.style.mix;
+    for (const d in this.dirW) { const w0 = this.dirW[d] * loco; if (w0 < 0.002) continue; const [n, , ref] = pick(d); if (!BODY.clips[n]) continue; const mixW = d === 'fwd' && MX && BODY.clips[MX[0]] && /Jog|Sprint/.test(n) && n !== MX[0] ? MX[1] : 0; tgt[n] = (tgt[n] || 0) + w0 * (1 - mixW); if (mixW) tgt[MX[0]] = (tgt[MX[0]] || 0) + w0 * mixW; this.gaitTS[n] = clamp(sp / ref, 0.8, 1.3); }
     for (const n in tgt) if (!(n in this.bw)) this.bw[n] = 0;
     let sum = 0; for (const n in this.bw) { const g = tgt[n] || 0; this.bw[n] += (g - this.bw[n]) * Math.min(1, dt * 9); if (this.bw[n] < 0.002 && !g) { const a = this.A(n); a.stop(); delete this.bw[n]; continue; } sum += this.bw[n]; }
     const baseShare = Math.max(0, 1 - Math.min(1, oneW)), norm = sum > 0 ? baseShare / sum : 0, oneNorm = oneW > 1 ? 1 / oneW : 1;
@@ -601,10 +641,23 @@ class Animator {
     for (const b of m.skel.bones) { b.quaternion.copy(BODY.restQ[b.name]); b.position.copy(BODY.restP[b.name]); } /* every bone from rest, every frame: a bone a clip does not move must not keep what was done to it last frame (the turned torso wound round and round) */
     m.mixer.update(dt); m.root.updateMatrixWorld(true);
     if (this.hands) { const pt = this.pointW > 0.4; poseHand(m, 'r', this.hands.r, 1); poseHand(m, 'l', pt ? 'point' : this.hands.l, 1); }
+    // the blow taken: spring the bend and the shove back; the cut given: load, drive and follow through with the whole trunk; the guard turned to the side it covers
+    { const X = this.rx; X.v += (-110 * X.a - 14 * X.v) * dt; X.a += X.v * dt; X.hv += (-170 * X.h - 16 * X.hv) * dt; X.h += X.hv * dt;
+      X.ov.addScaledVector(X.o, -55 * dt).multiplyScalar(Math.max(0, 1 - 8 * dt)); X.o.addScaledVector(X.ov, dt);
+      if (!this.dead && !this.down) { if (X.o.lengthSq() > 1e-6) { m.root.position.add(X.o); m.root.updateMatrixWorld(true); }
+        if (Math.abs(X.a) > 1e-3) { rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(X.ax, X.a * 0.4)); rotWorld(m.bones.spine_03, new Q().setFromAxisAngle(X.ax, X.a * 0.35)); }
+        if (Math.abs(X.h) > 1e-3) rotWorld(m.bones.Head, new Q().setFromAxisAngle(X.ax, X.h * 0.45)); } }
+    if (this.one && this.one.attack && !this.dead) { const a = this.one.a, p = a.time / a.getClip().duration, s2 = this.atkSide || 1, P = this.atkPow || 1, upv = new V3(0, 1, 0);
+      if (this.biteT > 0) { this.biteT -= dt; a.timeScale = this.one.ts * 0.22; } else a.timeScale = this.one.ts;
+      const tw = p < 0.32 ? -0.28 * sm(p / 0.32) : p < 0.52 ? lerp(-0.28, 0.36, sm((p - 0.32) / 0.2)) : 0.36 * (1 - sm(clamp((p - 0.52) / 0.4, 0, 1)));
+      rotWorld(m.bones.spine_02, new Q().setFromAxisAngle(upv, tw * s2 * P)); const dip = p > 0.3 && p < 0.62 ? Math.sin((p - 0.3) / 0.32 * Math.PI) * 0.1 * P : 0;
+      if (dip) rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(new V3(1, 0, 0).applyQuaternion(m.root.quaternion), dip)); }
+    if (this.blockOn && !m.spear) { const bd = this.blockDir, upv = new V3(0, 1, 0); if (bd === 'L' || bd === 'R') rotWorld(m.bones.spine_02, new Q().setFromAxisAngle(upv, bd === 'L' ? 0.4 : -0.4)); else if (bd === 'U') rotWorld(m.bones.spine_03, new Q().setFromAxisAngle(new V3(1, 0, 0).applyQuaternion(m.root.quaternion), -0.22)); }
     this.legIK(dt);
-    if (m.spear && !this.dead && !this.down) this.spearIK(dt);
+    if (m.spear && !this.dead && !this.down && !(this.one && this.one.attack)) this.spearIK(dt);
     if (this.orderT > 0) { this.orderT -= dt; if (this.orderT <= 0) { this.pointAt = null; this.look = null; this.man.setExpr('calm'); } }
     this.pointW += ((this.pointAt && !this.dead && !this.down ? 1 : 0) - this.pointW) * Math.min(1, dt * 7);
+    if (this.raiseT > 0 && !this.dead && !this.down) { this.raiseT -= dt; const w = sm(clamp(Math.min(this.raiseT, (this.raiseD || 1.5) - this.raiseT) * 4, 0, 1)); const fw2 = new V3(0, 0, 1).applyQuaternion(m.root.quaternion); aimArm(m, 'r', fw2.multiplyScalar(0.2).add(new V3(0, 1, 0)), w * 0.95, 0.1); if (this.raiseT <= 0) m.setExpr('calm'); } /* the arm up: hold, or give fire */
     if (this.pointW > 0.01 && (this.pointAt || this.lastPoint)) { if (this.pointAt) this.lastPoint = this.pointAt; const w = sm(this.pointW);
       const S = m.bones.upperarm_l.getWorldPosition(new V3()), d = this.lastPoint.clone().sub(S); d.y = Math.max(d.y, 0.05 * d.length()); aimArm(m, 'l', d, w, 0.03); /* the off hand points the way, a little above the line */
       if (m.wpnKey !== 'none' && m.wpnKey !== 'bow') { const fwd = new V3(0, 0, 1).applyQuaternion(m.root.quaternion); aimArm(m, 'r', fwd.clone().multiplyScalar(0.35).add(new V3(0, 1, 0)), w * 0.9, 0.12); } } /* the weapon raised high */
@@ -616,8 +669,13 @@ class Animator {
   // each foot's reach before and behind the hips is stretched so the stride covers the ground he really travels; and a foot the
   // clip has put down is pinned where it landed until the clip lifts it, the leg reaching it by IK with the clip's own knee and
   // foot angle. The animation, with the slide taken out. Every man has his own cadence, stride and lean.
+  // his own way of moving: a run mixed from the library's (the sprint's drive, the walk's upright trot, the shield-run), his own
+  // cadence and stride, how he carries his arms, how much his trunk turns with the stride, how he holds his head, how low he runs
+  makeStyle() { const h = Math.random, k = h(); this.style = { cad: 0.9 + 0.2 * h(), stride: 0.9 + 0.2 * h(), lean: 0.02 + 0.09 * h(), altWalk: h() < 0.4,
+      mix: k < 0.3 ? ['Sprint_Loop', 0.25 + 0.25 * h()] : k < 0.55 ? ['Walk_Loop', 0.2 + 0.2 * h()] : k < 0.7 ? ['Sprint_Shield_Loop', 0.3 + 0.3 * h()] : null,
+      carry: (h() - 0.3) * 0.5, twist: 0.04 + 0.14 * h(), head: (h() - 0.5) * 0.3, low: h() < 0.3 ? 0.03 + 0.04 * h() : 0 }; }
   legIK(dt) {
-    const m = this.man, R = m.root; if (!this.style) { const h = Math.random; this.style = { cad: 0.93 + 0.14 * h(), stride: 0.92 + 0.16 * h(), lean: 0.02 + 0.07 * h(), altWalk: h() < 0.4 }; }
+    const m = this.man, R = m.root; if (!this.style) this.makeStyle();
     const L = this.legs || (this.legs = { ph: Math.random(), w: 0, last: R.position.clone(), v: new V3(), feet: [0, 1].map(() => ({ lock: null, rel: 0 })) });
     const off = this.dead || this.down || (this.one && LEGFREE.test(this.one.name)); L.w += ((off ? 0 : 1) - L.w) * Math.min(1, dt * 8); if (L.w < 0.01) { L.last.copy(R.position); for (const f of L.feet) f.lock = null; return; }
     if (dt > 0) { const v = R.position.clone().sub(L.last).divideScalar(dt); v.y = 0; if (v.length() > 12) v.set(0, 0, 0); L.v.lerp(v, Math.min(1, dt * 10)); } L.last.copy(R.position);
@@ -625,7 +683,10 @@ class Animator {
     // the cadence: the gait clip that leads the blend sets it (played a little faster or slower for his speed), the stretch makes up the rest
     let lead = null, lw = 0; for (const n in this.bw) if ((SPEED[n] || GAIT_ALT[n]) && this.bw[n] > lw) { lw = this.bw[n]; lead = n; }
     let k = 1; if (lead && sp > 0.12) { const vc = clipSpeedOf(lead), dur = BODY.clips[lead].duration, ts = clamp(sp / vc, 0.8, 1.3) * S.cad; L.ph = (L.ph + dt * ts / dur) % 1; k = clamp(sp / (vc * ts), 0.45, 1.7) * S.stride; } L.low = lead ? clipInfo(lead).low : 0.125;
-    if (sp > 0.12 && !(this.one && this.one.attack)) rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(left, S.lean * clamp(sp / 4, 0, 1) * L.w));
+    if (sp > 0.12 && !(this.one && this.one.attack)) { const mv = clamp(sp / 3, 0, 1) * L.w; rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(left, (S.lean + S.low * 2) * clamp(sp / 4, 0, 1) * L.w));
+      rotWorld(m.bones.spine_02, new Q().setFromAxisAngle(up, Math.sin(L.ph * 2 * Math.PI) * S.twist * mv)); rotWorld(m.bones.Head, new Q().setFromAxisAngle(left, S.head * mv));
+      if (!this.blockOn && m.wpnKey !== 'spear' && m.wpnKey !== 'gun') for (const sd of ['l', 'r']) rotWorld(m.bones['upperarm_' + sd], new Q().setFromAxisAngle(left, -S.carry * mv)); } /* his carriage: the trunk turning with the stride, the head set, the arms high or low */
+    if (S.low && sp > 1.5) { const pel = m.bones.pelvis, wp = pel.getWorldPosition(new V3()); wp.y -= S.low * clamp((sp - 1.5) / 2, 0, 1) * L.w; pel.parent.updateMatrixWorld(true); pel.position.copy(pel.parent.worldToLocal(wp)); pel.updateMatrixWorld(true); }
     const gy = (x, z) => m.groundAt ? m.groundAt(x, z) : R.position.y, base = R.position.y;
     for (let i = 0; i < 2; i++) { const F = L.feet[i], side = i === 0 ? 'l' : 'r', th = m.bones['thigh_' + side], ca = m.bones['calf_' + side], ft = m.bones['foot_' + side];
       const hip = th.getWorldPosition(new V3()), A = ft.getWorldPosition(new V3()), knee = ca.getWorldPosition(new V3()), fq = ft.getWorldQuaternion(new Q()), h = A.y - base;
@@ -643,15 +704,19 @@ class Animator {
   }
   spearIK(dt) {
     const m = this.man, R = m.root, fwd = new V3(0, 0, 1).applyQuaternion(R.quaternion), left = new V3(1, 0, 0).applyQuaternion(R.quaternion), up = new V3(0, 1, 0);
-    let k = 0; if (this.spearT >= 0) { this.spearT += dt; const t = this.spearT; k = t < 0.18 ? -0.35 * sm(t / 0.18) : t < 0.32 ? lerp(-0.35, 1, sm((t - 0.18) / 0.14)) : t < 0.7 ? lerp(1, 0, sm((t - 0.32) / 0.38)) : 0; if (t > 0.75) { this.spearT = -1; m.setExpr('calm'); } }
+    let k = 0; if (this.spearT >= 0) { this.spearT += dt * this.thrustRate; const t = this.spearT; k = t < 0.18 ? -0.35 * sm(t / 0.18) : t < 0.32 ? lerp(-0.35, 1, sm((t - 0.18) / 0.14)) : t < 0.7 ? lerp(1, 0, sm((t - 0.32) / 0.38)) : 0; if (t > 0.75) { this.spearT = -1; m.setExpr('calm'); } }
     if (m.wpnKey === 'gun') { k = 0; this.spearT = -1; } /* a gun is not thrust */
     const gunAim = m.wpnKey === 'gun' && this.aimOn, gunPort = m.wpnKey === 'gun' && !this.aimOn;
-    const pel = m.bones.pelvis.getWorldPosition(new V3()), dir = (gunPort ? fwd.clone().multiplyScalar(0.55).add(up.clone().multiplyScalar(0.62)).add(left.clone().multiplyScalar(0.45)) : fwd.clone().multiplyScalar(0.96).add(up.clone().multiplyScalar(gunAim ? 0.0 : 0.06))).normalize(), push = dir.clone().multiplyScalar(k * 0.4);
+    let sw = 0; if (this.sweepT >= 0) { this.sweepT += dt; const t = this.sweepT; sw = t < 0.22 ? -0.9 * sm(t / 0.22) : t < 0.5 ? lerp(-0.9, 1.1, sm((t - 0.22) / 0.28)) : t < 0.9 ? lerp(1.1, 0, sm((t - 0.5) / 0.4)) : 0; if (t > 0.9) { this.sweepT = -1; m.setExpr('calm'); } } /* the wolf-brush sweep: the whole front swept across */
+    const pel = m.bones.pelvis.getWorldPosition(new V3()), dir = (gunPort ? fwd.clone().multiplyScalar(0.55).add(up.clone().multiplyScalar(0.62)).add(left.clone().multiplyScalar(0.45)) : fwd.clone().multiplyScalar(0.96).add(up.clone().multiplyScalar(gunAim ? 0.0 : 0.06 + this.thrustH * Math.max(0, k)))).normalize(), push = dir.clone().multiplyScalar(k * 0.4 * this.thrustK);
+    if (sw) dir.applyAxisAngle(up, sw);
     const rear = gunAim ? m.bones.spine_03.getWorldPosition(new V3()).add(left.clone().multiplyScalar(-0.16)).add(fwd.clone().multiplyScalar(0.14)).add(up.clone().multiplyScalar(0.06)) /* the butt at the right cheek, the eye down the barrel */
       : gunPort ? pel.clone().add(left.clone().multiplyScalar(-0.17)).add(fwd.clone().multiplyScalar(0.12)).add(up.clone().multiplyScalar(0.12)) /* carried across the body, muzzle up over the left shoulder */
       : pel.clone().add(left.clone().multiplyScalar(-0.29)).add(fwd.clone().multiplyScalar(-0.03)).add(up.clone().multiplyScalar(0.13)).add(push); /* the rear hand out at the right hip, clear of the coat */
     const front = m.wpnKey === 'gun' ? rear.clone().add(dir.clone().multiplyScalar(gunAim ? 0.4 : 0.36)) : rear.clone().add(dir.clone().multiplyScalar(0.3)).add(left.clone().multiplyScalar(0.2)).add(up.clone().multiplyScalar(0.07)); /* within the arm's reach with the fist closed round the shaft */ /* the lead hand ahead of the belly, within the left arm's reach */
-    const sd = front.clone().sub(rear).normalize();
+    if (sw) { const c = pel.clone(); for (const P of [rear, front]) P.sub(c).applyAxisAngle(up, sw * 0.6).add(c); }
+    if (gunPort && this.reloadOn) { this.rT = (this.rT || 0) + dt; front.copy(rear).addScaledVector(dir, 0.6 + 0.11 * Math.sin(this.rT * 9)); } /* the ramrod: the off hand works at the muzzle */
+    const sd = (gunPort && this.reloadOn ? dir.clone() : front.clone().sub(rear)).normalize();
     gripTo(m, 'r', rear, rear.clone().add(left.clone().multiplyScalar(-0.7)).add(up.clone().multiplyScalar(0.05)).add(fwd.clone().multiplyScalar(-0.45)), sd, up.clone().multiplyScalar(-0.6).add(left.clone().multiplyScalar(-0.4)).normalize()); /* the elbow out and back, never in across the body; the fist (which carries the shaft) on the line */
     gripTo(m, 'l', front, front.clone().add(left.clone().multiplyScalar(0.8)).add(up.clone().multiplyScalar(-0.25)), sd, up.clone().multiplyScalar(-0.7).add(left.clone().multiplyScalar(0.3)).normalize());
     if (k > 0) { const sp = m.bones.spine_02; const q = new Q().setFromAxisAngle(up, -0.35 * k); rotWorld(sp, q); } /* the hips and trunk turn into the thrust */
@@ -810,5 +875,5 @@ function crowdStep(F, dt, c) {
   if (F.prev) { F.w = Math.min(1, F.w + dt / F.fade); if (F.w >= 1) F.prev = null; }
 }
 
-window.RIG = { Crowd, crowdState, crowdStep, bake, CROWD_GRIME, GRIME, analyse, Man, Animator, ARMOR, WEAPON, CHAINS, HITS, IDLES, SPEED, TRAVEL, SKIN, setGeo, bodyBoxes, get BODY() { return BODY; } };
+window.RIG = { poseRag, stepLoose, LOOSE, Crowd, crowdState, crowdStep, bake, CROWD_GRIME, GRIME, analyse, Man, Animator, ARMOR, WEAPON, CHAINS, HITS, IDLES, SPEED, TRAVEL, SKIN, setGeo, bodyBoxes, get BODY() { return BODY; } };
 })();
