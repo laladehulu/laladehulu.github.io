@@ -122,11 +122,11 @@ const SQUAD=[
  {name:'Lebedev',rank:'Pvt.',col:'#e9e3d1',wpn:'ppsh'},
 ];
 const WAVES=[
- {r:9,s:3,m:0,g:2,t:0,txt:'A probing attack in strength. Riflemen are pouring through the ruins.'},
- {r:10,s:7,m:1,g:3,t:0,txt:'Assault troops with MP 40s are coming in fast behind an MG 42.'},
- {r:12,s:9,m:2,g:3,t:0,txt:'Two MG 42 teams are setting up in no-man\'s land. Get them before they shred the windows.'},
- {r:13,s:10,m:2,g:4,t:1,txt:'A heavy assault on both flanks, with a Panzer in support. Watch the trenches.'},
- {r:15,s:12,m:2,g:4,t:1,txt:'Everything they have. A Panzer leads the last assault — only grenades and the PTRD can stop it.'},
+ {r:12,s:5,m:0,g:2,t:0,txt:'A probing attack in strength. Riflemen are pouring through the ruins.'},
+ {r:14,s:10,m:1,g:3,t:1,txt:'Assault troops behind a Panzer. Man the 45 mm gun in the street.'},
+ {r:16,s:12,m:2,g:4,t:1,txt:'Two MG 42 teams and a Panzer. Get the gun on the tank before it reaches the wire.'},
+ {r:18,s:14,m:2,g:5,t:2,txt:'A heavy assault on both flanks with two Panzers. Watch the trenches.'},
+ {r:20,s:18,m:2,g:5,t:3,txt:'Everything they have. Three Panzers lead the last assault.'},
 ];
 // Avalon-style sorties between assaults. Team size per sortie (8 soldiers).
 const SORTIES=[
@@ -138,7 +138,7 @@ const SORTIES=[
 ];
 const TEAM=[3,4,4,5,5];
 // mul: German numbers per assault · spread: German inaccuracy · pdmg: German damage to you · hp: squad toughness
-const DIFF={easy:{mul:0.6,spread:2.7,pdmg:0.6,hp:150,name:'Easy'},normal:{mul:1,spread:2.1,pdmg:0.8,hp:130,name:'Normal'},hard:{mul:1.3,spread:1.75,pdmg:1,hp:115,name:'Hard'}};
+const DIFF={easy:{mul:0.7,spread:2.5,pdmg:0.65,hp:150,name:'Easy'},normal:{mul:1,spread:1.85,pdmg:0.9,hp:130,name:'Normal'},hard:{mul:1.3,spread:1.6,pdmg:1,hp:115,name:'Hard'}};
 let UID=0;
 function mkUnit(o){return Object.assign({id:UID++,alive:true,x:0,y:0,aim:Math.PI,hp:100,maxhp:100,path:[],moving:false,phase:0,fireCd:0,reloadT:0,burst:4,burstPause:0,thinkT:rnd()*0.3,target:null,state:'idle',timer:0,bark:null,grenCd:8+rnd()*12,side:'sov',uniform:'sov',isSpy:false,revealed:false,arrested:false,sight:{},plog:[],logT:0,sightT:rnd()*0.4,repathT:0,mag:0,kind:'sq',moveA:0},o)}
 
@@ -241,7 +241,7 @@ function updateProj(dt){
       let best=null,bt=2;
       for(const u of G.units){if(!canHit(p,u))continue;const r=u.kind==='tank'?1.15:0.36;const fx=u.x-p.x,fy=u.y-p.y;const t=clamp((fx*p.dx+fy*p.dy)/st,0,1);const cx=p.x+p.dx*st*t,cy=p.y+p.dy*st*t;if(dist(cx,cy,u.x,u.y)<r&&t<bt){bt=t;best=u}}
       if(best){const hx=p.x+p.dx*st*bt,hy=p.y+p.dy*st*bt;p.dead=true;
-        if(best.kind==='tank'){if(p.at){hurt(best,90,{owner:p.owner,cause:'bullet',cal:p.cal,dx:p.dx,dy:p.dy});G.fx.push({k:'spark',x:hx,y:hy,t:0,life:0.3,n:8})}else{G.fx.push({k:'spark',x:hx,y:hy,t:0,life:0.15,n:3});if(crnd()<0.3)sfxAt('ric',hx,hy)}}
+        if(best.kind==='tank'){if(p.at){hurt(best,p.gun?330:90,{owner:p.owner,cause:'bullet',cal:p.cal,dx:p.dx,dy:p.dy});G.fx.push({k:'spark',x:hx,y:hy,t:0,life:0.3,n:8})}else{G.fx.push({k:'spark',x:hx,y:hy,t:0,life:0.15,n:3});if(crnd()<0.3)sfxAt('ric',hx,hy)}}
         else if(p.he)explode(hx,hy,2.2,95,{owner:p.owner,cause:'shell',hurtSov:true,hurtGer:false});
         else hurt(best,p.dmg,{owner:p.owner,cause:'bullet',cal:p.cal,dx:p.dx,dy:p.dy,tk:p.tk,at:p.at});
         break}
@@ -339,6 +339,7 @@ function sovAI(u,dt){
   if(u.revealed){traitorAI(u,dt);return}
   if(u.isSpy)spyAI(u,dt);
   if(u.isCom)comAI(u,dt);
+  if(u.gunner&&!u.path.length&&dist(u.x,u.y,CREWX,CREWY)<0.7){u.moving=false;return}
   if(u.knife){knifeTick(u,dt);return}
   if(u.recruit){recruitTick(u,dt);u.moving=false;return}
   if(u.stab){stabTick(u,dt);return}
@@ -480,7 +481,7 @@ function runSched(e){
 
 // ================= German AI =================
 function spawnGerman(kind){
-  if(kind==='tank'){const th=Math.round(800*(G.tankMul||1));const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:800,wpn:'mg42',mag:75,x:-1.5,y:20,aim:0,turret:0,shellCd:5});G.units.push(u);logMsg(G.tankMul<1?'Tank! The Panzer hit our mines — it is damaged, but still coming!':'Tank! A Panzer is coming down the street!','bad');sfx('tankHorn');return}
+  if(kind==='tank'){const th=Math.round(800*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:800,wpn:'mg42',mag:75,x:-1.5,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);logMsg(G.tankMul<1?'Tank! The Panzer hit our mines — it is damaged, but still coming!':'Tank! A Panzer is coming down the street!','bad');sfx('tankHorn');return}
   let y=0;for(let k=0;k<40;k++){y=1+(rnd()*38|0);if(passable(0,y)&&passable(1,y))break}
   const wpn=kind==='smg'?'mp40':kind==='mg'?'mg42':'kar98';
   const u=mkUnit({kind,side:'ger',uniform:'ger',name:'German',wpn,mag:WPN[wpn].mag,x:0.5,y:y+0.5,aim:0,hp:kind==='mg'?140:100,maxhp:kind==='mg'?140:100,grenCd:kind==='gren'?6:30+rnd()*30});
@@ -512,7 +513,8 @@ function gerAI(u,dt){
   if(canFire&&Math.abs(d)<0.2){if(u.burstPause>0)u.burstPause-=dt;else{const w=WPN[u.wpn];if(fire(u,u.aim)&&w.auto){u.burst--;if(u.burst<=0){u.burst=u.kind==='mg'?10+(rnd()*10|0):3+(rnd()*5|0);u.burstPause=u.kind==='mg'?0.8+rnd()*1.2:0.4+rnd()*0.6}}}}
   u.grenCd-=dt;if(u.grenCd<=0){if(dd>4&&dd<10){throwGrenade(u,t.x,t.y,'stick');say(u,'Granate!',1.3);u.grenCd=u.kind==='gren'?10+rnd()*8:40}else u.grenCd=2}}
 function tankAI(u,dt){
-  if(u.x<27.5){u.x+=0.85*dt;u.moving=true;u.phase+=dt*6}else u.moving=false;
+  // a Panzer left alive too long rolls on to the wire and shells the building at point-blank range
+  if(u.x<u.stopX){u.x+=0.85*dt;u.moving=true;u.phase+=dt*6}else{u.moving=false;u.holdT+=dt;if(u.holdT>60&&u.stopX<34.5){u.stopX=34.5;logMsg('A Panzer is rolling up to the wire!','bad')}}
   u.thinkT-=dt;if(u.thinkT<=0){u.thinkT=0.5;u.target=pickTarget(u)}
   const t=u.target&&u.target.alive?u.target:null;
   const want=t?Math.atan2(t.y-u.y,t.x-u.x):0;const d=angDiff(u.turret,want);u.turret+=clamp(d,-1.1*dt,1.1*dt);u.aim=u.turret;
@@ -532,8 +534,9 @@ function humanTick(p,I,dt){
   const mx=I?clamp(I[0]/100,-1,1):0,my=I?clamp(I[1]/100,-1,1):0;
   if(I)p.aim=I[2]/1000;
   const l=Math.hypot(mx,my);
-  if(l>0.1){const s=(p.reloadT>0?3.3:4.0)*Math.min(1,l)/l;moveFree(p,mx*s*dt,my*s*dt);p.moving=true;p.phase+=dt*10;p.moveA=Math.atan2(my,mx)}else p.moving=false;
-  const trig=!!(p.btn&1);
+  if(p.onGun){p.x=CREWX;p.y=CREWY;p.moving=false}
+  else if(l>0.1){const s=(p.reloadT>0?3.3:4.0)*Math.min(1,l)/l;moveFree(p,mx*s*dt,my*s*dt);p.moving=true;p.phase+=dt*10;p.moveA=Math.atan2(my,mx)}else p.moving=false;
+  const trig=!!(p.btn&1)&&!p.onGun;
   if(trig){const w=WPN[p.wpn];if(w.auto||!p.semiLock){if(fire(p,p.aim))p.semiLock=true;else if(p.mag<=0&&p.reserve<=0&&!(p.clickT>0)){if(p===G.me)sfx('empty');p.clickT=0.4}}}
   if(p.clickT>0)p.clickT=Math.max(0,p.clickT-dt);
   if(!trig)p.semiLock=false;
@@ -565,6 +568,8 @@ function humanEvent(p,e){
     case 's':switchSlot(p,e[1]);break}}
 function nearestInteract(p){
   if(!p||!p.alive||p.revealed)return null;
+  if(p.onGun)return{k:'gun',label:'Leave the gun'};
+  if(dist(p.x,p.y,CREWX,CREWY)<1.3&&!(G.gun.crew&&G.gun.crew!==p))return{k:'gun',label:'Man the 45 mm gun'};
   for(const c of CRATES)if(dist(p.x,p.y,c.x,c.y)<1.6)return{k:'crate',label:'Resupply ammunition and grenades'};
   let best=null,bd=1.4;
   {const c=nearCasing(p);if(c&&!p.isSpy){best={k:'casing',c,label:`Pick up the spent casing (${c.cal})`};bd=0.9}}
@@ -578,6 +583,7 @@ function nearestComrade(p,r){let best=null,bd=r;for(const u of G.squad){if(!u.al
 function nearestArrestable(p,r){let best=null,bd=r;for(const u of G.people){if(u===p||!u.alive||u.side!=='sov')continue;const d=dist(p.x,p.y,u.x,u.y);if(d<bd){bd=d;best=u}}return best}
 function doInteract(p){
   const it=nearestInteract(p);if(!it)return;
+  if(it.k==='gun'){if(p.onGun){p.onGun=false;if(G.gun.crew===p)G.gun.crew=null}else{const c=G.gun.crew;if(c&&!c.isPlayer){c.gunner=false;c.seeking=false}p.onGun=true;p.x=CREWX;p.y=CREWY;G.gun.crew=p}return}
   if(it.k==='crate'){if(p.crateCd>0)return;p.crateCd=1;storeSlot(p);p.slots[0].reserve=Math.max(p.slots[0].reserve,213);if(p.slots[1])p.slots[1].reserve=Math.max(p.slots[1].reserve,WPN[p.slots[1].wpn].res);p.reserve=p.slots[p.slot].reserve;p.grenades=3;if(p===G.me)sfx('reload');logMsg('Resupplied: full drums and three RGD-33 grenades.','good',p)}
   else if(it.k==='inspect'){it.b.inspBy.push(p.id);it.b.inspected=true;const t=inspectText(it.b);noteTo(p,t,'death');speech('You inspect the body',t,p);if(p===G.me)sfx('page');if(spySees(p))addGuess(p,8)}
   else if(it.k==='casing'){const c=it.c;G.casings.splice(G.casings.indexOf(c),1);const t=`A spent ${c.cal} casing at the ${zoneAt(c.x,c.y)}, fired ${ago(c.t)}. ${SOV_CALS.includes(c.cal)?'One of ours.':'A German calibre — but it was fired from where you are standing.'}`;noteTo(p,t,'talk');speech('Spent casing',t,p);if(p===G.me)sfx('page')}
@@ -785,6 +791,39 @@ function dropCasing(u,w){if(u.uniform!=='sov')return;u.cc=(u.cc||0)+1;if(w.auto&
   G.casings.push({x:u.x+Math.cos(a)*0.35,y:u.y+Math.sin(a)*0.35,t:G.time,cal:w.cal});if(G.casings.length>500)G.casings.splice(0,G.casings.length-500)}
 function nearCasing(p){let best=null,bd=0.9;for(const c of G.casings){const d=dist(p.x,p.y,c.x,c.y);if(d<bd){bd=d;best=c}}return best}
 const ago=t=>{const s=G.time-t|0;return s<10?'just now':s<60?`about ${Math.round(s/5)*5} s ago`:`about ${Math.round(s/60)} min ago`};
+// ================= 45 mm anti-tank gun =================
+// A crewable gun in the street, the squad's real answer to the Panzers. Anyone can man it (E); bots crew it when a
+// tank is on the field. It is also a sabotage station: a gun with its breechblock gone just clicks — and the click is
+// how the crew finds out.
+const GUNX=40.5,GUNY=20.5,CREWX=41.3,CREWY=20.5,GUN_CD=3.2;
+function gunIdx(){return STATIONS.findIndex(s=>s.id==='atgun')}
+function gunTick(dt){const g=G.gun;g.cd=Math.max(0,g.cd-dt);
+  let c=g.crew;if(c&&(!c.alive||c.side!=='sov'||dist(c.x,c.y,CREWX,CREWY)>0.9||(c.isPlayer&&!c.onGun)||(!c.isPlayer&&!c.gunner))){if(c.isPlayer)c.onGun=false;else{c.gunner=false;c.seeking=false}g.crew=c=null}
+  const tanks=G.units.filter(u=>u.alive&&u.kind==='tank');
+  if(!c&&tanks.length&&!G.effects.atgun){
+    if(!G.squad.some(u=>u.gunner)){let best=null,bd=26;for(const u of G.squad){if(!u.alive||u.side!=='sov'||traitor(u)||u.stab||u.knife||u.recruit)continue;const d=dist(u.x,u.y,CREWX,CREWY);if(d<bd){bd=d;best=u}}
+      if(best){best.gunner=true;best.duty=null;best.seeking=true;best.seekHold=99;goTo(best,CREWX,CREWY)}}
+    for(const u of G.squad)if(u.gunner&&!u.path.length&&dist(u.x,u.y,CREWX,CREWY)<0.6){g.crew=c=u;break}}
+  if(!tanks.length)for(const u of G.squad)if(u.gunner&&g.crew!==u){u.gunner=false;u.seeking=false}
+  if(!c)return;
+  let want=g.aim;
+  if(c.isPlayer)want=c.aim;else{let t=null,bd=34;for(const T of tanks){const d=dist(GUNX,GUNY,T.x,T.y);if(d<bd&&los(GUNX,GUNY,T.x,T.y,0.4)){bd=d;t=T}}if(!t){if(!tanks.length){c.gunner=false;c.seeking=false;g.crew=null}return}want=Math.atan2(t.y-GUNY,t.x-GUNX)}
+  const d=angDiff(g.aim,want);g.aim+=clamp(d,-1.3*dt,1.3*dt);c.aim=g.aim;
+  if(g.cd>0)return;
+  if(c.isPlayer?(c.btn&1):Math.abs(d)<0.035)fireGun(c)}
+function fireGun(c){const g=G.gun,i=gunIdx(),st=G.st[i];
+  if(st.sab||G.effects.atgun){g.cd=2;if(c===G.me)sfx('empty');logMsg('The gun only clicks — the breechblock is gone!','bad',c);if(st.sab&&!st.found)discover(i,c);return}
+  g.cd=GUN_CD;const a=g.aim+(rnd()-.5)*(c.isPlayer?0.01:0.025),dx=Math.cos(a),dy=Math.sin(a);
+  G.proj.push({x:GUNX+dx*1.1,y:GUNY+dy*1.1,dx,dy,sp:55,dmg:70,cal:'45 mm',owner:c,side:'sov',tk:false,dist:0,max:46,at:true,gun:true,last:-1,he:false});
+  G.fx.push({k:'muz',x:GUNX+dx*1.4,y:GUNY+dy*1.4,a,t:0,life:0.12,big:true});sfxAt('cannon',GUNX,GUNY);if(c===G.me)G.shake=Math.max(G.shake,REDUCED?2:7)}
+function drawGun(g,x,y,s){const gun=G.gun;g.save();g.translate(x,y);g.fillStyle='rgba(29,24,21,.55)';g.beginPath();g.ellipse(s*0.1,s*0.12,s*0.8,s*0.55,0,0,TAU);g.fill();
+  g.rotate(gun.aim);g.strokeStyle=PAL.ink;g.lineWidth=2;
+  g.fillStyle=PAL.ink;g.fillRect(-s*0.2,-s*0.62,s*0.42,s*0.2);g.fillRect(-s*0.2,s*0.42,s*0.42,s*0.2);
+  g.fillStyle='#55602c';g.beginPath();g.moveTo(s*0.25,-s*0.55);g.lineTo(s*0.4,-s*0.5);g.lineTo(s*0.4,s*0.5);g.lineTo(s*0.25,s*0.55);g.closePath();g.fill();g.stroke();
+  g.fillRect(-s*0.95,-s*0.08,s*0.95,s*0.16);g.strokeRect(-s*0.95,-s*0.08,s*0.95,s*0.16);
+  g.fillStyle=PAL.ink;g.fillRect(s*0.35,-s*0.06,s*0.95,s*0.12);g.fillRect(s*1.2,-s*0.09,s*0.12,s*0.18);
+  g.fillStyle=PAL.red;star(g,s*0.33,0,s*0.12);g.fill();g.restore()}
+
 // ================= sabotage & duties =================
 // Stations the spy can wreck. Sabotage is silent: nobody knows until a loyal soldier comes close enough to see it,
 // and every loyal soldier who passes a working station confirms it — so each discovery comes with a time window
@@ -794,11 +833,12 @@ const STATIONS=[
  {id:'barricade',name:'dugout barricade',x:57.5,y:20,fx:'The dugout barricade is down: the Germans need only four seconds inside to take it.'},
  {id:'lamp',name:'window lamp',x:46.5,y:12.5,fx:'A lamp in the north windows is guiding German mortars onto the building.'},
  {id:'crN',name:'north ammo crates',x:51.5,y:11.5,fx:'Spiked rounds in the north rooms: every gun there fires slowly this assault.'},
- {id:'crS',name:'south ammo crates',x:51.5,y:28.5,fx:'Spiked rounds in the south rooms: every gun there fires slowly this assault.'}];
+ {id:'crS',name:'south ammo crates',x:51.5,y:28.5,fx:'Spiked rounds in the south rooms: every gun there fires slowly this assault.'},
+ {id:'atgun',name:'45 mm anti-tank gun',x:GUNX,y:GUNY,fx:'The anti-tank gun has no breechblock: it cannot fire this assault.'}];
 const SAB_T=3,REP_T=4,SAB_WIN=3;
 const traitor=u=>!!(u&&(u.isSpy||u.turned));
 const clk=t=>{const s=t|0;return`${String(s/60|0).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`};
-function initStations(){G.st=STATIONS.map(()=>({sab:false,found:false,by:null,at:0,lastOk:0,rep:0}));G.sabDone=0;G.effects={};G.overLimit=8;G.dutyT=10}
+function initStations(){G.gun={aim:Math.PI,cd:0,crew:null};G.st=STATIONS.map(()=>({sab:false,found:false,by:null,at:0,lastOk:0,rep:0}));G.sabDone=0;G.effects={};G.overLimit=8;G.dutyT=10}
 function stationAt(u,r){let best=-1,bd=r||1.8;for(let i=0;i<STATIONS.length;i++){const S0=STATIONS[i],d=dist(u.x,u.y,S0.x,S0.y);if(d<bd){bd=d;best=i}}return best}
 function stationsTick(dt){
   for(let i=0;i<G.st.length;i++){const st=G.st[i],S0=STATIONS[i];
@@ -855,7 +895,7 @@ function startWave(){
   G.wave++;G.phase='wave';const w=WAVES[G.wave-1];const q=[];
   const sfx0=applySabotage();const md=G.mod||{mul:sfx0.phone?1.25:1};G.mod=null;G.tankMul=md.tank||1;const n=v=>Math.max(0,Math.round(v*md.mul*G.diff.mul));
   for(let i=0;i<n(w.r);i++)q.push('rifle');for(let i=0;i<n(w.s);i++)q.push('smg');for(let i=0;i<n(w.g);i++)q.push('gren');shuffle(q);
-  for(let i=0;i<w.m+(md.mg||0);i++)q.splice(1+i*3,0,'mg');if(w.t)q.splice(Math.floor(q.length*0.35),0,'tank');
+  for(let i=0;i<w.m+(md.mg||0);i++)q.splice(1+i*3,0,'mg');for(let i=0;i<w.t;i++)q.splice(Math.min(q.length,Math.floor(q.length*(0.15+i*0.3))),0,'tank');
   G.spawnQ=q;G.spawnT=0;G.arrestDone=false;G.pushed=false;G.lastSpawn=G.time;
   assignPosts();
   const sp=G.spy;if(!sp.isPlayer&&sp.alive&&!sp.revealed){sp.flaresLeft=G.wave>=2?1:0;sp.flareCd=25+rnd()*35;sp.stabCd=G.wave>=2?10+rnd()*20:1e9}
@@ -907,7 +947,7 @@ function step(inputs){
   if(G.council){for(let i=0;i<G.humans.length;i++){const h=G.humans[i],I=inputs&&inputs[i];h.btn=0;if(I&&I[4])for(const e of I[4])humanEvent(h,e)}councilTick(dt);return}
   G.time+=dt;
   for(const s of G.sched)if(!s.done&&G.time>=s.at){s.done=true;runSched(s);if(G.over)return}G.sched=G.sched.filter(s=>!s.done);
-  phaseTick(dt);if(G.over||G.council)return;stationsTick(dt);
+  phaseTick(dt);if(G.over||G.council)return;stationsTick(dt);gunTick(dt);
   for(let i=0;i<G.humans.length;i++){humanTick(G.humans[i],inputs?inputs[i]:null,dt);if(G.over)return}
   for(const u of G.units){if(!u.alive)continue;unitCommon(u,dt);if(u.isPlayer)continue;if(u.kind==='tank')tankAI(u,dt);else if(u.side==='ger')gerAI(u,dt);else sovAI(u,dt);if(G.over)return}
   separate();tracksTick();updateProj(dt);if(G.over)return;updateNades(dt);if(G.over)return;overrunTick(dt)}
@@ -1054,7 +1094,8 @@ function render(){
     ctx.strokeStyle=`rgba(140,255,150,${0.5*Math.max(0,1-Math.max(0,f.t-2)/3)})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ox,oy);ctx.quadraticCurveTo((ox+sx)/2,Math.min(oy,sy)-TS*4,sx,sy);ctx.stroke();
     if(f.t>1){const a=Math.max(0,1-Math.max(0,f.t-6)/3);ctx.fillStyle=`rgba(170,255,170,${a})`;ctx.beginPath();ctx.arc(sx,sy-TS*0.3+Math.sin(tm*5)*2,TS*0.22,0,TAU);ctx.fill();ctx.fillStyle=`rgba(90,255,120,${0.25*a})`;ctx.beginPath();ctx.arc(sx,sy,TS*0.9,0,TAU);ctx.fill()}
     if(on(ox,oy,0)&&f.t<6){ctx.strokeStyle='rgba(140,255,150,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(ox,oy,TS*0.6+Math.sin(tm*8)*2,0,TAU);ctx.stroke()}}
-  if(G.st)for(let i=0;i<STATIONS.length;i++){const S0=STATIONS[i],st=G.st[i];const [sx,sy]=w2s(S0.x,S0.y);if(!on(sx,sy,40))continue;const z=TS*0.32;
+  if(G.gun){const [gx,gy]=w2s(GUNX,GUNY);if(on(gx,gy,60))drawGun(ctx,gx,gy,TS)}
+  if(G.st)for(let i=0;i<STATIONS.length;i++){const S0=STATIONS[i],st=G.st[i];if(S0.id==='atgun'&&!st.found&&!(st.sab&&me&&traitor(me)))continue;const [sx,sy]=w2s(S0.x,S0.y);if(!on(sx,sy,40))continue;const z=TS*0.32;
     ctx.lineWidth=2;ctx.strokeStyle=PAL.ink;
     if(S0.id==='phone'){ctx.fillStyle=PAL.feld;ctx.fillRect(sx-z,sy-z*0.8,z*2,z*1.6);ctx.strokeRect(sx-z,sy-z*0.8,z*2,z*1.6);ctx.fillStyle=PAL.ink;ctx.fillRect(sx-z*0.8,sy-z*0.55,z*1.6,z*0.35)}
     else if(S0.id==='lamp'){ctx.fillStyle=PAL.ink;ctx.fillRect(sx-z*0.6,sy-z*0.9,z*1.2,z*1.8);ctx.fillStyle=PAL.ochre;ctx.beginPath();ctx.arc(sx,sy,z*0.45,0,TAU);ctx.fill()}
@@ -1098,8 +1139,8 @@ function hudTick(dt){
   $('objWrap').hidden=!onS;if(onS)$('objBar').firstElementChild.style.width=Math.min(100,M.prog*100)+'%';
   const th=sabHTML();if($('hudTrack').innerHTML!==th)$('hudTrack').innerHTML=th;
   const ov=$('overrun');if(G.overrun>0.3){ov.hidden=false;ov.textContent=`Germans in the command dugout! ${Math.max(0,(G.overLimit||8)-G.overrun).toFixed(1)} s`}else ov.hidden=true;
-  const w=WPN[p.wpn];$('wName').textContent=p.alive?w.name:p.escaped?'Escaped':p.arrested?'Arrested':'Killed';$('wCal').textContent=p.alive?w.cal:'';
-  $('ammo').innerHTML=p.alive?`${p.reloadT>0?'—':p.mag} <small>/ ${p.reserve}</small>`:'<small>spectating</small>';
+  const w=WPN[p.wpn];if(p.onGun&&p.alive){$('wName').textContent='45 mm anti-tank gun';$('wCal').textContent='45 mm';$('ammo').innerHTML=G.gun.cd>0?`<small>loading… ${G.gun.cd.toFixed(1)} s</small>`:'READY'}else{$('wName').textContent=p.alive?w.name:p.escaped?'Escaped':p.arrested?'Arrested':'Killed';$('wCal').textContent=p.alive?w.cal:'';
+  $('ammo').innerHTML=p.alive?`${p.reloadT>0?'—':p.mag} <small>/ ${p.reserve}</small>`:'<small>spectating</small>'}
   $('extra').innerHTML=!p.alive?'':`Grenades <b>${p.grenades}</b>`+(p.isSpy?` · Flares <b>${p.flares}</b>`:p.isCom?` · Arrests <b>${p.arrestsLeft}</b>`:'');
   const hb=$('meHp').firstElementChild;hb.style.width=Math.max(0,p.hp)+'%';hb.style.background=p.hp<40?'var(--red)':'var(--ok)';
   if(p.isSpy){$('susWrap').hidden=false;$('susLab').textContent='Suspicion on you';const v=G.susp[p.id]||0;$('susMeter').firstElementChild.style.width=Math.min(100,v/80*100)+'%';$('susTxt').textContent=v>=80?'arrest likely':v>=40?'watched':'low'}
@@ -1174,11 +1215,11 @@ function councilUI(){
 
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
-function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['E',role==='spy'?'Use: ammo crate, take a German weapon':'Use: ammo crate, inspect a body or a spent casing, take a German weapon'],
+function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
   ...(role==='spy'?[['C','Whisper an offer to the soldier next to you (once per assault)'],['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
 function showBrief(){
   const p=G.me,role=roleOf(p),spy=role==='spy',multi=G.humans.length>1;
-  const sortieP='<p><b>Sabotage.</b> Five stations hold the block together: the field telephone, the dugout barricade, a window lamp and two stacks of ammo crates. The spy can wreck one in three seconds when nobody is looking. Nobody notices until a loyal soldier walks past it — and every soldier who passes a working station proves it was fine at that moment, so each discovery comes with a time window. Hold E to repair it. A station still wrecked when an assault starts hurts the squad for that assault. <b>Three of those and the block falls.</b></p>';
+  const sortieP='<p><b>Sabotage.</b> Six stations hold the block together: the 45 mm anti-tank gun in the street (press E to man it — it is the best answer to the Panzers), the field telephone, the dugout barricade, a window lamp and two stacks of ammo crates. The spy can wreck one in three seconds when nobody is looking. Nobody notices until a loyal soldier walks past it — and every soldier who passes a working station proves it was fine at that moment, so each discovery comes with a time window. Hold E to repair it. A station still wrecked when an assault starts hurts the squad for that assault. <b>Three of those and the block falls.</b></p>';
   const tracksP=spy?'<p><b>Tracks.</b> Every boot leaves prints that fade over a minute, and every shot drops a casing. Walk in other men\'s tracks, and fresh snow after an assault covers everything.</p>':'<p><b>Tracks.</b> Boots leave prints that fade over a minute — the squad has small, medium and large boots, listed in the roster — and every shot drops a spent casing where the shooter stood. Press E on a casing to read its calibre and how long ago it was fired.</p>';
   const others=multi?`<p><b>${G.humans.length} players</b> are in this squad${G.squad.length?`, with ${G.squad.length} bots`:''}. Any of them could be the spy or the commissar.</p>`:'';
   $('briefRole').textContent=spy?'Brandenburger':role==='com'?'Commissar':'Soldier';$('briefRole').className=spy?'spy':'com';
