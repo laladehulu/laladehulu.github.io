@@ -153,9 +153,9 @@ function mkUnit(o){return Object.assign({id:UID++,alive:true,x:0,y:0,aim:Math.PI
 let G=null,state='boot',TS=36,VW=0,VH=0,DPR=1,camX=0,camY=0;
 const cv=$('cv'),ctx=cv.getContext('2d');const fog=document.createElement('canvas'),fctx=fog.getContext('2d');
 const KEYS={},MOUSE={x:0,y:0,down:false,in:false},TCH={mx:0,my:0,ax:0,ay:0,aiming:false,fire:false};
-const VIS=24;
-// bots and Germans only fight inside the player's view distance, so every engagement is one a player can see and join
-const AI_RANGE=VIS-1.5;
+const VIS=30;
+// bots and Germans only fight at close range, well inside the player's view, so the battle happens up close
+const AI_RANGE=14;
 const inDugout=u=>u.x>=54&&u.x<=58&&u.y>=16&&u.y<=24;
 
 const SEATS=8;
@@ -497,7 +497,7 @@ function runSched(e){
 function spawnGerman(kind){
   if(kind==='tank'){const th=Math.round(800*(G.tankMul||1));G.tankN=(G.tankN||0)+1;const ln=G.tankN%3;const u=mkUnit({kind:'tank',side:'ger',uniform:'ger',name:'Panzer',hp:th,maxhp:800,wpn:'mg42',mag:75,x:7,y:[20,19.2,20.8][ln],aim:0,turret:0,shellCd:5,stopX:[28,25.5,30][ln],holdT:0});G.units.push(u);logMsg(G.tankMul<1?'Tank! The Panzer hit our mines — it is damaged, but still coming!':'Tank! A Panzer is coming down the street!','bad');sfx('tankHorn');return}
   // infantry appear in the ruins just beyond the defenders' sight, so they are in the fight within seconds
-  let y=0,x0=0;for(let k=0;k<60;k++){y=1+(rnd()*38|0);x0=14+(rnd()*5|0);if(passable(x0,y)&&passable(x0+1,y))break;x0=0;if(passable(0,y)&&passable(1,y))break}
+  let y=0,x0=0;for(let k=0;k<60;k++){y=1+(rnd()*38|0);x0=22+(rnd()*6|0);if(passable(x0,y)&&passable(x0+1,y))break;x0=0;if(passable(0,y)&&passable(1,y))break}
   const wpn=kind==='smg'?'mp40':kind==='mg'?'mg42':'kar98';
   const u=mkUnit({kind,side:'ger',uniform:'ger',name:'German',wpn,mag:WPN[wpn].mag,x:x0+0.5,y:y+0.5,aim:0,hp:kind==='mg'?140:100,maxhp:kind==='mg'?140:100,grenCd:kind==='gren'?6:30+rnd()*30});
   G.units.push(u);
@@ -1030,7 +1030,7 @@ function bake(){
 function craterAt(g,x,y,r){g.fillStyle='rgba(212,191,147,.55)';g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.fillStyle='rgba(29,24,21,.6)';g.beginPath();g.arc(x+r*0.08,y+r*0.08,r*0.72,0,TAU);g.fill();g.strokeStyle='rgba(29,24,21,.5)';g.lineWidth=1.3;g.beginPath();g.arc(x,y,r,0,TAU);g.stroke()}
 function decal(k,x,y,r){if(!MG)return;if(k==='crater')craterAt(MG,x*S,y*S,(r||2)*S*0.45);else if(k==='blood'){MG.fillStyle='rgba(122,24,16,.75)';MG.beginPath();MG.arc(x*S,y*S,2+crnd()*3,0,TAU);MG.fill()}else if(k==='pool'){MG.fillStyle='rgba(122,24,16,.65)';MG.beginPath();MG.ellipse(x*S,y*S,10+crnd()*6,7+crnd()*4,crnd()*3,0,TAU);MG.fill()}}
 
-function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=$('app').getBoundingClientRect();VW=r.width;VH=r.height;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);fog.width=cv.width;fog.height=cv.height;TS=clamp(Math.min(VW,VH)/(VW<600?19:29),17,32)}
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=$('app').getBoundingClientRect();VW=r.width;VH=r.height;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);fog.width=cv.width;fog.height=cv.height;TS=clamp(Math.min(VW,VH)/(VW<600?16:23),20,36)}
 window.addEventListener('resize',resize);
 const w2s=(x,y)=>[x*TS-camX,y*TS-camY];
 function star(g,cx,cy,r){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*0.42:r;i?g.lineTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q):g.moveTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q)}g.closePath()}
@@ -1071,7 +1071,7 @@ function drawTank(g,x,y,s,u){g.save();g.translate(x,y);const dead=!!u.dead;
 // halftone screen for the fog of war (ink dots on a dark wash), rebuilt only when the pixel ratio changes
 let FOGP=null,FOGDPR=0;
 function fogPattern(g){if(FOGP&&FOGDPR===DPR)return FOGP;const c=document.createElement('canvas'),n=Math.round(7*DPR);c.width=c.height=n;const q=c.getContext('2d');
-  q.fillStyle='rgba(29,24,21,.6)';q.fillRect(0,0,n,n);q.fillStyle='rgba(29,24,21,.92)';q.beginPath();q.arc(n/2,n/2,n*0.36,0,TAU);q.fill();FOGP=g.createPattern(c,'repeat');FOGDPR=DPR;return FOGP}
+  q.fillStyle='rgba(29,24,21,.38)';q.fillRect(0,0,n,n);q.fillStyle='rgba(29,24,21,.72)';q.beginPath();q.arc(n/2,n/2,n*0.36,0,TAU);q.fill();FOGP=g.createPattern(c,'repeat');FOGDPR=DPR;return FOGP}
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=PAL.ink;ctx.fillRect(0,0,VW,VH);
   if(!G||!MAPC)return;const tm=performance.now()/1000;const me=G.me;const playing=!!me&&state!=='title';
