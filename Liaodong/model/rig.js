@@ -45,12 +45,40 @@ function pattern(kind, col, col2) {
       g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 1.2; g.stroke();
       const hgd = hg.createLinearGradient(x, 0, x + pw, 0); hgd.addColorStop(0, '#333'); hgd.addColorStop(0.5, '#fff'); hgd.addColorStop(1, '#333'); hg.fillStyle = hgd; rr(hg, x + 1.5, y + 2, pw - 3, ph * 1.04, pw * 0.45); hg.fill();
       g.fillStyle = col2 || '#7a1e16'; for (const yy of [y + ph * 0.22, y + ph * 0.6]) { g.fillRect(x + pw * 0.3, yy, pw * 0.4, 3.2); hg.fillStyle = '#888'; hg.fillRect(x + pw * 0.3, yy, pw * 0.4, 3.2); } }
+  } else if (kind === 'studsFine') { // 布面甲 as the 出警入蹕圖 and surviving coats show it: small round-headed rivets, close-set, over red cloth
+    tile = [0.11, 0.11]; rough = 0.8; metal = 0.3; str = 5; g.fillStyle = col; g.fillRect(0, 0, W, H); noiseOver(g, W, H, 0.08, 3500); const n = 5, sp = W / n, R0 = 9;
+    for (let r = 0; r < n; r++) for (let k = 0; k <= n; k++) { const x = k * sp + (r % 2 ? sp / 2 : 0), y = r * sp + sp / 2;
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.arc(x + 1.5, y + 2, R0 + 1, 0, 7); g.fill(); const gr = g.createRadialGradient(x - 3, y - 3, 1, x, y, R0); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.4, col2 || '#d8d8d0'); gr.addColorStop(1, '#5a5a58'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, R0, 0, 7); g.fill();
+      const hr = hg.createRadialGradient(x, y, 1, x, y, R0 + 1); hr.addColorStop(0, '#fff'); hr.addColorStop(0.7, '#bbb'); hr.addColorStop(1, '#000'); hg.fillStyle = hr; hg.beginPath(); hg.arc(x, y, R0 + 1, 0, 7); hg.fill(); }
+  } else if (kind === 'lames') { // 臂甲: the arm in overlapping steel bands, each lame riveted to the leather beneath
+    tile = [0.2, 0.09]; rough = 0.3; metal = 0.85; str = 5; const n = 3, ph = H / n;
+    for (let r = 0; r < n; r++) { const y = r * ph, gr = g.createLinearGradient(0, y, 0, y + ph); gr.addColorStop(0, shade(col, 0.35)); gr.addColorStop(0.55, col); gr.addColorStop(1, shade(col, -0.45)); g.fillStyle = gr; g.fillRect(0, y, W, ph);
+      const hr = hg.createLinearGradient(0, y, 0, y + ph); hr.addColorStop(0, '#fff'); hr.addColorStop(1, '#222'); hg.fillStyle = hr; hg.fillRect(0, y, W, ph);
+      for (let k = 0; k < 4; k++) { g.fillStyle = '#e8e4d8'; g.beginPath(); g.arc(W * (k + 0.5) / 4, y + ph * 0.25, 4, 0, 7); g.fill(); } }
+  } else if (kind === 'puttee') { // 行縢: cloth bound round the shin in crossing turns
+    tile = [0.1, 0.06]; rough = 0.95; str = 3; g.fillStyle = col; g.fillRect(0, 0, W, H); noiseOver(g, W, H, 0.08, 2500); g.strokeStyle = 'rgba(40,30,20,.55)'; g.lineWidth = 4; hg.fillStyle = '#aaa'; hg.fillRect(0, 0, W, H); hg.strokeStyle = '#222'; hg.lineWidth = 8;
+    for (const gg of [g, hg]) { gg.beginPath(); gg.moveTo(0, 0); gg.lineTo(W, H); gg.moveTo(0, H / 2); gg.lineTo(W / 2, H); gg.moveTo(W / 2, 0); gg.lineTo(W, H / 2); gg.moveTo(W, 0); gg.lineTo(0, H); gg.stroke(); }
   } else if (kind === 'studs') { // 布面甲 / 棉甲: cloth over iron, the plates riveted through with brass studs in rows
     tile = [0.26, 0.26]; rough = 0.82; metal = 0.25; str = 6; g.fillStyle = col; g.fillRect(0, 0, W, H); noiseOver(g, W, H, 0.09, 3500);
     for (let y = 0; y < H; y += 4) { g.fillStyle = 'rgba(0,0,0,.05)'; g.fillRect(0, y, W, 1); }
     const n = 4, sp = W / n, R0 = 15; for (let r = 0; r < n; r++) for (let k = 0; k <= n; k++) { const x = k * sp + (r % 2 ? sp / 2 : 0), y = r * sp + sp / 2;
       g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.arc(x + 2, y + 3, R0 + 1, 0, 7); g.fill(); const gr = g.createRadialGradient(x - 4, y - 5, 1, x, y, R0); gr.addColorStop(0, '#fff6c8'); gr.addColorStop(0.35, col2 || '#d4a845'); gr.addColorStop(1, '#5a4214'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, R0, 0, 7); g.fill();
       const hr = hg.createRadialGradient(x, y, 1, x, y, R0 + 1); hr.addColorStop(0, '#fff'); hr.addColorStop(0.7, '#bbb'); hr.addColorStop(1, '#000'); hg.fillStyle = hr; hg.beginPath(); hg.arc(x, y, R0 + 1, 0, 7); hg.fill(); }
+  } else if (kind === 'mountain') { // 山文甲: iron plates cut in the 山 shape (three prongs), interlocking with no lacing: the general's armour of the Ming tomb statues
+    tile = [0.12, 0.104]; rough = 0.38; metal = 0.75; str = 4; g.fillStyle = shade(col, -0.45); g.fillRect(0, 0, W, H); const cw = W / 2, ch2 = H / 2;
+    for (let r = -1; r < 3; r++) for (let k = -1; k < 3; k++) { const x = k * cw + (r % 2 ? cw / 2 : 0), y = r * ch2;
+      const Y = (gg, fill, lw) => { gg.beginPath(); gg.moveTo(x + cw / 2, y + ch2 * 0.55); gg.lineTo(x + cw / 2, y + ch2 * 1.25); gg.moveTo(x + cw / 2, y + ch2 * 0.55); gg.lineTo(x + cw * 0.04, y + ch2 * 0.12); gg.moveTo(x + cw / 2, y + ch2 * 0.55); gg.lineTo(x + cw * 0.96, y + ch2 * 0.12); gg.strokeStyle = fill; gg.lineWidth = lw; gg.lineCap = 'round'; gg.stroke(); };
+      Y(g, shade(col, 0.05), 26); Y(g, shade(col, 0.3), 12); Y(hg, '#fff', 26); }
+  } else if (kind === 'scale') { // 魚鱗甲: small iron scales, rounded at the foot, each row overlapping the one below
+    tile = [0.12, 0.1]; rough = 0.4; metal = 0.7; str = 4.5; g.fillStyle = col2 || '#3a1a14'; g.fillRect(0, 0, W, H); const cols = 5, rows = 4, pw = W / cols, ph = H / rows;
+    for (let r = rows; r >= -1; r--) for (let k = -1; k <= cols; k++) { const x = k * pw + (r % 2 ? pw / 2 : 0), y = r * ph;
+      const sc = (gg, f) => { gg.beginPath(); gg.moveTo(x + 1, y - ph * 0.3); gg.lineTo(x + 1, y + ph * 0.55); gg.quadraticCurveTo(x + pw / 2, y + ph * 1.35, x + pw - 1, y + ph * 0.55); gg.lineTo(x + pw - 1, y - ph * 0.3); gg.closePath(); gg.fillStyle = f; gg.fill(); };
+      const gr = g.createLinearGradient(x, y, x + pw, y + ph); gr.addColorStop(0, shade(col, 0.25)); gr.addColorStop(1, shade(col, -0.35)); sc(g, gr); g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = 1.5; g.stroke();
+      const hr = hg.createLinearGradient(x, y - ph * 0.3, x, y + ph); hr.addColorStop(0, '#555'); hr.addColorStop(1, '#fff'); sc(hg, hr); }
+  } else if (kind === 'mail') { // 鎖子甲: riveted rings, row on row
+    tile = [0.085, 0.085]; rough = 0.45; metal = 0.7; str = 3; g.fillStyle = '#3a3c40'; g.fillRect(0, 0, W, H); hg.fillStyle = '#000'; hg.fillRect(0, 0, W, H); const n = 8, sp = W / n;
+    for (let r = 0; r <= n; r++) for (let k = -1; k <= n; k++) { const x = k * sp + (r % 2 ? sp / 2 : 0), y = r * sp; for (const [gg, c] of [[g, shade(col, 0.1)], [hg, '#fff']]) { gg.strokeStyle = c; gg.lineWidth = 5; gg.beginPath(); gg.ellipse(x, y, sp * 0.52, sp * 0.42, 0, 0, 7); gg.stroke(); } }
+    noiseOver(g, W, H, 0.12, 1500);
   } else if (kind === 'quilt') { // 胖襖: the padded jacket, quilted in diamonds
     tile = [0.14, 0.14]; rough = 0.9; str = 4; g.fillStyle = col; g.fillRect(0, 0, W, H); noiseOver(g, W, H, 0.08, 3000);
     hg.fillStyle = '#bbb'; hg.fillRect(0, 0, W, H); g.strokeStyle = 'rgba(0,0,0,.28)'; g.lineWidth = 2; hg.strokeStyle = '#222'; hg.lineWidth = 5;
@@ -170,7 +198,7 @@ function bodyBoxes() {
   add('chest', aabb('spine_02', [-0.15, 1.165, -0.112], [0.15, 1.31, 0.12], { ch: 0.04, flare: [0.03, 0.012] }));
   add('chest', aabb('spine_03', [-0.185, 1.31, -0.125], [0.185, 1.465, 0.13], { ch: 0.045, flare: [-0.04, -0.04], bev: 0.03 }));
   add('neck', aabb('neck_01', [-0.058, 1.43, -0.07], [0.058, 1.575, 0.045], { ch: 0.018, flareN: [0.03, 0.01] }));
-  add('head', aabb('Head', [-0.118, 1.545, -0.125], [0.118, 1.83, 0.122], { ch: 0.042, bev: 0.035, bevN: 0.05, flareN: [-0.022, -0.012] })); /* one cut block: brow and crown bevelled, the jaw drawn in to the chin */
+  add('head', aabb('Head', [-0.118, 1.545, -0.125], [0.118, 1.83, 0.122], { ch: 0.026, bev: 0.035, bevN: 0.05, flareN: [-0.022, -0.012] })); /* one cut block: brow and crown bevelled, the jaw drawn in to the chin */
   for (const s of ['l', 'r']) { const S = s.toUpperCase(), b = (n) => P(n + '_' + s);
     const ua = seg('upperarm_' + s, b('upperarm'), b('lowerarm'), 0.112, 0.115, 0.03, 0.03, { hem: 1, ch: 0.03, flare: [-0.022, -0.025], bev: 0.03, bevN: 0 }); add('uarm' + S, ua);
     add('uarm' + S, rel(ua, -0.62, [0.072, 0.072, 0.07], { ch: 0.03, flare: [-0.012, -0.01], bev: 0.015 })); /* the shoulder, a block of its own over the joint, its edges eased where it meets the chest */
@@ -203,6 +231,14 @@ function helmetBoxes(kind, hairOnly) {
   if (hairOnly) { put(HAIRM, [-h[0] - 0.006, top - 0.07, z0 - h[2] - 0.006], [h[0] + 0.006, top + 0.012, z0 + h[2] - 0.03]); return out; }
   if (kind === 'ming' || kind === 'mingHigh') { const t = bowl(STEEL, 0.02, 0.04, 0.05); put(GILT, [-bx - 0.004, brow, z0 - bz - 0.004], [bx + 0.004, brow + 0.022, z0 + bz + 0.004]);
     const sp = kind === 'mingHigh' ? 0.2 : 0.12; spike(GILT, t, sp, 0.008); tassel(t + sp * 0.55); flaps(kind === 'mingHigh' ? ['p', 'lamellar', '#232427', '#8c1e18'] : ['p', 'studs', '#a8261d', '#d6aa48'], 0.12, 0); }
+  else if (kind === 'mingSteel') { const SS = ['s', '#c8ccd0', 0.3, 0.6], RC = ['p', 'studsFine', '#a8221c', '#d8d8d0'];
+    put(SS, [-bx, brow, z0 - bz], [bx, top + 0.012, z0 + bz]); put(SS, [-bx + 0.006, top + 0.012, z0 - bz + 0.006], [bx - 0.006, top + 0.12, z0 + bz - 0.006], { flare: -0.09, ch: 0.04, bev: 0 }); /* the tall bowl, drawn to a point */
+    spike(SS, top + 0.115, 0.08, 0.006); put(REDM, [-0.02, top + 0.19, z0 - 0.02], [0.02, top + 0.225, z0 + 0.02], { ch: 0.012, bev: 0.01 }); /* the red tassel ball */
+    put(REDM, [0.008, top + 0.12, z0 - 0.003], [0.075, top + 0.18, z0 + 0.003], { ch: 0, bev: 0 }); /* 盔旗: the little red pennant */
+    put(RC, [-bx - 0.004, brow - 0.19, z0 - bz - 0.022], [bx + 0.004, brow + 0.004, z0 - bz + 0.004], { ch: 0.01, bev: 0 }); /* 頓項: the red cloth guard down the neck... */
+    for (const sx of [-1, 1]) put(RC, sx < 0 ? [-bx - 0.022, brow - 0.2, z0 - bz] : [bx, brow - 0.2, z0 - bz], sx < 0 ? [-bx, brow + 0.004, z0 + bz * 0.92] : [bx + 0.022, brow + 0.004, z0 + bz * 0.92], { ch: 0.01, bev: 0 }); /* ...and round over the cheeks */ }
+  else if (kind === 'hood') { const C = ['p', 'cloth', '#7a7c78']; put(C, [-bx, brow - 0.01, z0 - bz], [bx, top + 0.02, z0 + bz], { ch: 0.05, bev: 0.03 }); /* a cloth hood over the head, falling to the shoulders behind and at the sides */
+    put(C, [-bx - 0.004, brow - 0.2, z0 - bz - 0.016], [bx + 0.004, brow + 0.01, z0 - bz + 0.01], { ch: 0.012, bev: 0 }); for (const sx of [-1, 1]) put(C, sx < 0 ? [-bx - 0.016, brow - 0.17, z0 - bz] : [bx, brow - 0.17, z0 - bz], sx < 0 ? [-bx, brow + 0.01, z0 + bz * 0.6] : [bx + 0.016, brow + 0.01, z0 + bz * 0.6], { ch: 0.008, bev: 0 }); }
   else if (kind === 'qing') { const t = bowl(['s', '#2a2620', 0.45, 0.7], 0.035, 0.05, 0.055); put(GILT, [-bx - 0.018, brow, z0 - bz - 0.018], [bx + 0.018, brow + 0.012, z0 + bz + 0.045]); /* the visor rim, out over the brow */
     spike(GILT, t, 0.26, 0.006); put(GILT, [-0.016, t, z0 - 0.016], [0.016, t + 0.03, z0 + 0.016]); tassel(t + 0.2); flaps(['p', 'studs', '#2a2a30', '#c9a24a'], 0.16, 0); }
   else if (kind === 'rattan') { const R = ['p', 'quilt', '#b08848']; put(R, [-bx - 0.03, brow - 0.005, z0 - bz - 0.03], [bx + 0.03, brow + 0.012, z0 + bz + 0.03]); put(R, [-bx, brow + 0.012, z0 - bz], [bx, top + 0.03, z0 + bz], { flare: -0.04 }); }
@@ -222,7 +258,7 @@ function setGeo(setKey) {
   for (const r in BB) for (const b of BB[r]) { if (covered.has(r)) emit(hid, b); else show(null, b); }
   let torsoT = 0.02;
   for (const P of S.pieces) { const T = typeof P.t === 'object' ? P.t : { t0: P.t, flare: 0 }, K = ['p', P.kind, P.col, P.col2], RK = P.rim ? ['p', P.rim[0], P.rim[1], P.rim[2]] : null; if (P.regions.includes('chest')) torsoT = T.t0;
-    for (const r of P.regions) for (const b of BB[r]) { const a = grow(b, T.t0, { flare: T.flare });
+    for (const r of P.regions) for (const b of BB[r]) { const a = grow(b, T.t0, { flare: T.flare }); if (P.long && /^thigh/.test(r)) { a.h = [a.h[0], a.h[1] + P.long / 2, a.h[2]]; a.c = a.c.clone().addScaledVector(a.ax[1], P.long / 2); }
       if (P.kind === 'cloth' || P.kind === 'quilt' || P.kind === 'fur') { /* cloth hangs: it does not follow the muscle. A sleeve is straight, a little wider at the cuff; a coat fills out the waist under the chest */
         if (/^(uarm|farm|thigh|calf)/.test(r) && b.flare[0] < 0) a.flare = [a.flare[0] - b.flare[0] + 0.01, a.flare[1] - b.flare[1] + 0.01];
         if (/^(belly|chest|hips)$/.test(r) && b.flare[0] > 0) a.flareN = [a.flareN[0] + b.flare[0] * 0.75, a.flareN[1] + b.flare[1] * 0.75]; }
@@ -230,7 +266,8 @@ function setGeo(setKey) {
       const NEXT = { uarm: 'farm', farm: 'hand', thigh: 'calf', calf: 'thigh', hips: 'thigh' }, rr = /^(uarm|farm|thigh|calf|hips)(L|R)?$/.exec(r), nx = rr && NEXT[rr[1]], cont = nx && (rr[1] === 'hips' ? P.regions.includes('thighL') : P.regions.includes(nx + rr[2]));
       if (RK && b.hem && !cont && !b.joint) { const f = b.hem > 0 ? a.flare : a.flareN; show(RK, rel(a, b.hem, [a.h[0] + f[0] + 0.006, 0.02, a.h[2] + f[1] + 0.006], { flare: 0 })); /* the hem or cuff: a border band round the end of the piece */ }
       if (T.pauldron && /^uarm/.test(r) && b === BB[r][0]) { const cap = rel(a, -1, [a.h[0] + 0.022, 0.085, a.h[2] + 0.022], { flare: 0.02 }); cap.c = cap.c.clone().addScaledVector(a.ax[1], 0.075); show(K, cap); if (RK) show(RK, rel(cap, 1, [cap.h[0] + 0.02 + 0.006, 0.016, cap.h[2] + 0.02 + 0.006], { ch: cap.ch })); } /* 披膊: a shoulder guard over the top of the arm */ } }
-  if (S.mirror) { const c3 = BB.chest[1]; show(S.mirror, aabb('spine_03', [-0.065, 1.33, c3.c.z + c3.h[2] + torsoT], [0.065, 1.44, c3.c.z + c3.h[2] + torsoT + 0.012])); } /* 護心鏡: the round mirror plate over the heart, here squared */
+  if (S.mirror) { const c3 = BB.chest[1], z = c3.c.z + c3.h[2] + torsoT + 0.012; show(S.mirror, mkBox('spine_03', new V3(0, 1.375, z), [X, Z, new V3(0, -1, 0)], [0.07, 0.007, 0.07], { ch: 0.04, bev: 0.004 })); } /* 護心鏡: the round mirror plate over the heart */
+  if (S.belt) { const bl = BB.belly[0], a = grow(bl, torsoT + 0.008); show(['s', S.belt, 0.7], rel(a, -0.8, [a.h[0] + 0.004, 0.022, a.h[2] + 0.004], { ch: a.ch })); } /* the belt over the coat */
   for (const [k, b] of S.helmet ? helmetBoxes(S.helmet) : helmetBoxes(null, true)) show(k, b);
   if (S.face === 'jin') for (const [k, b] of queueBoxes()) show(k, b);
   return (SETGEO[setKey] = { skin: toGeo(skin), hid: hid.pos.length ? toGeo(hid) : null, line: toGeo(line), parts: [...G.values()].map(e => ({ k: e.k, geo: toGeo(e.A) })), tris: (skin.idx.length + line.idx.length + [...G.values()].reduce((s, e) => s + e.A.idx.length, 0)) / 3 });
@@ -250,14 +287,31 @@ const ARMOR = {
   ming_jacket: { name: '明 · 胖襖', en: 'Ming soldier · padded red jacket', helmet: 'felt', face: 'ming',
     pieces: [PIECE(CALF.concat(FOOT), 0.010, 'leather', '#1d1915', null, ['trim', '#1d1915']), PIECE(THIGH, 0.008, 'cloth', '#2a3446', null, ['trim', '#2a3446']),
       PIECE(TORSO.concat(ARMS), 0.02, 'quilt', '#9e2b20', null, ['trim', '#2b2320'])] },
-  ming_studded: { name: '明 · 布面甲', en: 'Ming heavy foot · red studded coat', helmet: 'ming', face: 'ming', mirror: GILT,
-    pieces: [PIECE(CALF.concat(FOOT), 0.010, 'leather', '#1d1915', null, ['trim', '#1d1915']), PIECE(FARM, 0.016, 'leather', '#3a2a1c', null, ['trim', '#a8823c', '#e0b850']),
-      PIECE(TORSO, 0.024, 'studs', '#a8261d', '#d6aa48', ['trim', '#1c1814', '#d6aa48']), PIECE(THIGH, flareDown(0.03, 0.12), 'studs', '#a8261d', '#d6aa48', ['trim', '#1c1814', '#d6aa48']),
-      PIECE(UARM, flareArm(0.032, 0.09), 'studs', '#a8261d', '#d6aa48', ['trim', '#1c1814', '#d6aa48'])] },
+  ming_studded: { name: '明 · 布面甲', en: 'Ming heavy foot · red studded coat, steel arms, steel helmet', helmet: 'mingSteel', face: 'ming', mirror: ['s', '#dfe3e6', 0.32, 0.55], belt: '#17130f',
+    pieces: [PIECE(FOOT, 0.010, 'leather', '#1a1613', null, null), PIECE(CALF, 0.012, 'cloth', '#2c4672', null, ['trim', '#1c2a44']), /* the blue under-robe below the coat */
+      PIECE(FARM, 0.02, 'lames', '#a8acb2', null, ['trim', '#2a4a8a']), PIECE(UARM, flareArm(0.032, 0.03), 'lames', '#b0b4ba', null, ['trim', '#a8231a']),
+      PIECE(TORSO, 0.026, 'studsFine', '#a8221c', '#d8d8d0', ['trim', '#7a1612']), PIECE(THIGH, flareDown(0.032, 0.16), 'studsFine', '#a8221c', '#d8d8d0', ['trim', '#7a1612'], { long: 0.2 })] }, /* the coat to mid-calf, split front and back */
   ming_lamellar: { name: '明 · 札甲', en: 'Ming officer · black-lacquered lamellar', helmet: 'mingHigh', face: 'mingBeard', mirror: ['s', '#9aa2a8', 0.25, 0.9],
     pieces: [PIECE(CALF.concat(FOOT), 0.010, 'leather', '#1a1613', null, ['trim', '#1a1613']), PIECE(HAND, 0.004, 'leather', '#2c2016', null, null), PIECE(FARM, 0.02, 'lamellar', '#2a2b2e', '#8c1e18', ['trim', '#8c1e18']),
       PIECE(TORSO, 0.03, 'lamellar', '#232427', '#8c1e18', ['trim', '#8c1e18', '#d8b04a']), PIECE(THIGH, flareDown(0.036, 0.13), 'lamellar', '#232427', '#8c1e18', ['trim', '#8c1e18', '#d8b04a']),
       PIECE(UARM, flareArm(0.04, 0.1), 'lamellar', '#232427', '#8c1e18', ['trim', '#8c1e18', '#d8b04a'])] },
+  ming_shanwen: { name: '明 · 山文甲', en: 'Ming general · mountain-pattern iron armour, gilt', helmet: 'mingHigh', face: 'mingBeard', mirror: GILT,
+    pieces: [PIECE(CALF.concat(FOOT), 0.010, 'leather', '#1a1613', null, ['trim', '#1a1613']), PIECE(HAND, 0.004, 'leather', '#2c2016', null, null), PIECE(FARM, 0.022, 'mountain', '#8a7a52', null, ['trim', '#a8231a', '#d8b04a']),
+      PIECE(TORSO, 0.032, 'mountain', '#9a8656', null, ['trim', '#a8231a', '#d8b04a']), PIECE(THIGH, flareDown(0.038, 0.13), 'mountain', '#9a8656', null, ['trim', '#a8231a', '#d8b04a']),
+      PIECE(UARM, flareArm(0.042, 0.1), 'mountain', '#9a8656', null, ['trim', '#a8231a', '#d8b04a'])] },
+  ming_scale: { name: '明 · 魚鱗甲', en: 'Ming officer · fish-scale iron armour', helmet: 'ming', face: 'ming', mirror: ['s', '#9aa2a8', 0.25, 0.9],
+    pieces: [PIECE(CALF, 0.016, 'scale', '#5a5e64', '#2a1a14', ['trim', '#7a1e16']), PIECE(FOOT, 0.010, 'leather', '#1a1613', null, null), PIECE(FARM, 0.02, 'leather', '#3a2a1c', null, ['trim', '#7a1e16', '#c8a048']), /* 臂縛 bracers, 吊腿 shin guards */
+      PIECE(TORSO, 0.03, 'scale', '#5e6268', '#2a1a14', ['trim', '#7a1e16', '#c8a048']), PIECE(THIGH, flareDown(0.034, 0.12), 'scale', '#5e6268', '#2a1a14', ['trim', '#7a1e16', '#c8a048']),
+      PIECE(UARM, flareArm(0.038, 0.09), 'scale', '#5e6268', '#2a1a14', ['trim', '#7a1e16', '#c8a048'])] },
+  ming_mail: { name: '明 · 鎖子甲', en: 'Ming horseman · mail shirt over a blue robe', helmet: 'ming', face: 'young',
+    pieces: [PIECE(CALF.concat(FOOT), 0.010, 'leather', '#1d1915', null, ['trim', '#1d1915']), PIECE(THIGH, flareDown(0.014, 0.1), 'cloth', '#2e4060', null, ['trim', '#1c2232']), PIECE(FARM, 0.012, 'cloth', '#2e4060', null, ['trim', '#1c2232']),
+      PIECE(TORSO.concat(UARM), 0.024, 'mail', '#8a8e94', null, ['trim', '#3a2a1c'])] },
+  ming_paper: { name: '明 · 紙甲', en: 'Ming southern soldier · paper armour', helmet: 'felt', face: 'young',
+    pieces: [PIECE(FOOT, 0.006, 'leather', '#6b5634', null, null), PIECE(CALF, 0.012, 'cloth', '#d8cfb6', null, ['trim', '#8a7a5c']), PIECE(THIGH, 0.008, 'cloth', '#3c3a36', null, ['trim', '#3c3a36']),
+      PIECE(TORSO.concat(UARM), 0.026, 'quilt', '#c9b98e', null, ['trim', '#7a2a1c'])] }, /* layered paper and cloth, pressed and stitched (武備志 甲冑; 明史 兵志: 紙甲 for the southern armies) */
+  ming_robe: { name: '明 · 戰袍', en: 'Ming soldier · plain cloth robe, hood and puttees (抗倭圖卷)', helmet: 'hood', face: 'young', belt: '#6a2a1a',
+    pieces: [PIECE(FOOT, 0.006, 'leather', '#3a2a1c', null, null), PIECE(CALF, 0.012, 'puttee', '#d8d0bc', null, null),
+      PIECE(TORSO.concat(ARMS), 0.018, 'cloth', '#4f6a54', null, ['trim', '#3a5040']), PIECE(THIGH, flareDown(0.02, 0.12), 'cloth', '#4f6a54', null, ['trim', '#3a5040'], { long: 0.12 })] },
   qi_rattan: { name: '戚家軍 · 藤牌手', en: 'Qi Jiguang\'s southerner · rattan-shield man', helmet: 'rattan', face: 'young',
     pieces: [PIECE(FOOT, 0.006, 'leather', '#6b5634', null, null), PIECE(CALF, 0.012, 'cloth', '#d8cfb6', null, ['trim', '#8a7a5c']), PIECE(THIGH, 0.008, 'cloth', '#3c4650', null, ['trim', '#3c4650']),
       PIECE(TORSO.concat(UARM), 0.016, 'cloth', '#4a5a6a', null, ['trim', '#c8b48a'])] },
@@ -273,6 +327,10 @@ const ARMOR = {
     pieces: [PIECE(CALF.concat(FOOT), 0.010, 'leather', '#1a1613', null, ['trim', '#1a1613']), PIECE(FARM, 0.016, 'cloth', '#1f2a3a', null, ['trim', '#b32a20']),
       PIECE(TORSO, 0.024, 'studs', '#2c4a8a', '#c9a24a', ['trim', '#b32a20', '#c9a24a']), PIECE(THIGH, flareDown(0.03, 0.12), 'studs', '#2c4a8a', '#c9a24a', ['trim', '#b32a20', '#c9a24a']),
       PIECE(UARM, flareArm(0.032, 0.09), 'studs', '#2c4a8a', '#c9a24a', ['trim', '#b32a20', '#c9a24a'])] },
+  jin_red: { name: '後金 · 正紅旗', en: 'Jin bannerman · Plain Red', helmet: 'qing', face: 'jin', banner: '#a82a20',
+    pieces: [PIECE(CALF.concat(FOOT), 0.010, 'leather', '#1a1613', null, ['trim', '#1a1613']), PIECE(FARM, 0.016, 'cloth', '#1f2a3a', null, ['trim', '#2a1e14']),
+      PIECE(TORSO, 0.024, 'studs', '#a82a20', '#c9a24a', ['trim', '#2a1e14', '#c9a24a']), PIECE(THIGH, flareDown(0.03, 0.12), 'studs', '#a82a20', '#c9a24a', ['trim', '#2a1e14', '#c9a24a']),
+      PIECE(UARM, flareArm(0.032, 0.09), 'studs', '#a82a20', '#c9a24a', ['trim', '#2a1e14', '#c9a24a'])] },
   mongol: { name: '蒙古 · 皮甲', en: 'Khorchin Mongol · leather lamellar and fur', helmet: 'fur', face: 'mongol',
     pieces: [PIECE(CALF.concat(FOOT), 0.012, 'leather', '#3a2414', null, ['trim', '#3a2414']), PIECE(THIGH, 0.01, 'cloth', '#5a3a24', null, ['trim', '#5a3a24']),
       PIECE(ARMS, 0.018, 'cloth', '#6a4a2a', null, ['fur', '#8a6a44']), PIECE(TORSO, 0.028, 'lamellar', '#6a4528', '#2a1a10', ['fur', '#8a6a44'])] },
@@ -303,7 +361,7 @@ function faceTex(kind, expr) {
   const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return (TEX[key] = t);
 }
 let FACE_GEO = null;
-function faceGeo() { if (FACE_GEO) return FACE_GEO; const H = bodyBoxes().head[0], top = H.c.y + H.h[1]; const g = new THREE.PlaneGeometry(0.15, 0.19); g.translate(H.c.x, top - 0.05 - 0.095, H.c.z + H.h[2] + 0.0015); return (FACE_GEO = g); }
+function faceGeo() { if (FACE_GEO) return FACE_GEO; const H = bodyBoxes().head[0], top = H.c.y + H.h[1]; const g = new THREE.PlaneGeometry(0.19, 0.235); g.translate(H.c.x, top - 0.035 - 0.1175, H.c.z + H.h[2] + 0.0015); return (FACE_GEO = g); }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // weapons: rigid on a hand or forearm. The grip is read off the hand itself in the bind pose (finger direction, the line of
@@ -334,6 +392,11 @@ const WEAPON = {
     const g = new THREE.Group(); const pts = []; for (let i = 0; i <= 16; i++) { const t = i / 16 * 2 - 1; pts.push(new V3(-0.09 * (1 - t * t) + 0.05 * Math.pow(Math.abs(t), 3), t * 0.62, 0)); }
     g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.015, 4), wpnMat(0x4a2a18, 0.6)));
     const str = new THREE.Mesh(new THREE.BoxGeometry(0.004, 1.24, 0.004), wpnMat(0xe8dcc0, 0.9)); str.position.x = -0.04 + 0.05; g.add(str); return g; } },
+  gun: { name: '鳥銃 Matchlock', hand: 'r', two: true, gun: true, build() { // 鳥銃: the Ming matchlock (after the Japanese teppō): a long octagonal barrel, a curved butt held against the cheek
+    const g = new THREE.Group(); const st = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.62, 0.06), wpnMat(0x5a3820, 0.8)); st.position.y = 0.12; g.add(st);
+    const butt = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.2, 0.09), wpnMat(0x5a3820, 0.8)); butt.position.set(0, -0.26, -0.012); butt.rotation.x = 0.25; g.add(butt);
+    const br = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.017, 0.86, 8), wpnMat(0x2c2e31, 0.4, 0.8)); br.position.set(0, 0.7, 0.02); g.add(br);
+    const lk = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.03), wpnMat(0xb08a3a, 0.4, 0.8)); lk.position.set(0.02, 0.0, 0.03); g.add(lk); return g; } },
   none: { name: '無 Unarmed', hand: null, build() { return null; } },
 };
 function shieldMesh() { // 藤牌: a domed shield of coiled rattan, a tiger's face painted on it to frighten horses (紀效新書 藤牌)
@@ -417,7 +480,7 @@ class Animator {
   constructor(man) { this.man = man; this.bw = {}; this.os = []; this.one = null; this.phase = Math.random(); this.speed = 0; this.ang = 0; this.combat = false; this.idle = IDLES[(Math.random() * 3) | 0]; this.idleT = 6 + Math.random() * 8;
     this.chain = null; this.step = 0; this.pending = false; this.hold = null; this.dead = false; this.down = false; this.look = null; this.lookW = 0; this.spearT = -1; this.blockOn = false; this.cbT = 0; this.dirW = { fwd: 1, back: 0, left: 0, right: 0 }; this.pointAt = null; this.pointW = 0; this.orderT = 0; }
   A(name) { const m = this.man; if (!m.acts[name]) { const c = BODY.clips[name]; if (!c) return null; m.acts[name] = m.mixer.clipAction(c); } return m.acts[name]; }
-  armed() { const k = this.man.wpnKey; this.combat = k !== 'none'; this.hands = { r: ['dao', 'shield', 'spear'].includes(k) ? 'fist' : 'relax', l: ['spear', 'shield', 'bow'].includes(k) ? 'fist' : 'relax' }; }
+  armed() { const k = this.man.wpnKey; this.combat = k !== 'none'; this.hands = { r: ['dao', 'shield', 'spear', 'gun'].includes(k) ? 'fist' : 'relax', l: ['spear', 'shield', 'bow', 'gun'].includes(k) ? 'fist' : 'relax' }; }
   // 衝: the order to charge: the weapon goes up, the off hand points the way, the head turns to it, and he shouts
   order(target, dur) { if (this.dead || this.down) return; this.pointAt = target.clone(); this.orderT = dur || 2.2; this.look = target.clone(); this.man.setExpr('shout'); }
   get base() { return this.stance(); }
@@ -438,7 +501,7 @@ class Animator {
     this.chain = CHAINS[key] ? key : 'lianhuan'; this.chainStep(0, 0.12);
   }
   chainStep(i, fade) { const C = CHAINS[this.chain]; this.step = i; this.pending = false; const name = C.steps[i];
-    this.play(name, { fade, attack: true, expr: 'shout', then: () => { if (this.pending && this.step + 1 < C.steps.length) return this.chainStep(this.step + 1, 0.08); const r = BODY.clips[name + '_Rec'] ? name + '_Rec' : null; this.chain = null; if (r) this.play(r, { fade: 0.08, expr: 'calm' }); else { this.man.setExpr('calm'); this.endOne(); } } }); }
+    this.play(name, { fade, attack: true, expr: 'shout', ts: this.atkTS || 1, then: () => { if (this.pending && this.step + 1 < C.steps.length) return this.chainStep(this.step + 1, 0.08); const r = BODY.clips[name + '_Rec'] ? name + '_Rec' : null; this.chain = null; if (r) this.play(r, { fade: 0.08, expr: 'calm' }); else { this.man.setExpr('calm'); this.endOne(); } } }); }
   thrust() { if (this.spearT >= 0 && this.spearT < 0.45) return; this.spearT = 0; this.combat = true; this.man.setExpr('shout'); }
   block(on) { if (this.dead || this.down) return; if (on && !this.blockOn) { this.blockOn = true; if (this.man.spear) return; this.play(this.man.shield ? 'Idle_Shield_Break' : 'Sword_Block', { fade: 0.08, freezeAt: this.man.shield ? 0.18 : 0.42, hold: true }); }
     else if (!on && this.blockOn) { this.blockOn = false; if (this.one && this.one.hold) this.endOne(); } }
@@ -489,14 +552,16 @@ class Animator {
   spearIK(dt) {
     const m = this.man, R = m.root, fwd = new V3(0, 0, 1).applyQuaternion(R.quaternion), left = new V3(1, 0, 0).applyQuaternion(R.quaternion), up = new V3(0, 1, 0);
     let k = 0; if (this.spearT >= 0) { this.spearT += dt; const t = this.spearT; k = t < 0.18 ? -0.35 * sm(t / 0.18) : t < 0.32 ? lerp(-0.35, 1, sm((t - 0.18) / 0.14)) : t < 0.7 ? lerp(1, 0, sm((t - 0.32) / 0.38)) : 0; if (t > 0.75) { this.spearT = -1; m.setExpr('calm'); } }
-    const pel = m.bones.pelvis.getWorldPosition(new V3()), dir = fwd.clone().multiplyScalar(0.96).add(up.clone().multiplyScalar(0.06)).normalize(), push = dir.clone().multiplyScalar(k * 0.4);
-    const rear = pel.clone().add(left.clone().multiplyScalar(-0.29)).add(fwd.clone().multiplyScalar(-0.03)).add(up.clone().multiplyScalar(0.13)).add(push); /* the rear hand out at the right hip, clear of the coat */
-    const front = rear.clone().add(dir.clone().multiplyScalar(0.33)).add(left.clone().multiplyScalar(0.25)).add(up.clone().multiplyScalar(0.04)); /* the lead hand ahead of the belly, within the left arm's reach */
+    if (m.wpnKey === 'gun') { k = 0; this.spearT = -1; } /* a gun is not thrust */
+    const gunAim = m.wpnKey === 'gun' && this.aimOn, gunPort = m.wpnKey === 'gun' && !this.aimOn;
+    const pel = m.bones.pelvis.getWorldPosition(new V3()), dir = (gunPort ? fwd.clone().multiplyScalar(0.55).add(up.clone().multiplyScalar(0.62)).add(left.clone().multiplyScalar(0.45)) : fwd.clone().multiplyScalar(0.96).add(up.clone().multiplyScalar(gunAim ? 0.0 : 0.06))).normalize(), push = dir.clone().multiplyScalar(k * 0.4);
+    const rear = gunAim ? m.bones.spine_03.getWorldPosition(new V3()).add(left.clone().multiplyScalar(-0.16)).add(fwd.clone().multiplyScalar(0.14)).add(up.clone().multiplyScalar(0.06)) /* the butt at the right cheek, the eye down the barrel */
+      : gunPort ? pel.clone().add(left.clone().multiplyScalar(-0.17)).add(fwd.clone().multiplyScalar(0.12)).add(up.clone().multiplyScalar(0.12)) /* carried across the body, muzzle up over the left shoulder */
+      : pel.clone().add(left.clone().multiplyScalar(-0.29)).add(fwd.clone().multiplyScalar(-0.03)).add(up.clone().multiplyScalar(0.13)).add(push); /* the rear hand out at the right hip, clear of the coat */
+    const front = m.wpnKey === 'gun' ? rear.clone().add(dir.clone().multiplyScalar(gunAim ? 0.4 : 0.36)) : rear.clone().add(dir.clone().multiplyScalar(0.3)).add(left.clone().multiplyScalar(0.2)).add(up.clone().multiplyScalar(0.07)); /* within the arm's reach with the fist closed round the shaft */ /* the lead hand ahead of the belly, within the left arm's reach */
     const sd = front.clone().sub(rear).normalize();
-    ik2(m.bones.upperarm_r, m.bones.lowerarm_r, m.bones.hand_r, rear, rear.clone().add(left.clone().multiplyScalar(-0.7)).add(up.clone().multiplyScalar(0.05)).add(fwd.clone().multiplyScalar(-0.45))); /* the elbow out and back, never in across the body */
-    handTo(m, 'r', sd, up.clone().multiplyScalar(-0.6).add(left.clone().multiplyScalar(-0.4)).normalize());
-    ik2(m.bones.upperarm_l, m.bones.lowerarm_l, m.bones.hand_l, front, front.clone().add(left.clone().multiplyScalar(0.8)).add(up.clone().multiplyScalar(-0.25)));
-    handTo(m, 'l', sd, up.clone().multiplyScalar(-0.7).add(left.clone().multiplyScalar(0.3)).normalize());
+    gripTo(m, 'r', rear, rear.clone().add(left.clone().multiplyScalar(-0.7)).add(up.clone().multiplyScalar(0.05)).add(fwd.clone().multiplyScalar(-0.45)), sd, up.clone().multiplyScalar(-0.6).add(left.clone().multiplyScalar(-0.4)).normalize()); /* the elbow out and back, never in across the body; the fist (which carries the shaft) on the line */
+    gripTo(m, 'l', front, front.clone().add(left.clone().multiplyScalar(0.8)).add(up.clone().multiplyScalar(-0.25)), sd, up.clone().multiplyScalar(-0.7).add(left.clone().multiplyScalar(0.3)).normalize());
     if (k > 0) { const sp = m.bones.spine_02; const q = new Q().setFromAxisAngle(up, -0.35 * k); rotWorld(sp, q); } /* the hips and trunk turn into the thrust */
   }
   lookAt(dt) { // the chest and the head turn toward what he is watching (yaw only), sharing the turn
@@ -523,6 +588,9 @@ function aimArm(m, side, dirW, w, bendUp) { const U = m.bones['upperarm_' + side
   const e = S.clone().add(d.clone().multiplyScalar(l1)).add(new V3(0, bendUp || 0, 0)); aimBone(U, L.getWorldPosition(new V3()), e);
   aimBone(L, H.getWorldPosition(new V3()), e.clone().add(d.clone().multiplyScalar(l2))); aimBone(H, m.bones['middle_01_' + side].getWorldPosition(new V3()), H.getWorldPosition(new V3()).add(d));
   if (w < 0.999) { [U, L, H].forEach((b, i) => { const q = b.quaternion.clone(); b.quaternion.copy(save[i]).slerp(q, w); }); U.updateMatrixWorld(true); } }
+// put the inside of a fist (not the wrist) on a point, the grip axis along a line: solve, see where the grip landed, correct, solve again
+function gripTo(m, side, target, pole, axisW, knuckW) { const F = gripFrame(side), H = m.bones['hand_' + side], gl = F.o.clone().applyMatrix4(new M4().copy(BODY.bindWorld[BODY.bi['hand_' + side]]).invert()); let want = target.clone();
+  for (let it = 0; it < 3; it++) { ik2(m.bones['upperarm_' + side], m.bones['lowerarm_' + side], H, want, pole); handTo(m, side, axisW, knuckW); const g = gl.clone().applyMatrix4(H.matrixWorld); want.add(target.clone().sub(g)); m.gripGap = target.distanceTo(g); } }
 // rotate a bone by a world-space rotation, keeping its parent: local' = parentWorld⁻¹ · q · world
 const _q1 = new Q(), _q2 = new Q(), _v1 = new V3(), _v2 = new V3(), _v3 = new V3();
 function rotWorld(bone, q) { bone.getWorldQuaternion(_q1); _q1.premultiply(q); bone.parent.getWorldQuaternion(_q2); bone.quaternion.copy(_q2.invert().multiply(_q1)); bone.updateMatrixWorld(true); }
