@@ -171,6 +171,7 @@ const AI_RANGE=14;
 const inDugout=u=>u.x>=54&&u.x<=58&&u.y>=16&&u.y<=24;
 
 const SEATS=8;
+const CNAME=['Red','Blue','Green','Orange','Purple','Yellow','White','Pink'];
 const HCOL=['#e8231a','#1f6fe0','#2fa84f','#ff8c00','#9b4dd6','#f2d000','#f4f1e8','#e0409a'];// red blue green orange purple yellow white pink
 // which AI soldiers stay when humans take seats (the PTRD gunner is kept longest — the line needs him for the Panzer)
 const BOT_KEEP=['Kuznetsov','Orlov','Petrova','Morozov','Sokolova','Ivanov','Lebedev'];
@@ -186,7 +187,7 @@ function newGame(cfg){
   const nb=cfg.demo?SQUAD.length:Math.max(0,SEATS-hs.length);const keep=new Set(BOT_KEEP.slice(0,nb));
   const bots=SQUAD.filter(s=>keep.has(s.name));const posts=assignPostsList(bots.length);
   bots.forEach((s,i)=>{const u=mkUnit({kind:'sq',name:s.name,rank:s.rank,col:s.col,wpn:s.wpn,mag:WPN[s.wpn].mag,post:posts[i],hp:DF.hp,maxhp:DF.hp});u.x=u.post.x;u.y=u.post.y;u.aim=u.post.face;G.units.push(u)});
-  G.squad=G.units.filter(u=>u.kind==='sq');G.people=[...G.humans,...G.squad];G.people.forEach((u,i)=>u.col=HCOL[i%HCOL.length]);
+  G.squad=G.units.filter(u=>u.kind==='sq');G.people=[...G.humans,...G.squad];G.people.forEach((u,i)=>{u.col=HCOL[i%HCOL.length];u.sname=u.name;u.name=CNAME[i%CNAME.length];u.bot=!u.isPlayer});
   // everyone musters together in the back room, then the squad heads out to its posts
   {const sp=[];for(const [x,y] of [[49,21],[51,21],[48,22],[50,22],[49,23],[51,23],[48,20],[50,20],[48,21],[49,22],[51,22],[50,23],[49,20],[51,20],[48,23]])if(passable(x,y)&&!blockedAt(x+.5,y+.5,0.35))sp.push({x:x+.5,y:y+.5});
    if(sp.length)G.people.forEach((u,i)=>{const s=sp[i%sp.length],k=Math.floor(i/sp.length);u.x=s.x+(k?0.3*(k%2?1:-1):0);u.y=s.y;u.aim=Math.PI})}
@@ -219,7 +220,7 @@ function assignPostsList(n){
 function assignPosts(){const live=G.squad.filter(u=>u.alive&&!u.revealed);const ps=assignPostsList(live.length);live.forEach((u,i)=>{u.post=ps[i];u.seeking=false})}
 const liveSov=()=>G.units.filter(u=>u.alive&&u.side==='sov');
 const liveSquad=()=>G.squad.filter(u=>u.alive&&u.side==='sov');
-function getOfficer(ex){for(const n of ['Orlov','Ivanov','Morozov','Petrova','Sokolova','Kuznetsov','Lebedev']){const u=G.squad.find(s=>s.name===n);if(u&&u.alive&&u.side==='sov'&&u!==ex&&!u.isSpy)return u}return null}
+function getOfficer(ex){for(const n of ['Orlov','Ivanov','Morozov','Petrova','Sokolova','Kuznetsov','Lebedev']){const u=G.squad.find(s=>s.sname===n);if(u&&u.alive&&u.side==='sov'&&u!==ex&&!u.isSpy)return u}return null}
 // who runs the inquiry when the player is not the commissar: the hidden AI commissar, or the ranking officer once he is dead
 // the human commissar runs his own inquiry; otherwise the hidden AI commissar does, or the ranking officer once he is dead
 function investigator(){const c=G.com;if(c&&c.alive&&c.side==='sov')return c.isPlayer?null:c;return getOfficer()}
@@ -1213,7 +1214,7 @@ function render(){
       ctx.save();ctx.translate(ex,ey);ctx.rotate(a);ctx.fillStyle='#d8aa4d';ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-8,-9);ctx.lineTo(-8,9);ctx.closePath();ctx.fill();ctx.restore()}}
   ctx.textAlign='center';
   if(playing)for(const u of G.units){if(!u.alive||u.kind==='tank'||!vis(u))continue;const [sx,sy]=w2s(u.x,u.y);if(!on(sx,sy,60))continue;
-    if(u.uniform==='sov'&&u!==me){ctx.font=`700 ${Math.max(11,TS*0.34)|0}px Oswald, sans-serif`;ctx.lineWidth=3.5;ctx.strokeStyle=PAL.ink;const lab=u.revealed?`${u.name} — TRAITOR`:u.isCom&&G.comKnown?`${u.name} — COMMISSAR`:u.name;ctx.strokeText(lab,sx,sy-TS*0.62);ctx.fillStyle=u.revealed?'#ff6a50':PAL.paper;ctx.fillText(lab,sx,sy-TS*0.62);
+    if(u.uniform==='sov'&&u!==me){ctx.font=`700 ${Math.max(11,TS*0.34)|0}px Oswald, sans-serif`;ctx.lineWidth=3.5;ctx.strokeStyle=PAL.ink;const lab=(u.revealed?`${u.name} — TRAITOR`:u.isCom&&G.comKnown?`${u.name} — COMMISSAR`:u.name)+(u.bot?' · bot':'');ctx.strokeText(lab,sx,sy-TS*0.62);ctx.fillStyle=u.revealed?'#ff6a50':u.col;ctx.fillText(lab,sx,sy-TS*0.62);
       const hpw=TS*0.8;if(u.hp<u.maxhp){ctx.fillStyle=PAL.ink;ctx.fillRect(sx-hpw/2-1,sy+TS*0.52-1,hpw+2,6);ctx.fillStyle=PAL.olive;ctx.fillRect(sx-hpw/2,sy+TS*0.52,hpw*u.hp/u.maxhp,4)}}
     if(u.bark){ctx.font=`700 ${Math.max(12,TS*0.34)|0}px Oswald, sans-serif`;const tw=ctx.measureText(u.bark.t).width+14;const by=sy-TS*(u.uniform==='sov'&&u!==me?1.2:0.8);const ger=u.side==='ger';ctx.fillStyle=ger?PAL.feld:PAL.paper;ctx.strokeStyle=PAL.ink;ctx.lineWidth=2;ctx.fillRect(sx-tw/2,by-TS*0.38,tw,TS*0.48);ctx.strokeRect(sx-tw/2,by-TS*0.38,tw,TS*0.48);ctx.fillStyle=ger?PAL.paper:PAL.ink;ctx.fillText(u.bark.t,sx,by-TS*0.03)}}
   if(eye&&me.arrestHold){const A=me.arrestHold;const [sx,sy]=w2s(A.T.x,A.T.y);ctx.strokeStyle=PAL.red;ctx.lineWidth=5;ctx.beginPath();ctx.arc(sx,sy,TS*0.72,-Math.PI/2,-Math.PI/2+TAU*A.t/1.4);ctx.stroke()}
@@ -1278,7 +1279,7 @@ function hudTick(dt){
   if(!$('noteIc').innerHTML)$('noteIc').innerHTML=ICON.book;
   let html='';
   for(const u of G.people){const st=u.escaped?'<span class="st tr">fled</span>':u.revealed&&u.alive?'<span class="st tr">traitor</span>':u.arrested?'<span class="st arr">held</span>':!u.alive?'<span class="st kia">KIA</span>':`<div class="hpb"><i style="width:${Math.max(0,u.hp/u.maxhp*100)}%"></i></div>`;
-    html+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.name)}${u===p?' ◂':''}${u.isCom&&(G.comKnown||u===p)?' ★':''}${u.isPlayer&&NET&&NET.away_(u.seat)?' <span class="st arr">away</span>':''}</td><td>${st}</td>${p.isSpy?`<td><div class="sus" title="suspicion"><i style="width:${Math.min(100,(G.susp[u.id]||0)/80*100)}%"></i></div></td>`:''}</tr>`}
+    html+=`<tr><td><span class="sw" style="background:${u.col}"></span></td><td>${esc(u.name)}${u.bot?' <span class="st bot">bot</span>':u.isPlayer&&G.humans.length>1?` <small>${esc(u.sname)}</small>`:''}${u===p?' ◂':''}${u.isCom&&(G.comKnown||u===p)?' ★':''}${u.isPlayer&&NET&&NET.away_(u.seat)?' <span class="st arr">away</span>':''}</td><td>${st}</td>${p.isSpy?`<td><div class="sus" title="suspicion"><i style="width:${Math.min(100,(G.susp[u.id]||0)/80*100)}%"></i></div></td>`:''}</tr>`}
   if($('squadTbl').innerHTML!==html)$('squadTbl').innerHTML=html;
   // key prompts sit in fixed slots (one per key your role can use) so they never shuffle as hints come and go
   const keys=[];if(!p.isSpy)keys.push('T');if(p.isCom)keys.push('F');if(traitor(p))keys.push('X','V');if(p===G.spy)keys.push('B','Q');
