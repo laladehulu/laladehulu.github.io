@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v132</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v133</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -11700,7 +11700,7 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
   const rag0 = R.drawRagdoll;
   R.drawRagdoll = function (rag) {
     if (NM.ok && rag.unit) { let m = NM.ragMen.get(rag); if (!m && NM.dying.has(rag.unit.id)) { m = NM.dying.get(rag.unit.id); NM.dying.delete(rag.unit.id); bindRag(rag, m, { ix: 0, iy: 0, iz: 0 }); }
-      if (m) { this.hideFigure(rag.slot); m.root.visible = true; RIG.poseRag(m, rag.p); return; } }
+      if (m) { this.hideFigure(rag.slot); m.root.visible = true; RIG.poseRag(m, rag.p, this._nmDt); return; } }
     return rag0.call(this, rag); };
   const dying0 = R.dyingDraw;
   if (dying0) R.dyingDraw = function (i, u, dt) { const m = NM.ok && NM.dying.get(u.id); if (m) { this.hideFigure(i); m.root.position.set(u.x, u.y, u.z); m.update(clampDt(dt)); return; } return dying0.call(this, i, u, dt); };

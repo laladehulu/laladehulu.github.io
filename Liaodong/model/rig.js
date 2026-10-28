@@ -466,7 +466,7 @@ function stepLoose(dt) { for (let i = LOOSE.length - 1; i >= 0; i--) { const L =
     if (L.t > 40) { o.position.y -= dt * 0.05; if (L.t > 46) { o.parent && o.parent.remove(o); LOOSE.splice(i, 1); } } } }
 // ---- a dead man laid on the game's own ragdoll: seven points (head, chest, pelvis, hands, feet) carry the body; the trunk is
 // set by the chest over the pelvis and the line of the hands, the limbs reach their points by IK, the head is turned to its point
-function poseRag(m, p) { const P = (i) => new V3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]), head = P(0), chest = P(1), pel = P(2), hL = P(3), hR = P(4), fL = P(5), fR = P(6);
+function poseRag(m, p, dt) { if (!m.ragFrom) { m.ragFrom = { q: m.skel.bones.map(b => b.quaternion.clone()), rq: m.root.quaternion.clone(), rp: m.root.position.clone() }; m.ragT = 0; } m.ragT += dt || 1 / 60; const P = (i) => new V3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]), head = P(0), chest = P(1), pel = P(2), hL = P(3), hR = P(4), fL = P(5), fR = P(6);
   for (const b of m.skel.bones) { b.quaternion.copy(BODY.restQ[b.name]); b.position.copy(BODY.restP[b.name]); }
   const up = chest.clone().sub(pel).normalize(); let lf = hL.clone().sub(hR); lf.sub(up.clone().multiplyScalar(lf.dot(up))); if (lf.lengthSq() < 1e-4) lf = m.ragLeft || new V3(1, 0, 0); lf.normalize(); m.ragLeft = lf.clone(); const fw = new V3().crossVectors(lf, up).normalize();
   const R = new M4().makeBasis(lf, up, fw); m.root.quaternion.setFromRotationMatrix(R); const pb = BODY.bpos('pelvis'); m.root.position.copy(pel).sub(pb.applyQuaternion(m.root.quaternion)); m.root.updateMatrixWorld(true);
@@ -474,7 +474,13 @@ function poseRag(m, p) { const P = (i) => new V3(p[i * 3], p[i * 3 + 1], p[i * 3
   ik2(m.bones.upperarm_l, m.bones.lowerarm_l, m.bones.hand_l, hL, hL.clone().add(fw.clone().multiplyScalar(-0.3)).add(up.clone().multiplyScalar(-0.3)));
   ik2(m.bones.upperarm_r, m.bones.lowerarm_r, m.bones.hand_r, hR, hR.clone().add(fw.clone().multiplyScalar(-0.3)).add(up.clone().multiplyScalar(-0.3)));
   for (const [s, f] of [['l', fL], ['r', fR]]) { const t = f.clone().add(up.clone().multiplyScalar(0.0)); ik2(m.bones['thigh_' + s], m.bones['calf_' + s], m.bones['foot_' + s], t, m.bones['thigh_' + s].getWorldPosition(new V3()).add(fw.clone().multiplyScalar(0.6))); }
-  poseHand(m, 'r', m.wpnDropped ? 'relax' : 'fist', 1); poseHand(m, 'l', 'relax', 1); m.root.updateMatrixWorld(true); }
+  poseHand(m, 'r', m.wpnDropped ? 'relax' : 'fist', 1); poseHand(m, 'l', 'relax', 1);
+  const w = sm(clamp(m.ragT / 0.25, 0, 1)); if (w < 1) { const F = m.ragFrom; m.skel.bones.forEach((b, i) => { const q = b.quaternion.clone(); b.quaternion.copy(F.q[i]).slerp(q, w); }); const q = m.root.quaternion.clone(), pp = m.root.position.clone(); m.root.quaternion.copy(F.rq).slerp(q, w); m.root.position.copy(F.rp).lerp(pp, w); } /* from the live pose into the fall, not a jump */
+  m.root.updateMatrixWorld(true); }
+// three.js's mixer writes a bone only when the clip's value differs from the frame before. Bones are set back to rest each
+// frame (so nothing laid on top can pile up), so every bone must be written every frame, or a held pose (a guard, a clip
+// standing still) is left at rest: the T-pose. Last frame's values are marked unknown before each update.
+function mixUpdate(mx, dt) { const B = mx._bindings, j = mx._accuIndex; for (let i = 0; i < B.length; i++) { const pm = B[i], s = pm.valueSize, o = j * s + s, b = pm.buffer; for (let k = 0; k < s; k++) b[o + k] = NaN; } mx.update(dt); }
 class Man {
   constructor(setKey, wpnKey, scene) {
     this.root = THREE.SkeletonUtils.clone(BODY.gltf.scene); this.root.userData.man = this; this.scene = scene; scene.add(this.root);
@@ -519,7 +525,7 @@ class Man {
   // the weapon let go: it leaves the hand where it is and falls
   dropWeapon(vel) { const w = this.attached.find(a => a.userData.weapon); if (!w) return null; this.attached = this.attached.filter(a => a !== w); const g = new THREE.Group(); w.updateMatrixWorld(true); g.matrix.copy(w.matrixWorld); g.matrix.decompose(g.position, g.quaternion, g.scale);
     w.parent.remove(w); w.matrix.identity(); w.position.set(0, 0, 0); w.quaternion.identity(); w.scale.set(1, 1, 1); w.matrixAutoUpdate = true; g.add(w); this.scene.add(g); this.wpnDropped = true; return loose(g, vel, this.groundAt, 0.05); }
-  rearm() { if (this.wpnDropped) { this.wpnDropped = false; this.arm(this.wpnKey); } this.putHelmetOn(); }
+  rearm() { this.ragFrom = null; if (this.wpnDropped) { this.wpnDropped = false; this.arm(this.wpnKey); } this.putHelmetOn(); }
 }
 // the ink line round a rigid piece (a weapon, a shield): its own back faces, pushed out along their normals
 const RIG_LINE = new THREE.MeshBasicMaterial({ color: 0x15100b, side: THREE.BackSide });
@@ -555,6 +561,11 @@ const CONTACT = {};
 function contactT(name) { if (CONTACT[name] !== undefined) return CONTACT[name]; const c = BODY.clips[name]; if (!c) return 0; const sc = new THREE.Scene(), m = new Man('bare', 'none', sc), a = m.mixer.clipAction(c); a.play(); let best = 1e9, bt = 0;
   for (let i = 0; i < 48; i++) { const t = c.duration * i / 48; a.time = t; m.mixer.update(0); m.root.updateMatrixWorld(true); const y = m.bones.foot_l.getWorldPosition(new V3()).y - m.bones.foot_r.getWorldPosition(new V3()).y; if (y < best) { best = y; bt = t; } }
   m.dispose(); return (CONTACT[name] = bt); }
+// a pose held (the guard of a block): the clip's frame at that moment as a little looping clip of its own, so nothing is ever frozen
+const HOLDC = {};
+function holdClip(name, frac) { const k = name + '@' + frac; if (HOLDC[k]) return HOLDC[k]; const c = BODY.clips[name]; if (!c) return null; const t = c.duration * frac;
+  const tracks = c.tracks.map(tr => { const it = tr.createInterpolant(), v = Array.from(it.evaluate(t)); return new tr.constructor(tr.name, [0, 1], v.concat(v)); });
+  const h = new THREE.AnimationClip(k, 1, tracks); BODY.clips[k] = h; return (HOLDC[k] = h); }
 const CLIPV = {};
 function clipInfo(name) { if (CLIPV[name]) return CLIPV[name]; const c = BODY.clips[name]; if (!c) return { v: 1, low: 0.125 }; const sc = new THREE.Scene(), m = new Man('bare', 'none', sc), a = m.mixer.clipAction(c); a.play(); const N = 60, S = [], v = []; let mn = 9;
   for (let i = 0; i <= N; i++) { a.time = c.duration * i / N; m.mixer.update(0); m.root.updateMatrixWorld(true); const l = m.bones.foot_l.getWorldPosition(new V3()), r = m.bones.foot_r.getWorldPosition(new V3()); S.push([l, r]); mn = Math.min(mn, l.y, r.y); }
@@ -598,7 +609,7 @@ class Animator {
   raise(dur) { this.raiseT = this.raiseD = dur || 1.5; this.man.setExpr('shout'); }
   thrust(o) { o = o || {}; if (this.spearT >= 0 && this.spearT < (o.flurry ? 0.2 : 0.45)) return; this.spearT = 0; this.thrustH = o.h || 0; this.thrustK = o.k || 1; this.thrustRate = o.flurry ? 1.7 : 1; this.combat = true; this.man.setExpr('shout'); }
   sweep() { if (this.sweepT >= 0) return; this.sweepT = 0; this.combat = true; this.man.setExpr('shout'); }
-  block(on) { if (this.dead || this.down) return; if (on && !this.blockOn) { this.blockOn = true; if (this.man.spear) return; this.play(this.man.shield ? 'Idle_Shield_Break' : 'Sword_Block', { fade: 0.08, freezeAt: this.man.shield ? 0.18 : 0.42, hold: true }); }
+  block(on) { if (this.dead || this.down) return; if (on && !this.blockOn) { this.blockOn = true; if (this.man.spear) return; const h = holdClip(this.man.shield ? 'Idle_Shield_Break' : 'Sword_Block', this.man.shield ? 0.18 : 0.42); if (h) this.play(h.name, { fade: 0.14, loop: true, hold: true }); }
     else if (!on && this.blockOn) { this.blockOn = false; if (this.one && this.one.hold) this.endOne(); } }
   // a blow lands on him: he is thrown and bent away from it (a spring, so he comes back), his head whips, and he is shoved
   // (the feet then step to catch him: the legs see the shove as travel)
@@ -606,7 +617,8 @@ class Animator {
     X.v += (4.5 + (heavy ? 4 : 0)) * k; X.hv += (8 + (heavy ? 6 : 0)) * k; X.ov.add(d.multiplyScalar((0.8 + (heavy ? 1.1 : 0)) * k)); }
   // his blade bites: the cut drags for a moment before it follows through
   bite(t) { this.biteT = Math.max(this.biteT, t || 0.1); }
-  hit(dir, heavy) { if (this.dead || this.down) return; this.blockOn = false; this.chain = null; this.pending = false; this.play(heavy ? HITS.heavy : (HITS[dir] || HITS.F), { fade: 0.06, expr: 'pain', then: () => { this.man.setExpr('calm'); this.endOne(); } }); }
+  hit(dir, heavy) { if (this.dead || this.down) return; const name = heavy ? HITS.heavy : (HITS[dir] || HITS.F); if (this.one && /^Hit_/.test(this.one.name) && this.one.a.time < this.one.a.getClip().duration * 0.45) return; /* already reeling: the spring takes the new blow */
+    this.blockOn = false; this.chain = null; this.pending = false; this.play(name, { fade: 0.12, expr: 'pain', then: () => { this.man.setExpr('calm'); this.endOne(); } }); }
   die() { this.blockOn = false; this.chain = null; this.dead = true; this.play(Math.random() < 0.5 ? 'Death01' : 'Death02', { fade: 0.1, force: true, expr: 'pain', then: () => {} }); }
   wound() { this.dead = false; this.down = true; this.play('IdleToLay', { fade: 0.15, force: true, expr: 'pain', then: () => {} }); }
   rise() { if (!this.down) return; this.play('LayToIdle', { fade: 0.15, force: true, expr: 'calm', then: () => { this.down = false; this.endOne(); } }); }
@@ -616,10 +628,10 @@ class Animator {
   update(dt) {
     const m = this.man; if (this.cbT > 0) { this.cbT -= dt; if (this.cbT <= 0 && !this.blockOn) this.combat = m.wpnKey !== 'none' && !!this.keepCombat; }
     if (this.one) { const a = this.one.a, dur = a.getClip().duration;
-      if (this.one.freezeAt !== undefined && this.blockOn && a.time >= dur * this.one.freezeAt) a.timeScale = 0;
+      if (this.one.freezeAt !== undefined && this.blockOn && a.time >= dur * this.one.freezeAt) { a.timeScale = 1e-5; a.time = dur * this.one.freezeAt; } /* frozen at the guard (a speed of exactly 0 stops three.js applying a one-shot at all: the T-pose on a block) */
       if (!this.one.hold && a.time >= dur - 0.03) { const then = this.one.then; this.one = null; if (then) then(); else this.endOne(); } }
     let oneW = 0; for (const e of this.os) { e.w += clamp(e.target - e.w, -e.rate * dt, e.rate * dt); oneW += e.w; }
-    this.os = this.os.filter(e => { if (e.target === 0 && e.w <= 0.001) { if (!this.os.some(o => o !== e && o.a === e.a)) e.a.stop(); return false; } return true; });
+    this.os = this.os.filter(e => { if (e.target === 0 && e.w <= 0.001) { if (!this.os.some(o => o !== e && o.a === e.a) && !(e.a.getClip().name in this.bw)) e.a.setEffectiveWeight(0); return false; } /* faded out, left at weight 0: stopping a clip lets three.js retire bone bindings another clip still uses (the T-pose on a block) */ return true; });
     // the base
     const tgt = {}, sp = this.speed, ang = this.ang, loco = clamp((sp - 0.08) / 0.45, 0, 1); const st = this.stance(); tgt[st] = 1 - loco;
     const dir = Math.abs(ang) > 2.3 ? 'back' : ang > 0.8 ? 'left' : ang < -0.8 ? 'right' : 'fwd'; for (const d in this.dirW) this.dirW[d] += ((d === dir ? 1 : 0) - this.dirW[d]) * Math.min(1, dt * 7);
@@ -630,16 +642,16 @@ class Animator {
     if (!this.style) this.makeStyle(); const MX = this.style.mix;
     for (const d in this.dirW) { const w0 = this.dirW[d] * loco; if (w0 < 0.002) continue; const [n, , ref] = pick(d); if (!BODY.clips[n]) continue; const mixW = d === 'fwd' && MX && BODY.clips[MX[0]] && /Jog|Sprint/.test(n) && n !== MX[0] ? MX[1] : 0; tgt[n] = (tgt[n] || 0) + w0 * (1 - mixW); if (mixW) tgt[MX[0]] = (tgt[MX[0]] || 0) + w0 * mixW; this.gaitTS[n] = clamp(sp / ref, 0.8, 1.3); }
     for (const n in tgt) if (!(n in this.bw)) this.bw[n] = 0;
-    let sum = 0; for (const n in this.bw) { const g = tgt[n] || 0; this.bw[n] += (g - this.bw[n]) * Math.min(1, dt * 9); if (this.bw[n] < 0.002 && !g) { const a = this.A(n); a.stop(); delete this.bw[n]; continue; } sum += this.bw[n]; }
+    let sum = 0; for (const n in this.bw) { const g = tgt[n] || 0; this.bw[n] += (g - this.bw[n]) * Math.min(1, dt * 9); if (this.bw[n] < 0.002 && !g) { const a = this.A(n); if (!this.os.some(e => e.a === a)) a.setEffectiveWeight(0); delete this.bw[n]; continue; } sum += this.bw[n]; }
     const baseShare = Math.max(0, 1 - Math.min(1, oneW)), norm = sum > 0 ? baseShare / sum : 0, oneNorm = oneW > 1 ? 1 / oneW : 1;
     for (const n in this.bw) { const a = this.A(n); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(this.bw[n] * norm);
-      if (SPEED[n] || GAIT_ALT[n]) { a.timeScale = 0; const C = a.getClip(), off = contactT(n); a.time = ((((this.legs ? this.legs.ph : 0) + (off / C.duration)) % 1) + 1) % 1 * C.duration; } else a.timeScale = 1; } /* the walk and run clips are held to the legs' own phase, so the arms swing against the feet at any pace */
+      if (SPEED[n] || GAIT_ALT[n]) { a.timeScale = 1e-5; const C = a.getClip(), off = contactT(n); a.time = ((((this.legs ? this.legs.ph : 0) + (off / C.duration)) % 1) + 1) % 1 * C.duration; } else a.timeScale = 1; } /* the walk and run clips are held to the legs' own phase, so the arms swing against the feet at any pace */
     for (const e of this.os) e.a.setEffectiveWeight(e.w * oneNorm);
     { let tot = 0; for (const a of m.mixer._actions) if (a.enabled && m.mixer._isActiveAction(a)) tot += a.getEffectiveWeight(); /* active, whether running, paused, or held still on the legs' phase */ /* never less than a whole body: whatever is missing the stance fills, so no frame falls back to the bind pose */
       if (tot < 0.995) { const a = this.A(st); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(a.getEffectiveWeight() + 1 - tot); this.bw[st] = this.bw[st] || 0.001; } }
     if (IDLES.includes(st) && loco < 0.5) { this.idleT -= dt; if (this.idleT <= 0) { this.idleT = 8 + Math.random() * 9; this.idle = IDLES[(IDLES.indexOf(this.idle) + 1 + ((Math.random() * 2) | 0)) % IDLES.length]; } }
     for (const b of m.skel.bones) { b.quaternion.copy(BODY.restQ[b.name]); b.position.copy(BODY.restP[b.name]); } /* every bone from rest, every frame: a bone a clip does not move must not keep what was done to it last frame (the turned torso wound round and round) */
-    m.mixer.update(dt); m.root.updateMatrixWorld(true);
+    mixUpdate(m.mixer, dt); m.root.updateMatrixWorld(true);
     if (this.hands) { const pt = this.pointW > 0.4; poseHand(m, 'r', this.hands.r, 1); poseHand(m, 'l', pt ? 'point' : this.hands.l, 1); }
     // the blow taken: spring the bend and the shove back; the cut given: load, drive and follow through with the whole trunk; the guard turned to the side it covers
     { const X = this.rx; X.v += (-110 * X.a - 14 * X.v) * dt; X.a += X.v * dt; X.hv += (-170 * X.h - 16 * X.hv) * dt; X.h += X.hv * dt;
@@ -682,7 +694,7 @@ class Animator {
     const sp = L.v.length(), S = this.style, up = new V3(0, 1, 0), fwd = new V3(0, 0, 1).applyQuaternion(R.quaternion), left = new V3(1, 0, 0).applyQuaternion(R.quaternion);
     // the cadence: the gait clip that leads the blend sets it (played a little faster or slower for his speed), the stretch makes up the rest
     let lead = null, lw = 0; for (const n in this.bw) if ((SPEED[n] || GAIT_ALT[n]) && this.bw[n] > lw) { lw = this.bw[n]; lead = n; }
-    let k = 1; if (lead && sp > 0.12) { const vc = clipSpeedOf(lead), dur = BODY.clips[lead].duration, ts = clamp(sp / vc, 0.8, 1.3) * S.cad; L.ph = (L.ph + dt * ts / dur) % 1; k = clamp(sp / (vc * ts), 0.45, 1.7) * S.stride; } L.low = lead ? clipInfo(lead).low : 0.125;
+    let k = 1; if (lead && sp > 0.12) { const vc = clipSpeedOf(lead), dur = BODY.clips[lead].duration, run = /Jog|Sprint/.test(lead), ts = (run ? clamp(1.05 + sp * 0.09, 1.15, 1.45) : clamp(sp / vc, 0.85, 1.3)) * S.cad; /* a run is quick steps, not a slow long one: at a soldier's jog the feet turn over fast and the stride is short */ L.ph = (L.ph + dt * ts / dur) % 1; k = clamp(sp / (vc * ts), 0.38, 1.7) * S.stride; } L.low = lead ? clipInfo(lead).low : 0.125;
     if (sp > 0.12 && !(this.one && this.one.attack)) { const mv = clamp(sp / 3, 0, 1) * L.w; rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(left, (S.lean + S.low * 2) * clamp(sp / 4, 0, 1) * L.w));
       rotWorld(m.bones.spine_02, new Q().setFromAxisAngle(up, Math.sin(L.ph * 2 * Math.PI) * S.twist * mv)); rotWorld(m.bones.Head, new Q().setFromAxisAngle(left, S.head * mv));
       if (!this.blockOn && m.wpnKey !== 'spear' && m.wpnKey !== 'gun') for (const sd of ['l', 'r']) rotWorld(m.bones['upperarm_' + sd], new Q().setFromAxisAngle(left, -S.carry * mv)); } /* his carriage: the trunk turning with the stride, the head set, the arms high or low */
@@ -788,7 +800,7 @@ function bake() {
   const data = new Float32Array(W * H * 4), M = new M4(); const A = m.anim;
   for (const P of plan) { m.mixer.stopAllAction(); const act = m.mixer.clipAction(P.base); act.reset(); act.setLoop(P.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity); act.clampWhenFinished = true; act.setEffectiveWeight(1); act.play();
     m.wpnKey = P.v === 'pole' ? (P.name === 'Gun_Aim' ? 'gun' : 'spear') : 'none'; A.aimOn = P.name === 'Gun_Aim';
-    for (let f = 0; f < P.n; f++) { const t = P.dur * f / (P.n - 1); act.time = Math.min(t, P.base.duration - 1e-4); m.mixer.update(0); m.root.updateMatrixWorld(true);
+    for (let f = 0; f < P.n; f++) { const t = P.dur * f / (P.n - 1); act.time = Math.min(t, P.base.duration - 1e-4); for (const b of bones) { b.quaternion.copy(BODY.restQ[b.name]); b.position.copy(BODY.restP[b.name]); } mixUpdate(m.mixer, 0); m.root.updateMatrixWorld(true);
       poseHand(m, 'r', 'fist', 1); poseHand(m, 'l', P.v === 'pole' || /Shield|Bow/.test(P.name) ? 'fist' : 'relax', 1); m.root.updateMatrixWorld(true);
       if (P.v === 'pole') { A.spearT = P.name === 'Spear_Thrust' ? t : -1; A.spearIK(0); m.root.updateMatrixWorld(true); }
       for (let b = 0; b < nb; b++) { M.multiplyMatrices(body.matrixWorld, bi).multiply(bones[b].matrixWorld).multiply(m.skel.boneInverses[b]).multiply(body.bindMatrix); /* exactly what skinning and the mesh's own placement do to a bind-pose point */ const e = M.elements, o = ((P.row + f) * W + b * 3) * 4;
