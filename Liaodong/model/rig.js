@@ -520,6 +520,9 @@ const IDLES = ['Idle_Loop', 'Idle_LookAround_Loop', 'Idle_Tired_Loop'];
 const SPEED = { Walk_Fwd_Loop: 1.01, Jog_Fwd_Loop: 5.36, Sprint_Loop: 8.25, Sprint_Shield_Loop: 7.5, Walk_Bwd_Loop: 1.05, Jog_Bwd_Loop: 3.21, Walk_L_Loop: 0.68, Jog_Left_Loop: 3.21, Walk_R_Loop: 0.6, Jog_Right_Loop: 3.21, Crawl_Fwd_Loop: 0.6 };
 const GAITS = { fwd: ['Walk_Fwd_Loop', 'Jog_Fwd_Loop', 'Sprint_Loop'], back: ['Walk_Bwd_Loop', 'Jog_Bwd_Loop'], left: ['Walk_L_Loop', 'Jog_Left_Loop'], right: ['Walk_R_Loop', 'Jog_Right_Loop'] };
 // the one-shots that travel (their root motion, metres in his own frame: +x to his left, +z ahead)
+// gait bands, in the game's own speeds (m/s): [clip, the top of its band, the pace it looks right at]
+const GAITBAND = { fwd: [['Walk_Fwd_Loop', 1.9, 1.3], ['Jog_Fwd_Loop', 4.6, 3.4], ['Sprint_Loop', 99, 5.6]], back: [['Walk_Bwd_Loop', 2.2, 1.2], ['Jog_Bwd_Loop', 99, 3.0]],
+  left: [['Walk_L_Loop', 2.0, 1.1], ['Jog_Left_Loop', 99, 3.0]], right: [['Walk_R_Loop', 2.0, 1.1], ['Jog_Right_Loop', 99, 3.0]] };
 const TRAVEL = { Dodge_Left: [2.0, 0], Dodge_Right: [-2.0, 0], Roll: [0, 5.0], Sword_Dash: [0, 3.7], Shield_Dash: [0, 1.0] };
 class Animator {
   constructor(man) { this.man = man; this.bw = {}; this.os = []; this.one = null; this.phase = Math.random(); this.speed = 0; this.ang = 0; this.combat = false; this.idle = IDLES[(Math.random() * 3) | 0]; this.idleT = 6 + Math.random() * 8;
@@ -567,17 +570,16 @@ class Animator {
     // the base
     const tgt = {}, sp = this.speed, ang = this.ang, loco = clamp((sp - 0.08) / 0.45, 0, 1); const st = this.stance(); tgt[st] = 1 - loco;
     const dir = Math.abs(ang) > 2.3 ? 'back' : ang > 0.8 ? 'left' : ang < -0.8 ? 'right' : 'fwd'; for (const d in this.dirW) this.dirW[d] += ((d === dir ? 1 : 0) - this.dirW[d]) * Math.min(1, dt * 7);
-    let period = 0, pw = 0;
-    for (const d in this.dirW) { const w0 = this.dirW[d] * loco; if (w0 < 0.002) continue; const G = GAITS[d].filter(n => BODY.clips[n]), v = G.map(n => SPEED[n]); let k = 0; while (k < G.length - 2 && sp > v[k + 1]) k++;
-      const t = G.length > 1 ? clamp((sp - v[k]) / (v[k + 1] - v[k]), 0, 1) : 0; const a = G[k], b = G[Math.min(k + 1, G.length - 1)];
-      tgt[a] = (tgt[a] || 0) + w0 * (1 - t); if (b !== a) tgt[b] = (tgt[b] || 0) + w0 * t;
-      const pa = BODY.clips[a].duration, pb = BODY.clips[b].duration; const vt = lerp(v[k], v[Math.min(k + 1, G.length - 1)], t) || 1; const P = lerp(pa, pb, t) * clamp(vt / Math.max(sp, 0.3), 0.5, 2.5); period += P * w0; pw += w0; }
-    if (pw > 0) this.phase = (this.phase + dt / (period / pw)) % 1;
+    // one gait clip per direction, chosen by speed band, each at its own natural pace (no stride matching: a little foot
+    // slide is better than legs slowed down and smeared between a walk and a jog); the change of gait is a short crossfade
+    const pick = (d) => { const B = GAITBAND[d]; let k = 0; while (k < B.length - 1 && sp > B[k][1]) k++; return B[k]; };
+    this.gaitTS = this.gaitTS || {};
+    for (const d in this.dirW) { const w0 = this.dirW[d] * loco; if (w0 < 0.002) continue; const [n, , ref] = pick(d); if (!BODY.clips[n]) continue; tgt[n] = (tgt[n] || 0) + w0; this.gaitTS[n] = clamp(sp / ref, 0.8, 1.3); }
     for (const n in tgt) if (!(n in this.bw)) this.bw[n] = 0;
     let sum = 0; for (const n in this.bw) { const g = tgt[n] || 0; this.bw[n] += (g - this.bw[n]) * Math.min(1, dt * 9); if (this.bw[n] < 0.002 && !g) { const a = this.A(n); a.stop(); delete this.bw[n]; continue; } sum += this.bw[n]; }
     const baseShare = Math.max(0, 1 - Math.min(1, oneW)), norm = sum > 0 ? baseShare / sum : 0, oneNorm = oneW > 1 ? 1 / oneW : 1;
     for (const n in this.bw) { const a = this.A(n); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(this.bw[n] * norm);
-      if (SPEED[n]) { a.timeScale = 0; a.time = this.phase * a.getClip().duration; } else a.timeScale = 1; }
+      a.timeScale = SPEED[n] ? (this.gaitTS[n] || 1) : 1; }
     for (const e of this.os) e.a.setEffectiveWeight(e.w * oneNorm);
     { let tot = 0; for (const a of m.mixer._actions) if (a.isRunning() || (a.enabled && a.paused)) tot += a.getEffectiveWeight(); /* never less than a whole body: whatever is missing the stance fills, so no frame falls back to the bind pose */
       if (tot < 0.995) { const a = this.A(st); if (!a.isRunning()) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.play(); } a.setEffectiveWeight(a.getEffectiveWeight() + 1 - tot); this.bw[st] = this.bw[st] || 0.001; } }
