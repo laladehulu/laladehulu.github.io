@@ -592,7 +592,9 @@ class Animator {
   get base() { return this.stance(); }
   stance() { const m = this.man; if (this.hold) return this.hold; return m.shield ? 'Idle_Shield_Loop' : (this.combat && m.wpnKey !== 'none' && !m.spear && m.wpnKey !== 'bow') ? 'Sword_Idle' : (this.combat || m.spear) && this.idle === 'Idle_Tired_Loop' ? 'Idle_Loop' : this.idle; } /* a man under arms does not slouch */
   // ---- one-shots: each fades in over the base and out again; a new one takes over from the last
-  play(name, o) { o = o || {}; if (this.dead && !o.force) return null; const a = this.A(name); if (!a) return null; const f = o.fade === undefined ? 0.12 : Math.max(0.02, o.fade);
+  twin(name) { const k = name + '#2'; if (!BODY.clips[k] && BODY.clips[name]) { const c = BODY.clips[name].clone(); c.name = k; BODY.clips[k] = c; } return k; }
+  play(name, o) { o = o || {}; if (this.dead && !o.force) return null; { const cur = this.os.find(e => e.a.getClip().name === name && e.w > 0.02); if (cur) name = this.twin(name.replace(/#2$/, '')) === name ? name.replace(/#2$/, '') : this.twin(name); } /* the same move again: from its twin, crossfaded, never restarted under itself */
+    const a = this.A(name); if (!a) return null; const f = o.fade === undefined ? 0.12 : Math.max(0.02, o.fade);
     for (const e of this.os) e.target = 0, e.rate = 1 / f;
     const prev = this.os.find(e => e.a === a); if (prev) this.os = this.os.filter(e => e.a !== a); /* the same clip again: it takes over its own fading entry, which must not stop it when it fades out (that left no clip on the body: the T-pose) */
     a.reset(); a.enabled = true; a.setLoop(o.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity); a.clampWhenFinished = true; a.timeScale = o.ts || 1; a.setEffectiveWeight(0); a.play();
@@ -638,7 +640,8 @@ class Animator {
     this.os = this.os.filter(e => { if (e.target === 0 && e.w <= 0.001) { if (!this.os.some(o => o !== e && o.a === e.a) && !(e.a.getClip().name in this.bw)) e.a.setEffectiveWeight(0); return false; } /* faded out, left at weight 0: stopping a clip lets three.js retire bone bindings another clip still uses (the T-pose on a block) */ return true; });
     // the base
     const tgt = {}, sp = this.speed, ang = this.ang, loco = clamp((sp - 0.08) / 0.45, 0, 1); const st = this.stance(); tgt[st] = 1 - loco;
-    const dir = Math.abs(ang) > 2.3 ? 'back' : ang > 0.8 ? 'left' : ang < -0.8 ? 'right' : 'fwd'; for (const d in this.dirW) this.dirW[d] += ((d === dir ? 1 : 0) - this.dirW[d]) * Math.min(1, dt * 7);
+    const ca = Math.cos(ang), sa = Math.sin(ang), raw = { fwd: Math.max(0, ca), back: Math.max(0, -ca), left: Math.max(0, sa), right: Math.max(0, -sa) }; /* the four ways blended by the angle he moves at, not switched at a threshold */
+    { const p2 = (x) => x * x * x; let t = 0; for (const d in raw) { raw[d] = p2(raw[d]); t += raw[d]; } for (const d in this.dirW) this.dirW[d] += ((t > 0 ? raw[d] / t : (d === 'fwd' ? 1 : 0)) - this.dirW[d]) * Math.min(1, dt * 6); }
     // one gait clip per direction, chosen by speed band, each at its own natural pace (no stride matching: a little foot
     // slide is better than legs slowed down and smeared between a walk and a jog); the change of gait is a short crossfade
     const pick = (d) => { const B = GAITBAND[d]; let k = 0; while (k < B.length - 1 && sp > B[k][1]) k++; const r = B[k]; return d === 'fwd' && k === 0 && this.style && this.style.altWalk ? ['Walk_Loop', r[1], r[2]] : r; };
@@ -698,7 +701,7 @@ class Animator {
     const sp = L.v.length(), S = this.style, up = new V3(0, 1, 0), fwd = new V3(0, 0, 1).applyQuaternion(R.quaternion), left = new V3(1, 0, 0).applyQuaternion(R.quaternion);
     // the cadence: the gait clip that leads the blend sets it (played a little faster or slower for his speed), the stretch makes up the rest
     let lead = null, lw = 0; for (const n in this.bw) if ((SPEED[n] || GAIT_ALT[n]) && this.bw[n] > lw) { lw = this.bw[n]; lead = n; }
-    let k = 1; if (lead && sp > 0.12) { const vc = clipSpeedOf(lead), dur = BODY.clips[lead].duration, run = /Jog|Sprint/.test(lead), ts = (run ? clamp(1.05 + sp * 0.09, 1.15, 1.45) : clamp(sp / vc, 0.85, 1.3)) * S.cad; /* a run is quick steps, not a slow long one: at a soldier's jog the feet turn over fast and the stride is short */ L.ph = (L.ph + dt * ts / dur) % 1; k = clamp(sp / (vc * ts), 0.38, 1.7) * S.stride; } L.low = lead ? clipInfo(lead).low : 0.125;
+    let k = 1; if (lead && sp > 0.12) { const vc = clipSpeedOf(lead), dur = BODY.clips[lead].duration, run = /Jog|Sprint/.test(lead), ts = (run ? clamp(1.05 + sp * 0.09, 1.15, 1.45) : clamp(sp / vc, 0.85, 1.3)) * S.cad; /* a run is quick steps, not a slow long one: at a soldier's jog the feet turn over fast and the stride is short */ L.ph = (L.ph + dt * ts / dur) % 1; k = clamp(sp / (vc * ts), 0.38, 1.7) * S.stride; } { const lo = lead ? clipInfo(lead).low : 0.125, e = Math.min(1, dt * 6); L.k = L.k === undefined ? k : L.k + (k - L.k) * e; L.low = L.low === undefined ? lo : L.low + (lo - L.low) * e; k = L.k; } /* eased: a change of gait does not jump the feet */
     if (sp > 0.12 && !(this.one && this.one.attack)) { const mv = clamp(sp / 3, 0, 1) * L.w; rotWorld(m.bones.spine_01, new Q().setFromAxisAngle(left, (S.lean + S.low * 2) * clamp(sp / 4, 0, 1) * L.w));
       rotWorld(m.bones.spine_02, new Q().setFromAxisAngle(up, Math.sin(L.ph * 2 * Math.PI) * S.twist * mv)); rotWorld(m.bones.Head, new Q().setFromAxisAngle(left, S.head * mv));
       if (!this.blockOn && m.wpnKey !== 'spear' && m.wpnKey !== 'gun') for (const sd of ['l', 'r']) rotWorld(m.bones['upperarm_' + sd], new Q().setFromAxisAngle(left, -S.carry * mv)); } /* his carriage: the trunk turning with the stride, the head set, the arms high or low */
@@ -710,11 +713,18 @@ class Animator {
       const d = A.clone().sub(hip); d.y = 0; const along = L.v.lengthSq() > 0.01 ? L.v.clone().normalize() : fwd, a = d.dot(along); const want = hip.clone().add(d).add(along.clone().multiplyScalar(a * (k - 1))); want.y = gy(want.x, want.z) + h;
       // pinned while the clip has it down
       const down = h < (L.low || 0.125); let target;
-      if (down) { if (!F.lock || F.rel > 0) { F.lock = want.clone(); F.rel = 0; } F.lock.y = gy(F.lock.x, F.lock.z) + h; if (F.lock.distanceTo(want) > 0.45) { F.rel = 1; } target = F.lock.clone(); }
-      else { if (F.lock && F.rel === 0) F.rel = 1e-3; F.rel = Math.min(1, F.rel + dt / 0.12); target = F.lock && F.rel < 1 ? F.lock.clone().lerp(want, sm(F.rel)) : want; if (F.rel >= 1) F.lock = null; }
-      if (F.rel >= 1 && down) target = want;
+      /* F.rel: 0 pinned; between 0 and 1 the foot is going from where it was pinned to where the clip wants it (a step, never a jump) */
+      if (!F.lock) { F.lock = want.clone(); F.rel = 0; }
+      if (down && F.rel === 0 && F.lock.distanceTo(want) > 0.45) F.rel = 1e-3; /* pulled too far from a planted foot: it steps */
+      if (!down && F.rel === 0) F.rel = 1e-3; /* the clip lifts it */
+      if (F.rel > 0) { F.rel = Math.min(1, F.rel + dt / (down ? 0.18 : 0.12)); target = F.lock.clone().lerp(want, sm(F.rel)); if (F.rel >= 1) { F.lock.copy(want); if (down) F.rel = 0; } }
+      else { F.lock.y = gy(F.lock.x, F.lock.z) + h; target = F.lock.clone(); }
+      if (!down && F.rel >= 1) { F.lock.copy(want); target = want; }
+      if (down && F.rel >= 1) F.rel = 0;
+      if (down && F.wasUp) { F.lock.copy(want); F.rel = 0; target = want.clone(); } F.wasUp = !down; /* put down where the clip puts it */
       const save = [th.quaternion.clone(), ca.quaternion.clone(), ft.quaternion.clone()];
-      ik2(th, ca, ft, target, knee.clone().add(knee.clone().sub(hip.clone().lerp(A, 0.5)).multiplyScalar(2))); /* the knee keeps the way the clip bent it */
+      { const bend = knee.clone().sub(hip.clone().lerp(A, 0.5)), bl = bend.length(); let kd = fwd.clone(); if (bl > 0.02) { bend.divideScalar(bl); const wb = clamp((bl - 0.02) / 0.06, 0, 1); kd.multiplyScalar(1 - wb).addScaledVector(bend, wb); if (kd.dot(fwd) < 0.2) kd.addScaledVector(fwd, 0.2 - kd.dot(fwd)); kd.normalize(); }
+        F.kd = F.kd ? F.kd.lerp(kd, Math.min(1, dt * 12)).normalize() : kd; ik2(th, ca, ft, target, knee.clone().addScaledVector(F.kd, 0.5)); } /* the knee keeps the way the clip bent it, but never flips: a nearly straight leg bends forward, and the knee's line is eased */
       ft.parent.getWorldQuaternion(_q2); ft.quaternion.copy(_q2.invert().multiply(fq)); ft.updateMatrixWorld(true); /* and the foot its angle */
       if (L.w < 0.999) { [th, ca, ft].forEach((b, kk) => { const qq = b.quaternion.clone(); b.quaternion.copy(save[kk]).slerp(qq, L.w); }); th.updateMatrixWorld(true); } }
   }
