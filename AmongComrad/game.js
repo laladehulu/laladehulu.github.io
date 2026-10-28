@@ -147,7 +147,7 @@ function mkUnit(o){return Object.assign({id:UID++,alive:true,x:0,y:0,aim:Math.PI
 let G=null,state='boot',TS=36,VW=0,VH=0,DPR=1,camX=0,camY=0;
 const cv=$('cv'),ctx=cv.getContext('2d');const fog=document.createElement('canvas'),fctx=fog.getContext('2d');
 const KEYS={},MOUSE={x:0,y:0,down:false,in:false},TCH={mx:0,my:0,ax:0,ay:0,aiming:false,fire:false};
-const VIS=17;
+const VIS=24;
 // bots and Germans only fight inside the player's view distance, so every engagement is one a player can see and join
 const AI_RANGE=VIS-1.5;
 const inDugout=u=>u.x>=54&&u.x<=58&&u.y>=16&&u.y<=24;
@@ -222,7 +222,7 @@ function fire(u,ang,o={}){
   if(u.mag<=0){startReload(u);return false}
   const w=WPN[u.wpn];
   let sp=w.spread*(u.isPlayer?1:(u.side==='ger'?G.diff.spread:1.5))*(o.extra||1);
-  if(u.isPlayer&&u.moving)sp*=1.6;
+  if(u.isPlayer&&u.moving)sp*=1.6;if(u.crouch)sp*=0.65;
   const a=ang+(rnd()+rnd()-1)*sp*1.5,dx=Math.cos(a),dy=Math.sin(a);
   const tk=!!o.tk||(u.isPlayer&&u.isSpy&&!u.revealed);
   G.proj.push({x:u.x+dx*0.3,y:u.y+dy*0.3,dx,dy,sp:w.speed,dmg:w.dmg*(o.mul||1),cal:w.cal,owner:u,side:u.side,tk,dist:0,max:u.isPlayer?w.range*1.3:Math.min(w.range*1.3,AI_RANGE+3),at:!!w.at,last:-1,he:false});
@@ -240,7 +240,7 @@ function updateProj(dt){
   for(const p of G.proj){let rem=p.sp*dt;
     while(rem>0&&!p.dead){const st=Math.min(0.3,rem);rem-=st;const nx=p.x+p.dx*st,ny=p.y+p.dy*st;
       let best=null,bt=2;
-      for(const u of G.units){if(!canHit(p,u))continue;const r=u.kind==='tank'?1.15:0.36;const fx=u.x-p.x,fy=u.y-p.y;const t=clamp((fx*p.dx+fy*p.dy)/st,0,1);const cx=p.x+p.dx*st*t,cy=p.y+p.dy*st*t;if(dist(cx,cy,u.x,u.y)<r&&t<bt){bt=t;best=u}}
+      for(const u of G.units){if(!canHit(p,u))continue;const r=u.kind==='tank'?1.15:u.crouch?0.27:0.36;const fx=u.x-p.x,fy=u.y-p.y;const t=clamp((fx*p.dx+fy*p.dy)/st,0,1);const cx=p.x+p.dx*st*t,cy=p.y+p.dy*st*t;if(dist(cx,cy,u.x,u.y)<r&&t<bt){bt=t;best=u}}
       if(best){const hx=p.x+p.dx*st*bt,hy=p.y+p.dy*st*bt;p.dead=true;
         if(best.kind==='tank'){if(p.at){hurt(best,p.gun?330:90,{owner:p.owner,cause:'bullet',cal:p.cal,dx:p.dx,dy:p.dy});G.fx.push({k:'spark',x:hx,y:hy,t:0,life:0.3,n:8})}else{G.fx.push({k:'spark',x:hx,y:hy,t:0,life:0.15,n:3});if(crnd()<0.3)sfxAt('ric',hx,hy)}}
         else if(p.he)explode(hx,hy,2.2,95,{owner:p.owner,cause:'shell',hurtSov:true,hurtGer:false});
@@ -250,10 +250,14 @@ function updateProj(dt){
       if(nx<0||ny<0||nx>=W||ny>=H){p.dead=true;break}
       const ti=(ny|0)*W+(nx|0),t=grid[ti];
       if(t===WALL){p.dead=true;if(p.he)explode(nx-p.dx*0.3,ny-p.dy*0.3,2.2,95,{owner:p.owner,cause:'shell',hurtSov:true,hurtGer:false});else impact(nx-p.dx*0.15,ny-p.dy*0.15);break}
-      if((t===COVER||t===WIN||t===CRATE)&&p.dist>1.4&&p.last!==ti){p.last=ti;if(!p.he&&!p.gun&&rnd()<(t===WIN?0.6:0.5)){p.dead=true;impact(nx,ny);break}}
+      if((t===COVER||t===WIN||t===CRATE)&&p.dist>1.4&&p.last!==ti){p.last=ti;if(!p.he&&!p.gun&&rnd()<coverStop(p,nx,ny,t)){p.dead=true;impact(nx,ny);break}}
       if(p.he&&p.dist>=p.max){p.dead=true;explode(nx,ny,2.2,95,{owner:p.owner,cause:'shell',hurtSov:true,hurtGer:false});break}
       if(p.dist>p.max){p.dead=true;break}}}
   G.proj=G.proj.filter(p=>!p.dead)}
+// a bullet crossing cover is stopped half the time — almost always if a soldier is crouched just behind it
+function coverStop(p,x,y,t){const cx=(x|0)+0.5,cy=(y|0)+0.5;
+  for(const u of G.units){if(!u.alive||!u.crouch||u.kind==='tank'||!canHit(p,u))continue;const dx=u.x-cx,dy=u.y-cy;if(dx*dx+dy*dy<2.4&&dx*p.dx+dy*p.dy>0)return 0.92}
+  return t===WIN?0.6:0.5}
 function impact(x,y){if(!G.me||dist(x,y,G.me.x,G.me.y)>VIS+4)return;G.fx.push({k:'dust',x,y,t:0,life:0.45});if(crnd()<0.4)G.fx.push({k:'spark',x,y,t:0,life:0.12,n:2});if(crnd()<0.06)sfxAt('ric',x,y)}
 function dirKey(s){if(s.cause!=='bullet'||s.dx===undefined)return'none';if(s.dx<-0.35)return'behind';if(s.dx>0.35)return'front';return'flank'}
 function hurt(u,dmg,src){
@@ -341,7 +345,8 @@ function sovAI(u,dt){
   if(u.revealed){traitorAI(u,dt);return}
   if(u.isSpy)spyAI(u,dt);
   if(u.isCom)comAI(u,dt);
-  if(u.gunner&&!u.path.length&&dist(u.x,u.y,crewSpot(u.gunner-1).x,crewSpot(u.gunner-1).y)<0.7){u.moving=false;return}
+  if(u.gunner&&!u.path.length&&dist(u.x,u.y,crewSpot(u.gunner-1).x,crewSpot(u.gunner-1).y)<0.7){u.moving=false;u.crouch=true;return}
+  u.crouch=false;
   if(u.knife){knifeTick(u,dt);return}
   if(u.recruit){recruitTick(u,dt);u.moving=false;return}
   if(u.stab){stabTick(u,dt);return}
@@ -353,6 +358,7 @@ function sovAI(u,dt){
   else if(u.sortie&&M&&M.st==='go'){if(!u.path.length&&!u.seeking&&dist(u.x,u.y,u.spot.x,u.spot.y)>0.6){u.repathT-=dt;if(u.repathT<=0){u.repathT=1;goTo(u,u.spot.x,u.spot.y)}}}
   else if(!u.path.length&&!u.seeking&&u.post&&dist(u.x,u.y,u.post.x,u.post.y)>0.35){u.repathT-=dt;if(u.repathT<=0){u.repathT=1.2;goTo(u,u.post.x,u.post.y)}}
   if(u.seeking&&!u.path.length){u.seekHold-=dt;if(u.seekHold<=0)u.seeking=false}
+  u.crouch=!u.moving&&!u.path.length&&!u.seeking&&!u.duty;
   combatTick(u,dt)}
 function combatTick(u,dt){
   u.thinkT-=dt;if(u.thinkT<=0){u.thinkT=0.28+rnd()*0.12;u.target=pickTarget(u)}
@@ -536,9 +542,10 @@ function humanTick(p,I,dt){
   if(!p.alive)return;
   const mx=I?clamp(I[0]/100,-1,1):0,my=I?clamp(I[1]/100,-1,1):0;
   if(I)p.aim=I[2]/1000;
+  p.crouch=!!(p.btn&16)&&!p.onGun;
   const l=Math.hypot(mx,my);
   if(p.onGun){const cs=crewSpot(p.onGun-1);p.x=cs.x;p.y=cs.y;p.moving=false}
-  else if(l>0.1){const s=(p.reloadT>0?3.3:4.0)*Math.min(1,l)/l;moveFree(p,mx*s*dt,my*s*dt);p.moving=true;p.phase+=dt*10;p.moveA=Math.atan2(my,mx)}else p.moving=false;
+  else if(l>0.1){const s=(p.crouch?1.7:p.reloadT>0?3.3:4.0)*Math.min(1,l)/l;moveFree(p,mx*s*dt,my*s*dt);p.moving=true;p.phase+=dt*10;p.moveA=Math.atan2(my,mx)}else p.moving=false;
   const trig=!!(p.btn&1)&&!p.onGun;
   if(trig){const w=WPN[p.wpn];if(w.auto||!p.semiLock){if(fire(p,p.aim))p.semiLock=true;else if(p.mag<=0&&p.reserve<=0&&!(p.clickT>0)){if(p===G.me)sfx('empty');p.clickT=0.4}}}
   if(p.clickT>0)p.clickT=Math.max(0,p.clickT-dt);
@@ -1009,14 +1016,14 @@ function bake(){
 function craterAt(g,x,y,r){g.fillStyle='rgba(212,191,147,.55)';g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.fillStyle='rgba(29,24,21,.6)';g.beginPath();g.arc(x+r*0.08,y+r*0.08,r*0.72,0,TAU);g.fill();g.strokeStyle='rgba(29,24,21,.5)';g.lineWidth=1.3;g.beginPath();g.arc(x,y,r,0,TAU);g.stroke()}
 function decal(k,x,y,r){if(!MG)return;if(k==='crater')craterAt(MG,x*S,y*S,(r||2)*S*0.45);else if(k==='blood'){MG.fillStyle='rgba(122,24,16,.75)';MG.beginPath();MG.arc(x*S,y*S,2+crnd()*3,0,TAU);MG.fill()}else if(k==='pool'){MG.fillStyle='rgba(122,24,16,.65)';MG.beginPath();MG.ellipse(x*S,y*S,10+crnd()*6,7+crnd()*4,crnd()*3,0,TAU);MG.fill()}}
 
-function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=$('app').getBoundingClientRect();VW=r.width;VH=r.height;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);fog.width=cv.width;fog.height=cv.height;TS=clamp(Math.min(VW,VH)/(VW<600?14:20),24,40)}
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=$('app').getBoundingClientRect();VW=r.width;VH=r.height;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);fog.width=cv.width;fog.height=cv.height;TS=clamp(Math.min(VW,VH)/(VW<600?19:29),17,32)}
 window.addEventListener('resize',resize);
 const w2s=(x,y)=>[x*TS-camX,y*TS-camY];
 function star(g,cx,cy,r){g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*0.42:r;i?g.lineTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q):g.moveTo(cx+Math.cos(a)*q,cy+Math.sin(a)*q)}g.closePath()}
 // soldiers are printed shapes: flat khaki or field-grey, ink outline, a hard offset shadow; Soviet helmets carry a red star
 const UNI={sov:{coat:'#8a7d47',pack:'#5a5531',helm:'#55602c'},ger:{coat:'#6b7471',pack:'#4a524f',helm:'#4a524f'}};
 function drawSoldier(g,x,y,s,u){
-  g.save();g.translate(x,y);const sov=u.uniform==='sov',C=sov?UNI.sov:UNI.ger,lw=Math.max(1.5,s*0.06);
+  g.save();g.translate(x,y);if(u.crouch)s*=0.8;const sov=u.uniform==='sov',C=sov?UNI.sov:UNI.ger,lw=Math.max(1.5,s*0.06);
   g.fillStyle='rgba(29,24,21,.55)';g.beginPath();g.ellipse(s*0.09,s*0.1,s*0.34,s*0.3,0,0,TAU);g.fill();
   if(sov){g.strokeStyle=PAL.ink;g.lineWidth=Math.max(3,s*0.13);g.beginPath();g.arc(0,0,s*0.45,0,TAU);g.stroke();g.strokeStyle=u.revealed?PAL.red:u.col;g.lineWidth=Math.max(2,s*0.07);g.stroke()}
   g.rotate(u.aim);
@@ -1242,7 +1249,7 @@ function councilUI(){
 
 // ================= screens =================
 let ROLE='comrade',DIFFSEL='normal';try{const d=localStorage.getItem('ac_diff');if(DIFF[d])DIFFSEL=d}catch(e){}
-function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
+function keysHTML(role){return [['WASD','Move'],['Mouse','Aim · left click to fire'],['R','Reload'],['G / right click','Throw grenade'],['1 · 2','Switch weapon'],['Hold Shift','Crouch — behind cover almost nothing gets through'],['E',role==='spy'?'Use: man the anti-tank gun, ammo crate, take a German weapon':'Use: man the anti-tank gun, ammo crate, inspect a body or a spent casing, take a German weapon'],
   ...(role==='spy'?[['C','Whisper an offer to the soldier next to you (once per assault)'],['V','Knife the soldier in front of you (from behind, unseen)'],['Q','Fire a green flare (calls German mortars)'],['Hold X','Sabotage the station you are standing at']]:role==='com'?[['T','Question the nearest comrade'],['Hold F','Arrest the nearest comrade (2 arrests — reveals you)'],['Hold E','Repair a wrecked station']]:[['T','Question the nearest comrade'],['Hold E','Repair a wrecked station']]),['N','Notebook'],['Esc',NET?'Menu':'Pause']].map(([k,v])=>`<kbd>${k}</kbd><span>${v}</span>`).join('')+(TOUCH?'<kbd>Touch</kbd><span>Left stick moves, right stick aims and fires.</span>':'')}
 function showBrief(){
   const p=G.me,role=roleOf(p),spy=role==='spy',multi=G.humans.length>1;
@@ -1330,7 +1337,7 @@ function collectInput(){
   if(live){if(KEYS.KeyW||KEYS.ArrowUp)my-=1;if(KEYS.KeyS||KEYS.ArrowDown)my+=1;if(KEYS.KeyA||KEYS.ArrowLeft)mx-=1;if(KEYS.KeyD||KEYS.ArrowRight)mx+=1;if(TOUCH){mx+=TCH.mx;my+=TCH.my}}
   let aim=p?p.aim:Math.PI;
   if(live){if(TOUCH){if(TCH.aiming)aim=Math.atan2(TCH.ay,TCH.ax);else if(Math.hypot(mx,my)>0.1)aim=Math.atan2(my,mx)}else if(MOUSE.in)aim=Math.atan2((MOUSE.y+camY)/TS-p.y,(MOUSE.x+camX)/TS-p.x)}
-  let b=0;if(live){if(TOUCH?TCH.fire:MOUSE.down)b|=1;if(KEYS.KeyF)b|=2;if(KEYS.KeyX)b|=4;if(KEYS.KeyE)b|=8}
+  let b=0;if(live){if(TOUCH?TCH.fire:MOUSE.down)b|=1;if(KEYS.KeyF)b|=2;if(KEYS.KeyX)b|=4;if(KEYS.KeyE)b|=8;if(KEYS.ShiftLeft||KEYS.ShiftRight||TCH.crouch)b|=16}
   const r=[q100(clamp(mx,-1,1)),q100(clamp(my,-1,1)),Math.round(aim*1000),b];const ev=EVQ.splice(0);if(ev.length)r.push(ev);return r}
 function press(code){
   if(code==='Escape'){if(state==='notebook')closeNotebook();else if(state==='play'){state='pause';$('pause').hidden=false;$('keysList2').innerHTML=keysHTML(roleOf(G.me))}else if(state==='pause'){state='play';$('pause').hidden=true}return}
@@ -1352,7 +1359,8 @@ function stick(el,cb,end){let id=null;const k=el.querySelector('i');
   el.addEventListener('pointermove',mv);const up=e=>{if(e.pointerId!==id)return;id=null;k.style.transform='';end()};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up)}
 stick($('stickL'),(x,y)=>{TCH.mx=x;TCH.my=y},()=>{TCH.mx=0;TCH.my=0});
 stick($('stickR'),(x,y)=>{TCH.ax=x;TCH.ay=y;TCH.aiming=Math.hypot(x,y)>0.2;TCH.fire=Math.hypot(x,y)>0.55},()=>{TCH.aiming=false;TCH.fire=false});
-document.querySelectorAll('#touch .tbtns button').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();audioInit();KEYS[b.dataset.k]=true;press(b.dataset.k)});const up=()=>{KEYS[b.dataset.k]=false};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up)});
+$('crouchBtn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();TCH.crouch=!TCH.crouch;$('crouchBtn').setAttribute('aria-pressed',TCH.crouch)},true);
+document.querySelectorAll('#touch .tbtns button:not(#crouchBtn)').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();audioInit();KEYS[b.dataset.k]=true;press(b.dataset.k)});const up=()=>{KEYS[b.dataset.k]=false};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up)});
 
 // ================= single player loop =================
 let RALPHA=1,lastStepAt=0;
