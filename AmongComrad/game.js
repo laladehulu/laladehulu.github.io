@@ -621,32 +621,33 @@ function humanEvent(p,e){
     case 'w':issueWeapon(p,String(e[1]||''));break}}
 // the E action floats over the thing it acts on
 function ePrompt(p){if(!p.alive)return null;const si=stationAt(p,1.8);
-  if(si>=0&&!traitor(p)&&G.st[si].found){const st=G.st[si];return{x:STATIONS[si].x,y:STATIONS[si].y,label:`Hold: repair${st.rep>0?` ${Math.round(st.rep/REP_T*100)}%`:''}`}}
-  return nearestInteract(p)}
-function worldTag(x,y,label,below){ctx.save();const [sx,sy0]=w2s(x,y);ctx.font=`600 ${Math.max(12,TS*0.32)|0}px "PT Sans", sans-serif`;
-  const kw=Math.max(16,TS*0.48),tw=ctx.measureText(label).width,h=kw+6,w=kw+tw+16,x0=sx-w/2,y0=below?sy0+TS*0.75:sy0-TS*0.75-h;
-  ctx.fillStyle=PAL.paper;ctx.strokeStyle=PAL.ink;ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
-  ctx.beginPath();if(below){ctx.moveTo(sx-5,y0);ctx.lineTo(sx,y0-6);ctx.lineTo(sx+5,y0)}else{ctx.moveTo(sx-5,y0+h);ctx.lineTo(sx,y0+h+6);ctx.lineTo(sx+5,y0+h)}ctx.fillStyle=PAL.ink;ctx.fill();
-  ctx.fillRect(x0+3,y0+3,kw,kw);ctx.fillStyle=PAL.paper;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 ${kw*0.7|0}px Oswald, sans-serif`;ctx.fillText('E',x0+3+kw/2,y0+3+kw/2+1);
-  ctx.fillStyle=PAL.ink;ctx.textAlign='left';ctx.font=`600 ${Math.max(12,TS*0.32)|0}px "PT Sans", sans-serif`;ctx.fillText(label,x0+kw+10,y0+h/2+1);ctx.restore()}
+  const it=nearestInteract(p);
+  if(si>=0&&!traitor(p)&&G.st[si].found){const st=G.st[si],S0=STATIONS[si];if(!it||st.rep>0||faceScore(p,S0.x,S0.y)<it.score)return{x:S0.x,y:S0.y,label:`Hold: repair${st.rep>0?` ${Math.round(st.rep/REP_T*100)}%`:''}`}}
+  return it}
+function worldTag(x,y,label,below){ctx.save();const [sx,sy0]=w2s(x,y);const k=Math.max(18,TS*0.55),x0=sx-k/2,y0=below?sy0+TS*0.7:sy0-TS*0.7-k;
+  ctx.fillStyle=PAL.ink;ctx.strokeStyle=PAL.paper;ctx.lineWidth=2;ctx.fillRect(x0,y0,k,k);ctx.strokeRect(x0,y0,k,k);
+  ctx.fillStyle=PAL.paper;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 ${k*0.68|0}px Oswald, sans-serif`;ctx.fillText('E',sx,y0+k/2+1);ctx.restore()}
+// when several things are in reach, take the one you're facing (aim), then the closest
+function faceScore(p,x,y){const d=dist(p.x,p.y,x,y);return (d<0.35?0:Math.abs(angDiff(p.aim,Math.atan2(y-p.y,x-p.x))))+0.35*d}
 function nearestInteract(p){
   if(!p||!p.alive||p.revealed)return null;
   if(p.onGun)return{k:'gun',label:'Leave the gun',x:p.x,y:p.y};
-  if(dist(p.x,p.y,ARMORY.x,ARMORY.y)<1.6)return{k:'armory',label:'Armoury',x:ARMORY.x,y:ARMORY.y};
-  for(let k=0;k<GUNS.length;k++){const cs=crewSpot(k),gc=G.guns[k].crew;if(dist(p.x,p.y,cs.x,cs.y)<1.3&&!(gc&&gc.isPlayer&&gc!==p))return{k:'gun',gi:k,label:'Man the gun',x:GUNS[k].x,y:GUNS[k].y}}
-  for(const c of CRATES)if(dist(p.x,p.y,c.x,c.y)<1.6)return{k:'crate',label:'Resupply',x:c.x,y:c.y};
-  let best=null,bd=1.4;
-  {const c=nearCasing(p);if(c&&!p.isSpy){best={k:'casing',c,label:`Pick up casing (${c.cal})`,x:c.x,y:c.y};bd=0.9}}
-  for(const b of G.bodies){const d=dist(p.x,p.y,b.x,b.y);if(d>=bd)continue;
-    if(b.uniform==='sov'&&!b.inspBy.includes(p.id)&&!p.isSpy&&b.u!==p){best={k:'inspect',b,label:`Inspect ${b.u.name}`,x:b.x,y:b.y};bd=d}
-    else if(b.wpn&&!b.taken){best={k:'take',b,label:`Take ${WPN[b.wpn].name}`,x:b.x,y:b.y};bd=d}}
-  return best}
+  const c=[];
+  if(dist(p.x,p.y,ARMORY.x,ARMORY.y)<1.6)c.push({k:'armory',label:'Armoury',x:ARMORY.x,y:ARMORY.y});
+  for(let k=0;k<GUNS.length;k++){const cs=crewSpot(k),gc=G.guns[k].crew;if(dist(p.x,p.y,cs.x,cs.y)<1.3&&!(gc&&gc.isPlayer&&gc!==p))c.push({k:'gun',gi:k,label:'Man the gun',x:GUNS[k].x,y:GUNS[k].y})}
+  for(const cr of CRATES)if(dist(p.x,p.y,cr.x,cr.y)<1.6)c.push({k:'crate',label:'Resupply',x:cr.x,y:cr.y});
+  {const cs=nearCasing(p);if(cs&&!p.isSpy)c.push({k:'casing',c:cs,label:`Pick up casing (${cs.cal})`,x:cs.x,y:cs.y})}
+  for(const b of G.bodies){if(dist(p.x,p.y,b.x,b.y)>=1.4)continue;
+    if(b.uniform==='sov'&&!b.inspBy.includes(p.id)&&!p.isSpy&&b.u!==p)c.push({k:'inspect',b,label:`Inspect ${b.u.name}`,x:b.x,y:b.y});
+    else if(b.wpn&&!b.taken)c.push({k:'take',b,label:`Take ${WPN[b.wpn].name}`,x:b.x,y:b.y})}
+  let best=null,bs=1e9;for(const o of c){const sc=faceScore(p,o.x,o.y);if(sc<bs){bs=sc;best=o}}
+  if(best)best.score=bs;return best}
 // AI soldiers you can question
 function nearestComrade(p,r){let best=null,bd=r;for(const u of G.squad){if(!u.alive||u.side!=='sov')continue;const d=dist(p.x,p.y,u.x,u.y);if(d<bd){bd=d;best=u}}return best}
 // anyone the commissar can arrest, other players included
 function nearestArrestable(p,r){let best=null,bd=r;for(const u of G.people){if(u===p||!u.alive||u.side!=='sov')continue;const d=dist(p.x,p.y,u.x,u.y);if(d<bd){bd=d;best=u}}return best}
 function doInteract(p){
-  const it=nearestInteract(p);if(!it)return;
+  const it=ePrompt(p);if(!it||!it.k)return;
   if(it.k==='armory'){if(p===G.me)openArmory();return}
   if(it.k==='gun'){if(p.onGun){const g=G.guns[p.onGun-1];if(g.crew===p)g.crew=null;p.onGun=0}else{const g=G.guns[it.gi],c=g.crew;if(c&&!c.isPlayer){c.gunner=0;c.seeking=false}p.onGun=it.gi+1;const cs=crewSpot(it.gi);p.x=cs.x;p.y=cs.y;g.crew=p}return}
   if(it.k==='crate'){if(p.crateCd>0)return;p.crateCd=1;storeSlot(p);p.slots[0].reserve=Math.max(p.slots[0].reserve,WPN[p.slots[0].wpn].res);if(p.slots[1])p.slots[1].reserve=Math.max(p.slots[1].reserve,WPN[p.slots[1].wpn].res);p.reserve=p.slots[p.slot].reserve;p.grenades=3;if(p===G.me)sfx('reload');logMsg('Resupplied: full drums and three RGD-33 grenades.','good',p)}
@@ -1716,6 +1717,6 @@ async function boot(){resize();if(TOUCH)document.body.classList.add('touch');
     if(rec&&Room.ok()&&Date.now()-(rec.at||0)<6*3600e3){$('mpMsg').textContent='Reopening your room…';NET=new Room(myName());NET.hostRecover(rec,err=>{if(err)return mpErr(err);$('mpMsg').textContent='';$('title').hidden=true;$('hud').hidden=false;state='play';
         newGame({seed:rec.cfg.seed,diff:rec.cfg.diff,humans:rec.cfg.names.map(n=>({name:n}))});G.me=G.humans[0]})}
     else if(Room.ok())joinCode(code)}
-  window.__ac={G:()=>G,state:()=>state,net:()=>NET,hh:()=>[...HHIST],step,serialize,stateHash,passable,desync(){if(G&&G.me){G.me.x+=0.01}}}}
+  window.__ac={G:()=>G,state:()=>state,net:()=>NET,hh:()=>[...HHIST],step,serialize,stateHash,passable,ePrompt,desync(){if(G&&G.me){G.me.x+=0.01}}}}
 boot();
 })();
