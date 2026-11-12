@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v141</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v142</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6747,6 +6747,11 @@ async function iceServers() {
 // whose router fails can see why. A STUN reply means his public address was found (a direct link may still be blocked); a relay
 // reply means a TURN server answered, which gets through almost any network; with no relay, strict routers cannot connect.
 async function checkNetwork(report) {
+  const R = relayUrl(); let server = null;
+  if (R && typeof WebSocket !== 'undefined') { server = await new Promise((res) => { let ws, done = false; const fin = (v) => { if (done) return; done = true; try { ws.close(); } catch (e) { } res(v); };
+      try { ws = new WebSocket(R.replace(/\/$/, '') + '/room/CHECK?id=c' + Math.random().toString(36).slice(2, 10)); } catch (e) { res(false); return; }
+      ws.onopen = () => fin(true); ws.onerror = () => fin(false); ws.onclose = () => fin(false); setTimeout(() => fin(false), 6000); });
+    report({ step: 'server', ok: server }); }
   const ice = await iceServers(), named = [];
   for (const e of ice) { const u = [].concat(e.urls)[0], host = u.replace(/^(stun|turns?):/, '').split(/[:?]/)[0]; named.push({ e, kind: /^stun/.test(u) ? 'stun' : 'relay', host }); }
   const probe = (servers, relayOnly) => new Promise((res) => { let pc; const got = new Set(); try { pc = new RTCPeerConnection({ iceServers: servers, iceTransportPolicy: relayOnly ? 'relay' : 'all' }); } catch (err) { res(got); return; }
@@ -6756,7 +6761,50 @@ async function checkNetwork(report) {
   const stun = named.filter(n => n.kind === 'stun'), relays = named.filter(n => n.kind === 'relay');
   const s0 = await probe(stun.map(n => n.e), false); report({ step: 'stun', ok: s0.has('srflx'), local: s0.has('host') });
   let anyRelay = false; for (const r of relays) { const g = await probe([r.e], true), ok = g.has('relay'); anyRelay = anyRelay || ok; report({ step: 'relay', host: r.host, ok }); }
-  report({ step: 'done', stun: s0.has('srflx'), relay: anyRelay });
+  report({ step: 'done', stun: s0.has('srflx'), relay: anyRelay, server });
+}
+// ---- the relay server (relay/worker.js on Cloudflare): every player talks through one WebSocket to his room, so it connects on any
+// network that loads a web page. RelayPeer/RelayConn stand in for PeerJS's Peer/DataConnection (same events and calls), so the
+// lobby and lockstep code are the same either way. Address: RELAY_URL below, or ?relay=wss://... ; ?p2p=1 forces peer-to-peer.
+// If the relay cannot be reached, the game falls back to peer-to-peer.
+const RELAY_URL = '';
+function relayUrl() { try { const q = new URLSearchParams(location.search); if (q.get('p2p')) return ''; return q.get('relay') || RELAY_URL; } catch (e) { return RELAY_URL; } }
+class RelayConn {
+  constructor(peer, id) { this.p = peer; this.peer = id; this.open = false; this.h = {}; this.peerConnection = null; }
+  on(e, f) { (this.h[e] || (this.h[e] = [])).push(f); return this; }
+  emit(e, a) { for (const f of this.h[e] || []) try { f(a); } catch (err) { console.error(err); } }
+  send(d) { if (this.open) this.p.out({ to: this.peer, k: 'data', d }); }
+  close() { if (!this.open) return; this.p.out({ to: this.peer, k: 'close' }); this.drop(); }
+  drop() { if (!this.open && this.dead) return; this.open = false; this.dead = true; delete this.p.conns[this.peer]; this.emit('close'); }
+}
+class RelayPeer {
+  constructor(id, room, base) {
+    this.id = id || 'p' + Math.random().toString(36).slice(2, 12); this.h = {}; this.conns = {}; this.q = []; this.ok = false; this.dead = false;
+    const ws = this.ws = new WebSocket(base.replace(/\/$/, '') + '/room/' + room + '?id=' + encodeURIComponent(this.id));
+    const t = setTimeout(() => { if (!this.ok) { this.fail('relay-down'); } }, 6000);
+    ws.onopen = () => { clearTimeout(t); this.ok = true; this.emit('open', this.id); this.flush(); };
+    ws.onmessage = (ev) => { let a; try { a = JSON.parse(ev.data); } catch (e) { return; } for (const m of a) this.recv(m); };
+    ws.onclose = () => { clearTimeout(t); if (this.dead) return; if (!this.ok) { this.fail('relay-down'); return; } this.dead = true; for (const id in this.conns) this.conns[id].drop(); this.emit('error', { type: 'network', message: 'Lost the connection to the relay server.' }); };
+  }
+  fail(type) { if (this.dead) return; this.dead = true; try { this.ws.close(); } catch (e) { } this.emit('error', { type, message: 'Could not reach the game server.' }); }
+  on(e, f) { (this.h[e] || (this.h[e] = [])).push(f); return this; }
+  emit(e, a) { for (const f of this.h[e] || []) try { f(a); } catch (err) { console.error(err); } }
+  // everything sent in one turn of the event loop goes out as one frame (the relay counts frames, not messages)
+  out(m) { this.q.push(m); if (!this.qt) { this.qt = true; queueMicrotask(() => { this.qt = false; this.flush(); }); } }
+  flush() { if (!this.ok || this.dead || !this.q.length || this.ws.readyState !== 1) return; const q = this.q; this.q = []; try { this.ws.send(JSON.stringify(q)); } catch (e) { } }
+  connect(id) { const c = new RelayConn(this, id); this.conns[id] = c; this.out({ to: id, k: 'open' }); return c; }
+  recv(m) {
+    const c = m.from && this.conns[m.from];
+    switch (m.k) {
+      case 'open': { const n = new RelayConn(this, m.from); this.conns[m.from] = n; this.out({ to: m.from, k: 'ack' }); this.emit('connection', n); setTimeout(() => { if (!n.dead) { n.open = true; n.emit('open'); } }, 0); break; }
+      case 'ack': if (c && !c.open) { c.open = true; c.emit('open'); } break;
+      case 'data': if (c && c.open) c.emit('data', m.d); break;
+      case 'close': case 'gone': if (c) c.drop(); break;
+      case 'err': if (m.type === 'unavailable-id' || m.type === 'room-full' || m.type === 'bad-id') { this.dead = true; this.emit('error', { type: m.type }); } else this.emit('error', { type: m.type, to: m.to }); break;
+    }
+  }
+  reconnect() { } disconnect() { }
+  destroy() { this.dead = true; for (const id in this.conns) this.conns[id].drop(); try { this.ws.close(); } catch (e) { } }
 }
 function peerOpts(ice) { return { debug: 0, config: { iceServers: ice, sdpSemantics: 'unified-plan' } }; }
 function genCode() { let s = ''; for (let i = 0; i < 5; i++) s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; return s; }
@@ -6767,17 +6815,22 @@ class Net {
     this.fast = {}; this.sent = []; this.rtt = {}; this.rtick = {};
     this.onLobby = null; this.onStart = null; this.onInput = null; this.onHash = null; this.onPeerLeft = null; this.onFail = null; this.onChat = null;
   }
-  static available() { return typeof Peer !== 'undefined' && typeof RTCPeerConnection !== 'undefined'; }
+  static available() { return (!!relayUrl() && typeof WebSocket !== 'undefined') || (typeof Peer !== 'undefined' && typeof RTCPeerConnection !== 'undefined'); }
+  static relay() { return relayUrl(); }
+  useRelay() { return !this.noRelay && !!relayUrl() && typeof WebSocket !== 'undefined'; }
+  // the relay could not be reached: try peer-to-peer instead, if this browser has it
+  canFallBack() { this.noRelay = true; return typeof Peer !== 'undefined' && typeof RTCPeerConnection !== 'undefined'; }
   static check(report) { return checkNetwork(report); }
   host(cfg, cb) {
     const code = genCode(); this.code = code; this.isHost = true; this.myIdx = 0; this.myCfg = cfg;
     this.players = [{ id: 'self', idx: 0, cfg, connected: true }];
     let peer;
-    if (!this.ice) { iceServers().then(ice => { this.ice = ice; this.host(cfg, cb); }); return; }
-    try { peer = new Peer(PREFIX + code, peerOpts(this.ice)); } catch (e) { cb(e); return; }
+    if (this.useRelay()) { try { peer = new RelayPeer(PREFIX + code, code, relayUrl()); this.via = 'relay'; } catch (e) { this.noRelay = true; } }
+    if (!peer) { if (!this.ice) { iceServers().then(ice => { this.ice = ice; this.host(cfg, cb); }); return; }
+      try { peer = new Peer(PREFIX + code, peerOpts(this.ice)); this.via = 'p2p'; } catch (e) { cb(e); return; } }
     this.peer = peer;
     peer.on('open', (id) => { this.players[0].id = id; cb(null, code); this.startPing(); });
-    peer.on('error', (e) => { if (e.type === 'unavailable-id') { try { peer.destroy(); } catch (_) { } this.host(cfg, cb); } else cb(e); });
+    peer.on('error', (e) => { if (e.type === 'unavailable-id') { try { peer.destroy(); } catch (_) { } this.host(cfg, cb); } else if (e.type === 'relay-down' && this.canFallBack()) { console.warn('relay unreachable, using peer-to-peer'); this.host(cfg, cb); } else if (e.type !== 'peer-unavailable') cb(e); });
     peer.on('connection', (conn) => this.acceptConn(conn));
     peer.on('disconnected', () => { try { peer.reconnect(); } catch (_) { } });
   }
@@ -6786,8 +6839,10 @@ class Net {
   maxRtt() { let m = 0; for (const id in this.conns) { const r = this.rtt[id]; if (r > m) m = r; } return m; }
   join(code, cfg, cb) {
     this.code = code; this.isHost = false; this.myCfg = cfg;
-    if (!this.ice) { iceServers().then(ice => { this.ice = ice; this.join(code, cfg, cb); }); return; }
-    let peer; try { peer = new Peer(peerOpts(this.ice)); } catch (e) { cb(e); return; }
+    let peer;
+    if (this.useRelay()) { try { peer = new RelayPeer(null, code, relayUrl()); this.via = 'relay'; } catch (e) { this.noRelay = true; } }
+    if (!peer) { if (!this.ice) { iceServers().then(ice => { this.ice = ice; this.join(code, cfg, cb); }); return; }
+      try { peer = new Peer(peerOpts(this.ice)); this.via = 'p2p'; } catch (e) { cb(e); return; } }
     this.peer = peer; let done = false;
     peer.on('open', () => {
       const conn = peer.connect(PREFIX + code, { reliable: true, serialization: 'json' });
@@ -6795,7 +6850,8 @@ class Net {
       this.watchIce(conn);
       this.wire(conn, () => { if (!done) { done = true; clearTimeout(timer); cb(null); } });
     });
-    peer.on('error', (e) => { if (!done) { done = true; cb(new Error(e.type === 'peer-unavailable' ? 'Room not found. Check the code.' : (e.message || String(e)))); } });
+    peer.on('error', (e) => { if (done) return; if (e.type === 'relay-down' && this.canFallBack()) { console.warn('relay unreachable, using peer-to-peer'); done = true; this.join(code, cfg, cb); return; }
+      if (e.type === 'peer-unavailable' && e.to && e.to !== PREFIX + code) return; done = true; cb(new Error(e.type === 'peer-unavailable' ? 'Room not found. Check the code.' : e.type === 'room-full' ? 'That room is full.' : (e.message || e.type || String(e)))); });
     peer.on('connection', (conn) => this.acceptConn(conn));
   }
   // report why a connection failed instead of hanging: WebRTC tells us when no network path (direct or relayed) works
@@ -11955,14 +12011,15 @@ $('btnHost').onclick = () => {
 };
 // the connection check: what this network can reach, in plain words, for a player whose games will not connect
 $('btnNetCheck').onclick = () => {
-  if (typeof RTCPeerConnection === 'undefined') { $('menuMsg').textContent = 'This browser or viewer has no WebRTC, so peer-to-peer play cannot work here.'; return; }
+  if (typeof RTCPeerConnection === 'undefined' && !Net.relay()) { $('menuMsg').textContent = 'This browser or viewer has no WebRTC, so peer-to-peer play cannot work here.'; return; }
   const out = $('menuMsg'), lines = [typeof Peer === 'undefined' ? 'PeerJS did not load (its CDN is blocked here)' : 'Checking your connection…']; const show = () => { out.textContent = lines.join('  ·  '); };
   show(); $('btnNetCheck').disabled = true;
   Net.check((r) => {
-    if (r.step === 'stun') { lines[0] = r.ok ? 'Public address found (STUN works)' : (r.local ? 'Could not find your public address: STUN is blocked' : 'WebRTC is not working in this browser'); }
+    if (r.step === 'server') lines.splice(1, 0, r.ok ? 'Game server reachable' : 'Game server NOT reachable (falling back to peer-to-peer)');
+    else if (r.step === 'stun') { lines[0] = r.ok ? 'Public address found (STUN works)' : (r.local ? 'Could not find your public address: STUN is blocked' : 'WebRTC is not working in this browser'); }
     else if (r.step === 'relay') lines.push((r.ok ? 'Relay OK: ' : 'Relay not reachable: ') + r.host);
     else if (r.step === 'done') { $('btnNetCheck').disabled = false;
-      lines.push(r.relay ? 'Verdict: you should be able to connect to anyone (a relay answered).' : r.stun ? 'Verdict: no relay answered. You can connect to many players, but not across strict routers (carrier, campus, office). Tell the developer: the free relays may be down.' : 'Verdict: this network blocks WebRTC. Try another network or a phone hotspot.');
+      lines.push(r.server ? 'Verdict: the game server answered, so you can play with anyone on any network.' : r.relay ? 'Verdict: you should be able to connect to anyone (a relay answered).' : r.stun ? 'Verdict: no relay answered. You can connect to many players, but not across strict routers (carrier, campus, office). Tell the developer: the free relays may be down.' : 'Verdict: this network blocks WebRTC. Try another network or a phone hotspot.');
       console.log('[net check]', lines.join(' | ')); }
     show(); });
 };
