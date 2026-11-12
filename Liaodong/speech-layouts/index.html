@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v139</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v140</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -277,7 +277,9 @@ h3.sect { font-family: var(--font-display); font-weight: 700; font-size: 15px; l
 .spk .n { font: 600 10px sans-serif; color: #e8c27a; letter-spacing: .05em; display: block; } .spk .z { font: 700 17px 'Noto Serif CJK TC', serif; display: block; } .spk .e { font: 12px sans-serif; opacity: .85; display: block; max-width: 340px; white-space: normal; }
 #soldierPanel .career-cta { display: flex; gap: 14px; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1px solid var(--line-paper, #cbbf9f); background: rgba(194,58,68,.06); margin-bottom: 12px; flex-wrap: wrap; }
 #soldierPanel .career-cta small { display: block; color: var(--ink2); max-width: 60ch; margin-top: 2px; }
-.roles button.on { outline: 2px solid var(--imp); }
+.roles button { text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 9px 12px; border: 1px solid var(--line-paper); background: #f3ecdc; color: var(--ink); cursor: pointer; font: inherit; }
+.roles button b { font-weight: 700; } .roles button small { font-size: 12px; color: var(--ink2); line-height: 1.4; }
+.roles button.on { border-color: var(--imp); background: #fff5ee; box-shadow: inset 0 0 0 1px var(--imp); outline: none; }
 .chk { display: flex; gap: 8px; align-items: center; margin: 10px 0; font-size: 13px; }
 #drill { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); font: 700 26px/1.1 serif; color: #f4ead2; text-shadow: 0 2px 10px #000, 0 0 2px #000; opacity: 0; pointer-events: none; text-align: center; z-index: 21; letter-spacing: 3px; transition: opacity .25s; }
 #drill small { display: block; font: 600 12px sans-serif; letter-spacing: 2px; color: #d9cfb6; margin-top: 4px; text-transform: uppercase; }
@@ -440,51 +442,68 @@ body.zgrid #comms { top: 158px; }
       <div class="title"><h1>明清戰爭</h1><span class="en">Ming Dynasty · 1619</span></div>
       <p class="sub">The Ming Dynasty against the rising Manchu Later Jin. Build an army squad by squad, ride in at its head, fight with dao and rifle in first person, or climb to a bird's-eye view and give orders. Deterministic lockstep keeps every peer's battle identical.</p>
       <p class="sub" style="font-size:12px">Sound: instrument recordings from the Versilian Community Sample Library and VSCO-2 Community Edition (CC0, Versilian Studios); erhu and suona are physical models written for this game; battle effects and the war-drum recordings and the Han-civilization pieces “Red Dawn” and “Hill of Sorrows” (music by Omri Lahav) from <a href="https://play0ad.com" target="_blank" rel="noopener">0 A.D.</a> © Wildfire Games, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>, trimmed and re-encoded. Soldiers' voices: cries of pain and death from Warfork and the “80 CC0 creature SFX” packs via the <a href="https://github.com/lavenderdotpet/CC0-Public-Domain-Sounds" target="_blank" rel="noopener">CC0 Public Domain Sounds</a> collection (CC0). <label style="white-space:nowrap"><input type="checkbox" id="optVoice" checked> soldiers' voices</label></p>
+      <h3 class="sect">Mode</h3>
+      <div class="seg modes" id="modeSeg"><button type="button" data-m="standard" class="on"><b>Field battle</b><small>Your army against theirs</small></button><button type="button" data-m="duel"><b>Duel · 決鬥</b><small>Players alone in a ring, each in the kit of his post. Rounds, first to five. Online or against a swordsman.</small></button><button type="button" data-m="grand"><b>Grand battle</b><small>A council of AI commanders on each side. Command your allies.</small></button><button type="button" data-m="chaos"><b>Chaos</b><small>No orders, no fear, no deployment. Earthquakes, fleets and fire.</small></button><button type="button" data-m="officers"><b>Officers · co-op</b><small>Every player leads one squad in person beside AI generals. Peer-to-peer.</small></button><button type="button" data-m="heroes"><b>Heroes</b><small>Be a champion in a phased historical siege. No orders, only your blade and abilities. Co-op or versus.</small></button><button type="button" data-m="soldier"><b>小兵之路 · Path of a Soldier</b><small>One man in the ranks. Lethal muskets, long reloads, drums and gongs. A career from recruit to general, or co-op with friends.</small></button><button type="button" data-m="campaign"><b>Co-op campaign</b><small>Historical missions in phases: ambushes, relief, sieges and break-outs. Each player leads a squad they choose, beside AI generals.</small></button><button type="button" data-m="assault"><b>Assault</b><small>Attackers with limited manpower storm fortified lines point by point; defenders fall back to the next. You fight as a soldier.</small></button><button type="button" data-m="siege"><b>攻守城 · Siege</b><small>A walled town in stages: fill the ditch, raise ladders and towers, ram the gate, fight through the streets. Attack or defend as a soldier.</small></button><button type="button" data-m="beacon"><b>烽火 · Hold the Beacon</b><small>Co-op tower defence on the Liaodong wall, 1618. Hold off the raids, hire men with silver, light five fires to bring the relief.</small></button><button type="button" data-m="story"><b>Story</b><small>Seven battles from Sarhu to Yangzhou, as the Ming or the Jin.</small></button></div>
+      <p class="note" id="modeNote" style="margin:-6px 0 12px"></p>
+      <div id="zheCta"><div><b>浙兵 · The Zhejiang Company</b><small>A story campaign. Spring 1619: a mandarin duck team of Yiwu miners marches into the mountains of Liaodong with Liu Ting's column. Live with your file in camp, fight the battles as they really happened, and bring home whoever you can.</small></div><div class="btns"><button class="btn primary" id="btnZhe" type="button">Begin</button><button class="btn" id="btnZheNew" type="button" hidden>New</button></div></div>
+      <div id="hostSetup">
+      <div id="storyPanel" hidden><h3 class="sect">Campaign</h3><div class="chapters" id="storyList"></div><div id="warchest"></div></div>
+      <div id="soldierPanel" hidden>
+        <div class="career-cta"><div><b>小兵之路 · The career</b><small>Enlist in 1619 on the Liaodong frontier. March between forts, drill, buy kit, keep your comrades alive, earn merit and rise from recruit to regional commander while the war turns around you.</small></div><button class="btn primary" id="btnCareer" type="button">Open the road</button></div>
+      </div>
+      <div id="missionPanel" hidden>
+        <h3 class="sect" id="missionHead">Mission</h3><div class="chapters" id="missionList"></div>
+        <p class="note" id="missionNote"></p>
+      </div>
+      <div id="heroPanel" hidden><h3 class="sect">Siege</h3><div class="chapters" id="scenList"></div></div>
+      <div id="fieldPanel">
+      <h3 class="sect">Battlefield</h3>
+      <div class="battles" id="battles"></div>
+      </div>
+      </div>
+      <div id="personalHome"><div id="personal">
+      <h3 class="sect" id="personalHead">Your side</h3>
       <div class="row">
-        <label class="lbl" for="nameIn">Name</label><input type="text" id="nameIn" maxlength="16" value="Commander">
         <label class="lbl" for="factionSeg">Faction</label>
         <div class="seg" id="factionSeg"><button type="button" data-f="0" class="on">大明 Ming</button><button type="button" data-f="1">後金 Later Jin</button></div>
-        <label class="lbl" style="min-width:0"><input type="checkbox" id="mountedIn"> start on horseback</label>
-        <label class="lbl" style="min-width:0"><input type="checkbox" id="lowfxIn"> low graphics</label>
-        <label class="lbl" style="min-width:0"><input type="checkbox" id="musicIn" checked> music</label>
-        <input type="checkbox" id="fogIn" hidden>
+        <label class="lbl" id="mountedWrap" style="min-width:0"><input type="checkbox" id="mountedIn"> start on horseback</label>
       </div>
       <div class="row arms" id="armsRow">
         <label class="lbl" for="armMelee">Your blade</label><select id="armMelee"><option value="">Standard issue</option><option value="dao">腰刀 Dao saber · balanced</option><option value="jian">劍 Jian · fast thrusts, wide parry</option><option value="guandao">偃月刀 Guandao · huge reach, slow</option><option value="mace">鐵鞭 Iron mace · breaks guards</option><option value="qiang">槍 Qiang spear · fight at the tip</option></select>
         <label class="lbl" for="armRanged">Missile</label><select id="armRanged"><option value="">Standard issue</option><option value="niaochong">鳥銃 Niaochong musket</option><option value="sanyan">三眼銃 Three-eyed gun · 3 quick shots</option><option value="xbow">弩 Crossbow · flat heavy bolt</option><option value="bow">弓 Horn bow · fast, arcing</option><option value="none">None · hands free</option></select>
         <label class="lbl" style="min-width:0"><input type="checkbox" id="armShield"> rattan shield</label>
       </div>
-      <div id="zheCta"><div><b>浙兵 · The Zhejiang Company</b><small>A story campaign. Spring 1619: a mandarin duck team of Yiwu miners marches into the mountains of Liaodong with Liu Ting's column. Live with your file in camp, fight the battles as they really happened, and bring home whoever you can.</small></div><div class="btns"><button class="btn primary" id="btnZhe" type="button">Begin</button><button class="btn" id="btnZheNew" type="button" hidden>New</button></div></div>
-      <h3 class="sect">Mode</h3>
-      <div class="seg modes" id="modeSeg"><button type="button" data-m="standard" class="on"><b>Field battle</b><small>Your army against theirs</small></button><button type="button" data-m="duel"><b>Duel · 決鬥</b><small>Players alone in a ring, each in the kit of his post. Rounds, first to five. Online or against a swordsman.</small></button><button type="button" data-m="grand"><b>Grand battle</b><small>A council of AI commanders on each side. Command your allies.</small></button><button type="button" data-m="chaos"><b>Chaos</b><small>No orders, no fear, no deployment. Earthquakes, fleets and fire.</small></button><button type="button" data-m="officers"><b>Officers · co-op</b><small>Every player leads one squad in person beside AI generals. Peer-to-peer.</small></button><button type="button" data-m="heroes"><b>Heroes</b><small>Be a champion in a phased historical siege. No orders, only your blade and abilities. Co-op or versus.</small></button><button type="button" data-m="soldier"><b>小兵之路 · Path of a Soldier</b><small>One man in the ranks. Lethal muskets, long reloads, drums and gongs. A career from recruit to general, or co-op with friends.</small></button><button type="button" data-m="campaign"><b>Co-op campaign</b><small>Historical missions in phases: ambushes, relief, sieges and break-outs. Each player leads a squad they choose, beside AI generals.</small></button><button type="button" data-m="assault"><b>Assault</b><small>Attackers with limited manpower storm fortified lines point by point; defenders fall back to the next. You fight as a soldier.</small></button><button type="button" data-m="siege"><b>攻守城 · Siege</b><small>A walled town in stages: fill the ditch, raise ladders and towers, ram the gate, fight through the streets. Attack or defend as a soldier.</small></button><button type="button" data-m="beacon"><b>烽火 · Hold the Beacon</b><small>Co-op tower defence on the Liaodong wall, 1618. Hold off the raids, hire men with silver, light five fires to bring the relief.</small></button><button type="button" data-m="story"><b>Story</b><small>Seven battles from Sarhu to Yangzhou, as the Ming or the Jin.</small></button></div>
-      <p class="note" id="modeNote" style="margin:-6px 0 12px"></p>
-      <div id="storyPanel" hidden><h3 class="sect">Campaign</h3><div class="chapters" id="storyList"></div><div id="warchest"></div></div>
-      <div id="soldierPanel" hidden>
-        <div class="career-cta"><div><b>小兵之路 · The career</b><small>Enlist in 1619 on the Liaodong frontier. March between forts, drill, buy kit, keep your comrades alive, earn merit and rise from recruit to regional commander while the war turns around you.</small></div><button class="btn primary" id="btnCareer" type="button">Open the road</button></div>
-        <h3 class="sect">Quick battle or co-op · your post</h3><div class="chapters roles" id="roleList"></div>
-        <label class="chk"><input type="checkbox" id="officerIn"> Serve as an officer (lead your squad and two more by drum and gong)</label>
-      </div>
-      <div id="missionPanel" hidden>
-        <h3 class="sect" id="missionHead">Mission</h3><div class="chapters" id="missionList"></div>
-        <h3 class="sect">Your troops</h3><div class="chapters roles" id="mroleList"></div>
-        <p class="note" id="missionNote"></p>
-      </div>
-      <div id="heroPanel" hidden><h3 class="sect">Champion</h3><div class="chapters" id="hcList"></div><h3 class="sect">Siege</h3><div class="chapters" id="scenList"></div></div>
-      <div id="fieldPanel">
-      <h3 class="sect">Battlefield</h3>
-      <div class="battles" id="battles"></div>
+      <div id="builderBox">
       <div class="builder">
         <div><h3>Available squads <span class="budget" id="budget"></span></h3><div class="roster" id="roster"></div></div>
         <div><h3>Your army <span class="budget" id="armyCount"></span></h3><div class="army" id="armyList"></div></div>
       </div>
       </div>
+      <div id="roleBox" hidden>
+        <h3 class="sect" id="roleHead">Quick battle or co-op · your post</h3><div class="chapters roles" id="roleList"></div>
+        <label class="chk"><input type="checkbox" id="officerIn"> Serve as an officer (lead your squad and two more by drum and gong)</label>
+      </div>
+      <div id="mroleBox" hidden>
+        <h3 class="sect">Your troops</h3><div class="chapters roles" id="mroleList"></div>
+      </div>
+      <div id="hcBox" hidden><h3 class="sect">Champion</h3><div class="chapters" id="hcList"></div></div>
+      </div></div>
       <div class="actions">
         <button class="btn primary" id="btnSolo" type="button">Practice vs AI</button>
-        <button class="btn" id="btnHost" type="button">Host P2P battle</button>
-        <span class="spacer"></span>
+        <button class="btn" id="btnHost" type="button">Host a room</button>
+      </div>
+      <h3 class="sect">Play with friends</h3>
+      <div class="row joinrow">
+        <label class="lbl" for="nameIn">Name</label><input type="text" id="nameIn" maxlength="16" value="Commander">
         <input type="text" id="codeIn" placeholder="ROOM CODE" maxlength="5" style="width:120px;text-transform:uppercase;letter-spacing:.2em">
-        <button class="btn" id="btnJoin" type="button">Join</button>
+        <button class="btn" id="btnJoin" type="button">Join a room</button>
         <button class="btn" id="btnNetCheck" type="button" title="Test whether your network can reach the connection and relay servers">Check connection</button>
+      </div>
+      <p class="note" style="margin:-4px 0 8px">Joining plays the host's mode and battlefield. You pick your side, squads or post inside the room.</p>
+      <div class="row settings">
+        <label class="lbl" style="min-width:0"><input type="checkbox" id="lowfxIn"> low graphics</label>
+        <label class="lbl" style="min-width:0"><input type="checkbox" id="musicIn" checked> music</label>
+        <input type="checkbox" id="fogIn" hidden>
       </div>
       <div class="msg" id="menuMsg"></div>
       <div class="note" id="netNote"></div>
@@ -555,6 +574,7 @@ body.zgrid #comms { top: 158px; }
       <div class="code" id="codeOut">·····</div>
       <div class="note" id="lobbyBattle" style="margin:0 0 8px"></div>
       <div class="row"><button class="btn sm" id="btnCopy" type="button">Copy code</button><span class="note" id="copyMsg" style="margin:0"></span></div>
+      <div id="lobbyPersonal"></div>
       <div class="players" id="players"></div>
       <div class="actions">
         <button class="btn primary" id="btnStart" type="button">Begin the battle</button>
@@ -11857,8 +11877,20 @@ function renderBattles() {
     box.appendChild(el);
   }
 }
+// ---- the menu by mode: only what this mode uses is shown. The mode's own setup (battlefield, mission, siege, chapter) sits
+// under the mode; "Your side" holds the player's own choices (faction, squads, post, troops, champion, arms), and moves into the
+// room when he hosts or joins, so every player picks there, for the host's mode
+const MP_MODES = { standard: 1, duel: 1, grand: 1, chaos: 1, officers: 1, heroes: 1, soldier: 1, campaign: 1, assault: 1, siege: 1, beacon: 1 };
+const SOLO_LABEL = { standard: 'Battle vs AI', duel: 'Duel a swordsman', grand: 'Grand battle vs AI', chaos: 'Start the chaos', officers: 'Lead a squad vs AI', heroes: 'Start the siege', soldier: 'Quick battle', campaign: 'Start the mission', assault: 'Start the assault', siege: 'Start the siege', beacon: 'Hold the beacon', story: 'Play this chapter' };
+function menuLayout(field, soldier, mis, heroes, story, duel) {
+  const m = state.mode, beacon = m === 'beacon';
+  $('builderBox').hidden = !field; $('roleBox').hidden = !soldier; $('mroleBox').hidden = !mis; $('hcBox').hidden = !heroes;
+  $('mountedWrap').hidden = !(field || story); $('armsRow').hidden = heroes || beacon;
+  $('btnSolo').textContent = SOLO_LABEL[m] || 'Practice vs AI'; $('btnHost').hidden = !MP_MODES[m]; $('btnHost').textContent = /^(officers|heroes|soldier|campaign|beacon)$/.test(m) ? 'Host a co-op room' : 'Host a room';
+  const inRoom = state.screen === 'lobby'; $('btnSolo').parentElement.hidden = inRoom; $('personalHead').textContent = inRoom ? 'Your side · ' + (({ standard: 'Field battle', duel: 'Duel', grand: 'Grand battle', chaos: 'Chaos', officers: 'Officers', heroes: 'Heroes', soldier: 'Path of a Soldier', campaign: 'Co-op campaign', assault: 'Assault', siege: 'Siege', beacon: 'Hold the Beacon' })[m] || m) : 'Your side';
+}
 function renderMenu() {
-  renderBattles(); renderStory(); renderScen(); const story = state.mode === 'story', heroes = state.mode === 'heroes', duel = state.mode === 'duel', soldier = state.mode === 'soldier' || duel, mis = state.mode === 'campaign' || state.mode === 'assault' || state.mode === 'siege'; $('missionPanel').hidden = !mis; if (mis && typeof renderMissions === 'function') renderMissions(); $('storyPanel').hidden = !story; $('heroPanel').hidden = !heroes; $('soldierPanel').hidden = !soldier; $('armsRow').hidden = heroes; $('fieldPanel').hidden = story || heroes || soldier || mis || state.mode === 'beacon'; if (typeof beaconMenu === 'function') beaconMenu(state.mode === 'beacon'); { const sp = $('soldierPanel'); const cta = sp && sp.querySelector('.career-cta'), oi = $('officerIn'); if (cta) cta.hidden = duel; if (oi && oi.parentElement) oi.parentElement.hidden = duel; const hd = sp && sp.querySelector('h3.sect'); if (hd) hd.textContent = duel ? 'Duel · your arms' : 'Quick battle or co-op · your post'; } if (soldier && typeof renderRoles === 'function') renderRoles(); $('modeNote').textContent = state.mode === 'officers' ? 'Officers: you lead a single squad in person (the first one in your army) beside AI generals. Host a room so friends can each lead a squad too.' : state.mode === 'grand' ? 'Grand battle: AI generals fill out both sides. Command your allies from the command view.' : state.mode === 'chaos' ? 'Chaos: no orders and no fear, and the gods take a hand.' : story ? 'Story: seven battles of the Ming–Jin war. Your faction choice sets which side you fight for.' : heroes ? 'Heroes: you are a lone champion; AI armies fight a phased siege. Faction sets your side. Host a room so each friend plays a champion.' : '';
+  renderBattles(); renderStory(); renderScen(); const story = state.mode === 'story', heroes = state.mode === 'heroes', duel = state.mode === 'duel', soldier = state.mode === 'soldier' || duel, mis = state.mode === 'campaign' || state.mode === 'assault' || state.mode === 'siege'; $('missionPanel').hidden = !mis; if (mis && typeof renderMissions === 'function') renderMissions(); $('storyPanel').hidden = !story; $('heroPanel').hidden = !heroes; $('soldierPanel').hidden = !soldier; const field = !(story || heroes || soldier || mis || state.mode === 'beacon'); $('fieldPanel').hidden = !field; menuLayout(field, soldier, mis, heroes, story, duel); if (typeof beaconMenu === 'function') beaconMenu(state.mode === 'beacon'); { const sp = $('soldierPanel'); const cta = sp && sp.querySelector('.career-cta'), oi = $('officerIn'); if (cta) cta.hidden = duel; if (sp) sp.hidden = !soldier || duel; if (oi && oi.parentElement) oi.parentElement.hidden = duel; const hd = $('roleHead'); if (hd) hd.textContent = duel ? 'Duel · your arms' : 'Your post'; } if (soldier && typeof renderRoles === 'function') renderRoles(); $('modeNote').textContent = state.mode === 'officers' ? 'Officers: you lead a single squad in person (the first one in your army) beside AI generals. Host a room so friends can each lead a squad too.' : state.mode === 'grand' ? 'Grand battle: AI generals fill out both sides. Command your allies from the command view.' : state.mode === 'chaos' ? 'Chaos: no orders and no fear, and the gods take a hand.' : story ? 'Story: seven battles of the Ming–Jin war. Your faction choice sets which side you fight for.' : heroes ? 'Heroes: you are a lone champion; AI armies fight a phased siege. Faction sets your side. Host a room so each friend plays a champion.' : '';
   $('modeSeg').querySelectorAll('button').forEach(bt => bt.classList.toggle('on', bt.dataset.m === state.mode));
   const ros = S.ROSTER[state.faction]; const cost = armyCost(state.army), left = S.BUDGET - cost;
   const b = $('budget'); b.textContent = `${left} / ${S.BUDGET} taels`; b.classList.toggle('over', left < 0);
@@ -11896,11 +11928,12 @@ function renderScen() { renderHClass(); $('scenList').innerHTML = Object.keys(S.
 $('scenList').addEventListener('click', (e) => { const bt = e.target.closest('button'); if (!bt) return; state.scen = bt.dataset.s; AUDIO.init(); AUDIO.play('ui'); renderScen(); });
 $('storyList').addEventListener('click', (e) => { const bt = e.target.closest('button'); if (!bt || bt.disabled) return; state.chapter = +bt.dataset.c; AUDIO.init(); AUDIO.play('ui'); renderStory(); });
 $('modeSeg').addEventListener('click', (e) => { const bt = e.target.closest('button'); if (!bt) return; state.mode = bt.dataset.m; AUDIO.init(); AUDIO.play('ui'); renderMenu(); });
-function myCfg() { return { name: ($('nameIn').value.trim() || 'Commander').slice(0, 16), team: state.faction, army: state.army.slice(), mounted: $('mountedIn').checked, battle: state.battle, hclass: state.hclass, role: state.role, command: state.officer ? 3 : 0, arms: myArms(), kit: state.mode === 'soldier' ? { arms: myArms() } : undefined }; }
+function myCfg() { return { mode: state.mode, name: ($('nameIn').value.trim() || 'Commander').slice(0, 16), team: state.faction, army: state.army.slice(), mounted: $('mountedIn').checked, battle: state.battle, hclass: state.hclass, role: state.role, command: state.officer ? 3 : 0, arms: myArms(), kit: state.mode === 'soldier' ? { arms: myArms() } : undefined }; }
 function myArms() { const a = { melee: $('armMelee').value, ranged: $('armRanged').value, shield: $('armShield').checked }; return a.melee || a.ranged || a.shield ? a : null; }
 function show(screen) {
   state.screen = screen;
   $('menu').hidden = screen !== 'menu'; $('lobby').hidden = screen !== 'lobby';
+  { const P = $('personal'), home = screen === 'lobby' ? $('lobbyPersonal') : $('personalHome'); if (P && home && P.parentElement !== home) home.appendChild(P); if (screen === 'lobby' || screen === 'menu') try { renderMenu(); } catch (e) { } } /* your side is chosen in the room */
   $('hud').hidden = screen !== 'game'; $('cmdui').hidden = screen !== 'game' || !Input.cmdMode;
   if (screen !== 'game') { $('pause').hidden = true; $('result').hidden = true; }
 }
@@ -11937,6 +11970,8 @@ $('btnJoin').onclick = () => {
   const net = new Net(); state.net = net; wireLobby(net);
   net.join(code, myCfg(), (err) => { if (err) { $('menuMsg').textContent = err.message || String(err); net.destroy(); state.net = null; return; } $('menuMsg').textContent = ''; $('codeOut').textContent = code; $('lobbySub').textContent = 'You are in. The host begins the battle when everyone has arrived.'; $('btnStart').hidden = true; $('lobbyWait').hidden = false; show('lobby'); renderLobby(); });
 };
+// a choice made in the room goes to everyone at once
+for (const ev of ['click', 'change']) $('personal').addEventListener(ev, () => setTimeout(() => { if (state.screen === 'lobby' && state.net && state.net.myIdx >= 0) { state.net.sendCfg(myCfg()); renderLobby(); } }, 0));
 $('btnCopy').onclick = () => { const code = $('codeOut').textContent; navigator.clipboard && navigator.clipboard.writeText(code).then(() => { $('copyMsg').textContent = 'Copied'; }, () => { $('copyMsg').textContent = 'Select the code and copy it.'; }); };
 $('btnLeave').onclick = () => { if (state.net) state.net.destroy(); state.net = null; show('menu'); };
 $('btnMenu').onclick = () => { location.reload(); };
@@ -11955,12 +11990,14 @@ function renderLobby() {
   for (const p of sorted) {
     const el = document.createElement('div'); el.className = 'pl';
     const cfg = p.cfg; const team = cfg ? cfg.team : 0;
-    el.innerHTML = `<span class="tag t${team}">${cfg ? S.FACTION[team].short : '…'}</span><span><b>${cfg ? escapeHtml(cfg.name) : 'joining…'}</b>${p.idx === 0 ? ' <small>host</small>' : ''}${p.idx === net.myIdx ? ' <small>(you)</small>' : ''}${p.connected ? '' : ' <small style="color:var(--danger)">disconnected</small>'}<div class="squads">${cfg ? cfg.army.map(k => S.DEFS[k].name).join(', ') || 'no squads' : ''}${cfg && cfg.mounted ? ' · mounted' : ''}</div></span><span class="squads">${p.rtt ? p.rtt + ' ms' : ''}</span>`;
+    const pick = !cfg ? '' : /^(soldier|duel|campaign|assault|siege|beacon)$/.test(state.mode) ? 'post: ' + escapeHtml(String(cfg.role || '—')) : state.mode === 'heroes' ? 'champion: ' + escapeHtml(String((S.HCLASS[cfg.hclass | 0] || {}).name || cfg.hclass)) : (cfg.army.map(k => S.DEFS[k].name).join(', ') || 'no squads') + (cfg.mounted ? ' · mounted' : '');
+    el.innerHTML = `<span class="tag t${team}">${cfg ? S.FACTION[team].short : '…'}</span><span><b>${cfg ? escapeHtml(cfg.name) : 'joining…'}</b>${p.idx === 0 ? ' <small>host</small>' : ''}${p.idx === net.myIdx ? ' <small>(you)</small>' : ''}${p.connected ? '' : ' <small style="color:var(--danger)">disconnected</small>'}<div class="squads">${pick}</div></span><span class="squads">${p.rtt ? p.rtt + ' ms' : ''}</span>`;
     list.appendChild(el);
   }
   if (net.isHost) { const ready = net.players.every(p => p.cfg || !p.connected); $('btnStart').disabled = !ready; }
   const hostCfg = net.players.find(p => p.idx === 0); const bk = hostCfg && hostCfg.cfg && hostCfg.cfg.battle; const bd = S.BATTLES[bk] || S.BATTLES.field;
-  $('lobbyBattle').textContent = `Battlefield: ${bd.name} ${bd.jp} · ${bd.when}`;
+  if (!net.isHost && hostCfg && hostCfg.cfg && hostCfg.cfg.mode && hostCfg.cfg.mode !== state.mode) { state.mode = hostCfg.cfg.mode; if (bk) state.battle = bk; renderMenu(); net.sendCfg(myCfg()); } /* the room plays the host's mode: your side follows it */
+  { const MN = { standard: 'Field battle', duel: 'Duel', grand: 'Grand battle', chaos: 'Chaos', officers: 'Officers co-op', heroes: 'Heroes', soldier: 'Path of a Soldier', campaign: 'Co-op campaign', assault: 'Assault', siege: 'Siege', beacon: 'Hold the Beacon' }; const fieldish = /^(standard|grand|chaos|officers|soldier)$/.test(state.mode); $('lobbyBattle').textContent = (MN[state.mode] || state.mode) + (fieldish ? ` · ${bd.name} ${bd.jp} · ${bd.when}` : ''); }
 }
 $('btnStart').onclick = () => {
   const net = state.net; if (!net || !net.isHost) return;
@@ -15488,7 +15525,7 @@ const BCN = { open: false, sim: null, fires: -1, stage: '', log: 0, vis: null, t
 // ---- menu ----
 function beaconMenu(on) {
   let el = $('beaconPanel');
-  if (!el) { el = document.createElement('div'); el.id = 'beaconPanel'; el.hidden = true; const after = $('missionPanel'); after.parentNode.insertBefore(el, after.nextSibling); }
+  if (!el) { el = document.createElement('div'); el.id = 'beaconPanel'; el.hidden = true; $('personal').appendChild(el); } /* with your side: it is your troops, and it goes into the room */
   el.hidden = !on; if (!on) return;
   if (!ROLE_INFO.some(r => r[0] === state.role)) state.role = ROLE_INFO[0][0];
   el.innerHTML = `<h3 class="sect">烽火 · Hold the Beacon · 1618</h3>
