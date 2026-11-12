@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v138</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v139</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -484,6 +484,7 @@ body.zgrid #comms { top: 158px; }
         <span class="spacer"></span>
         <input type="text" id="codeIn" placeholder="ROOM CODE" maxlength="5" style="width:120px;text-transform:uppercase;letter-spacing:.2em">
         <button class="btn" id="btnJoin" type="button">Join</button>
+        <button class="btn" id="btnNetCheck" type="button" title="Test whether your network can reach the connection and relay servers">Check connection</button>
       </div>
       <div class="msg" id="menuMsg"></div>
       <div class="note" id="netNote"></div>
@@ -6720,6 +6721,21 @@ async function iceServers() {
   } catch (e) { console.warn('relay credentials', e); }
   return out;
 }
+// ---- the connection check (lobby button): asks every server on the list for a route and reports what came back, so a player
+// whose router fails can see why. A STUN reply means his public address was found (a direct link may still be blocked); a relay
+// reply means a TURN server answered, which gets through almost any network; with no relay, strict routers cannot connect.
+async function checkNetwork(report) {
+  const ice = await iceServers(), named = [];
+  for (const e of ice) { const u = [].concat(e.urls)[0], host = u.replace(/^(stun|turns?):/, '').split(/[:?]/)[0]; named.push({ e, kind: /^stun/.test(u) ? 'stun' : 'relay', host }); }
+  const probe = (servers, relayOnly) => new Promise((res) => { let pc; const got = new Set(); try { pc = new RTCPeerConnection({ iceServers: servers, iceTransportPolicy: relayOnly ? 'relay' : 'all' }); } catch (err) { res(got); return; }
+    const end = () => { try { pc.close(); } catch (_) { } res(got); }, t = setTimeout(end, 7000);
+    pc.onicecandidate = (ev) => { if (!ev.candidate) { clearTimeout(t); end(); return; } const m = / typ (\w+)/.exec(ev.candidate.candidate); if (m) got.add(m[1]); };
+    pc.createDataChannel('probe'); pc.createOffer().then(o => pc.setLocalDescription(o)).catch(end); });
+  const stun = named.filter(n => n.kind === 'stun'), relays = named.filter(n => n.kind === 'relay');
+  const s0 = await probe(stun.map(n => n.e), false); report({ step: 'stun', ok: s0.has('srflx'), local: s0.has('host') });
+  let anyRelay = false; for (const r of relays) { const g = await probe([r.e], true), ok = g.has('relay'); anyRelay = anyRelay || ok; report({ step: 'relay', host: r.host, ok }); }
+  report({ step: 'done', stun: s0.has('srflx'), relay: anyRelay });
+}
 function peerOpts(ice) { return { debug: 0, config: { iceServers: ice, sdpSemantics: 'unified-plan' } }; }
 function genCode() { let s = ''; for (let i = 0; i < 5; i++) s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; return s; }
 
@@ -6730,6 +6746,7 @@ class Net {
     this.onLobby = null; this.onStart = null; this.onInput = null; this.onHash = null; this.onPeerLeft = null; this.onFail = null; this.onChat = null;
   }
   static available() { return typeof Peer !== 'undefined' && typeof RTCPeerConnection !== 'undefined'; }
+  static check(report) { return checkNetwork(report); }
   host(cfg, cb) {
     const code = genCode(); this.code = code; this.isHost = true; this.myIdx = 0; this.myCfg = cfg;
     this.players = [{ id: 'self', idx: 0, cfg, connected: true }];
@@ -11646,7 +11663,7 @@ RP.drawFigure = function (slot, u, x, y, z, yaw, alpha, hide) {
   // ---- the frame
   // men made ahead of need, two a frame, for the kits on this field, and every material compiled once: a man walking into the
   // near field, a helmet knocked off, a first block, never stall a frame
-  function warm(r) { if (NM.warmDone) return; if (!NM.warmList) { const seen = new Map(); for (const u of r.sim.units) if (eligible(u)) { const k = kitOf(u, r.sim), key = k.set + '|' + k.wpn; seen.set(key, (seen.get(key) || 0) + 1); }
+  function warm(r) { if (NM.warmDone) return; if (window.NM_NOWARM) { NM.warmDone = true; return; } /* (tests on software rendering skip it) */ if (!NM.warmList) { const seen = new Map(); for (const u of r.sim.units) if (eligible(u)) { const k = kitOf(u, r.sim), key = k.set + '|' + k.wpn; seen.set(key, (seen.get(key) || 0) + 1); }
       NM.warmList = []; for (const [key, n] of [...seen].sort((a, b) => b[1] - a[1])) for (let i = 0; i < Math.min(6, Math.ceil(n / 4)); i++) NM.warmList.push(key); NM.warmList = NM.warmList.slice(0, CAP); }
     for (let i = 0; i < 2 && NM.warmList.length; i++) { const key = NM.warmList.shift(), [set, wpn] = key.split('|'); const m = new RIG.Man(set, wpn, r.scene); m.key = key; for (const s of m.meshes) s.castShadow = false; lit(r, m); m.root.visible = false; m.unit = -1; NM.pool.push(m);
       if (!NM.compiled) NM.compiled = new Set(); if (!NM.compiled.has(set)) { NM.compiled.add(set); m.root.visible = true; m.root.position.set(0, -50, 0); try { r.renderer.compile(r.scene, r.camera); } catch (e) {} m.root.visible = false; } }
@@ -11899,6 +11916,19 @@ $('btnHost').onclick = () => {
   AUDIO.init(); $('menuMsg').textContent = 'Opening a room…';
   const net = new Net(); state.net = net; wireLobby(net);
   net.host(myCfg(), (err, code) => { if (err) { $('menuMsg').textContent = 'Could not open a room: ' + (err.message || err.type || err); return; } $('menuMsg').textContent = ''; $('codeOut').textContent = code; $('lobbySub').textContent = 'Share this room code. Friends enter it under Join on the main screen.'; $('btnStart').hidden = false; $('lobbyWait').hidden = true; show('lobby'); renderLobby(); });
+};
+// the connection check: what this network can reach, in plain words, for a player whose games will not connect
+$('btnNetCheck').onclick = () => {
+  if (typeof RTCPeerConnection === 'undefined') { $('menuMsg').textContent = 'This browser or viewer has no WebRTC, so peer-to-peer play cannot work here.'; return; }
+  const out = $('menuMsg'), lines = [typeof Peer === 'undefined' ? 'PeerJS did not load (its CDN is blocked here)' : 'Checking your connection…']; const show = () => { out.textContent = lines.join('  ·  '); };
+  show(); $('btnNetCheck').disabled = true;
+  Net.check((r) => {
+    if (r.step === 'stun') { lines[0] = r.ok ? 'Public address found (STUN works)' : (r.local ? 'Could not find your public address: STUN is blocked' : 'WebRTC is not working in this browser'); }
+    else if (r.step === 'relay') lines.push((r.ok ? 'Relay OK: ' : 'Relay not reachable: ') + r.host);
+    else if (r.step === 'done') { $('btnNetCheck').disabled = false;
+      lines.push(r.relay ? 'Verdict: you should be able to connect to anyone (a relay answered).' : r.stun ? 'Verdict: no relay answered. You can connect to many players, but not across strict routers (carrier, campus, office). Tell the developer: the free relays may be down.' : 'Verdict: this network blocks WebRTC. Try another network or a phone hotspot.');
+      console.log('[net check]', lines.join(' | ')); }
+    show(); });
 };
 $('btnJoin').onclick = () => {
   if (!Net.available()) { $('menuMsg').textContent = 'Multiplayer is not available in this viewer. Open the downloaded .html file in a desktop browser to join.'; return; }
