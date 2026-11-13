@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v146</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v147</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1968,6 +1968,7 @@ class Sim {
     if (an) { ax /= an; az /= an; }
     if (!this.chaos && !this.heroMode && squadIds.length >= 4 && !this.reserveSet) this.reserveSet = {};
     if (this.reserveSet && this.reserveSet[team + ':' + squadIds[0]] === undefined && squadIds.length >= 4) { let best = -1, bc = 0; for (const id of squadIds) { const q = this.squads[id]; if (q.def.ai === 'melee' && !q.def.mounted && q.count > bc) { bc = q.count; best = id; } } this.reserveSet[team + ':' + squadIds[0]] = best; if (best >= 0) this.squads[best].reserve = true; }
+    const goIn = this.shootersGoIn(team); // the attack has lost its blades: its archers and gunners stop standing off and go in themselves
     for (let i = 0; i < squadIds.length; i++) {
       const sq = this.squads[squadIds[i]]; if (!sq.alive || sq.routing) continue;
       let e = null, bd = 1e18;
@@ -1979,10 +1980,10 @@ class Sim {
         if (D.kind === DIR_SUPPORT) { const req = this.players[D.by]; const h = req ? this.units[req.heroId] : null; if (h && !h.dead) { px = h.x - sin(h.yaw) * 14; pz = h.z - cos(h.yaw) * 14; } }
         if (D.kind === DIR_FLANK && len(sq.cx - px, sq.cz - pz) < 22) { if (i === 0) pl.directive = { kind: DIR_ATTACK, x: 0, z: 0, by: D.by }; }
         else {
-          const close = !pl.fleeing && d < (def.ai === 'ranged' ? 0 : def.mounted ? (pl.aggr ? pl.aggr + 15 : 45) : (pl.aggr || 32)) && D.kind !== DIR_FLANK && !this.navBlockedLine(sq.cx, sq.cz, e.cx, e.cz);
+          const close = !pl.fleeing && d < (def.ai === 'ranged' ? (goIn ? 26 : 0) : def.mounted ? (pl.aggr ? pl.aggr + 15 : 45) : (pl.aggr || 32)) && D.kind !== DIR_FLANK && !this.navBlockedLine(sq.cx, sq.cz, e.cx, e.cz);
           if (close) { sq.order = ORD_CHARGE; sq.tx = e.cx; sq.tz = e.cz; sq.facing = ang; continue; }
           const eang = this.dirAng(pl, enemies, px, pz, e), rx = -cos(eang), rz = sin(eang), n = squadIds.length;
-          const lat = (i - (n - 1) / 2) * (this.mode === 'assault' ? 7 : 20), back = def.ai === 'cannon' ? (pl.standoff ? -70 : -14) : def.mounted ? -8 : (pl.standoff && def.ai === 'ranged' ? -38 : 0);
+          const lat = (i - (n - 1) / 2) * (this.mode === 'assault' ? 7 : 20), back = def.ai === 'cannon' ? (pl.standoff ? -70 : -14) : def.mounted ? -8 : (pl.standoff && def.ai === 'ranged' && !goIn ? -38 : 0);
           const tx = px + rx * lat + sin(eang) * back, tz = pz + rz * lat + cos(eang) * back;
           if (len(sq.cx - tx, sq.cz - tz) > 3) { sq.order = ORD_MOVE; sq.tx = clamp(tx, -HALF + 5, HALF - 5); sq.tz = clamp(tz, -HALF + 5, HALF - 5); sq.facing = eang; }
           else { if (sq.order !== ORD_HOLD) { sq.tx = sq.cx; sq.tz = sq.cz; } sq.order = ORD_HOLD; sq.facing = eang; }
@@ -2006,11 +2007,11 @@ class Sim {
         else if (k === 'spearwall') { for (let j = 0; j < enemies.length; j++) if (enemies[j].def.mounted && len(enemies[j].cx - sq.cx, enemies[j].cz - sq.cz) < 35) go = true; }
         if (go) this.useAbility(sq, -1); }
       if (sq.abOn > 0 && sq.ability === 'spearwall') { sq.facing = ang; continue; }
-      if (!def.mounted && def.ai !== 'ranged' && def.ai !== 'cannon' && d >= 75 && this.objectives.length) {
+      if (!def.mounted && (def.ai !== 'ranged' || goIn) && def.ai !== 'cannon' && d >= 75 && this.objectives.length) {
         let ob = null, od = 1e18; for (let j = 0; j < this.objectives.length; j++) { const o = this.objectives[j]; if (o.owner === team && o.ctrl * (team === 0 ? 1 : -1) >= 100) continue; const d2 = (o.x - sq.cx) * (o.x - sq.cx) + (o.z - sq.cz) * (o.z - sq.cz); if (d2 < od) { od = d2; ob = o; } }
         if (ob && od < d * d * 1.4) { sq.order = ORD_MOVE; sq.tx = ob.x; sq.tz = ob.z; sq.facing = atan2(ob.x - sq.cx, ob.z - sq.cz); continue; }
       }
-      if (def.ai === 'ranged' && !sq.dry) {
+      if (def.ai === 'ranged' && !sq.dry && !goIn) {
         const want = (def.bow ? def.bow.range : def.rifle.range) * this.rangeMul * 0.62;
         if (d > want + 10) { sq.order = ORD_MOVE; sq.tx = e.cx - nx * want; sq.tz = e.cz - nz * want; sq.facing = ang; }
         else { if (sq.order !== ORD_HOLD) { sq.tx = sq.cx; sq.tz = sq.cz; } sq.order = ORD_HOLD; sq.facing = ang; }
@@ -4753,6 +4754,18 @@ Sim.prototype.mAggro = function () {
 };
 Sim.prototype.mOver = function (won, text) { if (this.mwin !== undefined) return; this.mwin = won ? this.mission.side : 1 - this.mission.side; this.events.push({ t: 'mend', won, text }); };
 // ---- assault
+// an attacking side whose blades have fallen and whose bows remain: left alone its archers stand off at the edge of their range and
+// the assault never comes. When its melee men drop under a third of its shooters, the shooters go in (sidearms out, onto the
+// points and the enemy); once enough blades are back (over three fifths), they stand off again. Only the side that must attack:
+// the mission's attacker, the besiegers in Heroes, the enemy in a co-op campaign mission that names none.
+Sim.prototype.shootersGoIn = function (team) {
+  const M = this.mission; const att = M ? (M.attacker !== undefined ? M.attacker : this.mode === 'campaign' ? 1 - (M.side | 0) : -1) : this.heroMode ? 1 : -1; /* a scripted story chapter that names no attacker is left as written */
+  if (att < 0 || team !== att) return false;
+  const C = this.goInC || (this.goInC = { t: -1, v: [false, false] });
+  if (C.t !== this.tick) { C.t = this.tick; for (let tm = 0; tm < 2; tm++) { let mel = 0, rng = 0; for (const u of this.teamAlive[tm]) { if (u.inactive || u.type === 'horse' || u.champ || u.def.ai === 'cannon') continue; if (u.def.ai === 'ranged') rng++; else mel++; }
+      C.v[tm] = rng >= 8 && (C.v[tm] ? mel < rng * 0.6 : mel < rng * 0.33); } }
+  return C.v[team];
+};
 Sim.prototype.assaultDirs = function () {
   if (this.mission.siege && this.sg && this.sector <= 1) return this.siegeDirs();
   const M = this.mission, A = M.attacker, keys = M.sectors[this.sector] || []; const zs = keys.map(k => this.missionZone(k)).filter(z => z && z.owner !== A);
