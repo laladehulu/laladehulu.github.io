@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v145</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v146</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
 <title>New Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -4779,14 +4779,27 @@ Sim.prototype.assaultThink = function () {
   if (M.talk) { const mv = this.mv, el = this.tick / 30; for (const tm in M.talk) for (const [t, who, text, zh] of M.talk[tm]) { const k = 'op:' + tm + ':' + t; if (!mv.said[k] && el >= t) { mv.said[k] = 1; this.events.push({ t: 'msay', who, text, zh: zh || '', team: tm | 0 }); } } }
   // manpower: every attacking man who falls costs a ticket; reserves march on while tickets last and the line is thin
   let act = 0, rngN = 0; for (const u of this.teamAlive[A]) if (!u.inactive && u.type !== 'horse' && u.def.ai !== 'cannon') { act += u.def.ai === 'ranged' ? 0.35 : 1; if (u.def.ai === 'ranged') rngN++; } act = Math.round(act); /* archers and gunners stand back and seldom fall: counted at a third, so a standing archery company cannot fill the field and starve the assault of fresh men */
-  const CAP = M.cap || 64;
-  if (act + Math.round(CAP / 3) <= CAP && this.tickets > 0) { const next = Object.keys(this.mg).find(g => this.mg[g].G.team === A && !this.mg[g].released); if (next) { this.mRelease(next); if (rngN >= CAP * 0.4) { const p = this.players[this.mg[next].p]; for (const id of p.squads) { const q = this.squads[id]; if (q.def.ai !== 'ranged') continue; for (const uid of q.unitIds) { const u = this.units[uid]; if (u.dead) continue; u.dead = true; u.hp = 0; u.inactive = true; u.trimmed = true; this.total[u.team]--; } q.count = 0; q.aliveCount = 0; q.alive = false; } } /* enough bows on the field already: this wave comes as blades only */ this.assaultDirs(); } }
+  const CAP = M.cap || 64, RNG_CAP = Math.max(8, Math.round(CAP * 0.3));
+  if (act + Math.round(CAP / 3) <= CAP && this.tickets > 0) { const next = Object.keys(this.mg).find(g => this.mg[g].G.team === A && !this.mg[g].released); if (next) { this.mRelease(next); { let room = RNG_CAP - rngN; const p = this.players[this.mg[next].p]; for (const id of p.squads) { const q = this.squads[id]; if (q.def.ai !== 'ranged') continue; for (const uid of q.unitIds) { const u = this.units[uid]; if (u.dead) continue; if (room > 0) { room--; continue; } u.dead = true; u.hp = 0; u.inactive = true; u.trimmed = true; this.total[u.team]--; q.aliveCount = Math.max(0, (q.aliveCount || 1) - 1); } if (!q.unitIds.some(uid => !this.units[uid].dead)) { q.count = 0; q.aliveCount = 0; q.alive = false; } } } /* a wave brings only as many bows as the field has room for (a third of the attack); the rest stay in camp */ this.assaultDirs(); } }
   // the manpower pool is bigger than the field: fallen attackers come back up the road as fresh men while tickets last
   let revivable = false;
-  if (this.tickets > 0 && this.tick % 45 === 0) { let room = Math.min(CAP - act, this.tickets), k = 0;
+  // bows are a third of the attack at most: archers stand back and seldom fall, so left alone they fill the field and the men who
+  // must climb and break the gate never come. Past the share no fallen archer is raised, and spare archers at the back go
+  // back to the camp (their manpower returns as blades)
+  if (rngN > RNG_CAP + 6 && this.tick % 90 === 45) { const fwdZ = (u) => A === 1 ? u.z : -u.z; const spare = this.teamAlive[A].filter(u => !u.inactive && u.def.ai === 'ranged' && u.ctrl < 0 && u.type !== 'hero' && u.squad >= 0).sort((p, q) => fwdZ(p) - fwdZ(q));
+    for (const u of spare.slice(0, Math.min(4, rngN - RNG_CAP))) { u.dead = true; u.hp = 0; u.inactive = true; u.trimmed = true; this.total[u.team]--; const q = this.squads[u.squad]; if (q) { q.aliveCount = Math.max(0, (q.aliveCount || 1) - 1); } this.tickets++; } }
+  // reserves come up in bodies, not one by one: from ground already taken when no defender is near it, else from the camp
+  let stage = null; if (this.sector > 0) { const ks = M.sectors[this.sector - 1], zs = ks.map(k => this.missionZone(k)).filter(Boolean);
+    if (zs.length) { const fz = A === 1 ? -1 : 1; const z0 = zs[(this.tick / 45 | 0) % zs.length]; const sx = z0.x, sz = z0.z + fz * (z0.r + 14);
+      const near = this.teamAlive[1 - A].some(d => !d.inactive && len(d.x - sx, d.z - sz) < 26); if (!near && !(this.sg && TERR.sditch && waterAt(sx, sz) > 0)) stage = [sx, sz]; } }
+  const deadMelee = this.tick % 45 === 0 ? this.units.reduce((n, u) => n + (u.dead && !u.inactive && !u.trimmed && u.team === A && u.squad >= 0 && u.ctrl < 0 && u.def.ai !== 'ranged' && u.def.ai !== 'cannon' && u.type !== 'horse' && u.type !== 'hero' && this.tick - (u.deathTick || 0) >= 30 * 8 ? 1 : 0), 0) : 0;
+  if (this.tickets > 0 && this.tick % 45 === 0 && (deadMelee >= 10 || this.tick % 270 === 0)) { let room = Math.min(CAP - act, this.tickets), k = 0, rk = rngN;
+    const at = stage || M.attAt;
     for (const u of this.units) { if (room <= 0) break; if (!u.dead || u.inactive || u.trimmed || u.team !== A || u.type === 'horse' || u.type === 'hero' || u.squad < 0 || u.def.ai === 'cannon' || u.ctrl >= 0) continue; revivable = true;
       if (this.tick - (u.deathTick || 0) < 30 * 8) continue; const g = this.mg[this.players[this.squads[u.squad].owner] ? this.players[this.squads[u.squad].owner].gid : ''] ; if (g && !g.released) continue;
-      this.reviveUnit(u, clamp(M.attAt[0] + ((k % 6) - 2.5) * 3, -HALF + 4, HALF - 4), clamp(M.attAt[1] + Math.floor(k / 6) * 3 * (A === 1 ? -1 : 1), -HALF + 4, HALF - 4)); k++; room--; } }
+      if (u.def.ai === 'ranged') { if (rk >= RNG_CAP) continue; rk++; }
+      this.reviveUnit(u, clamp(at[0] + ((k % 6) - 2.5) * 3, -HALF + 4, HALF - 4), clamp(at[1] + Math.floor(k / 6) * 3 * (A === 1 ? -1 : 1), -HALF + 4, HALF - 4)); k++; room--; }
+    if (k) this.assaultDirs(); }
   else if (this.tickets > 0) revivable = this.units.some(u => u.dead && !u.inactive && !u.trimmed && u.team === A && u.type !== 'horse' && u.type !== 'hero' && u.squad >= 0 && u.def.ai !== 'cannon');
   if (keys.every(k => this.missionZone(k).owner === A)) {
     this.events.push({ t: 'msector', sector: this.sector, team: A });
