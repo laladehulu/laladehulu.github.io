@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v150</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v151</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -6064,6 +6064,98 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
       for (const [x, z] of [[-30, 40], [-16, 56], [-38, 64], [18, 44], [34, 58], [16, 70], [-4, 80], [40, 36], [-48, 50]]) house(sim, keep, x, z, 3.4, 2.6, false, 2.8);
       palZ(sim, -56, 30, 74, 1.2); palZ(sim, 52, 30, 74, 1.2); /* the low brushwood fences of the yards */
       trees(sim, r, clear, 140, -145, 145, -145, 145, 1); rocks(sim, r, clear, 24, -145, 145, -145, 145); } };
+
+  // ========== Act Two: the island ==========
+  const junk = (sim, keep, x, z, len, bow, o) => { sim.boxes.push(Object.assign({ x, z, hw: len / 2, hd: 1.9, h: 2.2, kind: 'junk', bow: bow || 1 }, o || {})); keep.push({ x, z, r: len / 2 + 3 }); };
+  const junkZ = (sim, keep, x, z, len, bow, o) => { sim.boxes.push(Object.assign({ x, z, hw: 1.9, hd: len / 2, h: 2.2, kind: 'junk', bow: bow || 1 }, o || {})); keep.push({ x, z, r: len / 2 + 3 }); };
+  const racks = (sim, x0, z0, n) => { for (let i = 0; i < n; i++) sim.boxes.push({ x: x0 + (i % 4) * 4, z: z0 + Math.floor(i / 4) * 3.5, hw: 1.6, hd: 0.3, h: 1.6, kind: 'fence' }); }; /* fish-drying racks */
+
+  // ---------- 沿海 A village of the Liaodong coast, 1622 ----------
+  // A composite of the landings the East River men made on the Jin-held coast (《明史》毛文龍傳: 數遣兵襲擾, 招集遼民; the Korean
+  // records of 1622–1623 count boatloads of Liaodong people brought out). The sea lies along the east edge; the beach with the
+  // boats drawn up, a fishing village behind it, the Jin tax granary in its stockade inland, and the fields where the Han
+  // bondservants work under guard. The Jin outposts are inland (+z) and to the west.
+  B.djcoast = { name: 'The Liaodong coast', jp: '遼東沿海', when: 'Spring 1622', biome: 'spring', fog: 0.35, terrain: 0.4, features: [], hidden: true, horizon: { lo: 0.6, nokarst: true, open: [0.7, 2.4] },
+    desc: 'A fishing village on the Jin-held coast of Liaodong: the boats drawn up on the beach, the bondservants in the fields, the tax granary in its stockade.' };
+  M.djcoast = { trees: 70, rocks: 18,
+    terrain(L, r) { L.sea = { x0: 112, depth: 6, islands: [] }; L.hills.push({ x: -110, z: 100, rx: 70, rz: 60, rot: 0.2, h: 14 }); L.hills.push({ x: -60, z: -120, rx: 90, rz: 34, rot: 0, h: 9 }); L.hills.push({ x: 40, z: 140, r: 50, h: 10 }); },
+    objectives: [{ x: 106, z: -40, r: 12, name: 'The boats' }, { x: -10, z: 30, r: 12, name: 'The bondservants\' field' }, { x: 40, z: 78, r: 12, name: 'The granary' }],
+    noTree(x, z) { return x > 60 || (Math.abs(x + 10) < 40 && Math.abs(z - 30) < 30) || (Math.abs(x - 40) < 30 && Math.abs(z - 78) < 26); },
+    build(sim, r, keep, clear) {
+      for (const [z, b] of [[-60, 1], [-40, 1], [-22, 1], [-4, 1]]) junkZ(sim, keep, 114, z, 13, b, { wy: 0, furled: true });
+      for (const [x, z] of [[78, -30], [70, -14], [84, -4], [74, 12], [64, -46], [88, -56]]) house(sim, keep, x, z, 3.2, 2.6, false, 2.8);
+      racks(sim, 92, -24, 8);
+      /* the tax granary: three storehouses in a palisade with its gate toward the village */
+      for (let x = 22; x < 58; x += 3) sim.boxes.push({ x: x + 1.5, z: 62, hw: 1.5, hd: 0.5, h: 2, kind: 'palisade' }); for (let x = 22; x < 58; x += 3) if (Math.abs(x + 1.5 - 40) > 4) sim.boxes.push({ x: x + 1.5, z: 94, hw: 1.5, hd: 0.5, h: 2, kind: 'palisade' });
+      for (let z = 62; z < 94; z += 3) { sim.boxes.push({ x: 22, z: z + 1.5, hw: 0.5, hd: 1.5, h: 2, kind: 'palisade' }); sim.boxes.push({ x: 58, z: z + 1.5, hw: 0.5, hd: 1.5, h: 2, kind: 'palisade' }); }
+      for (const x of [30, 40, 50]) house(sim, keep, x, 82, 3.4, 4, false, 3.6); keep.push({ x: 40, z: 78, r: 24 });
+      /* the guard huts by the field */ house(sim, keep, -34, 46, 3, 2.4, false); house(sim, keep, -40, 34, 3, 2.4, false);
+      trees(sim, r, clear, 60, -145, 60, -145, 145, undefined); rocks(sim, r, clear, 16, -145, 60, -145, 145); } };
+
+  // ---------- 皮島 Pidao (Gado), the fishing village under the hills, 1623 ----------
+  // 《明史》毛文龍傳: 島中商賈輻輳, 遼民歸者日眾; 《朝鮮王朝實錄》仁祖元年–二年 on the famine on the islands and the soldiers who
+  // came ashore to take grain. Gado lies off the Korean coast at Cheolsan: a hilly island, the fishing village and the East River
+  // grain store on the sheltered shore, the sea along the east edge. Here the village and the granary sit low by the beach (-z);
+  // the hills and the soldiers' camps are inland (+z).
+  B.djpidao = { name: 'Pidao', jp: '皮島 · 椵島', when: 'Autumn 1623', biome: 'autumn', fog: 0.25, terrain: 0.6, features: [], hidden: true, horizon: { lo: 0.7, nokarst: true, open: [0.6, 2.5] },
+    desc: 'The East River\'s island off the Korean coast: the fishing village and the grain store on the sheltered beach, the soldiers\' camps in the hills.' };
+  M.djpidao = { trees: 90, rocks: 30,
+    terrain(L, r) { L.sea = { x0: 108, depth: 7, islands: [{ x: 150, z: 90, r: 16 }] }; L.hills.push({ x: -40, z: 100, rx: 110, rz: 60, rot: 0.1, h: 22 }); L.hills.push({ x: -120, z: -40, r: 50, h: 14 }); L.hills.push({ x: 60, z: 130, r: 40, h: 12 }); },
+    objectives: [{ x: 30, z: -40, r: 11, name: 'The grain store' }, { x: 70, z: -60, r: 12, name: 'The fishing village' }, { x: 0, z: 40, r: 12, name: 'The hill path' }],
+    noTree(x, z) { return (x > 0 && z < 0) || Math.abs(x) < 8; },
+    build(sim, r, keep, clear) {
+      for (const [z, b] of [[-90, -1], [-72, 1], [-54, 1], [-30, -1]]) junkZ(sim, keep, 112, z, 12, b, { wy: 0, furled: true });
+      junk(sim, keep, 128, -120, 18, 1, { wy: 0 }); /* a grain ship from Dengzhou at anchor */
+      for (const [x, z] of [[60, -48], [72, -66], [84, -52], [62, -78], [80, -86], [94, -70], [50, -66]]) house(sim, keep, x, z, 3, 2.4, false, 2.7);
+      racks(sim, 88, -40, 12);
+      for (const [x, z] of [[24, -40], [36, -40], [30, -28]]) house(sim, keep, x, z, 4, 3.2, false, 3.4); /* the grain store */
+      for (let x = 14; x < 46; x += 3) if (Math.abs(x + 1.5 - 30) > 4) sim.boxes.push({ x: x + 1.5, z: -16, hw: 1.5, hd: 0.5, h: 1.6, kind: 'palisade' });
+      sim.deco.push({ kind: 'road', x: 0, w: 4 }); sim.roadX = 0;
+      trees(sim, r, clear, 90, -145, 145, -145, 145, 1); rocks(sim, r, clear, 26, -145, 100, -145, 145); } };
+
+  // ---------- 鐵山 Tieshan, the hill fort on the Korean coast, 1624 ----------
+  // 《朝鮮王朝實錄》仁祖二年; 《明史》毛文龍傳: the East River's mainland posts at Tieshan (鐵山) and Sinmi island, from which it
+  // ran its raids. A palisaded camp on a low hill above the shore, half built; the sea and the boats to the east; the plain to
+  // the north (+z) over which the Jin come from the Yalu.
+  B.djtieshan = { name: 'Tieshan', jp: '鐵山', when: 'Summer 1624', biome: 'summer', fog: 0.15, terrain: 0.6, features: [], hidden: true, horizon: { lo: 0.8, nokarst: true, open: [0.7, 2.3] },
+    desc: 'The East River\'s hill fort on the Korean shore, its palisade half built, the boats below, and the plain to the north where the Jin come from the Yalu.' };
+  M.djtieshan = { trees: 80, rocks: 26,
+    terrain(L, r) { L.sea = { x0: 118, depth: 6, islands: [] }; L.plateaus.push({ x: 20, z: -30, r0: 30, r1: 44, h: 9 }); L.hills.push({ x: -110, z: -90, r: 50, h: 12 }); L.hills.push({ x: -120, z: 110, r: 40, h: 8 }); },
+    objectives: [{ x: 20, z: -30, r: 14, name: 'The fort' }, { x: 20, z: -5, r: 9, name: 'The north gate' }, { x: 112, z: -70, r: 11, name: 'The boats' }],
+    noTree(x, z) { return Math.hypot(x - 20, z + 30) < 58 || x > 90; },
+    build(sim, r, keep, clear) {
+      /* the palisade on the plateau's rim; the gaps of the unfinished stretch on the north-east are marked by logs on the ground */
+      const cx = 20, cz = -30, x0 = cx - 24, x1 = cx + 24, z0 = cz - 22, z1 = cz + 22;
+      pal(sim, x0, cx - 4, z1, 2.2); pal(sim, cx + 4, cx + 9, z1, 2.2); /* the north face: the gate, and east of it the stretch not built yet (cx + 9 .. x1) */
+      pal(sim, x0, x1, z0, 2.2); palZ(sim, x0, z0, z1, 2.2); palZ(sim, x1, z0, cz - 4, 2.2); /* the east face is open at its north end too */
+      for (let x = cx + 11; x < x1; x += 4) sim.boxes.push({ x, z: z1 + 2, hw: 1.6, hd: 0.25, h: 0.35, kind: 'log' }); /* the stakes for it, lying on the ground */
+      keep.push({ x: cx, z: cz, r: 34 });
+      for (const [x, z] of [[8, -36], [28, -40], [14, -22], [32, -24]]) sim.boxes.push({ x, z, hw: 2.4, hd: 2.4, h: 2.2, kind: 'tent' });
+      house(sim, keep, 20, -44, 4, 3, false, 3.2); /* the commander's hut */
+      for (const [z, b] of [[-90, 1], [-74, 1], [-56, -1]]) junkZ(sim, keep, 120, z, 13, b, { wy: 0, furled: true });
+      trees(sim, r, clear, 70, -145, 90, -145, 145, undefined); rocks(sim, r, clear, 20, -145, 90, -145, 145); } };
+
+  // ---------- 鞍山 A Jin manor farm near Anshan, autumn 1626 ----------
+  // After Ningyuan and the death of Nurhaci (the eighth month of 1626) the East River raided far inland: 《明熹宗實錄》天啟六年
+  // 七月–八月, 毛文龍 襲鞍山驛, 薩爾滸 (the Jin had to send banners back from the west). A walled farm (拖克索, a bannerman's
+  // estate worked by Han bondservants) in the hills south of Anshan: an earth-walled compound with its gate, the bondservants'
+  // huts, the river ford, and the long valley back south (-z) toward the coast and the boats.
+  B.djanshan = { name: 'A manor near Anshan', jp: '鞍山 · 拖克索', when: 'Autumn 1626', biome: 'autumn', fog: 0.2, terrain: 0.7, features: [], hidden: true, horizon: { lo: 1.0, nokarst: true },
+    desc: 'A bannerman\'s walled farm in the hills south of Anshan, worked by Han bondservants; a ford below it, and the long valley south toward the sea.' };
+  M.djanshan = { trees: 130, rocks: 34,
+    terrain(L, r) { L.river = { axis: 'x', c0: -20, amp: 6, freq: 0.02, ph: 0.7, w: 10, depth: 2.4, bridges: [{ at: 0, hw: 8, ford: true }] };
+      L.hills.push({ x: -120, z: 20, rx: 50, rz: 120, rot: 0, h: 20 }); L.hills.push({ x: 120, z: 30, rx: 50, rz: 110, rot: 0, h: 18 }); L.hills.push({ x: 0, z: 150, rx: 120, rz: 30, rot: 0, h: 14 }); },
+    objectives: [{ x: 0, z: 60, r: 13, name: 'The manor' }, { x: 0, z: -20, r: 10, name: 'The ford' }, { x: 0, z: -138, r: 12, name: 'The valley south' }],
+    noTree(x, z) { return (Math.abs(x) < 46 && z > 30 && z < 96) || Math.abs(x) < 7; },
+    build(sim, r, keep, clear) {
+      sim.deco.push({ kind: 'road', x: 0, w: 5 }); sim.roadX = 0;
+      cityWall(sim, { axis: 'x', at: 34, from: -30, to: 30, h: 4, hd: 1.2, out: -1, gx: 0, gw: 3.5, nobast: true, notower: true }); cityWall(sim, { axis: 'x', at: 90, from: -30, to: 30, h: 4, hd: 1.2, out: 1, nobast: true, notower: true });
+      cityWall(sim, { axis: 'z', at: -30, from: 34, to: 90, h: 4, hd: 1.2, out: -1, nobast: true, notower: true }); cityWall(sim, { axis: 'z', at: 30, from: 34, to: 90, h: 4, hd: 1.2, out: 1, nobast: true, notower: true });
+      keep.push({ x: 0, z: 62, r: 40 });
+      sim.boxes.push({ x: 0, z: 74, hw: 8, hd: 4.5, h: 4.4, kind: 'hall' }); /* the bannerman's house */
+      for (const [x, z] of [[-20, 50], [-20, 62], [20, 50], [20, 62], [-16, 84], [16, 84]]) house(sim, keep, x, z, 3, 2.4, false, 2.6); /* storehouses and stables */
+      for (const [x, z] of [[-44, 40], [-52, 52], [-40, 60], [46, 44], [54, 58]]) house(sim, keep, x, z, 2.6, 2.2, false, 2.3); /* the bondservants' huts outside the wall */
+      trees(sim, r, clear, 120, -145, 145, -145, 145, undefined); rocks(sim, r, clear, 30, -145, 145, -145, 145); } };
 })();
 </script>
 <script>
@@ -6224,6 +6316,154 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
           [12, 'zhao', 'And us?', '那我們呢？'], [16, 'qian', 'There is an island, they say. Off the coast. Nobody lives there.', '聽說有個島。在海上。沒人住。']] },
     ],
     win: 'Mao Wenlong got away in a farmer\'s coat. Many in the village did not.',
+  },
+
+  // ========== Act Two: the island ==========
+  // ----- 五 · 沿海 · The first landing, spring 1622 -----
+  dj5: {
+    title: '沿海 · The landing', year: 'Spring 1622', battle: 'djcoast', side: 0, soldier: { group: 'file' }, hidden: true, ch: 'dj5',
+    brief: 'Across the strait from Pidao, on the Jin-held coast: a village, a granary, and a field of Liaodong people working as bondservants under guard.',
+    start: [104, -46, -PI / 2],
+    zones: [{ key: 'boats', x: 104, z: -40, r: 12, name: 'The boats' }, { key: 'vil', x: 76, z: -18, r: 13, name: 'The fishing village' }, { key: 'field', x: -10, z: 30, r: 13, name: 'The bondservants\' field' }, { key: 'gran', x: 40, z: 78, r: 12, name: 'The granary' }],
+    groups: {
+      file: { team: 0, name: 'Sergeant Chen Shou', zh: '陳壽', army: ['ronin'], at: [102, -46, -PI / 2], dir: ['support'], stay: true },
+      second: { team: 0, name: 'Zhang Pan\'s boat crews', zh: '張盤', army: ['ronin', 'ashigaru'], at: [104, -26, -PI / 2], dir: ['hold', 76, -14], stay: true },
+      watch: { team: 1, name: 'The village watch', zh: '村中金兵', army: ['samurai'], at: [74, -14, PI / 2], dir: ['hold', 76, -18], stay: true, n: 9 },
+      guards: { team: 1, name: 'The field guards', zh: '看守', army: ['samurai', 'archer'], at: [-14, 40, PI / 2], dir: ['hold', -10, 32], stay: true, n: 14 },
+      slaves: { team: 0, name: 'The bondservants', zh: '包衣', army: ['ronin', 'ronin'], at: [-20, 24, 0], dir: ['hold', -16, 24], stay: true, reserve: true, escort: true },
+      gran: { team: 1, name: 'The granary guard', zh: '倉兵', army: ['samurai', 'archer'], at: [40, 76, PI], dir: ['hold', 40, 76], stay: true, n: 12 },
+      horse: { team: 1, name: 'Riders from the Jinzhou post', zh: '金州騎兵', army: ['cavalry', 'cavalry', 'archer'], at: [-140, 60, PI / 2], reserve: true, n: 20 },
+    },
+    phases: [
+      { title: '一 · 上岸 · Ashore', goal: 'Take the fishing village', text: 'Grey light. The boats grind onto the sand. The village is held by a handful of Jin; the people in it are Liaodong fishermen who were here before the banners.', show: ['vil'],
+        start: [['dir', 'second', 'attack']], obj: { all: [{ reach: 'vil' }, { defeat: ['watch'], frac: 0.8 }] },
+        say: [[3, 'file', 'Off the boats! Quick and quiet, and nobody touches the fishermen.', '下船！快，別出聲，誰也不許碰漁民。'],
+          [11, 'ma', 'That\'s my uncle\'s house. They made him row for them.', '那是我舅舅家。他們逼他給他們划船。'],
+          [19, 'zhao', 'Watch the doors. A Jin with a bow behind a door is worth ten in the open.', '看著門。門後面一個拿弓的金兵，頂十個在外面的。']] },
+      { title: '二 · 田 · The field', goal: 'Free the bondservants in the field', text: 'Inland, in the field below the hills, sixty Liaodong people are hoeing under guard: the families the banners gave to their soldiers last year.', show: ['field'], hide: ['vil'],
+        start: [['dir', 'file', 'hold', -6, 24], ['dir', 'second', 'hold', 60, -10]], obj: { all: [{ reach: 'field' }, { defeat: ['guards'], frac: 0.7 }] }, at: [[1, ['dir', 'guards', 'attack']]],
+        say: [[4, 'qian', 'Look at their heads. Shaved and queued. Those are our people.', '看他們的頭。剃了，留了辮子。那是我們的人。'],
+          [14, 'liu', 'The guards are running at us! Good. Saves walking.', '看守朝我們衝過來了！好，省得走路。'],
+          [26, 'hu', 'Don\'t kill me! I\'m Han! I\'m from Haizhou! I ran from them twice!', '別殺我！我是漢人！海州的！我跑過兩回了！']] },
+      { title: '三 · 倉 · The granary', goal: 'Take the granary and burn it', text: 'The Jin tax granary holds this whole coast\'s autumn harvest. What you can\'t carry, burn.', show: ['gran'], hide: ['field'],
+        start: [['release', 'slaves'], ['dir', 'slaves', 'hold', 96, -40], ['dir', 'file', 'hold', 40, 70], ['dir', 'second', 'hold', 44, 66]], obj: { all: [{ hold: 'gran', t: 10 }, { defeat: ['gran'], frac: 0.7 }] },
+        done: [['burn', 22, 58, 82], ['burn', 22, 58, 74]],
+        say: [[3, 'zheng', 'Rice! White rice, sacks of it! Carry what you can carry!', '米！白米，好多袋！能背多少背多少！'],
+          [14, 'sun', 'Every sack we burn is a month a Jin soldier goes hungry.', '燒一袋，就有一個金兵餓一個月。'],
+          [24, 'file', 'Fire it! And then back to the boats, fast!', '點火！然後回船，快！']] },
+      { title: '四 · 回船 · Back to the boats', goal: 'Get the bondservants and your file back to the boats', text: 'The smoke can be seen for twenty li. Riders are coming from the Jinzhou post. Get everyone onto the boats.', show: ['boats'], hide: ['gran'],
+        start: [['release', 'horse'], ['dir', 'horse', 'attack'], ['dir', 'second', 'hold', 96, -30], ['dir', 'file', 'hold', 100, -40]], obj: { all: [{ arrive: 'slaves', zone: 'boats' }, { extract: 'boats' }] },
+        say: [[4, 'gou', 'Horses! From the west! Lots!', '馬！西邊！好多！'],
+          [12, 'hu', 'They\'ll kill the ones who ran first. They always do.', '他們會先殺跑的人。他們一向這樣。'],
+          [22, 'zhao', 'Spears facing the horses, the boats behind you. Walk backwards if you have to.', '槍頭對著馬，船在你背後。要倒著走就倒著走。']] },
+    ],
+    win: 'The boats went back to the island low in the water: sixty bondservants, two hundred sacks of rice, and the smoke of the granary behind them.',
+  },
+
+  // ----- 六 · 皮島 · Hunger on the island, autumn 1623 (played as Li Erniu) -----
+  dj6: {
+    title: '皮島 · The grain store', year: 'Autumn 1623', battle: 'djpidao', side: 0, soldier: { group: 'file' }, hidden: true, ch: 'dj6',
+    brief: 'The men of the file are away on the mainland. The grain ship from Dengzhou is late, the island is starving, and the soldiers in the hill camps have run out of patience.',
+    start: [30, -48, 0],
+    zones: [{ key: 'store', x: 30, z: -36, r: 11, name: 'The grain store' }, { key: 'vil', x: 70, z: -62, r: 12, name: 'The fishing village' }, { key: 'path', x: 0, z: 26, r: 11, name: 'The hill path' }],
+    groups: {
+      file: { team: 0, name: 'Elder Wang of the fishing village', zh: '王老漢', army: ['ronin'], at: [30, -46, 0], dir: ['support'], stay: true },
+      fishers: { team: 0, name: 'The fishermen of the village', zh: '漁民', army: ['ronin'], at: [70, -60, 0], dir: ['hold', 70, -58], stay: true },
+      mob1: { team: 1, name: 'Soldiers from the hill camps', zh: '饑兵', army: ['ronin', 'ronin'], at: [0, 60, PI], reserve: true, n: 16 },
+      mob2: { team: 1, name: 'More soldiers from the camps', zh: '饑兵', army: ['ronin', 'ashigaru'], at: [-30, 70, PI], reserve: true, n: 18 },
+      raid: { team: 1, name: 'The ones going for the village', zh: '搶漁村的', army: ['ronin'], at: [100, 30, PI], reserve: true, n: 10 },
+      captain: { team: 0, name: 'Captain Chen Jisheng\'s guard', zh: '陳繼盛', army: ['samurai', 'rifle_imp'], at: [-80, 40, 0], reserve: true, stay: true },
+    },
+    phases: [
+      { title: '一 · 餓 · Hunger', goal: 'Get to the grain store: men are coming down from the hill camps', text: 'You are Li Erniu. Your brother and his file are on the mainland. Down the hill path come forty men in Ming coats with clubs and spears: the island\'s own soldiers, three months without pay or rice.', show: ['store', 'path'],
+        start: [['release', 'mob1'], ['dir', 'mob1', 'hold', 30, -30]], obj: { all: [{ reach: 'store' }, { survive: 30 }] },
+        say: [[3, 'zheng', 'Erniu! Get the women into the store. Those aren\'t Jin. That\'s worse: they know where we keep the rice.', '二妞！把女人帶進倉裡。那不是金兵。比金兵還糟：他們知道米放在哪兒。'],
+          [12, 'gou', 'That\'s Big Pockmark from the third camp. He gave me a fish once.', '那是第三營的白麻子。他還給過我一條魚。'],
+          [22, 'qian', 'Tell them the ship is coming! Tell them the general is sending rice!', '告訴他們船要來了！告訴他們總兵要發米了！'],
+          [28, 'zheng', 'They\'ve heard that for three months. Hold the door.', '這話他們聽了三個月了。守住門。']] },
+      { title: '二 · 門 · The door', goal: 'Hold the grain store', text: 'If the store goes, the whole island starves this winter, the children first. Hold the door. Knock them down; nobody has to die.', show: ['store'], hide: ['path'],
+        start: [['dir', 'mob1', 'attack'], ['release', 'mob2'], ['dir', 'mob2', 'hold', 30, -32]], obj: { all: [{ hold: 'store', t: 10 }, { defeat: ['mob1', 'mob2'], frac: 0.55 }] }, at: [[20, ['wound', 3]]],
+        say: [[4, 'erniu', 'Get back! This is the children\'s rice!', '退回去！這是孩子們的米！'],
+          [10, 'dong', 'Big Pockmark, it\'s me, Dong, you bought thread off me! Go home!', '白麻子，是我，老董，你在我這兒買過線！回去吧！'],
+          [24, 'zheng', 'They\'re not fighting like soldiers. They\'re fighting like hungry men. That\'s harder.', '他們不像兵那樣打。他們像餓漢那樣打。這更難擋。']] },
+      { title: '三 · 漁村 · The village', goal: 'The fishing village: stop them taking the boats', text: 'A band of them has gone along the shore to take the fishing boats and sail for Korea. Without the boats the village dies.', show: ['vil'], hide: ['store'],
+        start: [['release', 'raid'], ['dir', 'raid', 'hold', 72, -62], ['dir', 'file', 'hold', 66, -58]], obj: { all: [{ reach: 'vil' }, { defeat: ['raid'], frac: 0.6 }] }, at: [[20, ['release', 'captain']], [20, ['dir', 'captain', 'hold', 30, -20]]],
+        say: [[4, 'ma_mother', 'The boats! They\'re pushing out the boats!', '船！他們在推船！'],
+          [16, 'qian', 'Chen Jisheng\'s guard is coming down from headquarters. Someone told the general.', '陳繼盛的親兵從帥府下來了。有人報給總兵了。'],
+          [28, 'erniu', 'Don\'t let them hang anybody. Please. They\'re just hungry.', '別讓他們吊死人。求求你們。他們只是餓了。']] },
+    ],
+    win: 'The store held and the boats stayed. The grain ship came eleven days later. Chen Jisheng hanged four men on the beach anyway.',
+  },
+
+  // ----- 七 · 鐵山 · Tieshan, summer 1624 -----
+  dj7: {
+    title: '鐵山 · Tieshan', year: 'Summer 1624', battle: 'djtieshan', side: 0, soldier: { group: 'file' }, hidden: true, ch: 'dj7',
+    brief: 'The fort on the hill above the Korean shore is half built. The north-east stretch of the palisade is still lying on the ground when the Jin come.',
+    start: [24, -26, 0],
+    zones: [{ key: 'gap', x: 38, z: -6, r: 9, name: 'The unfinished wall' }, { key: 'ngate', x: 20, z: -5, r: 7, name: 'The north gate' }, { key: 'boats', x: 108, z: -72, r: 11, name: 'The boats' }],
+    groups: {
+      file: { team: 0, name: 'Sergeant Chen Shou', zh: '陳壽', army: ['rifle_imp'], at: [24, -26, 0], dir: ['support'], stay: true },
+      fort: { team: 0, name: 'The Tieshan garrison', zh: '鐵山守兵', army: ['ashigaru', 'rifle_imp'], at: [12, -30, 0], dir: ['hold', 18, -12], stay: true },
+      korea: { team: 0, name: 'Korean musketeers', zh: '朝鮮砲手', army: ['rifle_imp', 'rifle_imp'], at: [-140, -60, PI / 2], reserve: true, stay: true },
+      probe: { team: 1, name: 'Jin riders', zh: '金兵哨騎', army: ['cavalry', 'archer'], at: [60, 140, PI], reserve: true, n: 14 },
+      main: { team: 1, name: 'Bordered Red banner', zh: '鑲紅旗', army: ['samurai', 'samurai', 'archer', 'shinsengumi'], at: [10, 140, PI], reserve: true, n: 34 },
+      flank: { team: 1, name: 'Jin raiders on the shore', zh: '金兵', army: ['samurai', 'archer'], at: [140, 60, PI], reserve: true, n: 16 },
+    },
+    phases: [
+      { title: '一 · 缺口 · The gap', goal: 'Hold the unfinished stretch of the wall', text: 'The palisade is unfinished on the north-east, where the stakes still lie on the ground. Jin riders are already coming across the plain to look at it. Your file has muskets now. Use them.', show: ['gap'],
+        start: [['release', 'probe'], ['dir', 'probe', 'hold', 38, -4]], obj: { all: [{ reach: 'gap' }, { defeat: ['probe'], frac: 0.6 }] },
+        say: [[3, 'file', 'The gap! Muskets in the gap! Two ranks: one fires, one loads!', '缺口！火銃上缺口！兩排：一排放，一排裝！'],
+          [12, 'zhao', 'Breathe out, then pull. Don\'t look at the horse. Look at the man.', '吐氣，再扣。別看馬。看人。'],
+          [22, 'kim', 'My people use the matchlock since the Japanese war. Your guns are not so good as ours!', '我們從倭亂以後就用鳥銃。你們的銃沒我們的好！']] },
+      { title: '二 · 北門 · The north gate', goal: 'Hold the north gate against the banner', text: 'That was only a look. Now the Bordered Red banner comes across the plain, on foot, with ladders and hooks, for the gate.', show: ['ngate'], hide: ['gap'],
+        start: [['release', 'main'], ['dir', 'main', 'hold', 20, -4], ['dir', 'file', 'hold', 20, -12], ['dir', 'fort', 'hold', 16, -10]], obj: { all: [{ hold: 'ngate', t: 10 }, { defeat: ['main'], frac: 0.55 }] }, at: [[14, ['release', 'korea']], [14, ['dir', 'korea', 'hold', 6, -12]], [30, ['wound', 4]]],
+        say: [[4, 'liu', 'Fourteen. Fifteen. Sixteen. Ha!', '十四。十五。十六。哈！'],
+          [15, 'kim', 'Korean musketeers! From the village! My cousin is with them!', '朝鮮砲手！從村子裡來的！我表哥也在！'],
+          [26, 'qian', 'The Korean court sent no one. These men came on their own.', '朝鮮朝廷一個人也沒派。這些人是自己來的。']] },
+      { title: '三 · 船 · The boats', goal: 'Get down to the shore and save the boats', text: 'While the banner was at the gate, a band of them came down the shore to burn the boats. Without the boats there is no going back to the island.', show: ['boats'], hide: ['ngate'],
+        start: [['release', 'flank'], ['dir', 'flank', 'hold', 108, -72], ['dir', 'file', 'hold', 102, -68]], obj: { all: [{ reach: 'boats' }, { defeat: ['flank'], frac: 0.6 }] },
+        say: [[4, 'ma', 'My boat! They\'re putting a torch in my boat!', '我的船！他們在往我船上扔火把！'],
+          [14, 'zhao', 'Run. Load as you run. Fire when you stop.', '跑。邊跑邊裝。停下就放。']] },
+    ],
+    win: 'The Jin went back to the Yalu. By autumn the palisade at Tieshan was finished, and the Korean musketeers had built their own huts beside it.',
+  },
+
+  // ----- 八 · 鞍山 · The Anshan raid, the eighth month of 1626 -----
+  dj8: {
+    title: '鞍山 · The raid', year: 'The eighth month of 1626', battle: 'djanshan', side: 0, soldier: { group: 'file' }, hidden: true, ch: 'dj8',
+    brief: 'The Khan is dead. While the banners mourn him and quarrel over his throne, the East River strikes deep inland, at the farms that feed them.',
+    start: [6, -60, 0],
+    zones: [{ key: 'ford', x: 0, z: -20, r: 10, name: 'The ford' }, { key: 'manor', x: 0, z: 62, r: 14, name: 'The manor' }, { key: 'valley', x: 0, z: -136, r: 12, name: 'The valley south' }],
+    groups: {
+      file: { team: 0, name: 'Sergeant Chen Shou', zh: '陳壽', army: ['rifle_imp'], at: [6, -60, 0], dir: ['support'], stay: true },
+      raid: { team: 0, name: 'Mao Chenglu\'s raiders', zh: '毛承祿', army: ['ronin', 'samurai', 'rifle_imp'], at: [-14, -64, 0], dir: ['hold', -6, -26], stay: true },
+      fwatch: { team: 1, name: 'The ford watch', zh: '渡口哨兵', army: ['archer'], at: [0, -12, PI], dir: ['hold', 0, -16], stay: true, n: 6 },
+      manor: { team: 1, name: 'The bannerman\'s household', zh: '拖克索莊丁', army: ['samurai', 'archer', 'samurai'], at: [0, 60, PI], dir: ['hold', 0, 56], stay: true, n: 22 },
+      kept: { team: 0, name: 'The bondservants', zh: '包衣', army: ['ronin', 'ronin'], at: [-44, 50, 0], dir: ['hold', -40, 50], stay: true, reserve: true, escort: true },
+      banner: { team: 1, name: 'Plain Blue horse from Anshan', zh: '正藍旗', army: ['cavalry', 'cavalry', 'cavalry', 'archer'], at: [0, 145, PI], reserve: true, n: 26 },
+    },
+    phases: [
+      { title: '一 · 渡 · The ford', goal: 'Take the ford before the watch can raise the alarm', text: 'Dawn mist in the valley. Six Jin bowmen watch the ford below the manor. Kill them before they can blow a horn.', show: ['ford'],
+        start: [['dir', 'raid', 'hold', -4, -22]], obj: { all: [{ reach: 'ford' }, { defeat: ['fwatch'], frac: 0.8 }] },
+        say: [[3, 'file', 'Muskets wait. Blades first. A shot here wakes the whole valley.', '銃先別放。先用刀。這兒一響，整條山谷都醒了。'],
+          [11, 'hu', 'That\'s my master\'s farm up there. I ran from it. Twice.', '上面就是我主子的莊子。我從那兒跑過兩回。']] },
+      { title: '二 · 莊 · The manor', goal: 'Storm the manor', text: 'The manor\'s gate is open for the morning carts. Go in before they can shut it.', show: ['manor'], hide: ['ford'],
+        start: [['dir', 'raid', 'hold', 0, 40], ['dir', 'file', 'hold', 0, 36], ['dir', 'manor', 'attack']], obj: { all: [{ hold: 'manor', t: 10 }, { defeat: ['manor'], frac: 0.7 }] },
+        say: [[4, 'hu', 'The master\'s house is the big one. His sons sleep with their bows!', '大房子是主子的。他兒子們睡覺都抱著弓！'],
+          [16, 'liu', 'Fifty-one. Fifty-two.', '五十一。五十二。'],
+          [26, 'gou', 'Brother Liu, that one was a cook! He had a ladle!', '劉哥，那個是廚子！他手裡拿的是勺子！']] },
+      { title: '三 · 火 · Fire', goal: 'Free the bondservants and burn the manor', text: 'Open the bondservants\' huts. Then fire the storehouses: this farm will feed no banner this winter.', show: ['manor'],
+        start: [['release', 'kept'], ['dir', 'kept', 'hold', 0, -30]], obj: { all: [{ arrive: 'kept', zone: 'ford' }, { survive: 24 }] }, at: [[6, ['burn', -26, 26, 50]], [10, ['burn', -26, 26, 64]], [14, ['burn', -20, 20, 84]]],
+        say: [[3, 'hu', 'Come out! Come out, it\'s the Ming! Uncle Wei, it\'s me, Hu San!', '出來！都出來，是明軍！魏大叔，是我，胡三！'],
+          [12, 'qian', 'Some of them won\'t come. They have children in Anshan, with the master\'s family.', '有的人不肯走。他們的孩子在鞍山，在主子家裡。'],
+          [20, 'zheng', 'Then let them stay. You can\'t carry a man who won\'t be carried.', '那就讓他們留下。不肯走的人，背也背不走。']] },
+      { title: '四 · 谷 · The valley', goal: 'Get everyone down the valley to the south', text: 'The smoke has brought the Plain Blue horse down from Anshan. Twenty li to the coast. Fight your way down the valley and don\'t stop.', show: ['valley'], hide: ['manor'],
+        start: [['release', 'banner'], ['dir', 'banner', 'attack'], ['dir', 'kept', 'hold', 0, -130], ['dir', 'raid', 'hold', 0, -110], ['dir', 'file', 'hold', 0, -120]], obj: { all: [{ arrive: 'kept', zone: 'valley' }, { extract: 'valley' }] }, at: [[20, ['wound', 6]]],
+        say: [[4, 'zhao', 'Muskets now! Halt, fire, walk. Halt, fire, walk.', '現在放銃！停，放，走。停，放，走。'],
+          [16, 'kim', 'In the narrow place the horses must come one by one. Stop them there.', '窄的地方，馬只能一匹一匹過。在那兒攔住他們。'],
+          [30, 'hu', 'I\'m not going back. Whatever happens, I am not going back.', '我不回去。不管怎樣，我都不回去。']] },
+    ],
+    win: 'The raiders came down to the boats with three hundred freed bondservants. The court in Beijing called it the Anshan victory. In Liaoyang the new Khan, Hong Taiji, decided the East River had to be dealt with.',
   },
   };
 })();
@@ -8364,6 +8604,21 @@ class Renderer {
       const mb = (geo, m, x, yy, z, rx, rz) => { const o = new THREE.Mesh(geo, m); o.position.set(x, yy, z); if (rx) o.rotation.x = rx; if (rz) o.rotation.z = rz; o.castShadow = true; g.add(o); };
       mb(new THREE.BoxGeometry(L, 0.18, W * 0.8), wood, 0, 0.95, 0); mb(new THREE.BoxGeometry(L, b.h, 0.1), dark, 0, 0.95 + b.h / 2, (b.z > 0 ? -1 : 1) * W * 0.42); for (const sx of [-1, 1]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.14, 10), wood); wh.rotation.x = HPI; wh.position.set(sx * L * 0.3, 0.62, 0); g.add(wh); }
       mb(new THREE.BoxGeometry(0.12, 0.12, 2.4), wood, L / 2 + 1, 0.9, 0, 0, 0); this.scene.add(g); }
+    // 沙船 junks (the East River fleet, the fishing boats of the islands): a flat-bottomed hull with a raised square stern, a deck
+    // house aft, a tall main mast with a battened brown sail and a small fore mast; drawn along the collider's long side,
+    // bow toward b.bow (+1 / -1), sitting on the sand or in the shallows (b.wy: the water's surface, if it floats)
+    for (const b of boxes.filter(q => q.kind === 'junk')) { const ax = b.hw >= b.hd, L = Math.max(b.hw, b.hd) * 2, W = Math.min(b.hw, b.hd) * 2; const y = b.wy !== undefined ? Math.max(b.wy - 0.6, terrainH(b.x, b.z)) : terrainH(b.x, b.z);
+      const g = new THREE.Group(); g.position.set(b.x, y, b.z); g.rotation.y = (ax ? 0 : HPI) + ((b.bow || 1) < 0 ? PI : 0) + (b.tilt ? 0 : 0); if (b.list) g.rotation.z = b.list;
+      const hullM = new THREE.MeshLambertMaterial({ color: 0x5a3e26 }), dark = new THREE.MeshLambertMaterial({ color: 0x2e2218 }), sailM = new THREE.MeshLambertMaterial({ color: b.sail || 0x8a5a34, side: THREE.DoubleSide }), batt = new THREE.MeshLambertMaterial({ color: 0x3a2a1a }), red = new THREE.MeshLambertMaterial({ color: 0x9a2a22 });
+      const mb = (geo, m, x, yy, z, rx, ry, rz) => { const o = new THREE.Mesh(geo, m); o.position.set(x, yy, z); o.rotation.set(rx || 0, ry || 0, rz || 0); o.castShadow = true; o.receiveShadow = true; g.add(o); return o; };
+      mb(new THREE.BoxGeometry(L * 0.82, 1.1, W), hullM, -L * 0.03, 0.75, 0); /* the hull */ mb(new THREE.BoxGeometry(L * 0.22, 0.9, W * 0.86), hullM, L * 0.46, 1.0, 0, 0, 0, 0.32); /* the bow, swept up */
+      mb(new THREE.BoxGeometry(L * 0.14, 1.9, W * 1.02), hullM, -L * 0.45, 1.3, 0); /* the high square stern */ mb(new THREE.BoxGeometry(L * 0.14, 0.24, W * 1.04), red, -L * 0.45, 2.3, 0);
+      mb(new THREE.BoxGeometry(L * 0.86, 0.1, W * 1.04), dark, -L * 0.02, 1.32, 0); /* the gunwale */ mb(new THREE.BoxGeometry(L * 0.2, 1.0, W * 0.7), dark, -L * 0.3, 1.85, 0); /* the deck house */
+      if (!b.wreck) { const mh = L * 0.95; mb(new THREE.CylinderGeometry(0.1, 0.14, mh, 6), batt, L * 0.06, 1.3 + mh / 2, 0); /* main mast */ mb(new THREE.CylinderGeometry(0.07, 0.09, mh * 0.6, 6), batt, L * 0.36, 1.3 + mh * 0.3, 0); /* fore mast */
+        if (!b.furled) { const sw = L * 0.48, sh = mh * 0.72; mb(new THREE.PlaneGeometry(sw, sh), sailM, L * 0.04, 1.6 + mh * 0.2 + sh / 2, 0.16, 0, HPI, 0); for (let k = 0; k <= 5; k++) mb(new THREE.BoxGeometry(0.06, 0.06, sw * 1.04), batt, L * 0.04, 1.6 + mh * 0.2 + sh * k / 5, 0.2, 0, 0, 0).rotation.y = 0; /* the battens across the sail */
+          mb(new THREE.PlaneGeometry(sw * 0.45, sh * 0.5), sailM, L * 0.35, 1.6 + sh * 0.3, 0.12, 0, HPI, 0); }
+        else mb(new THREE.CylinderGeometry(0.22, 0.22, L * 0.4, 6), sailM, L * 0.05, 2.6, 0, 0, 0, HPI); /* the sail lowered and lashed */ }
+      this.scene.add(g); }
     // earthen ramparts with a grass cap; palisades of sharpened stakes
     const ramp = boxes.filter(q => q.kind === 'rampart'), pal = boxes.filter(q => q.kind === 'palisade');
     if (ramp.length) { const em = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: 0x8a867e }), ramp.length), gm = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ color: snow ? 0xe8ebee : 0x6a6660 }), ramp.length);
@@ -17865,14 +18120,17 @@ const dIdx = (k) => DR.findIndex(r => r.k === k);
 function dLoad() { try { return JSON.parse(localStorage.getItem(DKEY) || 'null'); } catch (e) { return null; } }
 function dSave() { try { localStorage.setItem(DKEY, JSON.stringify(DS)); } catch (e) { } }
 function dFresh() { const s = { v: 1, dj: true, stage: 'c1', name: { zh: '李鐵', en: 'Li Tie' }, alive: {}, fate: {}, bond: {}, talked: {}, flags: {}, seen: {}, me: 'me' };
-  for (const r of DR) if (!r.guest && !r.joins) s.alive[r.k] = true; return s; }
+  for (const r of DR) if (!r.guest && !r.joins && !r.only) s.alive[r.k] = true; return s; }
 function dMeRow() { const r = dRow('me'), nm = DS.me === 'me' ? DS.name : (DS.meName || { zh: '', en: '' }); r.zh = nm.zh; r.en = nm.en; }
 function dDress(u, i) { const r = DR[i]; if (!u || !r) return; u.look = Object.assign({ id: 'd:' + r.k }, DLOOK[r.k] || {}); if (state.renderer) state.renderer.colorFigure(u.id, u); }
 function dGo(scene) { try { localStorage.setItem(DGO, scene); } catch (e) { } location.reload(); }
 const dAge = (k, year) => { const r = dRow(k); return r && r.born ? year - r.born : 0; };
 // who comes into the file at this chapter, and who is with it (the chapter's cast; by default everyone alive)
-function dJoin(n) { for (const r of DR) if (r.joins === n && DS.alive[r.k] === undefined) DS.alive[r.k] = true; }
-function dFile(n) { const C = DCH[n]; const cast = C && C.cast; return DR.filter(r => !r.guest && r.k !== DS.me && DS.alive[r.k] && (!cast || cast.includes(r.k))); }
+function dJoin(n) { for (const r of DR) if ((r.joins === n || (r.only && r.only.includes(n))) && DS.alive[r.k] === undefined) DS.alive[r.k] = true; }
+const dMeK = (n) => { const P = DCH[n] && DCH[n].playAs; return (typeof P === 'function' ? P() : P) || DS.me; }; // whom you play in this chapter
+// cards may carry fields worked out when they are shown (ages, what was chosen): resolve them
+const dCards = (L) => (typeof L === 'function' ? L() : L).filter(Boolean).map(c => { const o = Object.assign({}, c); for (const f of ['p', 'year', 'title', 'html']) if (typeof o[f] === 'function') o[f] = o[f](); return o; });
+function dFile(n) { const C = DCH[n] || {}, cast = C.cast, me = dMeK(n); return DR.filter(r => !r.guest && r.k !== me && r.k !== DS.me && DS.alive[r.k] && (!cast || cast.includes(r.k)) && (!C.away || !C.away.includes(r.k)) && (!r.only || r.only.includes(n)) && !(r.k === 'erniu' && !C.withErniu && !C.playAs)); }
 const dDead = () => DR.filter(r => !r.guest && r.k !== DS.me && DS.alive[r.k] === false && (DS.fate[r.k] === 'dead' || DS.fate[r.k] === 'lost'));
 const dName = (k) => k === DS.me ? DS.name : dRow(k);
 
@@ -17884,7 +18142,7 @@ const DCH = {};
 
 // ========== 第一幕 · 遼陽 · Act One: the fall ==========
 DCH[1] = {
-  year: 1621, mission: 'dj1', act: '第一幕 · 遼陽 · Act One: the fall',
+  year: 1621, withErniu: true, mission: 'dj1', act: '第一幕 · 遼陽 · Act One: the fall',
   intro: [
     { title: '遼東 · Liaodong', year: 'Spring 1621 · 天啟元年', p: ['Liaodong is the Ming empire\'s corner beyond the Great Wall: a plain of farms and walled towns between the Liao River and the Yalu, held for two hundred years against the steppe and the forest peoples.',
       'Three years ago the Jurchen Khan Nurhaci declared war on the Ming. Two years ago he destroyed four Ming armies at Sarhu. This spring he has taken Shenyang. Liaoyang, the capital of Liaodong, is next.'], zh: '天啟元年三月，努爾哈赤陷瀋陽，進圍遼陽。' },
@@ -17910,7 +18168,7 @@ DCH[1] = {
 };
 
 DCH[2] = {
-  year: 1621, mission: 'dj2',
+  year: 1621, withErniu: true, mission: 'dj2',
   intro: [
     { title: '東行 · East', year: 'The fourth month of 1621', p: ['You walked for ten days. Behind you the smoke of Liaoyang, then the smoke of the villages, then nothing. Around you more people every day: farmers with their ploughs on their backs, soldiers without officers, monks, a magistrate in a cart with his books.',
       'No one knows where the road goes in the end. East is the Yalu, and over it Korea; somewhere south is the sea. The Khan\'s riders come down the road every few days to take what they want: carts, horses, girls.'], zh: '遼民渡江者，不可勝數。' },
@@ -17962,7 +18220,7 @@ DCH[2] = {
 };
 
 DCH[3] = {
-  year: 1621, mission: 'dj3',
+  year: 1621, withErniu: true, mission: 'dj3',
   intro: [
     { title: '毛文龍 · Mao Wenlong', year: 'Summer 1621', p: ['Mao Wenlong is a Hangzhou man who came to Liaodong as an officer and has never in his life done what he was told. When Liaoyang fell he took a few hundred men down the coast in fishing boats and began to take in every Liaodong refugee who could hold a blade.',
       'He calls them his sons. His enemies say he calls them his sons so he can draw pay for them.'], zh: '毛文龍，字振南，仁和人。' },
@@ -18010,7 +18268,7 @@ DCH[3] = {
 };
 
 DCH[4] = {
-  year: 1621, mission: 'dj4',
+  year: 1621, withErniu: true, mission: 'dj4',
   intro: [
     { title: '過江 · Over the river', year: 'Autumn 1621', p: ['Mao Wenlong crossed the Yalu with his refugees and set up his camp among the Korean villages around Yongcheon. The Korean king had not asked for him and did not want him: the Khan had warned Korea what would happen if it sheltered Ming soldiers.',
       'But the farmers of Yongcheon took you in. Your file sleeps in the barn of a headman called Kim, whose nephew Kim Sun speaks some Chinese because his father ferried the Ming envoys over the Yalu.'], zh: '毛文龍屯龍川、彌串堡。' },
@@ -18057,7 +18315,7 @@ const DCAMP = { fires: [[0, 0], [8, -5]], tents: [[-10, 4, 1.7, 2.5, 2.1], [-4.5
   props: [['pot', 8, -5, 0], ['rack', -7.5, -3.5, 0.9], ['log', 0, 2.9, 0], ['log', -2.6, -1.4, 1.1], ['log', 2.7, -1.2, -1.1]] };
 function dCampCfg(n) {
   const C = DCH[n], K = C.camp, ox = K.at ? K.at[0] : 0, oz = K.at ? K.at[1] : 0, P = (x, z) => [+(x + ox).toFixed(2), +(z + oz).toFixed(2)];
-  const npcs = [], beds = [], file = dFile(n), rows = [{ k: DS.me }].concat(file), N = rows.length;
+  const npcs = [], beds = [], file = dFile(n), rows = [{ k: dMeK(n) }].concat(file), N = rows.length;
   rows.forEach((r, i) => { const a = -0.5 + (i / Math.max(8, N)) * Math.PI * 1.55 + Math.PI * 0.55; const p = P(Math.sin(a) * 6.3, Math.cos(a) * 6.3); beds.push([p[0], p[1], +(a + Math.PI).toFixed(3), false]); });
   for (const k of dDead().map(r => r.k).slice(0, 4)) { const a = Math.PI * (1.6 + beds.length * 0.07); const p = P(Math.sin(a) * 6.3, Math.cos(a) * 6.3); beds.push([p[0], p[1], +(a + Math.PI).toFixed(3), true]); } // empty bedrolls for the dead
   file.forEach((r, i) => { const a = (i / Math.max(1, file.length)) * Math.PI * 2 + 0.4, rr = i % 3 === 2 ? 3.4 : 2.5; const x = Math.sin(a) * rr, z = Math.cos(a) * rr; const p = P(x, z);
@@ -18074,18 +18332,19 @@ function dStart(scene) {
   const n = +m[2], C = DCH[n]; if (!C) { $('menu').hidden = false; return; }
   const seed = (Math.random() * 0x7fffffff) | 0, pl = [{ name: DS.name.zh || 'You', team: 0, connected: true }];
   if (m[1] === 'c') {
-    if (!DS.seen['i' + n]) { dJoin(n); return zCards(typeof C.intro === 'function' ? C.intro() : C.intro, () => { DS.seen['i' + n] = 1; DS.stage = 'c' + n; dSave(); dStart('c' + n); }); }
+    if (!DS.seen['i' + n]) { dJoin(n); return zCards(dCards(C.intro), () => { DS.seen['i' + n] = 1; DS.stage = 'c' + n; dSave(); dStart('c' + n); }); }
     if (!C.camp) { DS.stage = 'b' + n; dSave(); return dStart('b' + n); } // straight into the battle
     const camp = dCampCfg(n); ZB = null;
     startGame({ seed, battle: camp.map || 'zcamp', mode: 'campaign', mission: 'zcamp', camp, players: pl }, 0, null, 1);
-    for (const u of state.sim.units) if (u.camp) { ZC.map[u.id] = u.ci; dDress(u, u.ci); } { const me = state.sim.units[state.sim.players[0].heroId]; dDress(me, dIdx(DS.me)); } ZC.chatT = 6;
+    for (const u of state.sim.units) if (u.camp) { ZC.map[u.id] = u.ci; dDress(u, u.ci); } { const me = state.sim.units[state.sim.players[0].heroId]; dDress(me, dIdx(dMeK(n))); } ZC.chatT = 6;
     MUSIC.play('menu'); MUSIC.setIntensity(0.15); AUDIO.setFire(0.6); $('army').hidden = true;
     setTimeout(() => storyCard(C.camp.card, C.camp.title), 900);
   } else {
     ZC = null; startGame({ seed, battle: SIM.MISSIONS[C.mission].battle, mode: 'campaign', mission: C.mission, players: pl }, 0, null, 1);
     const sim = state.sim, me = sim.players[0], q = sim.squads[me.soldierSq];
-    ZB = { map: {}, sq: q.id, first: me.heroId, cur: DS.me, fell: false, R: DR, dj: true, ch: n, deadMe: [] };
-    const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = dIdx(DS.me);
+    ZB = { map: {}, sq: q.id, first: me.heroId, cur: dMeK(n), fell: false, R: DR, dj: true, ch: n, deadMe: [] };
+    const used = {}; used[me.heroId] = 1; ZB.map[me.heroId] = dIdx(dMeK(n));
+    for (const gid of C.mingFoes || []) { const g = sim.mg[gid]; if (!g) continue; const pl = sim.players[g.p]; for (const sid of pl.squads) for (const uid of sim.squads[sid].unitIds) { const u = sim.units[uid]; u.look = { id: 'mut:' + (uid % 6), ming: true, hat: ['band', 'wrap', 'straw', 'felt'][uid % 4], brows: 'knit', beard: uid % 3 ? 'stubble' : undefined }; if (state.renderer) state.renderer.colorFigure(uid, u); } } /* men in Ming coats on the other side */
     const file = dFile(n), order = (C.order || []).filter(k => file.some(r => r.k === k)).concat(file.map(r => r.k).filter(k => !(C.order || []).includes(k)));
     // the men a scripted wound is meant for take that place in the squad (the sim wounds by place)
     for (const kk in (C.wounds || {})) { const k = C.wounds[kk], uid = q.unitIds[+kk]; if (uid === undefined || used[uid] || !file.some(r => r.k === k)) continue; used[uid] = 1; ZB.map[uid] = dIdx(k); }
@@ -18104,14 +18363,16 @@ function dLook() {
 }
 function dKeyE() {
   if (state.zheDlg) return true; const t = dLook(); if (!t) return true;
-  if (t.bed) { const n = ZC.night, C = DCH[n]; const go = () => { DS.stage = 'b' + n; dSave(); if (C.dawn) zCards([C.dawn], () => dGo('b' + n)); else dGo('b' + n); };
-    if (C.camp.choice && typeof CHD !== 'undefined' && CHD[C.camp.choice] && chGot(chCtx(), C.camp.choice) < 0) { chDecide(CHD[C.camp.choice].build(chCtx()), () => go()); return true; }
+  if (t.bed) { const n = ZC.night, C = DCH[n]; const go = () => { DS.stage = 'b' + n; dSave(); if (C.dawn) zCards(dCards([C.dawn]), () => dGo('b' + n)); else dGo('b' + n); };
+    const chId = typeof C.camp.choice === 'function' ? C.camp.choice() : C.camp.choice;
+    if (chId && typeof CHD !== 'undefined' && CHD[chId] && chGot(chCtx(), chId) < 0) { chDecide(CHD[chId].build(chCtx()), () => go()); return true; }
+    if (false) { chDecide(CHD[C.camp.choice].build(chCtx()), () => go()); return true; }
     go(); return true; }
   dDialog(t.k, t.u); return true;
 }
 // talk: the same panel and keys as the Zhejiang camp (#zheDlg, state.zheDlg)
 function dDialog(k, u) {
-  const n = ZC.night, D = (DCH[n].talk && DCH[n].talk(k)) || dTalkAny(k, n); if (!D) return; const r = dRow(k); state.zheDlg = { k };
+  const n = ZC.night, D = (DCH[n].talk && DCH[n].talk(k)) || dTalkAny(k, n); if (!D) return; const r = dRow(k); state.zheDlg = { k }; if (typeof D.g === 'function') D.g = D.g(); if (!D.g || !D.g[0]) D.g = ['……', '...'];
   if (document.pointerLockElement) document.exitPointerLock(); Input.keys = 0; $('pause').hidden = true;
   let box = $('zheDlg'); if (!box) { box = document.createElement('div'); box.id = 'zheDlg'; document.body.appendChild(box); box.addEventListener('mousedown', (e) => e.stopPropagation()); }
   const h = localHero(); if (h && u) Input.yaw = Math.atan2(u.x - h.x, u.z - h.z);
@@ -18143,7 +18404,7 @@ function dHUD(dt) {
 function dSay(ev) {
   const sim = state.sim, h = localHero(), C = DCH[ZB.ch]; const W = (C.who || {})[ev.who] || ['', ev.who];
   let id = -1, who = W.slice(); const ji = DR.findIndex(r => r.k === ev.who && !r.guest);
-  if (ji >= 0) { for (const uid in ZB.map) if (ZB.map[uid] === ji && sim.units[uid] && !sim.units[uid].dead && !sim.units[uid].wounded && +uid !== (h && h.id)) id = +uid; if (id >= 0) who = [DR[ji].zh, DR[ji].en]; else return true; } // a man's own words are not spoken by someone else: if he is gone, the line goes with him
+  if (ji >= 0) { for (const uid in ZB.map) if (ZB.map[uid] === ji && sim.units[uid] && !sim.units[uid].dead && !sim.units[uid].wounded) id = +uid; if (id >= 0) who = [DR[ji].zh, DR[ji].en]; else return true; } // a man's own words are not spoken by someone else: if he is gone, the line goes with him
   else if (sim.mg[ev.who]) { const g = sim.mg[ev.who]; id = sim.players[g.p].heroId; }
   if (id >= 0 && sim.units[id] && sim.units[id].dead) id = -1;
   if (id < 0 && h) { const cand = sim.teamAlive[h.team].filter(u => u.id !== h.id && !u.wounded && u.type !== 'horse' && Math.hypot(u.x - h.x, u.z - h.z) < 22); if (cand.length) id = cand[Math.floor(Math.random() * cand.length)].id; }
@@ -18168,19 +18429,19 @@ function dFinish(winner) {
   for (const uid in ZB.map) { const r = DR[ZB.map[uid]]; if (!r) continue; const u = sim.units[uid];
     fate[r.k] = u.dead ? 'dead' : (!won && u.wounded && !u.aided && u.helpedBy < 0 && !near(u, 4)) ? 'lost' : (u.wounded && !u.aided && u.helpedBy < 0 && !near(u, 6) && M.phases.some(P => P.obj && P.obj.extract)) ? 'lost' : 'out'; }
   for (const k of ZB.deadMe) fate[k] = 'dead';
-  const meK = DS.me, alive = h && !h.dead, oldName = Object.assign({}, DS.name);
+  const meK = dMeK(n), alive = h && !h.dead, oldName = Object.assign({}, DS.name), other = !!C.playAs;
   if (ZB.cur === meK || ZB.cur === 'stranger') fate[meK] = alive ? 'out' : 'dead'; else fate[meK] = 'dead';
-  if (ZB.cur && ZB.cur !== meK && ZB.cur !== 'stranger' && alive) { const nk = ZB.cur, r = dRow(nk); if (meK === 'me') DS.meName = oldName; DS.me = nk; DS.name = { zh: r.zh, en: r.en }; fate[nk] = 'out'; }
+  if (!other && ZB.cur && ZB.cur !== meK && ZB.cur !== 'stranger' && alive) { const nk = ZB.cur, r = dRow(nk); if (meK === 'me') DS.meName = oldName; DS.me = nk; DS.name = { zh: r.zh, en: r.en }; fate[nk] = 'out'; }
   const list = Object.keys(fate);
   for (const k of list) { DS.fate[k] = fate[k]; DS.alive[k] = fate[k] === 'out'; }
   DS.stage = 'e' + n; DS.lastWon = won; dSave();
-  const ft = C.fateText, rows = list.map(k => { const r = dRow(k), f = fate[k]; const nm = k === DS.me ? `${DS.name.zh} ${DS.name.en} (you)` : k === meK && DS.me !== meK ? `${oldName.zh} ${oldName.en} (you, until you fell)` : `${r.zh} ${r.en}`; return `<li class="${f === 'out' ? 'out' : f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${nm} — ${ft[f] || ft.out}</li>`; }).join('');
+  const ft = C.fateText, rows = list.map(k => { const r = dRow(k), f = fate[k]; const nm = other ? `${r.zh} ${r.en}${k === meK ? ' (you)' : ''}` : k === DS.me ? `${DS.name.zh} ${DS.name.en} (you)` : k === meK && DS.me !== meK ? `${oldName.zh} ${oldName.en} (you, until you fell)` : `${r.zh} ${r.en}`; return `<li class="${f === 'out' ? 'out' : f}">${f === 'out' ? '<b>✓</b>' : f === 'dead' ? '✝' : '?'} ${nm} — ${ft[f] || ft.out}</li>`; }).join('');
   const outN = list.filter(k => fate[k] === 'out').length;
   $('resultTitle').textContent = won ? (C.resultTitle || '過 · Through') : '敗 · Beaten back'; $('resultTitle').className = won ? 'win' : 'lose';
   const head = outN <= 1 ? (won ? 'You came through, and almost no one with you.' : 'You came back alone.') : won ? M.win : (M.loseText || 'You were beaten back.');
   $('resultText').innerHTML = `${head} ${outN} of ${list.length} of your people came through.`;
   $('btnNext').hidden = false; $('btnNext').textContent = 'What happened →';
-  $('btnNext').onclick = () => { $('result').hidden = true; const nx = typeof C.next === 'function' ? C.next() : C.next; DS.stage = nx === 'done' ? 'done' : 'c' + nx; dSave(); zCards(C.after(won, rows, outN), () => DCH[nx] ? dGo('c' + nx) : dEnd()); }; /* a chapter not written yet: the save waits at its door */
+  $('btnNext').onclick = () => { $('result').hidden = true; const nx = typeof C.next === 'function' ? C.next() : C.next; DS.stage = nx === 'done' ? 'done' : 'c' + nx; dSave(); zCards(dCards(C.after(won, rows, outN)), () => DCH[nx] ? dGo('c' + nx) : dEnd()); }; /* a chapter not written yet: the save waits at its door */
 }
 function dEnd() { if (!DS.stage || DS.stage === 'done') DS.stage = 'done'; dSave(); location.reload(); }
 
@@ -18197,7 +18458,7 @@ function dMenu() {
   let el = $('djCta'); const z = $('zheCta'); if (!z) return;
   if (!el) { const st = document.createElement('style'); st.textContent = '#djCta { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 14px 16px; margin: -6px 0 16px; border: 1px solid #3a6a6a; background: linear-gradient(100deg, rgba(40,90,100,.16), rgba(220,210,190,.08)); flex-wrap: wrap } #djCta b { font-size: 19px; letter-spacing: .04em } #djCta small { display: block; color: var(--ink2); margin-top: 4px; max-width: 640px; line-height: 1.5 } #djCta .btns { display: flex; gap: 8px }';
     document.head.appendChild(st); el = document.createElement('div'); el.id = 'djCta';
-    el.innerHTML = '<div><b>東江 · The East River</b><small>A story campaign, 1621–1637. A smith\'s son of Liaoyang and the people who ran with him: refugees, Mao Wenlong\'s island army off Korea, raids behind the Jin lines, two invasions of Korea, a mutiny, and the fall of the island. <i>Act One is ready; more acts are coming.</i></small></div><div class="btns"><button class="btn primary" id="btnDj" type="button">Begin</button><button class="btn" id="btnDjNew" type="button" hidden>New</button></div>';
+    el.innerHTML = '<div><b>東江 · The East River</b><small>A story campaign, 1621–1637. A smith\'s son of Liaoyang and the people who ran with him: refugees, Mao Wenlong\'s island army off Korea, raids behind the Jin lines, two invasions of Korea, a mutiny, and the fall of the island. <i>Acts One and Two are ready; more acts are coming.</i></small></div><div class="btns"><button class="btn primary" id="btnDj" type="button">Begin</button><button class="btn" id="btnDjNew" type="button" hidden>New</button></div>';
     const after = $('jinCta') || z; after.after(el); }
   const s = dLoad(), b = $('btnDj'), nb = $('btnDjNew'); const cont = s && s.stage && s.stage !== 'done';
   const waiting = cont && /^c(\d+)$/.test(s.stage) && !DCH[+s.stage.slice(1)]; /* finished every chapter written so far */
@@ -18230,6 +18491,241 @@ CHD.dj2millet = {
     go: 'Lie down →' }),
   end: (C, o) => o === 0 ? (C.S.flags.childLived ? 'The youngest one lived.' : 'You never knew if the youngest one lived.') : o === 1 ? 'The file held the ford.' : 'Half a day, for everyone.',
 };
+
+// ===================== 東江 · Act Two: the island (1622–1626) =====================
+// Chapters 5–8 of the East River campaign (dongjiang.js): the first landing on the Jin coast, the famine on Pidao (played as
+// Li Erniu), the hill fort at Tieshan, and the deep raid toward Anshan after Nurhaci's death.
+DR.push(
+  { k: 'ma', zh: '馬六', en: 'Ma Liu', t: 'a fisherman of the Liaodong coast', born: 1600, joins: 5 },
+  { k: 'hu', zh: '胡三', en: 'Hu San', t: 'a Haizhou man, once a bannerman\'s bondservant', born: 1597, joins: 7 },
+  { k: 'auntwang', zh: '王嫂', en: 'Sister Wang', t: 'a fisherman\'s widow of Pidao', born: 1594, woman: true, only: [6] },
+  { k: 'xiaolan', zh: '小蘭', en: 'Xiaolan', t: 'a girl from Haizhou, freed at the landing', born: 1610, woman: true, only: [6] },
+  { k: 'mao', zh: '毛文龍', en: 'Mao Wenlong', t: 'Regional Commander of the East River', guest: true },
+  { k: 'chenshou', zh: '陳壽', en: 'Sergeant Chen Shou', t: 'a Mao Wenlong man, your company\'s sergeant', guest: true },
+  { k: 'kimyong', zh: '金永', en: 'Kim Yong', t: 'Kim Sun\'s cousin, a Korean musketeer', guest: true },
+);
+Object.assign(DLOOK, {
+  ma: { h: 1.02, hat: 'straw', brows: 'thick', beard: 'mous', rosy: true, skin: 0xa87a52 },
+  hu: { h: 0.97, hat: 'shaved', brows: 'sad', beard: 'stubble', scar: true, skin: 0xc8a07a },
+  auntwang: { h: 0.92, hat: 'kerchief', kerch: 0x6a3a2a, brows: 'knit', woman: true, skin: 0xc49a72 },
+  xiaolan: { h: 0.8, hat: 'kerchief', kerch: 0x8a5a7a, brows: 'high', young: true, rosy: true, woman: true, skin: 0xe2bc96 },
+  mao: { h: 1.0, hat: 'chief', brows: 'knit', beard: 'longmous', plume: 0xd02a1c, skin: 0xd8b088 },
+  chenshou: { h: 1.04, hat: 'rattan', brows: 'thick', beard: 'full', scar: true },
+  kimyong: { h: 1.0, hat: 'gat', brows: 'thick', beard: 'mous', coat: 0xe8e4da },
+});
+
+// ========== 第二幕 · 皮島 · Act Two: the island ==========
+DCH[5] = {
+  year: 1622, mission: 'dj5', act: '第二幕 · 皮島 · Act Two: the island', away: ['erniu'],
+  intro: [
+    { title: '第二幕 · 皮島', year: 'Act Two · The island · 1622', p: ['Gado, the Chinese call it Pidao: a hilly island of fishermen and goats off the Korean coast, twenty li from the mouth of the Yalu. In the spring of 1622 Mao Wenlong brought his people out to it in fishing boats, and by summer there were thirty thousand on an island that had fed three hundred.',
+      'The court in Beijing made him Regional Commander of the East River, sent him silver and grain by sea from Dengzhou, and told him to raid the Jin from behind. Mao reported that he had a hundred thousand men. Nobody could count them, out on the islands.'], zh: '毛文龍開鎮皮島，號東江。' },
+    { title: '你們 · Your people', year: 'Spring 1622', p: () => [`You are ${dAge('me', 1622)} now. Your mother and Erniu have a hut in the fishing village; Old Zheng cooks for a company of Mao\'s men. Zhao Da, Liu Heizi and you have been written into the rolls of Sergeant Chen Shou\'s company, and they give you a padded coat with the East River\'s red border on it.`,
+      'Ma Liu, a fisherman from the coast who rows one of the company\'s boats, has started bringing Erniu fish.'], btn: 'To the beach camp →' },
+  ],
+  camp: { map: 'djpidao', biome: 'night', fog: 0.3, at: [52, -100], title: '營 · The beach camp', card: 'The night before the first landing, on the beach below the fishing village. Walk among the file (E to talk). The general himself is walking the camp tonight. When you are ready, lie down (E).',
+    guests: ['mao', 'chenshou'],
+    chat: [['潮水半夜就漲。', 'The tide turns at midnight.'], ['對岸那片燈火，是金州的哨所。', 'Those lights across the water are the Jinzhou post.'], ['總兵說，一顆金人首級賞銀三兩。', 'The general says three taels a Jin head.'], ['我暈船。', 'I get seasick.'], ['船上別點燈。', 'No lights on the boats.'], ['聽說對岸田裡的人，都是遼陽人。', 'They say the people in the fields over there are Liaoyang people.']] },
+  dawn: { title: '渡海 · Across', year: 'Before dawn', p: ['Twenty boats in the dark, oars muffled with rags. Ma Liu rows yours. Halfway across he starts singing under his breath, and Sergeant Chen hits him, and he stops.', 'Then the boat grinds on sand.'], btn: 'Ashore →' },
+  battleCard: ['The Liaodong coast, 1622. Take the village, free the bondservants, burn the granary, and get everyone back to the boats.', '沿海 · The landing'],
+  who: { file: ['陳壽', 'Sergeant Chen Shou'], second: ['張盤', 'Zhang Pan'] },
+  order: ['zhao', 'ma', 'qian', 'gou', 'liu', 'kim', 'feng', 'dong', 'sun'],
+  fateText: { out: 'came back in the boats', dead: 'killed on the coast', lost: 'left on the Jin shore' },
+  after: (won, li, outN) => [
+    { title: '沿海 · What happened', year: 'Spring 1622', p: ['That year the East River\'s boats landed all along the Liaodong coast, and every landing brought back people: Han bondservants, fishermen, whole villages. The Korean records say that the refugees on the islands came to number in the hundreds of thousands. (This landing is a composite of those raids; the place is not named in the records.)',
+      'One of the bondservants who came back in your boat was a scarred Haizhou man called Hu San, who had run from his master twice and been caught twice. He asked to join the file.'], zh: '遼民歸者，日以千計。' },
+    { title: '你們 · Your people', year: `${outN} came back`, html: `<ul>${li}</ul>`, btn: 'A year later →' },
+  ],
+  next: 6,
+  talk: (k) => ({
+    zhao: { g: ['穿上這身紅邊襖，你就是兵了。', 'Put on that red-bordered coat and you\'re a soldier.'], t: [
+      { q: 'Am I?', a: [['兵是能聽令的人。你能聽令嗎？', 'A soldier is a man who can take an order. Can you?'], ['在遼陽那晚，你沒聽我的。你回頭去找你娘。', 'The night Liaoyang fell you didn\'t listen to me. You went back for your mother.'], ['……那是對的。可以後，要聽。', '...That was right. But from now on, listen.']] },
+      { q: 'What do you make of Mao Wenlong?', bond: 1, a: [['他給我們飯吃，給我們刀。朝廷給他銀子，他給我們一半。', 'He feeds us and arms us. The court gives him silver and he gives us half.'], ['另一半去了哪兒，我不問。我在遼陽見過不給一半的。', 'Where the other half goes, I don\'t ask. In Liaoyang I saw the ones who didn\'t give half.']] }] },
+    ma: { g: ['明天我划你們那條船。', 'Tomorrow I row your boat.'], t: [
+      { q: 'You\'ve been bringing my sister fish.', bond: 1, a: [['……她跟你說了？', '...She told you?'], ['我不是壞人。我有一條船，有一張網。我舅舅以前在對岸有三畝地。', 'I\'m not a bad man. I\'ve a boat, and a net. My uncle used to have three mu of land over there.'], ['你同意的話……等我們回來。', 'If you agree... when we get back.']] },
+      { q: 'Where are you from?', a: [['金州那邊的海邊。那個村子，明天就到。', 'The coast over by Jinzhou. That village, we land there tomorrow.'], ['我舅舅還在那兒。替金人划船。', 'My uncle\'s still there. Rowing for the Jin.']] }] },
+    qian: { g: ['總兵讓我給他寫奏摺。他說我的字瘦，正好。', 'The general has me writing his memorials. He says my brushwork is thin, which is just right.'], t: [
+      { q: 'What do you write?', bond: 1, a: [['他說殺了一百，我寫一千。他說有三萬人，我寫十萬。', 'He says we killed a hundred, I write a thousand. He says thirty thousand men, I write a hundred thousand.'], ['朝廷就按十萬人發餉。島上的人才能吃上飯。', 'The court sends pay for a hundred thousand. That\'s how the island eats.']] },
+      { q: 'Isn\'t that a lie?', a: [['是。', 'Yes.'], ['可是說實話，三萬人裡有一萬會餓死。你說，哪個是罪？', 'But if I wrote the truth, ten thousand of the thirty would starve. You tell me which is the crime.']] }] },
+    gou: { g: ['哥，我十四了。總兵說十四就能領餉。', 'Brother, I\'m fourteen. The general says fourteen can draw pay.'], t: [
+      { q: 'What will you do with it?', bond: 1, a: [['給大娘買米。還有……買一雙靴子。', 'Buy rice for Auntie. And... a pair of boots.'], ['我這輩子沒穿過自己的靴子。', 'I\'ve never had my own boots in my life.']] }] },
+    liu: { g: ['三兩一顆頭。我有二十三顆了，可那時候沒人收。', 'Three taels a head. I\'ve had twenty-three, and back then nobody was paying.'], t: [
+      { q: 'Are you still counting?', bond: 1, a: [['數。我會一直數下去，數到我哥說夠了。', 'I am. I\'ll keep counting until my brother says enough.'], ['他是不會說的。', 'He isn\'t going to say it.']] }] },
+    kim: { g: ['我給家裡寫信了。用諺文寫的。', 'I wrote to my family. In hangul.'], t: [
+      { q: 'What did you tell them?', bond: 1, a: [['說我在明朝的兵營裡，吃得飽。', 'That I\'m in a Ming camp, and eating well.'], ['第二句是假的。', 'The second part isn\'t true.']] },
+      { q: 'Why stay with us?', a: [['龍川燒了以後，我舅舅說：去吧，跟著明人。金人遲早還會來。', 'After Yongcheon burned my uncle said: go, go with the Ming. The Jin will come again sooner or later.'], ['我想在他們來以前，學會打仗。', 'I want to know how to fight before they come.']] }] },
+    feng: { g: ['島上沒豬。我改殺魚了。', 'No pigs on this island. I\'ve gone over to killing fish.'], t: [{ q: 'Is it the same?', a: [['魚也不看你。', 'Fish don\'t look at you either.']] }] },
+    dong: { g: ['我在島上開了個攤子。賣針線，也賣消息。', 'I\'ve set up a stall on the island. I sell needles and thread, and news.'], t: [{ q: 'What news?', bond: 1, a: [['朝鮮人說，毛總兵報的人數，比島上的石頭還多。', 'The Koreans say General Mao reports more men than there are stones on this island.']] }] },
+    sun: { g: ['我在島上搭了個爐子。你來不來學？', 'I\'ve built a forge on the island. Coming to learn?'], t: [
+      { q: 'Teach me.', bond: 1, flag: 'forge', a: [['（他把你爹的錘子放進你手裡。）先聽鐵的聲音。鐵會告訴你它要什麼。', '(He puts your father\'s hammer in your hand.) First listen to the iron. Iron tells you what it wants.']] }] },
+    mao: { g: ['遼東的好兒郎！你叫什麼？', 'A fine son of Liaodong! What\'s your name?'], t: [
+      { q: 'Li Tie, sir. A smith\'s son from Liaoyang.', bond: 1, a: [['鐵匠的兒子！好！我缺的就是鐵。', 'A smith\'s son! Good! Iron is just what I\'m short of.'], ['明天上了岸，給我帶幾個遼陽人回來。他們都是你的鄉親。', 'When you land tomorrow, bring me back some Liaoyang people. They\'re your own folk.']] },
+      { q: 'Will we take Liaoyang back?', a: [['會！我給皇上寫了，三年復遼。', 'We will! I\'ve written to the Emperor: Liaodong recovered in three years.'], ['（他大笑著走了。陳壽在後面搖頭。）', '(He walks off laughing. Behind him Sergeant Chen shakes his head.)']] }] },
+    chenshou: { g: ['早點睡。上了岸，誰也不許搶東西。', 'Get to sleep early. Once we\'re ashore, nobody loots.'], t: [{ q: 'Have you done this before?', bond: 1, a: [['四回。第一回，一半人沒回來。', 'Four times. The first time, half didn\'t come back.'], ['後來就學會了：上岸要快，回船要更快。', 'After that we learned. Ashore fast, back to the boats faster.']] }] },
+  })[k],
+};
+
+DCH[6] = {
+  year: 1623, mission: 'dj6', playAs: () => DS.alive.erniu ? 'erniu' : 'auntwang', cast: ['zheng', 'gou', 'qian', 'dong', 'sun', 'auntwang', 'xiaolan', 'erniu'], mingFoes: ['mob1', 'mob2', 'raid'],
+  intro: () => DS.alive.erniu ? DCH[6].introE : DCH[6].introW,
+  introW: [
+    { title: '一年 · A year', year: 'Autumn 1623', p: ['A year on the island. The East River\'s boats raid the coast every month and come back with people, and every month there are more mouths. The grain ships from Dengzhou come when the court remembers to send them. This autumn the court has not remembered.'], zh: '島中乏食，兵民嗷嗷。' },
+    { title: '王嫂 · Sister Wang', year: 'A fisherman\'s widow of Pidao', p: ['Your brother\'s file has sailed for the mainland. On the island, the key of the village grain store is kept by Sister Wang, a fisherman\'s widow, because the elder trusts no man with it. Since Erniu died, Sister Wang has looked in on your mother every evening. In this chapter you are Sister Wang.'], btn: 'Evening →' }],
+  introE: [
+    { title: '一年 · A year', year: 'Autumn 1623', p: ['A year on the island. The East River\'s boats raid the coast every month and come back with people, and every month there are more mouths. The grain ships from Dengzhou come when the court remembers to send them.',
+      'This autumn the court has not remembered. The soldiers in the hill camps have had no pay since summer, and no rice for a month.'], zh: '島中乏食，兵民嗷嗷。' },
+    { title: '二妞 · Erniu', year: () => `Li Erniu, ${dAge('erniu', 1623)}`, p: ['Your brother\'s file sailed for the mainland four days ago. You are Li Erniu. You mend nets with the fishermen\'s wives, help Old Zheng in the cookhouse, and keep the key of the village grain store, because the elder trusts no man with it.',
+      'Ma Liu asked your brother for you before he sailed. Your brother said: ask her.'], btn: 'Evening →' },
+  ],
+  camp: { map: 'djpidao', biome: 'night', fog: 0.25, at: [44, -78], title: '漁村 · The fishing village', card: 'Evening in the fishing village, the men away. Talk to the women and the old men (E). When you are ready, go to bed (E).',
+    guests: ['ma_mother'], choice: () => DS.alive.erniu ? 'dj6wed' : null,
+    chat: [['米缸見底了。', 'The rice jar\'s down to the bottom.'], ['山上的兵昨晚來偷魚了。', 'The soldiers from the hill came stealing fish last night.'], ['船怎麼還不來？', 'Why hasn\'t the ship come?'], ['小蘭又在數星星。', 'Xiaolan\'s counting the stars again.'], ['男人們什麼時候回來？', 'When are the men coming back?']] },
+  dawn: { title: '山上 · On the hill', year: 'Morning', p: ['Xiaolan runs into the cookhouse with her eyes huge. "They\'re coming down the hill path. The soldiers. All of them."', 'Old Zheng puts down his ladle and picks up a cleaver. "Erniu," he says. "The key."'], btn: 'To the grain store →' },
+  battleCard: ['Pidao, 1623. Hold the grain store against the island\'s own starving soldiers. Nobody has to die.', '皮島 · The grain store'],
+  who: { file: ['王老漢', 'Elder Wang'], fishers: ['', 'A fisherman'], ma_mother: ['李大娘', 'Your mother'], captain: ['陳繼盛', 'Chen Jisheng'] },
+  order: ['zheng', 'gou', 'qian', 'sun', 'dong', 'auntwang', 'xiaolan'], wounds: { 3: 'sun' },
+  fateText: { out: 'kept the store', dead: 'killed at the grain store', lost: 'hurt and left on the hill path' },
+  after: (won, li, outN) => [
+    { title: '皮島 · What happened', year: 'Autumn 1623', p: ['The grain ship from Dengzhou came eleven days later. Chen Jisheng, Mao Wenlong\'s right hand, hanged four of the soldiers on the beach as an example; the island watched. The rest went back to their camps and drew their pay when it came.',
+      'Your brother came back from the mainland the week after. Old Zheng told him everything, and then told him again.'], zh: '陳繼盛斬亂兵四人於岸。' },
+    { title: '二妞 · Erniu', year: `${outN} kept the store`, html: `<ul>${li}</ul>`, p: () => { const c = chGot(chCtx() || { S: DS }, 'dj6wed'); return [c === 0 ? 'Erniu married Ma Liu in the first month of 1624, in the fishing village, with a borrowed red skirt. Mao Wenlong sent a jar of wine and a pig.' : c === 1 ? 'Erniu told Ma Liu: when the war is over. He said he would wait. He kept bringing fish.' : 'Erniu said no to Ma Liu. He stayed in the file anyway, and rowed your boat as before.']; }, btn: 'Tieshan →' },
+  ],
+  next: 7,
+  talk: (k) => ({
+    zheng: { g: ['丫頭，你哥走了，你就是這家的男人。', 'Girl, with your brother gone, you\'re the man of this house.'], t: [
+      { q: 'How much rice is left?', a: [['倉裡的，夠村子吃一個月。山上的兵，一粒也沒有了。', 'What\'s in the store would feed the village a month. The soldiers on the hill have none at all.'], ['餓兵比金兵可怕。金兵還要命，餓兵只要米。', 'Hungry soldiers are worse than Jin. The Jin want your life; hungry men only want the rice.']] },
+      { q: 'Should I marry Ma Liu?', bond: 1, a: [['他是個好人。好人在這世道，活不長。', 'He\'s a good man. Good men don\'t live long these days.'], ['可是好人活著的時候，日子是好的。', 'But while a good man lives, the days are good.']] }] },
+    gou: { g: ['二姐，我也留下了。他們說我太小。', 'Second Sister, I got left behind too. They said I\'m too young.'], t: [{ q: 'You\'re fifteen.', bond: 1, a: [['十五了！我比你哥那時候還大一歲！', 'Fifteen! A year older than your brother was!'], ['……其實我是自己要留下的。總得有個男人看家。', '...Actually I asked to stay. Somebody has to look after the house.']] }] },
+    qian: { g: ['二妞，你識字嗎？', 'Erniu, can you read?'], t: [
+      { q: 'No.', a: [['我教你。一天三個字。', 'I\'ll teach you. Three characters a day.'], ['今天的三個：米、門、家。', 'Today\'s three: rice, door, home.']] },
+      { q: 'Why aren\'t you with the men?', bond: 1, a: [['總兵說，寫字的手比拿刀的手值錢。', 'The general says a hand that writes is worth more than one that holds a blade.'], ['我想他錯了。可我也不想去。', 'I think he\'s wrong. But I don\'t want to go either.']] }] },
+    dong: { g: ['山上的兵昨天找我買煙葉。用他們的刀換。', 'The soldiers on the hill wanted to buy tobacco from me yesterday. With their swords.'], t: [{ q: 'Did you sell?', bond: 1, a: [['沒有。兵賣刀，就快要賣命了。', 'No. When soldiers sell their swords, they\'re about to sell their lives.']] }] },
+    sun: { g: ['我又老了一歲。打鐵的手抖了。', 'Another year older. My smith\'s hands shake now.'], t: [{ q: 'Brother says you\'re teaching him.', bond: 1, a: [['他學得快。你爹的手，在他身上。', 'He learns fast. Your father\'s hands, on him.'], ['等這仗打完，讓他開個鋪子。在哪兒都行。', 'When this war is over, let him open a smithy. Anywhere.']] }] },
+    auntwang: { g: ['我男人去年出海沒回來。', 'My husband went out to sea last year and didn\'t come back.'], t: [
+      { q: 'I\'m sorry.', bond: 1, a: [['海就是這樣。給你魚，也收你人。', 'The sea\'s like that. It gives you fish, and it takes your men.'], ['你要嫁那個馬六？他船划得好。划得好的，能回來。', 'You\'ll marry that Ma Liu? He rows well. The ones who row well come back.']] }] },
+    xiaolan: { g: ['二姐姐，星星底下是金州嗎？', 'Big sister, is Jinzhou under those stars?'], t: [
+      { q: 'Over there. Why?', bond: 1, a: [['我娘還在金州的莊子上。他們只把我帶上了船。', 'My mother\'s still on the farm at Jinzhou. They only got me onto the boat.'], ['你哥下回去的時候，能帶上她嗎？', 'Next time your brother goes, could he bring her?']] }] },
+    ma_mother: { g: ['那個姓馬的，又送魚來了。', 'That Ma fellow brought fish again.'], t: [{ q: 'What do you think, Ma?', bond: 1, a: [['你爹娶我的時候，送的是一把鐮刀。他說：有鐮刀就有糧。', 'When your father married me, he brought a sickle. He said: with a sickle, there\'s grain.'], ['送魚的也行。', 'Bringing fish will do.']] }] },
+  })[k],
+};
+
+DCH[7] = {
+  year: 1624, mission: 'dj7', away: ['erniu'],
+  intro: [
+    { title: '鐵山 · Tieshan', year: 'Summer 1624', p: ['Mao Wenlong has posts all along the Korean shore opposite his islands, and the one at Tieshan is to be a real fort: a palisade on the hill above the beach, a gate, huts for a garrison. From Tieshan his raiders can cross the Yalu at night and be back before the Jin know they came.',
+      'The Koreans of Tieshan don\'t like it. Their king likes it less. But some of their musketeers have started drilling with the East River men, and Kim Sun\'s cousin Kim Yong is one of them.'], zh: '毛文龍屯兵鐵山、雲從、宣川。' },
+    { title: '火銃 · Muskets', year: () => `You are ${dAge('me', 1624)}`, p: ['Your file has been issued muskets: long bird-guns with matchlocks, made in the Dengzhou arsenal. Zhao Da has been teaching you to load in the dark. Hu San, the Haizhou man from the landing, is in the file now.'], btn: 'To the fort →' },
+  ],
+  camp: { map: 'djtieshan', biome: 'night', fog: 0.2, at: [20, -30], noTents: true, title: '鐵山 · The fort', card: 'The half-built fort at Tieshan, the night after the last of the stakes ran out. Talk to the file (E). When you are ready, lie down (E).',
+    guests: ['kimyong', 'chenshou'],
+    chat: [['木頭不夠了。東北邊還空著一段。', 'We\'ve run out of timber. There\'s still a gap on the north-east.'], ['火繩別受潮。', 'Keep your match dry.'], ['朝鮮人的鳥銃比我們的長。', 'The Korean bird-guns are longer than ours.'], ['北邊的平原上有火光。', 'There are fires on the plain to the north.'], ['船都拉上岸了。', 'The boats are all pulled up.']] },
+  dawn: { title: '平原 · The plain', year: 'The morning', p: ['At first light a lookout on the north gate shouts and points. Out on the plain, riders: a few, then more, coming at an easy trot, looking at the fort the way a man looks at a horse he might buy.', '"The gap," Zhao Da says. "They\'ve seen the gap."'], btn: 'To the wall →' },
+  battleCard: ['Tieshan, 1624. Your file has muskets now: LMB fire, R reload, RMB aim. Hold the gap, hold the gate, save the boats.', '鐵山 · Tieshan'],
+  who: { file: ['陳壽', 'Sergeant Chen Shou'], fort: ['', 'A man of the garrison'], korea: ['金永', 'Kim Yong'] },
+  order: ['zhao', 'kim', 'hu', 'ma', 'qian', 'liu', 'gou', 'feng', 'dong', 'sun'], wounds: { 4: 'qian' },
+  fateText: { out: 'held Tieshan', dead: 'killed at Tieshan', lost: 'left outside the palisade' },
+  after: (won, li, outN) => [
+    { title: '鐵山 · What happened', year: 'Summer 1624', p: ['The Jin probes along the Korean shore came every few months, and every few months the East River drove them off. (This fight is a composite; the posts at Tieshan, Unchong and Seoncheon, and the Korean musketeers who fought beside the East River, are in the Korean records.)',
+      'In the spring of 1625 the Jin took Lüshun, on the tip of the Liaodong peninsula, from Mao Wenlong\'s man Zhang Pan, who died there with his garrison. In the first month of 1626 the Khan himself was thrown back from the walls of Ningyuan by Yuan Chonghuan\'s Portuguese cannon. In the eighth month he died.'], zh: '天啟六年八月，努爾哈赤卒。' },
+    { title: '你們 · Your people', year: `${outN} held the fort`, html: `<ul>${li}</ul>`, btn: 'Two years later →' },
+  ],
+  next: 8,
+  talk: (k) => ({
+    zhao: { g: ['裝藥：火藥、彈丸、紙、搗實。閉著眼睛也要會。', 'Loading: powder, ball, wad, ram. You have to be able to do it with your eyes shut.'], t: [
+      { q: 'You\'re getting grey.', bond: 1, a: [['四十三了。在遼陽，四十三就該當伍長了。', 'Forty-three. In Liaoyang at forty-three I\'d have made file leader.'], ['在這兒，四十三是運氣好。', 'Out here, forty-three is lucky.']] },
+      { q: 'Muskets or blades?', a: [['銃打得遠，刀砍得準。金人兩樣都怕，只是怕的時候不一樣。', 'A musket reaches far, a blade strikes true. The Jin fear both, just at different moments.']] }] },
+    kim: { g: ['我表哥來了！他是朝鮮的砲手。', 'My cousin\'s here! He\'s a Korean musketeer.'], t: [{ q: 'Your king doesn\'t want us here.', bond: 1, a: [['國王住在漢陽，金人在義州。國王怕的是遠的，我們怕的是近的。', 'The king lives in Hanyang, the Jin are at Uiju. The king fears the distant thing; we fear the near one.']] }] },
+    hu: { g: ['……', '...'], t: [
+      { q: 'Tell me about your master.', bond: 1, a: [['鑲白旗的一個牛錄章京。他不打人。他只是……把你當成他的牛。', 'A niru captain of the Bordered White. He didn\'t beat people. He just... treated you like one of his oxen.'], ['牛吃得飽。牛也不能走。', 'An ox is well fed. An ox can\'t leave, either.']] },
+      { q: 'Your head is still shaved.', a: [['頭髮長得慢。你們看我的時候，我知道你們在想什麼。', 'Hair grows slowly. When you all look at me I know what you\'re thinking.'], ['我也在想。', 'I\'m thinking it too.']] }] },
+    ma: { g: () => [chGot(chCtx() || { S: DS }, 'dj6wed') === 0 ? '嫂子……不，你妹妹讓我帶話：吃飽，別逞強。' : '你妹妹讓我帶話：吃飽，別逞強。', chGot(chCtx() || { S: DS }, 'dj6wed') === 0 ? 'Your sister, my wife, says: eat properly, and don\'t show off.' : 'Your sister says: eat properly, and don\'t show off.'], t: [
+      { q: 'How is she?', bond: 1, a: [['她在跟秀才學字。她現在比我認得多。', 'She\'s learning characters from the scholar. She knows more than me now.'], ['她說，等我們回去，她要寫我的名字給我看。', 'She says when we get back she\'ll write my name and show me.']] }] },
+    qian: { g: ['總兵的奏摺又寫了一篇：鐵山大捷，斬首八百。', 'Another memorial for the general: a great victory at Tieshan, eight hundred heads.'], t: [{ q: 'We haven\'t fought yet.', bond: 1, a: [['所以我先寫好。打完了再改數目。', 'So I write it in advance. After the fight I change the numbers.'], ['有時候改大，有時候改小。從來沒改對過。', 'Sometimes up, sometimes down. Never once right.']] }] },
+    liu: { g: ['銃好。一放就倒，不用看他的臉。', 'Muskets are good. They fall when you fire, and you don\'t have to see their faces.'], t: [{ q: 'Do the faces bother you?', bond: 1, a: [['我哥的臉，我快想不起來了。', 'I can hardly remember my brother\'s face any more.'], ['所以要多看幾個金人的臉。好讓我想起來，我為什麼恨。', 'So I need to look at a few more Jin faces. To remember why I hate.']] }] },
+    gou: { g: ['我有靴子了！', 'I\'ve got boots!'], t: [{ q: 'They\'re too big.', bond: 1, a: [['會長的！我會長到穿得下的！', 'I\'ll grow! I\'ll grow into them!']] }] },
+    feng: { g: ['我塞了一把殺豬刀在靴子裡。銃打完了總得有東西。', 'I\'ve got a pig-sticker in my boot. Once the musket\'s fired you need something.'], t: [{ q: 'Good idea.', a: [['殺豬的，總有一把刀。', 'A butcher always has a knife.']] }] },
+    dong: { g: ['朝鮮人在說，金人的新汗是個狠的。', 'The Koreans are saying the Jin\'s next khan will be a hard one.'], t: [{ q: 'The Khan is still alive.', bond: 1, a: [['老汗快七十了。他的兒子們已經在挑刀子了。', 'The old Khan\'s nearly seventy. His sons are already choosing their knives.']] }] },
+    sun: { g: () => [DS.alive.sun ? '我跟船來的。炮手要人修銃。' : '', DS.alive.sun ? 'I came on the boat. The gunners need someone to mend the muskets.' : ''], t: [{ q: 'You should rest.', bond: 1, a: [['休息？我在遼陽的時候，一天打三十個箭頭。', 'Rest? In Liaoyang I made thirty arrowheads a day.'], ['現在修三把銃就累了。不服老不行。', 'Now three muskets wear me out. There\'s no not giving in to age.']] }] },
+    kimyong: { g: ['（他用漢字寫：）明兵能戰乎？', '(He writes in characters:) Can the Ming soldiers fight?'], t: [{ q: '(Write:) Tomorrow, you will see.', bond: 1, a: [['（他寫：）善。朝鮮砲手，亦能戰。', '(He writes:) Good. The Korean musketeers can fight too.'], ['（他笑了，把筆遞給金順，用朝鮮話說了一句。金順臉紅了。）', '(He laughs, hands the brush to Kim Sun and says something in Korean. Kim Sun goes red.)']] }] },
+    chenshou: { g: ['缺口那邊，明天你們隊守。', 'The gap. Your file holds it tomorrow.'], t: [{ q: 'Why us?', bond: 1, a: [['因為趙大在你們隊。他在遼陽西門守過。', 'Because Zhao Da is in your file. He held the west gate at Liaoyang.'], ['守住了一半，也算守過。', 'Half held is still held.']] }] },
+  })[k],
+};
+
+DCH[8] = {
+  year: 1626, mission: 'dj8', away: ['erniu'],
+  intro: [
+    { title: '汗死了 · The Khan is dead', year: 'The eighth month of 1626', p: ['Nurhaci died on the road back from the hot springs at Qinghe, sixty-seven years old, seven months after Ningyuan. His eighth son Hong Taiji was chosen Khan over his brothers. For a few weeks, while the banners mourned and the beile watched each other, the Jin rear lay open.',
+      'Mao Wenlong sent his raiders deep inland. His adopted son Mao Chenglu took a column up the valleys toward Anshan, to burn the bannermen\'s farms and bring out the Han who worked them.'], zh: '天啟六年秋，毛文龍遣將襲鞍山。' },
+    { title: '你 · You', year: () => `You are ${dAge('me', 1626)}`, p: ['Twenty-two. You have killed more men than you can remember and fixed more muskets than you can count. Zhao Da\'s hair is grey; Gou\'er is taller than you; Kim Sun speaks Chinese like a Liaoyang man. Hu San says he knows the farm: he worked it.'], btn: 'Into the hills →' },
+  ],
+  camp: { map: 'djanshan', biome: 'night', fog: 0.3, at: [58, -100], noTents: true, title: '山中 · In the hills', card: 'Hidden in the hills above the valley, the night before the raid. No fire: the camp is cold and dark. Talk to the file (E). Before dawn the file draws lots for who goes first through the gate. When you are ready, lie down (E).',
+    guests: ['chenshou'], choice: 'dj8lots',
+    chat: [['別生火。', 'No fire.'], ['山下就是莊子。我聞得見他們的灶煙。', 'The farm\'s just below. I can smell their kitchen smoke.'], ['新汗叫皇太極。', 'The new khan\'s called Hong Taiji.'], ['二十里到海邊。二十里。', 'Twenty li to the sea. Twenty li.'], ['胡三一晚上沒閉眼。', 'Hu San hasn\'t shut his eyes all night.']] },
+  dawn: { title: '霧 · Mist', year: 'Dawn', p: ['Mist in the valley, thick as milk. Below it the ford, and the six bowmen who watch it, and beyond them the farm with its gate already open for the carts.', 'Sergeant Chen raises his hand, and lets it fall.'], btn: 'Down to the ford →' },
+  battleCard: ['Near Anshan, 1626. Take the ford quietly, storm the manor, free the bondservants, and get everyone twenty li down the valley to the boats.', '鞍山 · The raid'],
+  who: { file: ['陳壽', 'Sergeant Chen Shou'], raid: ['毛承祿', 'Mao Chenglu'] },
+  order: ['zhao', 'hu', 'kim', 'ma', 'liu', 'gou', 'qian', 'feng', 'dong', 'sun'],
+  fateText: { out: 'came down the valley to the boats', dead: 'killed in the Anshan raid', lost: 'left in the valley' },
+  after: (won, li, outN) => [
+    { title: '鞍山 · What happened', year: 'Autumn 1626', p: ['The raid on Anshan and Sarhu forced Hong Taiji to call banners back from the west in the first weeks of his reign; the Ming court called it a victory and sent Mao Wenlong silver. (The manor is a composite; the raid is in the Ming records of the seventh and eighth months of 1626.)',
+      'Hong Taiji drew his own conclusion. As long as the East River sat on the islands and in Korea, no Jin army could march on the Great Wall without looking over its shoulder. Korea, which fed the islands, would have to be brought to heel. That winter the Jin began to gather on the Yalu.'], zh: '皇太極曰：毛文龍在，終為心腹之患。' },
+    { title: '你們 · Your people', year: `${outN} came down the valley`, html: `<ul>${li}</ul>`, p: [DS.alive.hu ? 'Hu San walked the last mile to the boats backwards, watching the valley.' : 'Hu San did not come back from the valley. He had said he would not go back, and he did not.'], btn: 'End of the second act →' },
+  ],
+  next: 9,
+  talk: (k) => ({
+    zhao: { g: ['我老了，鐵子。我跑不動二十里了。', 'I\'m getting old, Tie. I can\'t run twenty li any more.'], t: [
+      { q: 'Then don\'t run. Walk.', bond: 1, a: [['（他笑了，第一次笑出聲。）你說話越來越像我了。', '(He laughs, out loud for the first time.) You talk more and more like me.']] },
+      { q: 'Lead the file tomorrow.', a: [['不。明天你帶。我在旁邊看著。', 'No. Tomorrow you lead it. I\'ll watch from beside you.'], ['總有一天我不在旁邊。', 'One day I won\'t be beside you.']] }] },
+    hu: { g: ['那是我主子的莊子。', 'That\'s my master\'s farm.'], t: [
+      { q: 'Do you want to go in first?', bond: 1, a: [['不。我想最後一個出來。', 'No. I want to be the last one out.'], ['我要看著它燒。', 'I want to watch it burn.']] },
+      { q: 'Who is still in there?', a: [['魏大叔，他瘸了一條腿。張家的兩個丫頭。還有我跑的時候沒帶上的那個孩子。', 'Uncle Wei, with his lame leg. The two Zhang girls. And the boy I didn\'t take when I ran.'], ['他現在該八歲了。', 'He\'d be eight now.']] }] },
+    kim: { g: ['我想我爹了。', 'I miss my father.'], t: [{ q: 'You never talk about him.', bond: 1, a: [['他擺渡的時候唱歌。整條江都聽得見。', 'He used to sing when he ran the ferry. The whole river could hear.'], ['金人過江那年，他把船鑿沉了，人也沒上來。', 'The year the Jin crossed the river he scuttled his boat. He didn\'t come up.']] }] },
+    ma: { g: ['我答應過她要回去。', 'I promised her I\'d go back.'], t: [{ q: 'You will.', bond: 1, a: [['你也是。她就你一個哥。', 'So will you. She\'s only got the one brother.']] }] },
+    liu: { g: ['一百零三。', 'A hundred and three.'], t: [{ q: 'What will you do when it\'s over?', bond: 1, a: [['……沒想過。', '...Never thought about it.'], ['也許娶個媳婦。也許給她講我哥的事。', 'Maybe take a wife. Maybe tell her about my brother.'], ['先數完再說。', 'Finish counting first.']] }] },
+    gou: { g: ['哥，我比你高了。', 'Brother, I\'m taller than you now.'], t: [{ q: 'Your boots fit.', bond: 1, a: [['我說過我會長到穿得下的！', 'I told you I\'d grow into them!']] }] },
+    qian: { g: ['我在想，該怎麼寫這一仗。', 'I\'m thinking how to write this one.'], t: [{ q: 'Write it true, for once.', bond: 1, flag: 'qianTrue', a: [['……好。這一回，寫真的。只寫進我自己的本子裡。', '...All right. This once, the truth. Only in my own notebook.'], ['給總兵的那份，照樣寫一千。', 'The one for the general still says a thousand.']] }] },
+    feng: { g: ['殺豬殺人，現在燒房子了。', 'Pigs, then men, now houses.'], t: [{ q: 'Next?', a: [['下一個？我也不知道。也許是蓋房子。', 'Next? I don\'t know. Maybe building houses.']] }] },
+    dong: { g: ['我給莊子裡的人帶了針。他們的針一定都斷了。', 'I\'ve brought needles for the people on the farm. Theirs must all be broken.'], t: [{ q: 'That\'s kind.', bond: 1, a: [['做小買賣的，總得想著客人。', 'A peddler has to think of his customers.']] }] },
+    sun: { g: ['我不該跟來的。可我想看看他們的鐵匠鋪。', 'I shouldn\'t have come. But I wanted to see their forge.'], t: [{ q: 'Stay at the boats.', bond: 1, a: [['好。我在船邊等你們。給你們燒一鍋熱水。', 'All right. I\'ll wait by the boats. I\'ll have hot water for you.']] }] },
+    chenshou: { g: ['抽籤。誰先進門，誰拿頭功。', 'We draw lots. Whoever goes through the gate first gets first honours.'], t: [{ q: 'And the most danger.', bond: 1, a: [['頭功，就是頭一個死的機會。', 'First honours is the first chance to die.'], ['所以要抽籤。不讓任何人自己選。', 'That\'s why we draw lots. So nobody has to choose.']] }] },
+  })[k],
+};
+DCH[9] = null; // Act Three is being written
+
+// ---------- the choices of Act Two ----------
+// 二 · Ma Liu's question (camp before the famine, played as Erniu)
+CHD.dj6wed = {
+  build: (C) => ({ id: 'dj6wed', title: '魚 · The fish', ltitle: 'Ma Liu\'s question', year: 'Pidao, autumn 1623', who: ['李二妞 Li Erniu', 'at the door of the hut, with a basket of fish someone has left'], hold: 1.2,
+    lines: [chL('（籃子裡是兩條黃魚，用草繩穿著。草繩上打了個結：漁民求親的結。）', '(In the basket, two yellow croakers on a grass cord. In the cord, a knot: the knot a fisherman ties when he asks for a girl.)'),
+      chL('娘：他走以前跟你哥說了。你哥說：問她。', 'Your mother: He spoke to your brother before they sailed. Your brother said: ask her.'),
+      chL('王嫂：結解開，就是答應了。結不動，就是不答應。', 'Sister Wang: Untie the knot and it\'s yes. Leave it tied and it\'s no.'),
+      chL('（你在這個島上沒有房子，沒有地，沒有爹。你有一把鋸子，一個哥，和兩條魚。）', '(On this island you have no house, no land, no father. You have a saw, a brother, and two fish.)')],
+    opts: [
+      { q: 'Untie the knot.', led: 'Erniu untied the knot: she would marry Ma Liu.', a: [chL('（娘把魚接過去，說：晚上燒了吧。）', '(Your mother takes the fish and says: we\'ll cook them tonight.)'), chL('王嫂笑了，那是她男人沒回來以後第一次笑。', 'Sister Wang laughs: the first time since her husband didn\'t come back.')], fx: (C) => { chBond(C, 'ma', 2); C.S.flags.wed = 1; } },
+      { q: 'Retie it looser: when the war is over.', led: 'Erniu told Ma Liu: when the war is over.', a: [chL('王嫂：鬆一點的結……他懂的。漁民都懂。', 'Sister Wang: A looser knot... he\'ll understand. Fishermen do.')], fx: (C) => { chBond(C, 'ma', 1); C.S.flags.wedLater = 1; } },
+      { q: 'Leave the knot as it is.', led: 'Erniu left the knot tied: no.', a: [chL('（你把籃子放在門口，草繩沒動。）', '(You leave the basket at the door, the cord untouched.)'), chL('娘什麼也沒說。第二天早上，籃子不見了。', 'Your mother says nothing. In the morning the basket is gone.')], fx: (C) => { C.S.flags.wedNo = 1; } },
+    ],
+    go: 'Go to bed →' }),
+  end: (C, o) => o === 0 ? (C.S.alive.ma ? 'They are married still.' : 'She was a widow before she was thirty.') : o === 1 ? 'The war was not over.' : 'He kept rowing your boat.',
+};
+// 三 · the lots (camp before the Anshan raid): who goes through the manor gate first
+CHD.dj8lots = {
+  build: (C) => ({ id: 'dj8lots', title: '籤 · The lots', ltitle: 'Who went first through the gate', year: 'In the hills above Anshan, 1626', who: ['陳壽 Sergeant Chen Shou', 'holding out a fist with ten straws in it'], hold: 1.2,
+    lines: [chL('一根短的。抽到短的，明天第一個進門。', 'One short straw. Whoever draws it goes through the gate first tomorrow.'),
+      chL('劉黑子：給我。我去。不用抽。', 'Liu Heizi: Give it here. I\'ll go. No need to draw.'),
+      chL('胡三：……我認得那個門。我知道門後面站著誰。', 'Hu San: ...I know that gate. I know who stands behind it.'),
+      chL('趙大看著你。他什麼也沒說，可你知道他想讓你說。', 'Zhao Da is looking at you. He says nothing, but you know he wants you to speak.')],
+    opts: [
+      { q: 'I\'ll go first. I lead the file.', led: 'Went first through the manor gate yourself.', a: [chL('陳壽把拳頭收回去，把稻草扔了。「好。」', 'Sergeant Chen closes his fist and throws the straws away. "Good."'), chL('趙大點了點頭。', 'Zhao Da nods.')], fx: (C) => { chBond(C, 'zhao', 2); chRep(C, 'valor', 2); C.S.flags.first = 'me'; } },
+      { q: 'Let Liu Heizi go.', led: 'Let Liu Heizi go first, as he asked.', a: [chL('劉黑子咧嘴笑了。他好久沒笑了。', 'Liu Heizi grins. He hasn\'t smiled in a long time.')], fx: (C) => { chBond(C, 'liu', 2); C.S.flags.first = 'liu'; } },
+      { q: 'Hu San knows the gate. Let him lead.', led: 'Sent Hu San first: he knew the gate.', a: [chL('胡三看了你很久。「謝謝。」', 'Hu San looks at you for a long time. "Thank you."'), chL('劉黑子啐了一口：「剃頭的。」', 'Liu Heizi spits. "Shaved-head."')], fx: (C) => { chBond(C, 'hu', 2); chBond(C, 'liu', -1); C.S.flags.first = 'hu'; } },
+      { q: 'Draw. Everyone draws.', led: 'Made everyone draw lots.', a: [chL('（稻草一根一根抽出去。短的那根，在董貨郎手裡。他看著它，笑了一下。）', '(The straws go out one by one. The short one is in Dong the peddler\'s hand. He looks at it and gives a little laugh.)'), chL('董貨郎：做了三十年買賣，頭一回抽到頭彩。', 'Dong: Thirty years in trade, and the first time I\'ve drawn the prize.')], fx: (C) => { chBond(C, 'dong', 1); C.S.flags.first = 'dong'; } },
+    ],
+    go: 'Lie down →' }),
+  end: (C, o) => { const k = ['me', 'liu', 'hu', 'dong'][o]; return k === 'me' ? 'You went first.' : C.S.alive[k] ? `${({ liu: 'Liu Heizi', hu: 'Hu San', dong: 'Dong the peddler' })[k]} went first, and came out.` : `${({ liu: 'Liu Heizi', hu: 'Hu San', dong: 'Dong the peddler' })[k]} went first.`; },
+};
+// whoever went first through the gate takes the blow the manor fight gives the file
+{ const _s = dStart; dStart = function (scene) { if (scene === 'b8') { const D = dLoad(); const f = D && D.flags && D.flags.first; if (f && f !== 'me') DCH[8].wounds = { 6: f }; } return _s(scene); }; }
 
 })();
 </script>
