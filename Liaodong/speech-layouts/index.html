@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v147</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v148</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1677,7 +1677,7 @@ class Sim {
     const gun = gunOf(u.def, u.weapon);
     if (gun && this.phase === 1 && u.weapon === 'bow' && !(gun.xbow)) this.heroBow(u, a, gun);
     else if (gun && this.phase === 1) {
-      u.aiming = !!(a & A_AIM) && (u.st === ST_IDLE || u.st === ST_RELOAD) && !(a & A_BLOCK); u.aimHold = u.aiming && u.st === ST_IDLE ? (u.aimHold || 0) + DT : 0;
+      u.aiming = !!(a & A_AIM) && (u.st === ST_IDLE || (u.st === ST_RELOAD && !(u.reloadT > 0.8))) && !(a & A_BLOCK); /* no sights while reloading: holding aim through a reload no longer slows the walk to aiming pace; it takes hold the moment the gun is loaded */ u.aimHold = u.aiming && u.st === ST_IDLE ? (u.aimHold || 0) + DT : 0;
       const have = u.weapon === 'revolver' ? u.ammoR : u.ammo;
       if ((a & A_RELOAD) && u.club) { u.club = false; this.events.push({ t: 'grip', id: u.id, club: false }); }
       if ((a & A_FIRE) && !u.club) u.fireQ = 0.45;
@@ -9469,10 +9469,10 @@ class Renderer {
     }
     const mv = clamp(s / 1.5, 0, 1);
     const bob = dead ? 0 : (0.03 * Math.abs(Math.sin(ph * 2)) * gW + 0.06 * Math.abs(Math.sin(ph * 2)) * gT + 0.12 * (0.5 + 0.5 * Math.sin(ph + 1.2)) * gG) * mv;
-    const pitch = dead ? 0 : 0.07 * Math.sin(ph) * gG * mv;
+    let pitch = dead ? 0 : 0.07 * Math.sin(ph) * gG * mv;
     if (a) a.hbob = bob;
     let lean = 0, rootY = y + bob;
-    if (dead) { lean = 1.35; rootY = y + 0.35 - Math.max(0, deadT - 15) * 0.1; }
+    if (dead) { lean = 1.35; rootY = y + 0.35 - Math.max(0, deadT - 15) * 0.1; pitch = this._deadPitch || 0; }
     const root = T.m2.compose(T.v.set(x, rootY, z), T.q.setFromEuler(T.e.set(pitch, yaw, lean, 'YXZ')), T.v2.set(1, 1, 1));
     this.setPart(H.body, slot, root, 0, 0, 0, 0, 0, 0, 0, 1.05, 0, 0.56, 0.62, 1.5);
     const nod = dead ? 0.4 : (0.05 * Math.sin(ph * 2) * gW + 0.04 * Math.sin(ph * 2) * gT + 0.14 * Math.sin(ph + 2.2) * gG) * mv;
@@ -9517,6 +9517,25 @@ class Renderer {
   // ---------- viewmodel ----------
   // first person, loading the three-eyed gun: the muzzles tipped up before your face, one barrel at a time (powder, ball and wad,
   // the rammer driven home in strokes, the touch-hole primed), then the gun comes down and the match is blown on
+  // the muzzle-loader, done the way a man does it with the enemy coming: drop the gun, tear the cartridge with his teeth, shake
+  // the powder in, thumb the ball down, snatch the rod and ram it hard five or six times, whip it out, prime the pan with two
+  // taps, and snap the gun back up. Every stroke jolts the gun and the eye; nothing lingers.
+  vmMuzzleReload(rt, rh, P, R, hip) {
+    const K = R.muzzle, R0 = K[0][1], PO = K[1][1], Mz = K[2][1], V = (x, y, z) => new THREE.Vector3(x, y, z), o = (b, x, y, z) => V(b.x + x, b.y + y, b.z + z);
+    const S0 = 0.28, N = 6, SL = 0.058, SE = S0 + N * SL; /* the strokes */
+    const keys = [[0, R0], [0.05, PO], [0.08, o(PO, 0, 0.035, -0.02)], [0.1, PO], [0.14, o(Mz, 0, 0.02, 0)], [0.2, o(Mz, 0.005, 0.01, 0)], [0.23, o(Mz, 0, 0.03, 0.03)], [0.26, o(Mz, 0, -0.01, 0.1)]];
+    for (let i = 0; i < N; i++) { const t0 = S0 + i * SL; keys.push([t0 + SL * 0.55, o(Mz, 0, 0, -0.42 + (i === 0 ? -0.04 : 0))], [t0 + SL, o(Mz, 0, 0, -0.04)]); }
+    keys.push([SE + 0.04, o(Mz, 0, 0, -0.52)], [SE + 0.07, o(PO, 0, 0.02, 0.1)], [0.8, V(0.05, -0.04, -0.3)], [0.83, V(0.05, -0.02, -0.29)], [0.86, V(0.05, -0.05, -0.3)], [0.9, V(0.04, -0.05, -0.3)], [1, R0]);
+    this.vmKey(rh, keys, rt);
+    let shake = 0, pitch = 0, roll = 0;
+    if (rt > 0.14 && rt < 0.22) shake = Math.sin(rt * 260) * 0.006; /* the powder, poured with a shaking hand */
+    if (rt >= S0 && rt < SE) { const s = ((rt - S0) % SL) / SL; const hit = s > 0.5 && s < 0.66 ? Math.sin((s - 0.5) / 0.16 * Math.PI) : 0; shake = -hit * 0.022; pitch = -0.05 - hit * 0.035; roll = 0.03 + hit * 0.02; } /* each stroke slams home */
+    else if (rt >= 0.06 && rt < S0) { pitch = -0.04; roll = 0.02; }
+    if (rt > 0.79 && rt < 0.9) { const s = (rt - 0.79) / 0.11; shake = Math.abs(Math.sin(s * Math.PI * 2)) * -0.006; }
+    const prime = rt >= SE + 0.07 && rt < 0.92;
+    const target = rt >= 0.92 ? hip : prime ? P(0.1, -0.3, -0.44, 0.22, -0.15, 0.45) : R.relMuzzle;
+    return { target, rod: rt > 0.25 && rt < SE + 0.06, cart: rt > 0.04 && rt < 0.2, shake, pitch, roll, flask: prime && rt < 0.86 ? 1 : 0, speed: rt >= 0.92 ? 20 : 15 };
+  }
   vmSjReload(rt, rh, lh, P) {
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
     if (!this.vmFlask && this.vmRifle && this.vmRifle.parent) { const g = new THREE.Group(), lea = new THREE.MeshLambertMaterial({ color: 0xc9a25a, depthTest: false }), brass = new THREE.MeshLambertMaterial({ color: 0xb8913a, depthTest: false });
@@ -9617,7 +9636,7 @@ class Renderer {
       const style = reloadStyle(hero);
       if (reloading && style !== 'lever') {
         speed = 9;
-        if (style === 'muzzle') { target = rt < 0.93 ? R.relMuzzle : hip; this.vmKey(rhT, R.muzzle, rt); rod = rt > 0.42 && rt < 0.88; cart = rt > 0.12 && rt < 0.3; }
+        if (style === 'muzzle') { const q = this.vmMuzzleReload(rt, rhT, P, R, hip); target = q.target; rod = q.rod; cart = q.cart; shake = q.shake; camPitch = q.pitch; camRoll = q.roll; this._sjFl = q.flask; speed = q.speed; }
         else if (style === 'sj') { const q = this.vmSjReload(rt, rhT, lhT, P); target = q.target; rod = q.rod; this._sjFl = q.flask; this._sjBlow = q.blow; speed = 7; }
         else if (style === 'spencer') { target = rt < 0.86 ? R.relSpencer : hip; this.vmKey(rhT, R.spencer, rt); cart = rt > 0.36 && rt < 0.58; }
         else { target = rt < 0.9 ? R.relBreech : (hero.aiming ? ads : hip); this.vmKey(rhT, R.breech, rt); breechOpen = smooth(0.17, 0.24, rt) * (1 - smooth(0.73, 0.8, rt)); cart = rt > 0.45 && rt < 0.72; }
@@ -9732,7 +9751,7 @@ class Renderer {
     this.vmCyl.position.x = -0.04 * cylOut;
     this.vmCart.visible = cart;
     this.vmRod.visible = rod; if (rod) { this.vmRod.position.copy(st.rh).add(T.v.set(0, 0, 0.45)); }
-    { const sjr = w === 'rifle' && !hero.club && reloading && reloadStyle(hero) === 'sj'; if (!sjr) { this._sjFl = 0; this._sjBlow = 0; } this.vmRod.scale.set(sjr ? 2.6 : 1, sjr ? 2.6 : 1, 1);
+    { const rs = w === 'rifle' && !hero.club && reloading ? reloadStyle(hero) : ''; const sjr = rs === 'sj'; if (!sjr && rs !== 'muzzle') { this._sjFl = 0; this._sjBlow = 0; } this.vmRod.scale.set(sjr ? 2.6 : 1, sjr ? 2.6 : 1, 1);
       if (this.vmFlask) { this.vmFlask.visible = !!this._sjFl; if (this._sjFl) this.vmFlask.position.copy(st.rh).add(T.v.set(0.0, 0.0, 0.06)); }
       if (this.vmSj) { if (!this.vmSjMatch) this.vmSjMatch = this.vmSj.children.find(c => c.material && c.material.type === 'MeshBasicMaterial') || null;
         const mt = this.vmSjMatch; if (mt) { const b = this._sjBlow || 0, f = 1 + b * (2.2 + 0.6 * Math.sin(this.time * 31)); mt.scale.set(f, f, f); mt.material.color.setHex(b > 0.3 ? 0xffd27a : 0xff8a3a); } } }
@@ -9922,7 +9941,13 @@ class Renderer {
     for (let i = this.deadHorses.length - 1; i >= 0; i--) {
       const d = this.deadHorses[i]; d.t += dt; const hs = this.horseSlot.get(d.id);
       if (d.t > 22) { this.hideHorse(hs); this.deadHorses.splice(i, 1); continue; }
-      this.drawHorse(hs, units[d.id], d.x, d.y, d.z, d.yaw, 0, 0, true, d.t);
+      { // a dead horse comes down onto the ground and lies along it: it died at whatever height it was running at (a rise, mid-stride),
+        // and on a slope a body laid flat stood off the ground at one end. Settle onto the lowest of the ground under it, tilt with the slope
+        const fx = Math.sin(d.yaw), fz = Math.cos(d.yaw), hC = terrainH(d.x, d.z), hF = terrainH(d.x + fx * 1.1, d.z + fz * 1.1), hB = terrainH(d.x - fx * 1.1, d.z - fz * 1.1);
+        const hL = terrainH(d.x - fz * 0.6, d.z + fx * 0.6), hR = terrainH(d.x + fz * 0.6, d.z - fx * 0.6), gnd = Math.min(hC, (hF + hB) / 2, (hL + hR) / 2 + 0.05);
+        d.vy = (d.vy || 0) - 18 * dt; d.y += d.vy * dt; if (d.y <= gnd) { d.y = gnd; d.vy = 0; } if (d.y > gnd + 3) d.y = gnd + 3;
+        this._deadPitch = clamp(Math.atan2(hB - hF, 2.2), -0.6, 0.6); }
+      this.drawHorse(hs, units[d.id], d.x, d.y, d.z, d.yaw, 0, 0, true, d.t); this._deadPitch = 0;
     }
     for (const [id, v] of this.cannonRecoil) { const nv = v - dt; if (nv <= 0) this.cannonRecoil.delete(id); else this.cannonRecoil.set(id, nv); }
     // ragdolls
