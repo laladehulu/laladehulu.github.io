@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v156</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v157</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
 <title>New Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2314,8 +2314,9 @@ class Sim {
         const tsd = leash < 1e9 ? len(tgt.x - u.slotX, tgt.z - u.slotZ) : 0;
         const yy = !isHero && !u.mounted && u.role && sq && !sq.routing && sq.def.yuanyang && this.yyAI(u, sq, tgt, d, reach);
         const xl = (!yy && this.xc && !isHero && !u.mounted && !u.champ && u.ctrl < 0 && tsd <= leash + reach) ? this.xcLine(u, sq, tgt, d, reach) : 0; // 1: waiting or breathing, 2: spear keeping his distance
+        if (leash < 1e9 && !(tsd > (u.lOut ? leash + 3 : leash - 1) + reach)) u.lOut = true;
         if (yy) { }
-        else if (tsd > leash + reach) { this.goSlot(u, sq, ang); if (u.spaceOf >= 0) u.spaceOf = -1; } // hold the formation: step out only for a foe who comes to the line, rear ranks wait their turn
+        else if (leash < 1e9 && tsd > (u.lOut ? leash + 3 : leash - 1) + reach) { u.lOut = false; this.goSlot(u, sq, ang); if (u.spaceOf >= 0) u.spaceOf = -1; } // hold the formation: step out only for a foe who comes to the line, rear ranks wait their turn (with a margin either way, so a man does not shuttle out and back as the foe sways about the line)
         else if (xl) { }
         else if (u.mounted) {
           if (u.ctrl < 0) this.cavCharge(u, tgt, d); // shock cavalry: run up, ride through, wheel, come again
@@ -2371,8 +2372,12 @@ class Sim {
       if (d > 1.5) { this.cavSteer(u, u.slotX, u.slotZ, Math.min(u.def.speed, d * 1.2)); return u.hyaw; }
       this.cavSteer(u, u.x, u.z, 0); u.hyaw = sq.facing; return sq.facing;
     }
-    if (d > 0.45) return this.steerFoot(u, u.slotX, u.slotZ, u.def.speed * (sq.order === ORD_FOLLOW && d > 2.5 ? 1.45 : 1)); /* a man left behind his leader runs for his place (the pace cap below keeps it to the leader's own speed) */
-    u.mx = 0; u.mz = 0; return sq.facing;
+    // a man in his place stays put: once there (or as near as the crowd lets him, making no headway) he stands until his place
+    // really moves, instead of shoving for the last half pace against his neighbours and being pushed back, over and over
+    if (u.setl && d < 1.4) { u.mx = 0; u.mz = 0; return sq.facing; }
+    u.setl = false; if ((this.tick + u.id) % 20 === 0) { if (d < 1.4 && u.setlD !== undefined && d > u.setlD - 0.12) u.setl = true; u.setlD = d; }
+    if (d > 0.45 && !u.setl) return this.steerFoot(u, u.slotX, u.slotZ, u.def.speed * (sq.order === ORD_FOLLOW && d > 2.5 ? 1.45 : 1)); /* a man left behind his leader runs for his place (the pace cap below keeps it to the leader's own speed) */
+    u.setl = true; u.mx = 0; u.mz = 0; return sq.facing;
   }
   horseIdle(u) {
     if (u.rider >= 0 && this.units[u.rider].ctrlActive) return;
@@ -4163,6 +4168,12 @@ Sim.prototype.setupMission = function (teams, aiPl) {
       const sq = gp ? gp.squads.map(id => this.squads[id]).filter(q => q.def.yuanyang)[i] || this.squads[gp.squads[0]] : null; p.soldierSq = sq ? sq.id : 0; this.possess(p, sq, c.yyRole || 'shield');
       if (sq) for (const id of sq.unitIds) { const u = this.units[id]; u.def = Object.assign({}, u.def, { hp: u.def.hp * 1.5 }); u.hp = u.def.hp; u.zfile = true; }
       if (c.wkit && c.wkit.length && p.heroId >= 0) this.kitGive(this.units[p.heroId], c.wkit); });
+    // your own squad keeps with you from the first minute: it is yours to move (follow / halt / charge / form up), not the AI's,
+    // so a scripted move for the rest of your group never walks your file away from you. A story beat that hands you the
+    // file later (its chief falls, 'lead') still says so; this is only who moves the men.
+    for (const p of humans) { const q = this.squads[p.soldierSq]; if (!q || q.owner === p.idx || p.heroId < 0) continue;
+      if (q.owner >= 0) { const o = this.players[q.owner]; o.squads = o.squads.filter(id => id !== q.id); }
+      q.owner = p.idx; for (const id of q.unitIds) this.units[id].owner = p.idx; if (!p.squads.includes(q.id)) p.squads.push(q.id); q.order = ORD_FOLLOW; p.commanderId = p.heroId; }
     this.story = true; // your file: hardened Yiwu men, and the story's heart
   } else if (!ass) {
     humans.forEach((p, i) => { const c = this.cfg.players[p.idx] || {}; const t = roleType(c.role, M.side); p.team = M.side; p.army = humans.length === 1 || this.diff >= 3 ? [t, M.soloExtra || 'ashigaru'] : [t]; /* the lone banner: two companies each, and no one else */
@@ -6422,7 +6433,7 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
           [8, 'mao', 'Liaodong men! We came up the river for you. Show me the yamen.', '遼東的弟兄們！我們從江上來接你們。帶我去衙門。'],
           [16, 'zhao', 'That\'s Mao Wenlong? He\'s smaller than I thought.', '那就是毛文龍？比我想的矮。']] },
       { title: '三 · 衙門 · The yamen', goal: 'Take the yamen and seize Tong Yangzhen alive', text: 'Tong Yangzhen holds Zhenjiang for the Khan. Take him alive: a living traitor is worth more to the court than a dead one.', show: ['yamen'], hide: ['sgate'],
-        start: [['release', 'tong'], ['release', 'guard3'], ['dir', 'mao', 'hold', 0, 16], ['dir', 'file', 'hold', 0, 12]], obj: { officer: 'tong' },
+        start: [['release', 'tong'], ['release', 'guard3'], ['dir', 'mao', 'attack']], obj: { officer: 'tong' },
         say: [[3, 'mao', 'Alive! I want him alive, and his seal with him!', '要活的！人和印都要活的！'],
           [14, 'qian', 'Tong Yangzhen was a Ming officer, from a Liaodong family. He went over at Fushun.', '佟養真原本是明朝的官，遼東人家。撫順時投過去的。'],
           [24, 'liu', 'Then he gets no mercy from me.', '那我就不饒他。']] },
@@ -6745,13 +6756,13 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
     groups: {
       file: { team: 0, name: 'Sergeant Chen Shou', zh: '陳壽', army: ['ronin'], at: [72, -62, PI], dir: ['support'], stay: true },
       mao: { team: 0, name: 'Mao Wenlong', zh: '毛文龍', army: ['samurai'], at: [64, -56, PI], dir: ['hold', 2, 14], stay: true, n: 4, keepHero: true },
-      yguard: { team: 1, name: 'The Supreme Commander\'s guard', zh: '督師親兵', army: ['samurai', 'rifle_imp', 'samurai', 'cavalry'], at: [-10, 46, 0], dir: ['hold', -10, 48], stay: true, n: 34 },
-      yuan: { team: 1, name: 'Yuan Chonghuan', zh: '袁崇煥', army: ['samurai'], at: [-10, 70, 0], dir: ['hold', -10, 70], stay: true, n: 3, keepHero: true },
+      yguard: { team: 0, ming: true, name: 'The Supreme Commander\'s guard', zh: '督師親兵', army: ['samurai', 'rifle_imp', 'samurai', 'cavalry'], at: [-10, 46, 0], dir: ['hold', -10, 48], stay: true, n: 34 },
+      yuan: { team: 0, ming: true, name: 'Yuan Chonghuan', zh: '袁崇煥', army: ['samurai'], at: [-10, 70, 0], dir: ['hold', -10, 70], stay: true, n: 3, keepHero: true },
     },
-    choices: { 1: [[['calm', 'yguard', 0], ['dir', 'yguard', 'attack']], [['calm', 'yguard', 999]]] },
+    choices: { 1: [[], []] }, /* the guard is Ming, on your side of the field: drawing your blade outside the tent is settled in the story (they knock you down), not in a brawl */
     phases: [
       { title: '一 · 上岸 · Ashore', goal: 'Walk up from the boats behind the general', text: 'Mao Wenlong goes up from the beach in his best armour, with his guard behind him. Yuan Chonghuan\'s banners are on the hill.', show: ['field'],
-        start: [['calm', 'yguard', 999], ['calm', 'yuan', 999]], obj: { reach: 'field' },
+        start: [], obj: { reach: 'field' },
         say: [[2, 'mao', 'Chests out! Let the Supreme Commander see what the East River looks like!', '挺起胸來！讓督師看看東江的兵是什麼樣子！'],
           [8, 'qian', 'Yuan Chonghuan held Ningyuan against the old Khan. The Emperor gave him the imperial sword: the power of life and death.', '袁崇煥在寧遠擋住了老汗。皇上賜了他尚方寶劍：生殺予奪。'],
           [16, 'liu', 'Then why does he need so many guards on a little island?', '那他在這麼個小島上要這麼多親兵幹什麼？'],
@@ -13329,7 +13340,12 @@ function armyCost(a) { return a.reduce((s, k) => s + S.DEFS[k].cost, 0); }
 // buildings, and the height field is shaded), so the map shows what the field is like; the account is in the (i) pop-up
 const MAPCACHE = {}, MAPQ = [];
 function drawMap(key, N) {
-  const b = S.BATTLES[key]; let sim; try { sim = new S.Sim({ seed: 1619, battle: key, mode: 'standard', players: [{ name: 'map', team: 0, army: [] }] }); } catch (e) { return null; }
+  // the ground is one shared height field (terrainH): a throwaway Sim lays out this map's ground over it, so the live game's
+  // ground is put back afterwards. Never drawn during a game at all (see pumpMaps): it would move hills under the men's feet
+  const live = state.sim && state.sim.layout; const back = () => { if (live && state.sim && state.sim.layout === live) S.setTerrain(live); };
+  const b = S.BATTLES[key]; let sim; try { sim = new S.Sim({ seed: 1619, battle: key, mode: 'standard', players: [{ name: 'map', team: 0, army: [] }] }); } catch (e) { back(); return null; }
+  try { return drawMapOf(key, N, b, sim); } finally { back(); } }
+function drawMapOf(key, N, b, sim) {
   const R = 192, st = (2 * R) / N, H = new Float32Array(N * N); let lo = 1e9, hi = -1e9;
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const h = S.terrainH(-R + (i + .5) * st, -R + (j + .5) * st); H[j * N + i] = h; if (h < lo) lo = h; if (h > hi) hi = h; }
   const cv = document.createElement('canvas'); cv.width = cv.height = N; const g = cv.getContext('2d'), im = g.createImageData(N, N), D = im.data;
@@ -13353,7 +13369,7 @@ function drawMap(key, N) {
 }
 function mapImg(key, big) { const k = key + (big ? ':b' : ''); if (MAPCACHE[k]) return MAPCACHE[k]; if (!MAPQ.includes(k)) { MAPQ.push(k); pumpMaps(); } return ''; }
 function pumpMaps() { if (pumpMaps.on) return; pumpMaps.on = true;
-  const next = () => { const k = MAPQ.shift(); if (!k) { pumpMaps.on = false; return; } const [key, b] = k.split(':'); MAPCACHE[k] = drawMap(key, b ? 192 : 96) || 'none';
+  const next = () => { if (state.sim && $('menu') && $('menu').hidden) { setTimeout(next, 1500); return; } /* not while a battle is on */ const k = MAPQ.shift(); if (!k) { pumpMaps.on = false; return; } const [key, b] = k.split(':'); MAPCACHE[k] = drawMap(key, b ? 192 : 96) || 'none';
     for (const im of document.querySelectorAll(`img[data-map="${k}"]`)) if (MAPCACHE[k] !== 'none') im.src = MAPCACHE[k];
     setTimeout(next, 0); };
   setTimeout(next, 30); }
