@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v159</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v160</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2290,11 +2290,14 @@ class Sim {
         wantYaw = ang;
         const range = this.gunRange(def, u.weapon, u);
         if (d <= range && (sq ? sq.fire : true)) {
-          let inPlace = true; if (this.tick < (u.rampT || 0) && u.st === ST_IDLE && this.sg && TERR.swall && !this.overParapet(u)) { this.toRampart(u); inPlace = false; } else if (!def.skirmish) { if (u.mounted) this.cavSteer(u, u.x, u.z, 0); else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z, sd = len(sdx, sdz); if (sq && order !== ORD_CHARGE && sd > 1.3 && u.st === ST_IDLE) { this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.8); inPlace = false; } else { u.mx = 0; u.mz = 0; } } }
+          let inPlace = true; if (this.tick < (u.rampT || 0) && u.st === ST_IDLE && this.sg && TERR.swall && !this.overParapet(u)) { this.toRampart(u); inPlace = false; }
+          else if (u.seekT > this.tick && !u.mounted && len(u.slotX - u.seekX, u.slotZ - u.seekZ) < 25) { const d2 = len(u.seekX - u.x, u.seekZ - u.z); if (d2 > 0.8 && u.st === ST_IDLE) { this.steerFoot(u, u.seekX, u.seekZ, def.speed * 0.85); inPlace = false; } else { u.mx = 0; u.mz = 0; if (this.losClear(u, tgt)) u.seekT = Math.max(u.seekT, this.tick + 45); } } /* gone to a place he can shoot from (and he keeps it while it gives him a shot, unless his company marches off) */
+          else if (!def.skirmish) { if (u.mounted) this.cavSteer(u, u.x, u.z, 0); else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z, sd = len(sdx, sdz); if (sq && order !== ORD_CHARGE && sd > 1.3 && u.st === ST_IDLE) { this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.8); inPlace = false; } else { u.mx = 0; u.mz = 0; } } }
           else { const sdx = u.slotX - u.x, sdz = u.slotZ - u.z; if (len(sdx, sdz) > 0.6) this.steerFoot(u, u.slotX, u.slotZ, def.speed * 0.7); else { u.mx = 0; u.mz = 0; } }
           if (!u.mounted && (u.mx !== 0 || u.mz !== 0)) { const my = atan2(u.mx, u.mz), off = Math.abs(wrap(my - ang)), turner = (u.id * 37) % 10 < 7; if (off > 1.9 && len(u.slotX - u.x, u.slotZ - u.z) > (turner ? 1.2 : 4)) wantYaw = my; else if (off > 1.6) { u.mx *= 0.5; u.mz *= 0.5; } } // a long way back to his place: turn and walk it, don't skate backward; a step or two back is a slow backpedal
           if (inPlace && u.st === ST_IDLE && u.ammo > 0 && !this.losClear(u, tgt)) { /* a wall or a house in the way: shoot at someone he CAN see (any enemy in range, not only his company's mark); only a man on open ground with nobody in sight walks to find a shot */
-            const alt = this.losTarget(u, range); if (alt) { u.target = alt.id; u.losLock = this.tick + 60; } else if (this.sg && TERR.swall && u.team === this.sg.D && u.z > TERR.swall.z0 - 0.5) { u.rampT = this.tick + 120; this.toRampart(u); inPlace = false; } /* a defender with nothing to shoot at goes up on the rampart, whatever his company's place */ else if (!this.onWallTop(u)) { this.steerFoot(u, tgt.x, tgt.z, def.speed * 0.75); inPlace = false; } else inPlace = false; }
+            const alt = this.losTarget(u, range); if (alt) { u.target = alt.id; u.losLock = this.tick + 60; } else if (this.sg && TERR.swall && u.team === this.sg.D && u.z > TERR.swall.z0 - 0.5) { u.rampT = this.tick + 120; this.toRampart(u); inPlace = false; } /* a defender with nothing to shoot at goes up on the rampart, whatever his company's place */ else if (!this.onWallTop(u)) { if (!(u.seekT > this.tick)) { const sp = this.shotSpot(u, tgt); if (sp) { u.seekX = sp.x; u.seekZ = sp.z; u.seekT = this.tick + 30 * 6; } else { u.seekT = 0; } }
+              if (u.seekT > this.tick) this.steerFoot(u, u.seekX, u.seekZ, def.speed * 0.85); else this.steerFoot(u, tgt.x, tgt.z, def.speed * 0.75); inPlace = false; } else inPlace = false; } /* nothing close to shoot from: close in on him */
           if (inPlace && u.st === ST_IDLE && u.ammo > 0 && u.flinchT <= 0 && Math.abs(wrap(ang - u.yaw)) < 0.7) {
             u.st = ST_AIM; u.stT = 0; u.aimTarget = tgt.id; u.blocking = false;
             const g0 = gunOf(def, u.weapon); const aimT = Math.round((g0 ? g0.aim : 0.8) * 30);
@@ -2756,16 +2759,32 @@ class Sim {
     for (let i = 0; i < n; i++) { const v = this.units[this.nearBuf[i]]; if (v.dead || v.inactive || v.team === u.team || v.type === 'horse' || (v.downed && this.story)) continue; const d = len(v.x - u.x, v.z - u.z); if (d > range) continue; cand.push([d, v]); }
     cand.sort((a, b) => a[0] - b[0] || a[1].id - b[1].id); for (let i = 0; i < Math.min(6, cand.length); i++) if (this.losClear(u, cand[i][1])) return cand[i][1]; return null;
   }
-  // can he see (and shoot) his man? walls, houses, rocks and stockades block it; trees only partly hide, so they don't
+  // can he see (and shoot) his man? walls, houses, rocks, stockades, tree trunks and the lie of the ground block it
   losClear(u, t) {
     if (u.losTk !== undefined && this.tick - u.losTk < 12 && u.losTo === t.id) return u.losOk;
-    const ox = u.x, oy = u.y + 1.5, oz = u.z, dx = t.x - ox, dy = t.y + 1.2 - oy, dz = t.z - oz; let ok = true;
-    for (let i = 0; i < this.boxes.length && ok; i++) { const b = this.boxes[i]; if (b.kind === 'sinner' || (b.kind === 'sface' && this.overParapet(u))) continue; const k = this.rayBox(ox, oy, oz, dx, dy, dz, b, 1); if (k > 0.02 && k < 0.98) ok = false; }
-    const hd = len(dx, dz);
-    if (ok && hd > 1e-6) { const ux = dx / hd, uz = dz / hd, obs = this.obstacles;
-      for (let i = 0; i < obs.length; i++) { const o = obs[i]; if (o.kind === 0) continue; const lx = ox - o.x, lz = oz - o.z, b = lx * ux + lz * uz, c = lx * lx + lz * lz - o.r * o.r, disc = b * b - c; if (disc < 0) continue;
-        const t2 = -b - Math.sqrt(disc); if (t2 < 0.5 || t2 > hd - 0.5) continue; const y = oy + dy * (t2 / hd), gh = terrainH(o.x, o.z), top = o.kind === 1 ? gh + o.r * 0.9 : o.kind === 2 ? gh + 5 : o.kind === 5 ? gh + 1.2 : gh + 4; if (y < top && y > gh - 1) { ok = false; break; } } }
+    const ok = this.losFrom(u.x, u.y + 1.5, u.z, t, u);
     u.losTk = this.tick; u.losTo = t.id; u.losOk = ok; return ok;
+  }
+  // a clear line from a point (a man's eye) to t's chest: no wall, house, rock or stockade in it, and no rise of the ground
+  losFrom(ox, oy, oz, t, u) {
+    const dx = t.x - ox, dy = t.y + 1.2 - oy, dz = t.z - oz; let ok = true;
+    const hd = len(dx, dz);
+    if (hd > 3) { const n = Math.min(40, Math.ceil(hd / 2.2)); for (let i = 1; i < n; i++) { const f = i / n; const gx = ox + dx * f, gz = oz + dz * f; if (terrainH(gx, gz) > oy + dy * f - 0.2) return false; } } /* the shoulder of a hill */
+    for (let i = 0; i < this.boxes.length && ok; i++) { const b = this.boxes[i]; if (b.kind === 'sinner' || (b.kind === 'sface' && u && this.overParapet(u))) continue; const k = this.rayBox(ox, oy, oz, dx, dy, dz, b, 1); if (k > 0.02 && k < 0.98) ok = false; }
+    if (ok && hd > 1e-6) { const ux = dx / hd, uz = dz / hd, obs = this.obstacles;
+      for (let i = 0; i < obs.length; i++) { const o = obs[i]; const lx = ox - o.x, lz = oz - o.z, b = lx * ux + lz * uz, c = lx * lx + lz * lz - o.r * o.r, disc = b * b - c; if (disc < 0) continue;
+        const t2 = -b - Math.sqrt(disc); if (t2 < 0.5 || t2 > hd - 0.5) continue; const y = oy + dy * (t2 / hd), gh = terrainH(o.x, o.z), top = o.kind === 0 ? gh + 7 : o.kind === 1 ? gh + o.r * 0.9 : o.kind === 2 ? gh + 5 : o.kind === 5 ? gh + 1.2 : gh + 4; /* a tree's trunk stops a ball as it does in fireRifle; its crown does not */ if (y < top && y > gh - 1) { ok = false; break; } } }
+    return ok;
+  }
+  // a man with no clear shot looks for a place a few paces off (to either side, or a step or two forward) from which he has one:
+  // the nearest such place that is open ground, not in a house, a wall or the water. Null if there is none close by
+  shotSpot(u, t) {
+    const dx = t.x - u.x, dz = t.z - u.z, d = len(dx, dz) || 1, fx = dx / d, fz = dz / d, rx = -fz, rz = fx; let best = null, bd = 1e9;
+    const C = [[4, 0], [-4, 0], [8, 0], [-8, 0], [0, 6], [5, 5], [-5, 5], [12, 0], [-12, 0], [0, 12], [9, 9], [-9, 9]];
+    for (const [lat, fwd] of C) { const x = u.x + rx * lat + fx * fwd, z = u.z + rz * lat + fz * fwd; if (Math.abs(x) > HALF - 3 || Math.abs(z) > HALF - 3) continue; const w = waterAt(x, z); if (w === 1 || w === 2) continue;
+      let inBox = false; for (const b of this.boxes) if (Math.abs(x - b.x) < b.hw + 0.6 && Math.abs(z - b.z) < b.hd + 0.6) { inBox = true; break; } if (inBox) continue;
+      const cost = Math.abs(lat) + fwd * 1.3; if (cost >= bd) continue; if (this.losFrom(x, terrainH(x, z) + 1.5, z, t, u)) { best = { x, z }; bd = cost; } }
+    return best;
   }
   rayBox(ox, oy, oz, dx, dy, dz, b, maxT) {
     const gh = terrainH(b.x, b.z); const minY = gh - 0.5, maxY = gh + b.h;
