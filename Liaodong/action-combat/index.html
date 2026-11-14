@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v158</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v159</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -4644,8 +4644,52 @@ Sim.prototype.woundedAI = function (u) {
   if (d > 0.5) { const y = this.steerFoot(u, bx, bz, u.def.speed * (d > 4 ? 0.8 : 0.62)); this.turnTo(u, y, 4 * DT); } else { u.mx = 0; u.mz = 0; this.turnTo(u, h.yaw, 3 * DT); }
 };
 // a night camp: you, your file around the fire, and the tents
+// a night camp laid out on a battle map must be on clear ground: every bedroll, the fire, the tents, the people and the ground
+// between them away from the map's houses, walls, boats, rocks and trees, and out of the water. If anything is in the way the
+// whole camp slides to the nearest clear ground (rings out to 80 paces) and campShift says by how much (the campaigns move
+// your bed with it). Every campaign's camp goes through here.
+Sim.prototype.campFit = function (C) {
+  // what matters: the beds, the fire, the people and the ground between them. Tents and props are dressing: one that stands on
+  // a house or a rock is simply left out, rather than the whole camp walking off to an empty field
+  const pts = []; // [x, z, clearance]
+  for (const b of C.bedrolls || []) pts.push([b[0], b[1], 1.1]);
+  for (const f of C.fires || []) pts.push([f[0], f[1], 1.4]);
+  for (const n of C.npcs || []) pts.push([n.x, n.z, 0.7]);
+  if (C.me) pts.push([C.me.x, C.me.z, 0.9]);
+  if (!pts.length) return;
+  let cx = 0, cz = 0; { const L = C.bedrolls && C.bedrolls.length ? C.bedrolls.map(b => [b[0], b[1]]) : pts; for (const q of L) { cx += q[0]; cz += q[1]; } cx /= L.length; cz /= L.length; } /* the middle of the beds */
+  let R = 0; for (const b of (C.bedrolls && C.bedrolls.length ? C.bedrolls : [])) R = Math.max(R, len(b[0] - cx, b[1] - cz)); if (C.me) R = Math.max(R, len(C.me.x - cx, C.me.z - cz)); R = Math.min(R + 0.6, 10); /* the ring of beds and the walk to yours */
+  for (let r = 1.5; r <= R; r += 1.8) for (let k = 0, n = Math.max(6, Math.round(r * 2.4)); k < n; k++) { const a = k / n * TAU; pts.push([cx + sin(a) * r, cz + cos(a) * r, 0.45]); } // the ground between (a bed can be clear and still walled off from the fire)
+  const boxes = this.boxes, obs = this.obstacles, sea = TERR.sea, LIGHT = { tent: 1, mantlet: 1, wagon: 1, fence: 1, log: 1 }; /* the map's own dressing: may be cleared off a camp */
+  const boxHit = (b, x, z, m) => b.rot ? len(x - b.x, z - b.z) < len(b.hw, b.hd) + m : Math.abs(x - b.x) < b.hw + m && Math.abs(z - b.z) < b.hd + m;
+  const hit = (x, z, m, soft) => { if (Math.abs(x) > HALF - 10 || Math.abs(z) > HALF - 10) return true;
+    for (const b of boxes) { if (soft && LIGHT[b.kind]) continue; if (boxHit(b, x, z, m)) return true; }
+    for (const o of obs) if (len(x - o.x, z - o.z) < (o.r || 0.5) + m) return true;
+    const w = waterAt(x, z); if (w === 1 || w === 2) return true; if (sea && x > sea.x0 - 4) return true; return false; };
+  const bad = (dx, dz, soft) => { for (const q of pts) if (hit(q[0] + dx, q[1] + dz, q[2], soft)) { if (this.cfg.campDebug && !dx && !dz) this.campWhy = (this.campWhy || []).concat([[+q[0].toFixed(1), +q[1].toFixed(1), q[2]]]); return true; }
+    let lo = 1e9, hi = -1e9; for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, h = terrainH(cx + dx + sin(a) * R, cz + dz + cos(a) * R); if (h < lo) lo = h; if (h > hi) hi = h; } return hi - lo > 2.4; }; /* and not on a cliff */
+  const ring = (r0, r1, soft) => { for (let r = r0; r <= r1; r += 2) for (let k = 0, n = Math.max(8, Math.round(r * 1.4)); k < n; k++) { const a = k / n * TAU, dx = sin(a) * r, dz = cos(a) * r; if (!bad(dx, dz, soft)) return [dx, dz]; } return null; };
+  // where the camp goes: where it was put; else a step or two over; else where it was put, with the dressing in the way cleared
+  // off; else the nearest clear ground out to 80 paces; and if there is none, where it was put (cleared as far as it can be)
+  let sx = 0, sz = 0, clear = false;
+  if (bad(0, 0, false)) { const near = ring(2, 8, false);
+    if (near) { sx = near[0]; sz = near[1]; }
+    else if (!bad(0, 0, true)) clear = true;
+    else { const far = ring(10, 80, false); if (far) { sx = far[0]; sz = far[1]; } else clear = true; } }
+  if (clear || true) { const core = pts.map(q => [q[0] + sx, q[1] + sz, q[2]]); const gone = new Set(); for (const b of boxes) if (LIGHT[b.kind] && core.some(q => boxHit(b, q[0], q[1], q[2]))) gone.add(b);
+    if (gone.size) { const keep = boxes.filter(b => !gone.has(b)); boxes.length = 0; boxes.push(...keep); this.campCleared = gone.size; } }
+  sx = Math.round(sx * 100) / 100; sz = Math.round(sz * 100) / 100;
+  if (sx || sz) { this.campShift = [sx, sz];
+    for (const b of C.bedrolls || []) { b[0] += sx; b[1] += sz; } for (const f of C.fires || []) { f[0] += sx; f[1] += sz; } for (const t of C.tents || []) { t[0] += sx; t[1] += sz; }
+    for (const n of C.npcs || []) { n.x += sx; n.z += sz; } for (const q of C.props || []) { q[1] += sx; q[2] += sz; } if (C.me) { C.me.x += sx; C.me.z += sz; } }
+  // dressing that would stand in a house, on a rock or across a bedroll is left out
+  const nearBed = (x, z, m) => (C.bedrolls || []).some(b => len(b[0] - x, b[1] - z) < m * 0.8 + 0.5); /* a tent standing on a bedroll, not merely beside it */
+  if (C.tents) { const keep = C.tents.filter(t => !hit(t[0], t[1], 0.2) && !nearBed(t[0], t[1], Math.min(t[2], t[3]))); this.campDropped = C.tents.length - keep.length; C.tents.length = 0; C.tents.push(...keep); }
+  if (C.props) { const keep = C.props.filter(q => !hit(q[1], q[2], 0.5) && !nearBed(q[1], q[2], 0.3)); C.props.length = 0; C.props.push(...keep); }
+};
 Sim.prototype.setupCamp = function (humans) {
   const C = this.cfg.camp || { npcs: [], tents: [], me: { x: 0, z: 6, yaw: PI, role: 'shield' } };
+  if (this.cfg.camp) this.campFit(C);
   for (const t of C.tents || []) this.boxes.push({ x: t[0], z: t[1], hw: t[2], hd: t[3], h: t[4], kind: 'tent' });
   const CT = C.type || 'yuanyang', CTm = C.team | 0; // another campaign's camp: its own unit type and side (jin.js, shenji.js)
   const mk = (role, x, z, yaw) => { const u = this.addUnit(CT, CTm, -1, -1, x, z, yaw); if (CT === 'yuanyang') { u.role = role; u.def = YYDEF[role] || YYDEF.spear; u.hp = u.def.hp; u.weapon = u.def.weapons[0]; } else { u.def = defFor(CT, CTm); u.hp = u.def.hp; u.weapon = u.def.weapons[0]; } return u; };
@@ -9269,8 +9313,9 @@ class Renderer {
       const lt = new THREE.PointLight(0xff9a4a, 2.4, 30, 1.6); lt.position.set(x, y + 1.3, z); sc.add(lt);
       this.campFires.push({ x, y, z, fl, lt, t: Math.random() * 10 }); }
     for (const b of C.bedrolls || []) { const [x, z, yaw, empty] = b, y = terrainH(x, z); const grp = new THREE.Group(); grp.position.set(x, y, z); grp.rotation.y = yaw; sc.add(grp);
-      const mat = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.09, 1.85), L(empty ? 0x343a44 : 0x46505e)); mat.position.y = 0.05; grp.add(mat);
-      const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.66, 8), L(0x6a5a44)); roll.rotation.z = Math.PI / 2; roll.position.set(0, 0.13, -0.8); grp.add(roll);
+      const mat = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.09, 1.9), L(empty ? 0x5a5446 : 0x9a8a62)); mat.position.y = 0.05; grp.add(mat); /* a straw mat: it reads against the dark ground by firelight */
+      const quilt = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.07, 1.25), L(empty ? 0x3a3e48 : 0x4e6490)); quilt.position.set(0, 0.13, 0.25); grp.add(quilt);
+      const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.66, 8), L(empty ? 0x6a5a44 : 0xd8c8a0)); roll.rotation.z = Math.PI / 2; roll.position.set(0, 0.15, -0.78); grp.add(roll);
       if (empty) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 2.1), L(0x6b5232)); sp.position.set(0.48, 0.04, 0.1); sp.rotation.y = 0.05; grp.add(sp); const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.07, 8), L(0x7a6a50)); cup.position.set(-0.2, 0.13, -0.45); grp.add(cup);
         const hat = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.12, 10), L(0x2c2a26)); hat.position.set(0.12, 0.15, -0.3); grp.add(hat); } }
     for (const p of C.props || []) { const [kind, x, z, yaw] = p, y = terrainH(x, z); const grp = new THREE.Group(); grp.position.set(x, y, z); grp.rotation.y = yaw || 0; sc.add(grp);
@@ -9418,7 +9463,20 @@ class Renderer {
       const Dt = SIM.TERR.sditch, per = Math.round(F.f.hw * 2 / 0.9); for (let i = 0; i < F.n; i++) { if (i >= show) { F.m.setMatrixAt(i, T.zero); continue; } const col = i % per, lay = Math.floor(i / per); const x = F.f.x - F.f.hw + 0.45 + col * 0.9; T.m.compose(T.v.set(x, SIM.terrainH(x, Dt.zc) + 0.35 + lay * 0.6, Dt.zc + ((col * 7) % 3 - 1) * 0.6), T.q.setFromEuler(T.e.set(HPI, 0, 0)), T.v2.set(1, Dt.w * 1.1, 1)); F.m.setMatrixAt(i, T.m); }
       F.m.instanceMatrix.needsUpdate = true; }
   }
+  // your own bedroll in a night camp: where you lie down (E) to end the night. The campaigns call this with its place
+  markBed(x, z) {
+    if (this.bedMark) { this.scene.remove(this.bedMark.grp); this.bedMark = null; } const y = terrainH(x, z), grp = new THREE.Group(); grp.position.set(x, y, z); this.scene.add(grp);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(1.05, 1.32, 40), new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.06; grp.add(ring);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 4.2, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xffc860, transparent: true, opacity: 0.1, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false })); beam.position.y = 2.1; grp.add(beam);
+    const lt = new THREE.PointLight(0xffc070, 1.1, 7, 1.8); lt.position.y = 1.1; grp.add(lt);
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128; const g = cv.getContext('2d'); g.fillStyle = 'rgba(16,12,8,0.78)'; g.fillRect(8, 22, 496, 84); g.strokeStyle = '#d2a94c'; g.lineWidth = 4; g.strokeRect(8, 22, 496, 84);
+    g.fillStyle = '#f2cf6a'; g.font = 'bold 44px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('床 · Your bedroll · E', 256, 66);
+    const tex = new THREE.CanvasTexture(cv); const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, fog: false })); sp.scale.set(2.6, 0.65, 1); sp.position.y = 2.5; sp.renderOrder = 20; grp.add(sp);
+    this.bedMark = { grp, ring, beam, lt, sp, t: 0 };
+  }
   updateCamp(dt) {
+    if (this.bedMark) { const B = this.bedMark; B.t += dt; const k = 0.5 + 0.5 * Math.sin(B.t * 2.4); B.ring.material.opacity = 0.45 + 0.4 * k; B.ring.scale.setScalar(1 + 0.06 * k); B.beam.material.opacity = 0.06 + 0.07 * k; B.sp.position.y = 2.5 + 0.08 * Math.sin(B.t * 1.6);
+      const cam = this.camera.position, d = Math.hypot(cam.x - B.grp.position.x, cam.z - B.grp.position.z); B.sp.visible = d > 2.2; /* the label is for finding it; standing on it you see the prompt */ }
     for (const f of this.campFires) { f.t += dt; const k = 0.82 + 0.18 * Math.sin(f.t * 11) * Math.sin(f.t * 7.3 + 1) + 0.08 * Math.sin(f.t * 23); f.lt.intensity = 2.3 * k;
       f.fl.forEach((m, i) => { const s = 0.85 + 0.25 * Math.sin(f.t * (9 + i * 3) + i); m.scale.set(1, s, 1); m.rotation.y = f.t * (0.6 + i * 0.3); });
       if (Math.random() < dt * 9) this.sparks.spawn(f.x + rnd(-0.2, 0.2), f.y + 0.6, f.z + rnd(-0.2, 0.2), rnd(-0.3, 0.3), rnd(1.5, 3.2), rnd(-0.3, 0.3), rnd(0.8, 1.6), 0.05, 0.015, 1, 0.65, 0.25, 1, 0.4, 0.1, 0.9, -0.3, 0.2);
@@ -14218,6 +14276,8 @@ function startGame(msg, me, net, delay) {
   $('cmdui').classList.toggle('chaos', state.sim.chaos); $('fporders').classList.toggle('chaos', state.sim.chaos);
   if (state.renderer) { try { state.renderer.renderer.dispose(); } catch (e) { } }
   state.renderer = new RENDER.Renderer(canvas, state.sim, me);
+  // a night camp: the sim may have moved the camp onto clear ground (campFit); your bed goes with it, and is marked
+  if (cfg.camp && typeof ZC !== 'undefined' && ZC && ZC.bed) { const sh = state.sim.campShift; if (sh) ZC.bed = [ZC.bed[0] + sh[0], ZC.bed[1] + sh[1]]; if (state.renderer.markBed) state.renderer.markBed(ZC.bed[0], ZC.bed[1]); }
   state.ls = new Lockstep(msg.players.length, me, delay);
   msg.players.forEach((p, i) => { if (p.connected === false) state.ls.disconnect(i); });
   for (const [p, k, d] of state.pendingInputs) state.ls.onRemote(p, k, d); state.pendingInputs = [];
