@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v155</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v156</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
 <title>New Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2643,6 +2643,7 @@ class Sim {
   applyDamage(u, dmg, attackerId, ix, iy, iz, cause, hx, hy, hz) {
     if (u.dead || u.inactive) return false; if (dmg > 0) u.hurtTk = this.tick;
     if (u.ctrl >= 0 && this.players[u.ctrl] && this.players[u.ctrl].god) return false; // debug mode: the tester cannot be hurt
+    if (this.storyEase && dmg > 0) { if (u.ctrl >= 0 && !this.players[u.ctrl].ai) dmg *= this.storyEase.take; else if (u.team === this.mission.side) dmg *= this.storyEase.ally; } // a story chapter at the chosen difficulty
     if (this.xc && u.ctrl >= 0 && !this.players[u.ctrl].ai && (cause === 'melee' || cause === 'trample' || cause === 'spear' || cause === 'counter' || cause === 'arrow' || cause === 'shot')) { // no instant deaths in a crowd or under a whole company's volley
       const dec = (this.tick - (u.xcT === undefined ? this.tick : u.xcT)) * DT * 0.3 * u.def.hp; u.xcB = Math.max(0, (u.xcB || 0) - dec); u.xcT = this.tick;
       const room = Math.max(0, u.def.hp * 0.4 - u.xcB); if (dmg > room) dmg = room + (dmg - room) * 0.15;
@@ -4128,6 +4129,10 @@ Sim.prototype.setupMission = function (teams, aiPl) {
     (M.defRes || []).forEach((d, i) => mk('r' + i, { team: D, name: 'Reserve ' + (i + 1), army: d[0], at: [d[1], d[2], A === 1 ? PI : 0], reserve: true, sector: d[3] }));
     M.att.concat(M.att, M.att).forEach((a, i) => mk('a' + i, { team: A, name: AI_NAMES[A][i % 5], army: a, at: [M.attAt[0] + ((i % 3) - 1) * 40, M.attAt[1], M.attAt[2]], reserve: i >= 3 }));
   } else { // difficulty (co-op): 0 recruit, 1 soldier, 2 veteran, 3 lone banner — no AI companies on your side, only what the players bring
+    // a story chapter (you are one man in a file) follows the same setting: fewer and softer enemies, the blows that reach you
+    // lighter, your wounds closing when you get out of the fight, and objectives that a few stragglers no longer hold up
+    if (M.soldier) this.storyEase = [{ foe: 0.62, n: 0.6, take: 0.45, ally: 0.75, frac: 0.4, tol: 3, ht: 6, regen: 0.05 }, { foe: 0.74, n: 0.75, take: 0.62, ally: 0.85, frac: 0.5, tol: 2, ht: 8, regen: 0.035 },
+      { foe: 0.85, n: 0.9, take: 0.85, ally: 1, frac: 0.6, tol: 1, ht: 10, regen: 0.015 }, { foe: 0.9, n: 1, take: 1, ally: 1, frac: 1, tol: 0, ht: 12, regen: 0 }][this.diff];
     const D = this.diff, need = new Set(); for (const P of M.phases || []) { const walk = (o) => { if (!o) return; if (o.arrive) need.add(o.arrive); if (o.officer) need.add(o.officer); (o.all || []).forEach(walk); }; walk(P.obj); }
     if (M.soldier) need.add(M.soldier.group);
     for (const gid in M.groups) { const G = M.groups[gid];
@@ -4136,11 +4141,12 @@ Sim.prototype.setupMission = function (teams, aiPl) {
   for (const p of this.players) if (p.ai) { const g = this.mg[p.gid], G = g.G; this.placeArmy({ player: p, army: p.army }, G.team, G.at[0], G.at[1], G.at[2]);
     const lab = G.team === 1 && M.labels; if (lab) for (const id of p.squads) { const q = this.squads[id], L = lab[q.type]; if (!L) continue; const nd = Object.assign({}, q.def, { name: L[0], jp: L[1] }); q.def = nd; for (const uid of q.unitIds) { const u = this.units[uid]; u.def = Object.assign({}, u.def, { name: L[0], jp: L[1] }); } }
     const h = this.units[p.heroId]; if (h && G.officer) { h.def = Object.assign({}, h.def, { hp: h.def.hp * G.officer, name: G.name, dmg: h.def.dmg.map(x => x * 1.4) }); h.hp = h.def.hp; h.officer = true; }
-    if (G.n) this.mTrim(p, G.n, !!(G.wound || G.officer || G.keepHero)); /* a trimmed group keeps its general when the story needs the man (one to be taken alive, a named officer) */
+    { const E = this.storyEase; let n = G.n; if (E && G.team !== M.side && E.n < 1) { let c = 0; for (const id of p.squads) c += this.squads[id].unitIds.length; n = Math.max(4, Math.round(Math.min(n || c, c) * E.n)); }
+      if (n) this.mTrim(p, n, !!(G.wound || G.officer || G.keepHero || (this.storyEase && !G.n))); } /* a trimmed group keeps its general when the story needs the man (one to be taken alive, a named officer) */
     if (G.reserve) { p.inactive = true; for (const id of p.squads) { const q = this.squads[id]; q.inactive = true; for (const uid of q.unitIds) this.units[uid].inactive = true; } for (const uid of [p.heroId, p.horseId]) if (uid >= 0) this.units[uid].inactive = true; }
     this.mDir(p.gid, G.dir); }
   if (M.soldier) { const cache = new Map(); const tune = (d, k, m) => { if (!cache.has(d)) cache.set(d, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return cache.get(d); }; // a story chapter: the Jin at near full strength, their generals no one-man armies
-    for (const u of this.units) { if (u.type === 'horse' || u.def.ai === 'cannon' || u.team === M.side) continue; u.def = u.type === 'hero' ? tune(u.def, 0.75, 0.5) : tune(u.def, 0.85, 0.85); u.hp = u.def.hp; } }
+    for (const u of this.units) { if (u.type === 'horse' || u.def.ai === 'cannon' || u.team === M.side) continue; const fk = this.storyEase ? this.storyEase.foe : 0.85; u.def = u.type === 'hero' ? tune(u.def, 0.75, 0.5) : tune(u.def, fk, fk); u.hp = u.def.hp; } }
   if (!ass && !M.soldier) { // campaign balance: the enemy rank and file are a little softer, your allies a little harder (officers excepted)
     const cache = new Map(); const tune = (d, k, m) => { const key = d; if (!cache.has(key)) cache.set(key, new Map()); const c = cache.get(key); if (!c.has(k)) c.set(k, Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * m) : d.dmg })); return c.get(k); };
     const FK = [0.68, 0.82, 0.95, 1.0][this.diff], AK = [1.25, 1.12, 1.0, 1.0][this.diff];
@@ -4642,13 +4648,13 @@ Sim.prototype.mObj = function (o, el) {
   if (o.all) { let ok = 1; for (const s of o.all) { const r = this.mObj(s, el); if (r < 0) return -1; if (r === 0) ok = 0; } if (ok && o.keep === undefined && !o.reach) return 1; if (!ok) return 0; }
   if (o.keep) { const z = this.missionZone(o.keep); if (z && z.owner === 1 - this.mission.side) return -1; }
   if (o.reach) { const z = this.missionZone(o.reach); if (!(z && this.humansIn(z))) return 0; }
-  if (o.hold) { const z = this.missionZone(o.hold); const k = 'hold:' + o.hold; const S1 = this.mission.side === 1; if ((S1 ? z.n1 : z.n0) > 0 && (S1 ? z.n0 : z.n1) === 0) this.mv[k] = (this.mv[k] || 0) + 0.5; if ((this.mv[k] || 0) < Math.min(o.t, 12)) return 0; } /* take it and clear it: no long hold-outs */
+  if (o.hold) { const z = this.missionZone(o.hold); const k = 'hold:' + o.hold; const S1 = this.mission.side === 1; const E = this.storyEase, mine = S1 ? z.n1 : z.n0, theirs = S1 ? z.n0 : z.n1; if (mine > 0 && theirs <= (E ? E.tol : 0) && mine > theirs * 2) this.mv[k] = (this.mv[k] || 0) + 0.5; if ((this.mv[k] || 0) < Math.min(o.t, E ? E.ht : 12)) return 0; } /* take it and clear it: no long hold-outs */
   if (o.capture) { for (const k of o.capture) { const z = this.missionZone(k); if (z.owner !== this.mission.side) return 0; } }
-  if (o.defeat) { for (const gid of o.defeat) { const g = this.mg[gid]; if (!g || (!g.released && !g.broken)) return 0; if (!g.broken && this.mGroupFrac(gid) > 1 - (o.frac || 0.8)) return 0; } for (const gid of o.defeat) this.mBreak(gid); }
+  if (o.defeat) { for (const gid of o.defeat) { const g = this.mg[gid]; if (!g || (!g.released && !g.broken)) return 0; if (!g.broken && this.mGroupFrac(gid) > 1 - Math.min(o.frac || 0.8, this.storyEase ? this.storyEase.frac : 1)) return 0; } for (const gid of o.defeat) this.mBreak(gid); }
   if (o.officer) { const g = this.mg[o.officer]; if (!g || !g.released) return 0; const h = this.units[this.players[g.p].heroId]; const wound = g.G.wound; if (h && !h.dead && !(wound && h.hp < h.def.hp * wound)) return 0; if (!g.broken) { this.events.push({ t: 'mofficer', name: g.G.name, zh: g.G.zh || '', gid: o.officer, wounded: !!(h && !h.dead) }); this.mBreak(o.officer); } }
   if (o.arrive) { const z = this.missionZone(o.zone), p = this.players[this.mg[o.arrive].p]; let n = 0, a = 0; for (const id of p.squads) { const q = this.squads[id]; if (!q.alive) continue; a++; if (len(q.cx - z.x, q.cz - z.z) < z.r + 8) n++; }
     if (a === 0) { const gh = this.units[p.heroId]; if (!(o.general && gh && !gh.dead)) return -1; if (len(gh.x - z.x, gh.z - z.z) >= z.r + 8) return 0; } /* arrive + general: his companies may all be gone as long as he himself gets through */
-    else if (n < a) return 0; }
+    else if (n < (this.storyEase && this.diff < 3 ? Math.max(1, Math.ceil(a * 0.66)) : a)) return 0; } /* a story chapter: most of the column through is enough (one company caught up in a fight does not hold it up) */
   if (o.survive) { if (el < o.survive && !this.mQuietDone(el)) return 0; } /* 'hold out' only while there is something to hold against */
   if (o.never) return 0;
   if (o.rescue && this.mFallen() > 0) return 0; /* a man of yours is still down: get him up (he dies of it in a minute, and then the phase goes on without him) */
@@ -4679,7 +4685,7 @@ Sim.prototype.missionThink = function () {
   if (M.beacon && this.beaconTick) { this.beaconTick(); if (this.mwin !== undefined) return; }
   const mv = this.mv;
   if (mv.ph < 0) { mv.ph = 0; mv.t0 = this.tick; this.mStart(); }
-  if (M.soldier && this.tick % 15 === 0) this.aidPost();
+  if (M.soldier && this.tick % 15 === 0) { this.aidPost(); const E = this.storyEase; if (E && E.regen) for (const p of this.players) { if (p.ai) continue; const h = this.units[p.heroId]; if (h && !h.dead && h.hp > 0 && h.hp < h.def.hp && this.tick - (h.hurtTk || 0) > 30 * 5) h.hp = Math.min(h.def.hp, h.hp + h.def.hp * E.regen * 0.5); } }
   const P0 = M.phases[mv.ph]; if (P0 && !M.camp && this.mode !== 'assault') { // quiet: bring the next scripted beat forward (never in a timed phase)
     if (this.mThreat()) mv.quietPh = -1; else if (mv.quietPh !== mv.ph) { mv.quietPh = mv.ph; mv.quietT = this.tick; }
     const el0 = (this.tick - mv.t0) / 30;
@@ -6086,8 +6092,8 @@ return { Sim, defFor, STORY, DEFS, ROSTER, FACTION, BATTLES, MAPS, cityWall, BUD
       for (const [z, b] of [[-60, 1], [-40, 1], [-22, 1], [-4, 1]]) junkZ(sim, keep, 114, z, 13, b, { wy: 0, furled: true });
       for (const [x, z] of [[78, -30], [70, -14], [84, -4], [74, 12], [64, -46], [88, -56]]) house(sim, keep, x, z, 3.2, 2.6, false, 2.8);
       racks(sim, 92, -24, 8);
-      /* the tax granary: three storehouses in a palisade with its gate toward the village */
-      for (let x = 22; x < 58; x += 3) sim.boxes.push({ x: x + 1.5, z: 62, hw: 1.5, hd: 0.5, h: 2, kind: 'palisade' }); for (let x = 22; x < 58; x += 3) if (Math.abs(x + 1.5 - 40) > 4) sim.boxes.push({ x: x + 1.5, z: 94, hw: 1.5, hd: 0.5, h: 2, kind: 'palisade' });
+      /* the tax granary: three storehouses in a palisade, a gate toward the village (south) and one to the fields (north) */
+      for (let x = 22; x < 58; x += 3) if (Math.abs(x + 1.5 - 44) > 4) sim.boxes.push({ x: x + 1.5, z: 62, hw: 1.5, hd: 0.5, h: 2, kind: 'palisade' }); for (let x = 22; x < 58; x += 3) if (Math.abs(x + 1.5 - 40) > 4) sim.boxes.push({ x: x + 1.5, z: 94, hw: 1.5, hd: 0.5, h: 2, kind: 'palisade' });
       for (let z = 62; z < 94; z += 3) { sim.boxes.push({ x: 22, z: z + 1.5, hw: 0.5, hd: 1.5, h: 2, kind: 'palisade' }); sim.boxes.push({ x: 58, z: z + 1.5, hw: 0.5, hd: 1.5, h: 2, kind: 'palisade' }); }
       for (const x of [30, 40, 50]) house(sim, keep, x, 82, 3.4, 4, false, 3.6); keep.push({ x: 40, z: 78, r: 24 });
       /* the guard huts by the field */ house(sim, keep, -34, 46, 3, 2.4, false); house(sim, keep, -40, 34, 3, 2.4, false);
@@ -6320,8 +6326,8 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
     groups: {
       file: { team: 0, name: 'Captain Chen of the west quarter', zh: '陳千總', army: ['ronin'], at: [40, 100, PI], dir: ['support'], stay: true },
       garrison: { team: 0, name: 'The west quarter garrison', zh: '西城守兵', army: ['ashigaru'], at: [-30, 30, PI], dir: ['hold', -110, 0], stay: true },
-      jinA: { team: 1, name: 'Bordered Blue skirmishers', zh: '鑲藍旗', army: ['archer', 'samurai'], at: [76, 70, -PI / 2], dir: ['hold', 50, 60], n: 14 },
-      jinB: { team: 1, name: 'Bordered Blue bannermen', zh: '鑲藍旗', army: ['samurai', 'shinsengumi'], at: [110, 40, -PI / 2], reserve: true, n: 16 },
+      jinA: { team: 1, name: 'Bordered Blue skirmishers', zh: '鑲藍旗', army: ['archer', 'samurai'], at: [76, 70, -PI / 2], dir: ['hold', 50, 60], n: 10 },
+      jinB: { team: 1, name: 'Bordered Blue bannermen', zh: '鑲藍旗', army: ['samurai', 'shinsengumi'], at: [110, 40, -PI / 2], reserve: true, n: 12 },
       gate: { team: 1, name: 'Bordered Blue horse', zh: '鑲藍旗馬甲', army: ['cavalry', 'cavalry', 'archer'], at: [-100, 12, -PI / 2], dir: ['hold', -118, 0], stay: true, reserve: true },
       jinC: { team: 1, name: 'Jin foot by the canal', zh: '金兵', army: ['samurai', 'archer'], at: [100, -86, -PI / 2], reserve: true, n: 16 },
     },
@@ -6333,7 +6339,7 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
           [20, 'gou', 'Bannermen in the next street! Shooting through the doors!', '下一條街有旗兵！隔著門往裡射箭！'],
           [34, 'file', 'West quarter men, to me! Anyone with a blade, to me!', '西城的人，跟我來！有刀的都跟我來！']] },
       { title: '二 · 家 · Home', goal: 'Hold your street until the house is empty', text: 'The house is still standing. Your mother is dragging the chest; your sister has your father\'s good saw. Hold the street while they get out.', show: ['home'],
-        start: [['release', 'jinB'], ['dir', 'jinB', 'hold', 30, 25], ['dir', 'jinA', 'attack']], obj: { all: [{ defeat: ['jinA', 'jinB'], frac: 0.6 }, { survive: 26 }] }, at: [[18, ['wound', 4]], [36, ['burn', 0, 70, 38]]],
+        start: [['release', 'jinB'], ['dir', 'jinB', 'hold', 30, 25], ['dir', 'jinA', 'attack']], obj: { all: [{ defeat: ['jinB'], frac: 0.5 }, { survive: 26 }] }, at: [[18, ['wound', 4]], [36, ['burn', 0, 70, 38]]],
         say: [[2, 'erniu', 'Tie! Ma won\'t leave without the chest!', '鐵子！娘不扛那個箱子就不走！'],
           [9, 'zhao', 'Here they come. Close up, shoulder to shoulder. They cut down a man alone.', '來了。挨緊了，肩並肩。單個的人他們一砍就倒。'],
           [19, 'qian', 'Old Zheng is down! Somebody get him up!', '鄭老倒了！誰去把他扶起來！'],
@@ -6453,7 +6459,7 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
         say: [[4, 'liu', 'Up! Up! Horses can\'t climb in this snow!', '往上！往上！這麼深的雪，馬上不來！'],
           [12, 'zheng', 'My knees, my knees... keep going, I\'m coming.', '我的膝蓋……走，走，我跟著呢。']] },
       { title: '三 · 斷後 · The rearguard', goal: 'Hold the ridge while Mao Wenlong gets away', text: 'Their bowmen have come up on foot. Hold the top of the path: every moment here is a mile for the general.', show: ['ridge'],
-        start: [], obj: { all: [{ hold: 'ridge', t: 12 }, { defeat: ['jin2'], frac: 0.6 }] }, at: [[14, ['wound', 5]]],
+        start: [['dir', 'mao', 'hold', 4, -94]], obj: { all: [{ hold: 'ridge', t: 12 }, { defeat: ['jin2'], frac: 0.5 }] }, at: [[14, ['wound', 5]]],
         say: [[4, 'zhao', 'Uphill, in snow, with arrows. Make them pay for every step.', '上坡、踩雪、頂著箭。讓他們每一步都付代價。'],
           [18, 'kim', 'In my language we call this a 의병, a righteous army. Farmers who fight. That\'s us.', '我們的話裡叫這個「義兵」。打仗的農夫。就是我們。']] },
       { title: '四 · 海邊 · To the coast', goal: 'Get down the far side to the coast path', text: 'They have stopped coming. Get down off the ridge to the coast path. Bring the wounded.', show: ['coast'], hide: ['ridge'],
@@ -7037,13 +7043,13 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
     groups: {
       file: { team: 0, name: 'Kong Youde', zh: '孔有德', army: ['rifle_imp'], at: [0, 80, PI], dir: ['support'], stay: true },
       jin: { team: 0, name: 'The Jin army', zh: '金兵', army: ['samurai', 'archer', 'shinsengumi', 'samurai'], at: [-30, 90, PI], dir: ['hold', -10, 30], stay: true, jinKit: true },
-      g1: { team: 1, name: 'The north gate', zh: '黃龍兵', army: ['rifle_imp', 'samurai', 'ashigaru'], at: [0, 16, 0], dir: ['hold', 0, 20], stay: true, n: 24 },
+      g1: { team: 1, name: 'The north gate', zh: '黃龍兵', army: ['rifle_imp', 'samurai', 'ashigaru'], at: [0, 16, 0], dir: ['hold', 0, 20], stay: true, n: 18 },
       huang: { team: 1, name: 'Huang Long', zh: '黃龍', army: ['samurai', 'rifle_imp'], at: [0, -22, 0], dir: ['hold', 0, -20], stay: true, n: 18, keepHero: true },
-      stair: { team: 1, name: 'The harbour stair', zh: '港口兵', army: ['rifle_imp', 'ronin'], at: [36, -30, 0], dir: ['hold', 38, -30], stay: true, n: 16 },
+      stair: { team: 1, name: 'The harbour stair', zh: '港口兵', army: ['rifle_imp', 'ronin'], at: [36, -30, 0], dir: ['hold', 38, -30], stay: true, n: 12 },
     },
     phases: [
       { title: '一 · 北門 · The north gate', goal: 'Take the north gate', text: 'Kong Youde\'s guns have been firing from the ships since dawn. Now the land assault. Take the north gate.', show: ['ngate'],
-        start: [['dir', 'g1', 'attack']], obj: { all: [{ hold: 'ngate', t: 8 }, { defeat: ['g1'], frac: 0.65 }] }, at: [[1, ['lead']]],
+        start: [['dir', 'g1', 'attack'], ['dir', 'jin', 'attack']], obj: { all: [{ hold: 'ngate', t: 8 }, { defeat: ['g1'], frac: 0.65 }] }, at: [[1, ['lead']]],
         say: [[3, 'file', 'For the Khan! Show him what the East River can do!', '為了汗！讓他看看東江的本事！'],
           [12, 'zhao', 'I know the man on that gate. I drank with him on Pidao.', '城門上那個人我認得。在皮島一起喝過酒。'],
           [22, 'liu', 'Then he should have come with us.', '那他該跟我們走。']] },
@@ -7052,7 +7058,7 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
         say: [[4, 'zhao', 'Huang Long was Mao Wenlong\'s man. He took the East River after Shuangdao.', '黃龍是毛文龍的人。雙島以後是他接的東江。'],
           [16, 'hu', 'The bannermen are killing everyone in the houses. Everyone.', '旗兵在殺房子裡的人。所有的人。']] },
       { title: '三 · 港 · The harbour', goal: 'Take the harbour stair', text: 'The last of the garrison is fighting at the harbour stair, trying to reach the boats.', show: ['stair'], hide: ['yamen'],
-        start: [['dir', 'stair', 'attack'], ['dir', 'file', 'hold', 34, -28]], obj: { all: [{ hold: 'stair', t: 8 }, { defeat: ['stair'], frac: 0.6 }] },
+        start: [['dir', 'stair', 'attack'], ['dir', 'file', 'hold', 34, -28], ['dir', 'jin', 'hold', 32, -24]], obj: { all: [{ hold: 'stair', t: 8 }, { defeat: ['stair'], frac: 0.6 }] },
         say: [[4, 'gou', 'They\'re throwing themselves into the sea. Rather than be taken.', '他們在往海裡跳。寧死也不被抓。'],
           [16, 'hu', 'Huang Long cut his own throat in the yamen. I saw his body.', '黃龍在衙門裡自刎了。我看見了他的屍首。']] },
     ],
@@ -7069,7 +7075,7 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
       file: { team: 0, name: 'Huang Long', zh: '黃龍', army: ['rifle_imp'], at: [0, 14, 0], dir: ['support'], stay: true },
       gar: { team: 0, name: 'The Lüshun garrison', zh: '旅順守兵', army: ['rifle_imp', 'ashigaru', 'samurai'], at: [-10, 10, 0], dir: ['hold', 0, 18], stay: true },
       j1: { team: 1, name: 'The Jin assault', zh: '金兵', army: ['samurai', 'shinsengumi', 'archer', 'samurai'], at: [0, 120, PI], reserve: true, n: 36 },
-      k1: { team: 1, name: 'Kong Youde\'s men from the ships', zh: '孔有德', army: ['rifle_imp', 'samurai', 'ronin'], at: [96, -40, -PI / 2], reserve: true, n: 26, ming: true },
+      k1: { team: 1, name: 'Kong Youde\'s men from the ships', zh: '孔有德', army: ['rifle_imp', 'samurai', 'ronin'], at: [96, -40, -PI / 2], reserve: true, n: 20, ming: true },
       j2: { team: 1, name: 'The Bordered Yellow banner', zh: '鑲黃旗', army: ['samurai', 'shinsengumi', 'samurai', 'archer'], at: [-40, 130, PI], reserve: true, n: 34 },
     },
     phases: [
@@ -7078,7 +7084,7 @@ const DJ_MISSIONS = (() => { const PI = Math.PI;
         say: [[3, 'file', 'Mao Wenlong made me. I will not hand his last town to his adopted son.', '毛文龍提拔的我。我不會把他最後一座城交給他的乾兒子。'],
           [14, 'zhao', 'Kong Youde\'s guns. Our guns. From Dengzhou.', '孔有德的砲。我們的砲。從登州來的。']] },
       { title: '二 · 港 · The harbour stair', goal: 'They are landing at the harbour: hold the stair', text: 'Kong Youde\'s men are coming ashore from the ships at the quay. If they take the harbour stair they are inside.', show: ['stair'], hide: ['ngate'],
-        start: [['release', 'k1'], ['dir', 'k1', 'hold', 38, -30], ['dir', 'file', 'hold', 34, -28]], obj: { all: [{ hold: 'stair', t: 10 }, { defeat: ['k1'], frac: 0.55 }] }, at: [[20, ['wound', 4]]],
+        start: [['release', 'k1'], ['dir', 'k1', 'hold', 38, -30], ['dir', 'file', 'hold', 34, -28], ['dir', 'gar', 'hold', 28, -22]], obj: { all: [{ hold: 'stair', t: 10 }, { defeat: ['k1'], frac: 0.55 }] }, at: [[20, ['wound', 4]]],
         say: [[4, 'gou', 'That\'s Brother Liu! With Kong\'s men! Coming up the stair!', '是劉哥！跟孔有德的人在一起！上樓梯來了！'],
           [16, 'qian', 'Half of the men coming up that stair drew pay on Pidao.', '上樓梯來的一半人，都在皮島領過餉。']] },
       { title: '三 · 衙門 · The last', goal: 'Back to the yamen with Huang Long', text: 'The north gate has fallen behind you. Back to the yamen. Huang Long is there, and he has sent everyone who can still run to the boats on the west beach.', show: ['yamen'], hide: ['stair'],
