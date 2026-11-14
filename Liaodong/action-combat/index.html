@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v169</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v170</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -21195,9 +21195,12 @@ const WCORE = (() => {
   function judge(S, c, i) { const o = c[3][i]; S.office.repute = (S.office.repute | 0) + o[1]; S.office.favor = (S.office.favor | 0) + o[2]; S.cash += o[3]; S.karma = (S.karma | 0) + Math.sign(o[1]); return o[4]; }
   // a year in office: the evaluation (考滿): promotion, a stay, or dismissal
   const LADDER = [['知縣', 'County Magistrate', 43], ['知州', 'Department Magistrate', 44], ['知府', 'Prefect', 46], ['按察副使', 'Surveillance Vice Commissioner', 47], ['布政使', 'Provincial Administration Commissioner', 48]];
-  function evaluate(S) { const o = S.office; const sc = (o.favor | 0) * 1.2 + (o.repute | 0) * 0.6 + (S.karma | 0) * 0.2 + (S.xiao | 0) * 0.3 + (S.flags.eunuchFaction && S.day >= D(1624, 6, 1) && S.day < D(1627, 9, 1) ? 4 : 0) + (S.flags.donglin && S.day >= D(1625, 1, 1) && S.day < D(1628, 1, 1) ? -5 : 0);
-    o.repute = 0; o.favor = 0; const i = LADDER.findIndex(l => l[0] === o.zh); if (i < 0) return 'Your year in office passes without remark.';
-    if (sc >= 6 && i < LADDER.length - 1) { const L = LADDER[i + 1]; o.zh = L[0]; o.en = L[1]; o.rank = L[2]; return `Your evaluation is excellent. You are promoted ${L[1]} (${L[0]}).`; }
+  const LADDERS = { county: LADDER, hanlin: [['翰林院編修', 'Hanlin Compiler', 45], ['翰林院侍讀', 'Hanlin Reader-in-waiting', 46], ['詹事府少詹事', 'Junior Supervisor of the Heir\'s Household', 47], ['禮部右侍郎', 'Vice Minister of Rites', 48], ['東閣大學士', 'Grand Secretary of the Eastern Hall', 49]],
+    censor: [['監察御史', 'Investigating Censor', 44], ['僉都御史', 'Assistant Censor-in-chief', 47], ['左副都御史', 'Vice Censor-in-chief', 48], ['左都御史', 'Censor-in-chief', 49]] };
+  function evaluate(S) { const o = S.office; const LAD = LADDERS[o.lad || 'county']; const sc = (o.favor | 0) * 1.2 + (o.repute | 0) * 0.6 + (S.karma | 0) * 0.2 + (S.xiao | 0) * 0.3 + (S.flags.eunuchFaction && S.day >= D(1624, 6, 1) && S.day < D(1627, 9, 1) ? 4 : 0) + (S.flags.donglin && S.day >= D(1625, 1, 1) && S.day < D(1628, 1, 1) ? -5 : 0);
+    o.repute = 0; o.favor = 0; const i = LAD.findIndex(l => l[0] === o.zh); if (i < 0) return 'Your year in office passes without remark.';
+    if (sc >= 10 && (S.karma | 0) >= 4 && (o.lad || 'county') === 'county' && i <= 1) { const L = LADDERS.censor[0]; o.lad = 'censor'; o.zh = L[0]; o.en = L[1]; o.rank = L[2]; return `Your evaluation is excellent, and your name for honesty has reached the capital. You are made ${L[1]} (${L[0]}): a censor, the emperor's eyes and ears.`; }
+    if (sc >= 6 && i < LAD.length - 1) { const L = LAD[i + 1]; o.zh = L[0]; o.en = L[1]; o.rank = L[2]; return `Your evaluation is excellent. You are promoted ${L[1]} (${L[0]}).`; }
     if (sc <= -6) { S.office = null; return 'Your evaluation is "incompetent". You are dismissed and go home.'; }
     return 'Your evaluation is "adequate". You stay in your post.'; }
   // memorials at court: what you can write in each year, and what it does to you
@@ -21207,10 +21210,21 @@ const WCORE = (() => {
     { k: 'wei', from: D(1624, 6, 1), to: D(1626, 1, 1), title: 'On the eunuch Wei Zhongxian', opts: [['Sign Yang Lian\'s memorial of the twenty-four crimes', 'Yang Lian\'s memorial is answered with a reprimand. In 1625 the Eastern Depot comes for the men who signed it.', (S) => { S.flags.donglin = 1; S.flags.signedYang = 1; }],
       ['Write in praise of the Depositor of Loyalty', 'Wei Zhongxian\'s people remember your name kindly.', (S) => { S.flags.eunuchFaction = 1; S.karma = (S.karma | 0) - 2; }], ['Write nothing', 'You write nothing.', () => { }]] },
   ];
+  MEMOS.push({ k: 'shrine', from: D(1626, 6, 1), to: D(1627, 8, 22), title: 'On the living shrines to Wei Zhongxian', opts: [['Subscribe to a living shrine for the Depositor of Loyalty in your jurisdiction', 'A shrine with his statue in gold leaf goes up. You kowtow to it on his birthday with the others.', (S) => { S.flags.eunuchFaction = 1; S.karma = (S.karma | 0) - 2; S.cash -= 2000; S.cash = Math.max(0, S.cash); }],
+      ['Refuse, quietly', (S) => S.flags.shrineFell ? 'Your name is noted. In the spring your evaluation reads "deficient in respect".' : 'Your refusal goes unremarked, for now.', (S) => { if (Math.random() < 0.4) { S.flags.shrineFell = 1; if (S.office) S.office.favor = (S.office.favor | 0) - 6; } }],
+      ['Refuse, in a memorial', 'Your memorial is returned to you torn in half. Then the Embroidered Uniform Guard comes.', (S) => { S.flags.signedYang = 1; S.flags.donglin = 1; }]] });
+  MEMOS.push({ k: 'yuan', from: D(1629, 12, 2), to: D(1630, 8, 16), title: 'On the arrest of Yuan Chonghuan', opts: [['Plead for him: he held Ningyuan, he came to save the capital', 'The Emperor does not answer. In the eighth month of 1630 Yuan Chonghuan is cut to pieces in the market; the crowd buys his flesh to eat.', (S) => { S.karma = (S.karma | 0) + 2; if (S.office) S.office.favor = (S.office.favor | 0) - 3; }],
+      ['Denounce him: he let the Jin through, he killed Mao Wenlong', 'Your memorial is praised. He dies in the eighth month of 1630; you are thought of as a loyal man.', (S) => { if (S.office) S.office.favor = (S.office.favor | 0) + 3; S.karma = (S.karma | 0) - 1; }], ['Write nothing', 'You write nothing.', () => { }]] });
+  // famine in your county: open the granary or wait for permission
+  function famineNow(S) { const T = DT(S.day); if (!S.office || (S.office.lad || 'county') !== 'county' || S.office.jin || T.m !== 4 || ![1622, 1625, 1628, 1629].includes(T.y)) return null; const k = 'famine' + T.y; if (S.dil && S.dil[k]) return null;
+    return { k, title: ['饑荒', 'Famine in the county'], text: [['', `There was no rain last year. In the villages people are eating bark and the clay they call Guanyin earth. The county granary is full, but grain may only be released with the prefecture's permission, which takes months.`]],
+      opts: [['Open the granary now, on your own authority', 'The people kneel along the road when your chair passes. The prefect is furious.', (S) => { S.office.repute = (S.office.repute | 0) + 6; S.office.favor = (S.office.favor | 0) - 4; S.karma = (S.karma | 0) + 3; }],
+        ['Write to the prefecture and wait', 'Permission comes in the seventh month. By then the villages are half empty.', (S) => { S.office.repute = (S.office.repute | 0) - 3; S.karma = (S.karma | 0) - 1; }],
+        ['Sell the granary\'s grain to the merchants at famine prices', 'You make a great deal of money. You do not go to the villages.', (S) => { S.cash += 20000; S.office.repute = (S.office.repute | 0) - 8; S.karma = (S.karma | 0) - 5; }]] }; }
   function memosNow(S) { return MEMOS.filter(m => S.day >= m.from && S.day < m.to && !(S.memo && S.memo[m.k])); }
   function memo(S, m, i) { S.memo = S.memo || {}; S.memo[m.k] = i + 1; m.opts[i][2](S); return m.opts[i][1]; }
   // the Eastern Depot comes for the men who signed against Wei Zhongxian (1625, as it did for Yang Lian and Zuo Guangdou)
-  function purge(S) { if (S.flags.signedYang && S.office && S.day >= D(1625, 6, 1) && !S.flags.purged) { S.flags.purged = 1; S.office = null; S.health = Math.max(10, S.health - 50); return 'The Embroidered Uniform Guard comes at night. You are stripped of office, beaten in the Northern Prison and sent home a cripple. Yang Lian and Zuo Guangdou die in that prison.'; } return null; }
+  function purge(S) { if (S.flags.eunuchFaction && S.office && !S.office.jin && S.day >= D(1629, 3, 1) && !S.flags.purged2) { S.flags.purged2 = 1; S.office = null; return 'The new Emperor publishes the list of Wei Zhongxian\'s faction (逆案). Your name is on it, for the shrine. You are dismissed and sent home in disgrace.'; } if (S.flags.signedYang && S.office && S.day >= D(1625, 6, 1) && !S.flags.purged) { S.flags.purged = 1; S.office = null; S.health = Math.max(10, S.health - 50); return 'The Embroidered Uniform Guard comes at night. You are stripped of office, beaten in the Northern Prison and sent home a cripple. Yang Lian and Zuo Guangdou die in that prison.'; } return null; }
 
   // ---------------- what you see when you look at yourself (the journal) ----------------
   function journal(S) { const L = []; const a = age(S, S.born);
@@ -21314,7 +21328,7 @@ const WCORE = (() => {
     return [`${x.zh}娶了媳婦，是個厲害的。`, `${x.en} got married. A fierce one, they say: she keeps the money.`]; }
   function swear(S, k) { S.brothers = (S.brothers || []).concat([k]); addRel(S, k, 20); }
   const brothers = (S) => (S.brothers || []).filter(k => S.folk && S.folk[k] && S.folk[k].alive);
-  return { repOf, addRep, steal, gossip, swear, brothers, landPrice, buyLand, sellLand, landYear, pawn, redeemCost, redeem, borrow, owed, repay, moneyDay, contractOffer, contractDeliver, NIGHT, nightEvent, makeMates, festNow, CELL, BAGU, epitaph, load, cap, SPREAD, D, DT, season, biome, TR, POP, makeFolk, folkAt, GOODS, price, inv, give, buy, sell, RECIPES, craft, JOBS, jobsFor, work, relOf, addRel, giftTo, letterAsk, letterTake, letterDeliver, matchOffer, marry, folkDay, folkHistory,
+  return { LADDERS, famineNow, repOf, addRep, steal, gossip, swear, brothers, landPrice, buyLand, sellLand, landYear, pawn, redeemCost, redeem, borrow, owed, repay, moneyDay, contractOffer, contractDeliver, NIGHT, nightEvent, makeMates, festNow, CELL, BAGU, epitaph, load, cap, SPREAD, D, DT, season, biome, TR, POP, makeFolk, folkAt, GOODS, price, inv, give, buy, sell, RECIPES, craft, JOBS, jobsFor, work, relOf, addRel, giftTo, letterAsk, letterTake, letterDeliver, matchOffer, marry, folkDay, folkHistory,
     DIL, dilemmaNow, dilemmaChoose, ROAD, roadDay, STICKS, drawStick, TALES, tale, dice, CASES, caseNow, judge, LADDER, evaluate, MEMOS, memosNow, memo, purge, journal, rngFor, age };
 })();
 if (typeof module !== 'undefined') module.exports = WCORE;
@@ -21617,7 +21631,7 @@ function wBoard() {
   if (!done.length) { const nx = WEX.filter(e => e[1] > WS.day && e[2] === WS.place)[0]; toast(nx ? `A notice: ${nx[9]} will be held here on ${wFmt(nx[1]).en}.` : 'Old notices, rain-streaked.'); return; }
   const e = done[0], got = WS.exams[e[0] + e[1]]; WS.exams[e[0] + e[1] + 'read'] = 1;
   if (got >= e[6]) { WS.status = e[5]; wLog(`${e[8]}中了！`, `Passed ${e[9]}.`); banner(`中了 · Your name is on the list`, `You are now ${W_STATUS[e[5]][2]}`, 5); AUDIO.play('ui');
-    if (e[5] === 'jinshi') { WS.flags.awaitPost = 1; } }
+    if (e[5] === 'jinshi') { WS.flags.awaitPost = 1; WS.flags.jinshiScore = got; wPalaceRank(got); } }
   else { wLog(`${e[8]}落榜。`, `Failed ${e[9]}.`); toast(`You read the list twice. Your name is not on it. (Your paper scored ${got}; the line was about ${e[6]}.)`); }
   wSave();
 }
@@ -21647,7 +21661,7 @@ function wTalk(p, u) {
     if (WS.status !== ex[4]) say(`Sit ${ex[9]}`, [[ex[4] === 'none' ? '你已經有功名了。' : '你沒有資格。', ex[4] === 'none' ? 'You already hold a degree.' : `You are not qualified: it is for ${W_STATUS[ex[4]][2]}s.`]]);
     else say(`Sit ${ex[9]}`, [['進去吧。號舍在左。', 'In you go. The cells are on the left.']], () => wExam(ex));
   }
-  if (p.role === 'libu' && WS.status === 'jinshi' && !WS.office) say('Ask about a post', [['等著吧。進士候選，總要等的。', 'Wait. Every jinshi waits for a post.'], ['……也有人送點東西，就快些。', '...Some send a little something, and it goes faster.']], () => { WS.office = { zh: '知縣', en: 'County Magistrate', rank: 43, place: 'a county of Shuntian', since: WS.day }; WS.flags.awaitPost = 0; wLog('授知縣。', 'Appointed a county magistrate.'); banner('授官 · Appointed', 'County Magistrate (知縣), rank 7a', 5); });
+  if (p.role === 'libu' && WS.status === 'jinshi' && !WS.office && !(WS.flags.mourning > WS.day) && !WS.flags.purged && !WS.flags.purged2) say('Ask about a post', [['等著吧。進士候選，總要等的。', 'Wait. Every jinshi waits for a post.'], ['……也有人送點東西，就快些。', '...Some send a little something, and it goes faster.']], () => { WS.office = wFirstPost(); WS.flags.awaitPost = 0; wLog('授官。', `Appointed ${WS.office.en}.`); banner('授官 · Appointed', `${WS.office.en} (${WS.office.zh})`, 5); });
   if (p.role === 'passguard') say('Pass through', [[me >= 10 ? '相公請。' : '路引呢？……算了，給二十文。', me >= 10 ? 'Please, sir.' : 'Your papers? ...Never mind. Twenty wen.']], () => { if (me < 10) WS.cash = Math.max(0, WS.cash - 20); });
   if (p.role === 'grandee' || p.role === 'general') { if (me < 20) say('Ask to speak with him', [['（衛兵把你推開了。）', '(The guards push you back.)']]); else say('Pay your respects', [[`${T[0]}有心了。`, `Kind of you, ${T[1]}.`]], () => { WS.rel[p.k] = (WS.rel[p.k] || 0) + 1; }); }
   wTalkMore(p, say, me);
@@ -21898,11 +21912,15 @@ function wMoreThings(P) { const T = [], S2 = P.spots;
   if (WS.army && W_ARMYAT[WS.army.col] === WS.place && WS.place !== 'liaoyang') { const q = S2.yard || S2.gate || Object.values(S2)[0]; T.push({ k: 'bunk', x: q[0] + 4, z: q[1] + 3 }); }
   if (WS.jin && WS.place === 'lijia' && WS.day >= D(1621, 7, 1) && WS.day < D(1627, 1, 1)) T.push({ k: 'east', x: S2.road[0] + 6, z: S2.road[1], prop: 'banner', sign: '東' });
   if (WS.shop && WS.place === WS.shop.place && S2.smithy) T.push({ k: 'shop', x: S2.smithy[0] + 2, z: S2.smithy[1], prop: 'pot' });
+  wCapitalThings(P, T);
+  if (WS.place === 'tongzhou' && WS.day >= D(1622, 1, 1)) T.push({ k: 'board', x: S2.market[0] + 4, z: S2.market[1] - 2 });
   if (WS.place === 'county' && WS.office) T.push({ k: 'bench', x: S2.yamen[0], z: S2.yamen[1] - 2, prop: 'rack' }, { k: 'desk', x: S2.yamen[0] + 4, z: S2.yamen[1], prop: 'pot' }, { k: 'bed', x: S2.yamen[0] - 5, z: S2.yamen[1] + 3 });
   return T; }
 function wThingUse(T) {
   if (T.k === 'shrine') { if (WS.flags.prayed === WS.day) { toast('You have prayed today.'); return true; } WS.flags.prayed = WS.day; if (Math.random() < 0.3) { WS.luck = 1; WS.luckTo = WS.day + 10; } toast('You light a stick of incense before the little Earth God and his wife.'); return true; }
   if (T.k === 'bench') { wCourt(); return true; }
+  if (T.k === 'hdesk') { wDeskWork(); return true; }
+  if (T.k === 'academy') { wAcademy(); return true; }
   if (T.k === 'shop') { wShopWork(); return true; }
   if (T.k === 'east') { wToMao(); return true; }
   if (T.k === 'desk') { wMemorial(); return true; }
@@ -21930,9 +21948,9 @@ function wChoice(d) {
     if (WS.day > day0) { const n = WS.day - day0; WS.day = day0; wTurnDays(n); }
     wLog(d.title[0], `${d.title[1]}: ${o[0]}.`);
     const moved = WS.place !== place0 || WS.day !== day0;
-    return { lines: [['', w]], opts: [{ q: 'Go on', fx: () => { if (WS.health <= 0) return wDie(WS.flags.diedFor || 'of his wounds'); if (WS.flags.toMao) return wToMao(); if (moved) return wScene(place0); const nx = WCORE.dilemmaNow(WS) || WCORE.festNow(WS, WS.home); if (nx) wChoice(nx); } }] }; } }; }), { noLeave: true });
+    return { lines: [['', w]], opts: [{ q: 'Go on', fx: () => { if (WS.health <= 0) return wDie(WS.flags.diedFor || 'of his wounds'); if (WS.flags.toMao) return wToMao(); if (WS.flags.pendingBattle) { const m = WS.flags.pendingBattle; WS.flags.pendingBattle = null; return wBattle(m); } if (moved) return wScene(place0); const nx = WCORE.dilemmaNow(WS) || WCORE.festNow(WS, WS.home); if (nx) wChoice(nx); } }] }; } }; }), { noLeave: true });
 }
-function wAfterScene() { if (state.zheDlg || !WS.alive) return; if (WS.flags.toMao) return wToMao(); if (wArmyMoment()) return; const d = WCORE.dilemmaNow(WS) || WCORE.festNow(WS, WS.home); if (d) wChoice(d); }
+function wAfterScene() { if (state.zheDlg || !WS.alive) return; if (WS.flags.toMao) return wToMao(); if (wArmyMoment()) return; const d = WCORE.dilemmaNow(WS) || wSiegeNow() || WCORE.famineNow(WS) || WCORE.festNow(WS, WS.home); if (d) wChoice(d); }
 // the road's length: a horse cuts it by a third, winter adds two-fifths
 function wDays(ex) { if (!ex.days) return 0; let d = ex.days; if (WCORE.inv(WS, 'horse')) d = Math.max(1, Math.ceil(d * 2 / 3)); if (WCORE.season(WS.day) === 'winter') d = Math.ceil(d * 1.4); return d; }
 // roads that are shut: the Jin hold the east after their cities fall; only the magistrate goes to his county
@@ -22021,11 +22039,13 @@ function wBattleCards(m) { const F = wFmt(WS.day).en;
   return ({ roadA: [{ title: '東路 · The east road', year: F, p: ['General Liu Ting\'s column marches from Kuandian toward Hetu Ala: the Zhejiang men, the Sichuan men, the Korean allies, and the Liaoyang levy, you among them. The snow is still on the passes.'] }],
     abudali: [{ title: '阿布達里岡 · Abudali', year: F, p: ['The column has come out of the hills at Abudali. There is no word from the other columns.'] }],
     hunw: [{ title: '渾河 · The Hun River', year: F, p: ['Shenyang has fallen. The Sichuan and Zhejiang men under Chen Ce and Tong Zhongkui have crossed the Hun River to try to retake it. Your company is with them, on the north bank, with the river at your backs.'] }],
+    sj2: [{ title: '廣渠門 · The Guangqu Gate', year: F, p: ['The twentieth day of the eleventh month. Yuan Chonghuan\'s nine thousand Ningyuan cavalry stand outside the Guangqu Gate against the Jin army. The gate is shut behind them.'] }],
     ningyuan: [{ title: '寧遠 · Ningyuan', year: F, p: ['Nurhaci has come with his whole army across the frozen plain. Every fort beyond the Pass has been abandoned except this one. Yuan Chonghuan has burned the suburbs, brought the people inside, and mounted the red barbarian cannon on the walls.'] }] })[m]
     || [{ title: '遼陽 · Liaoyang', year: F, p: ['The Jin are in the city. Get your family out.'] }]; }
 function wFinishMore(m, heads) {
   if (m === 'hunw') { wMatesFall(0.5); const d = D(1621, 3, 18); if (WS.day < d) wTurnDays(d - WS.day); WS.place = 'liaoyang'; WS.from = 'west'; WS.hour = 9; wSave();
     zCards([{ title: '渾河 · The Hun River', year: wFmt(WS.day).en, p: ['The north bank was lost. The Sichuan men fought until there were none of them left; the Zhejiang men on the south bank were overrun the next day. You swam the river at dusk.', 'You are back in Liaoyang. The Jin are three days behind you.'] }], () => wScene('west')); return true; }
+  if (m === 'sj2') { wMatesFall(0.3); wSave(); zCards([{ title: '廣渠門 · The Guangqu Gate', year: wFmt(WS.day).en, p: ['The Jin drew off from the Guangqu Gate. In the city they are saying Yuan Chonghuan let them through the Wall on purpose.'] }], () => wScene()); return true; }
   if (m === 'ningyuan') { wMatesFall(0.15); if (WS.army) WS.army.r = Math.min(W_ARMY.length - 1, WS.army.r + 1); wSave();
     zCards([{ title: '寧遠大捷 · Victory at Ningyuan', year: wFmt(WS.day).en, p: ['The Jin assault broke on the walls of Ningyuan under the fire of the red barbarian cannon. It was the first defeat of Nurhaci\'s life; by the summer he was dead.', WS.army ? `You are made ${W_ARMY[WS.army.r][2]}.` : ''] }], () => wScene()); return true; }
   return false; }
@@ -22106,6 +22126,50 @@ function wTeaFight() { return { k: 'tea' + WS.day, title: ['茶館', 'Trouble in
   opts: [['Say sorry', 'He laughs and goes back to his table. Someone at the back snorts.', (S) => { WCORE.addRep(S, S.place, -1); }],
     ['Throw your tea in his face', (S) => S.flags.teaWon ? 'He swings, misses, and goes over a bench. The teahouse cheers. The keeper gives you a fresh bowl free.' : 'He beats you across three tables before his friends pull him off.', (S) => { S.flags.teaWon = S.arms + Math.random() * 40 > 45 ? 1 : 0; if (S.flags.teaWon) { WCORE.addRep(S, S.place, 3); S.arms += 0.5; } else S.health -= 18; }],
     ['Buy him a jug of wine (25 wen)', '"Now that\'s a proper country boy." He tells you about Sarhu until he falls asleep.', (S) => { S.cash -= 25; }]] }; }
+
+// ===================== R7: office, factions, the capital in danger =====================
+// more of history's calendar, 1622-1630
+WEV.push([D(1622, 1, 20), 'guangning', '廣寧丟了！王化貞跑了，熊廷弼也跟著退進關。', 'Guangning is lost! Wang Huazhen ran, and Xiong Tingbi fell back inside the Pass with him.'],
+  [D(1622, 5, 11), 'xuhongru', '山東白蓮教徐鴻儒反了，鄆城丟了。', 'The White Lotus have risen in Shandong under Xu Hongru; Yuncheng has fallen.'],
+  [D(1625, 7, 24), 'yanglian', '楊漣死在詔獄裡了。', 'Yang Lian has died in the Imperial Prison.'],
+  [D(1626, 1, 24), 'ningyuanwin', '寧遠大捷！袁崇煥用紅夷大炮打退了奴兒哈赤。', 'A great victory at Ningyuan! Yuan Chonghuan drove off Nurhaci with the red barbarian cannon.'],
+  [D(1626, 8, 11), 'nurhaci', '奴兒哈赤死了。他兒子皇太極做了汗。', 'Nurhaci is dead. His son Hong Taiji is Khan now.'],
+  [D(1627, 1, 8), 'korea', '韃子打朝鮮了。', 'The Jin have invaded Korea.'],
+  [D(1627, 8, 22), 'tianqi', '天啟爺駕崩了。信王登基，年號崇禎。', 'The Tianqi Emperor is dead. The Prince of Xin takes the throne; the reign will be called Chongzhen.'],
+  [D(1627, 11, 6), 'weizx', '魏忠賢在阜城上吊了。', 'Wei Zhongxian has hanged himself at Fucheng.'],
+  [D(1628, 7, 14), 'yuanback', '袁崇煥又起用了，督師薊遼。說五年復遼。', 'Yuan Chonghuan is recalled as Supreme Commander. He promises to recover Liaodong in five years.'],
+  [D(1629, 6, 5), 'maodead', '毛文龍在雙島被袁督師斬了。', 'Mao Wenlong has been executed by Supreme Commander Yuan at Shuangdao.'],
+  [D(1629, 10, 27), 'jisi', '韃子從喜峰口破關進來了！遵化丟了！', 'The Jin have broken through the Wall at Xifengkou! Zunhua has fallen!'],
+  [D(1629, 11, 20), 'guangqu', '韃子打到京城廣渠門了！袁督師在城外死戰。', 'The Jin are at the Guangqu Gate of the capital! Supreme Commander Yuan is fighting under the walls.'],
+  [D(1629, 12, 1), 'yuanarrest', '皇上把袁崇煥下獄了。說他通敵。', 'The Emperor has thrown Yuan Chonghuan in prison. They say he was in league with the enemy.']);
+WEV.sort((a, b) => a[0] - b[0]);
+Object.assign(W_FAR, { county: 9 });
+// more examinations after 1621: the prefectural test moves to Tongzhou for the refugees of Liaodong
+WEX.push(['tongshi', D(1622, 4, 10), 'tongzhou', 'market', 'none', 'shengyuan', 48, D(1622, 4, 20), '童試', 'the licentiate exam (童試)'], ['tongshi', D(1624, 4, 10), 'tongzhou', 'market', 'none', 'shengyuan', 48, D(1624, 4, 20), '童試', 'the licentiate exam (童試)'], ['tongshi', D(1627, 4, 10), 'tongzhou', 'market', 'none', 'shengyuan', 48, D(1627, 4, 20), '童試', 'the licentiate exam (童試)'],
+  ['xiangshi', D(1624, 8, 9), 'city', 'exam', 'shengyuan', 'juren', 68, D(1624, 8, 29), '鄉試', 'the Shuntian provincial exam (鄉試)'], ['xiangshi', D(1627, 8, 9), 'city', 'exam', 'shengyuan', 'juren', 68, D(1627, 8, 29), '鄉試', 'the Shuntian provincial exam (鄉試)'],
+  ['huishi', D(1625, 2, 9), 'city', 'exam', 'juren', 'jinshi', 78, D(1625, 3, 15), '會試', 'the metropolitan exam (會試) and the palace exam'], ['huishi', D(1628, 2, 9), 'city', 'exam', 'juren', 'jinshi', 78, D(1628, 3, 15), '會試', 'the metropolitan exam (會試) and the palace exam']);
+WEX.sort((a, b) => a[1] - b[1]);
+// the Tongzhou exams are kept by a proctor at the market there
+WPP.push({ k: 'tzproctor', zh: '學官', en: 'The Director of Studies', t: 'holds the licentiate exam for the refugees of Liaodong', born: 1575, look: { h: 1.0, hat: 'chief', beard: 'longmous' }, rank: 41, where: [[D(1622, 1, 1), 1e9, 'tongzhou', 'market', 20]], role: 'instructor' });
+// the palace exam: the emperor ranks the new jinshi
+function wPalaceRank(got) { const tier = got >= 96 ? 1 : got >= 88 ? 2 : 3; WS.flags.jinshiTier = tier;
+  wNote('殿試。', tier === 1 ? 'At the palace examination you are placed in the first class: among the top three in the empire. The Hanlin Academy will take you.' : tier === 2 ? 'At the palace examination you are placed in the second class, high enough to be chosen a Hanlin Bachelor (庶吉士).' : 'At the palace examination you are placed in the third class. A county will be found for you.'); }
+function wFirstPost() { const t = WS.flags.jinshiTier || 3; if (t <= 2) { const L = WCORE.LADDERS.hanlin[0]; return { zh: L[0], en: L[1], rank: L[2], lad: 'hanlin', since: WS.day }; }
+  return { zh: '知縣', en: 'County Magistrate', rank: 43, place: 'a county of Shuntian', since: WS.day, lad: 'county' }; }
+// the Hanlin and the censorate work in the capital: a desk in the city
+Object.assign(W_THING, { hdesk: ['Work at your desk (three hours)', '公'], academy: ['Hear the lecture at the Shoushan Academy (首善書院)', '講'] });
+function wCapitalThings(P, T) { const S2 = P.spots;
+  if (WS.place === 'city' && WS.office && (WS.office.lad === 'hanlin' || WS.office.lad === 'censor')) T.push({ k: 'hdesk', x: S2.ministry[0] - 4, z: S2.ministry[1] + 3, prop: 'pot' }, { k: 'desk', x: S2.ministry[0] - 7, z: S2.ministry[1] + 3, prop: 'rack' }, { k: 'bed', x: S2.inn[0] + 3, z: S2.inn[1] + 2 });
+  if (WS.place === 'city' && WS.day >= D(1622, 9, 1) && WS.day < D(1625, 8, 1)) T.push({ k: 'academy', x: S2.street[0] - 8, z: S2.street[1] + 4, prop: 'rack' }); }
+function wDeskWork() { const o = WS.office; if (o.deskDay === WS.day) return toast('You have done your day\'s work.'); o.deskDay = WS.day;
+  wPass(3, () => { if (o.lad === 'hanlin') { WS.learning = Math.min(100, WS.learning + 0.5); o.favor = (o.favor | 0) + 1; toast('Three hours compiling the Veritable Records of the Wanli reign. Your colleagues argue about how to describe Sarhu.'); }
+    else { o.repute = (o.repute | 0) + 1; toast('Three hours reading reports from the provinces: a magistrate who flogs debtors to death, a granary short by half. You mark two for impeachment.'); } }); }
+function wAcademy() { if (WS.flags.lecture === WS.day) return toast('The lecture is over for today.'); WS.flags.lecture = WS.day; WS.flags.donglinN = (WS.flags.donglinN | 0) + 1; if (WS.flags.donglinN >= 3) WS.flags.donglin = 1;
+  wPass(3, () => { WS.learning = Math.min(100, WS.learning + 0.8); toast('Zou Yuanbiao lectures on the extension of knowledge and the rectification of the heart. The hall is full of officials. You are seen there.'); }); }
+// the capital in danger: the Jin at the gates in the winter of 1629
+function wSiegeNow() { if (WS.day < D(1629, 11, 18) || WS.day > D(1629, 11, 24) || !['beijing', 'city', 'tongzhou'].includes(WS.place) || (WS.dil && WS.dil.siege1629)) return null;
+  return { k: 'siege1629', title: ['兵臨城下', 'The Jin at the gates'], text: [['', 'The Jin army is outside the Guangqu Gate. Yuan Chonghuan\'s Ningyuan cavalry have ridden day and night to get between them and the city; the gates are shut behind them. Men are wanted on the wall and outside it.']],
+    opts: [['Go out with Yuan\'s men to the Guangqu Gate', 'You are handed a spear at the gate.', (S) => { S.flags.pendingBattle = 'sj2'; }], ['Carry stones and water to the wall', 'Three days carrying stones. The Jin turn away to the south.', (S) => { S.karma = (S.karma | 0) + 1; S.health -= 6; }], ['Keep your head down', 'You keep your head down.', () => { }]] }; }
 
 })();
 </script>
