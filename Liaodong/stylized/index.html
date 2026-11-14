@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v172</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v173</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1017,7 +1017,7 @@ class Sim {
   constructor(cfg) {
     this.cfg = cfg; this.seed = cfg.seed | 0; this.rng = new RNG(this.seed);
     this.scen = cfg.mode === 'heroes' ? (SCEN[cfg.scen] || SCEN.ningyuan) : null; this.heroMode = !!this.scen;
-    this.battle = cfg.mode === 'campaign' ? ((cfg.camp && cfg.camp.map && BATTLES[cfg.camp.map]) ? cfg.camp.map : (MISSIONS[cfg.mission] || MISSIONS.taizhou).battle) : cfg.mode === 'assault' ? (OPS[cfg.op] || OPS.liaoyang).battle : this.scen ? this.scen.battle : cfg.mode === 'story' ? STORY[clamp(cfg.chapter | 0, 0, STORY.length - 1)].battle : BATTLES[cfg.battle] ? cfg.battle : 'field'; this.bdef = BATTLES[this.battle];
+    this.battle = cfg.mode === 'campaign' ? ((cfg.camp && cfg.camp.map && BATTLES[cfg.camp.map]) ? cfg.camp.map : (cfg.standMap && BATTLES[cfg.standMap] && MISSIONS[cfg.mission] && MISSIONS[cfg.mission].stand) ? cfg.standMap : (MISSIONS[cfg.mission] || MISSIONS.taizhou).battle) : cfg.mode === 'assault' ? (OPS[cfg.op] || OPS.liaoyang).battle : this.scen ? this.scen.battle : cfg.mode === 'story' ? STORY[clamp(cfg.chapter | 0, 0, STORY.length - 1)].battle : BATTLES[cfg.battle] ? cfg.battle : 'field'; this.bdef = BATTLES[this.battle];
     this.diff = clamp(cfg.diff === undefined ? 1 : cfg.diff | 0, 0, 3); /* 0 recruit · 1 soldier · 2 veteran · 3 lone banner */
     this.solo = (cfg.players || []).length === 1; this.xc = XCOMBAT || !!cfg.xcombat; this.noRout = true; // nobody routs: squads fight on (and beaten mission groups withdraw by script)
     this.mode = MODES[cfg.mode] ? cfg.mode : 'standard'; this.chaos = this.mode === 'chaos'; this.real = this.mode === 'soldier' || this.mode === 'assault'; this.lethal = this.mode === 'soldier';
@@ -13877,7 +13877,7 @@ function soloStart() {
   const cfg = myCfg(); const seed = (Math.random() * 0x7fffffff) | 0;
   state.lowfx = $('lowfxIn').checked; state.fog = false;
   if (state.mode === 'story') { const c = campFor(state.faction, state.chapter); if (c) { cfg.veterans = c.veterans; cfg.recruits = state.recruits.slice(); } }
-  startGame({ seed, battle: state.battle, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op, diff: diffPref(), ai: aiFor(state.mode), players: [{ ...cfg, connected: true }] }, 0, null, 1);
+  startGame({ seed, battle: state.battle, standMap: state.standMap, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op, diff: diffPref(), ai: aiFor(state.mode), players: [{ ...cfg, connected: true }] }, 0, null, 1);
 }
 // ---- the war council: every mode but Story is set up here. On its own it is a room on this computer (you and any AI generals
 // you add); "Invite friends" opens it online with a code, keeping everything chosen so far
@@ -13981,7 +13981,7 @@ $('btnStart').onclick = () => {
   const players = net.players.slice().sort((a, b) => a.idx - b.idx).map(p => ({ name: p.cfg ? p.cfg.name : 'Player', team: p.cfg ? p.cfg.team : 0, army: p.cfg ? p.cfg.army : [], mounted: p.cfg ? !!p.cfg.mounted : false, hclass: p.cfg ? p.cfg.hclass | 0 : 0, role: p.cfg ? p.cfg.role : 'musket', command: p.cfg ? p.cfg.command | 0 : 0, arms: p.cfg ? p.cfg.arms : null, kit: p.cfg ? p.cfg.kit : undefined, connected: p.connected }));
   let maxRtt = 0; for (const p of net.players) if (p.connected && p.rtt) maxRtt = Math.max(maxRtt, p.rtt);
   const delay = Math.max(3, Math.min(12, Math.ceil(maxRtt / 2 / 33.3) + 2));
-  net.start({ t: 'start', seed: (Math.random() * 0x7fffffff) | 0, players, delay, diff: diffPref(), ai: aiFor(state.mode), battle: state.battle, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op });
+  net.start({ t: 'start', seed: (Math.random() * 0x7fffffff) | 0, players, delay, diff: diffPref(), ai: aiFor(state.mode), battle: state.battle, standMap: state.standMap, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op });
 };
 function diffPref() { try { const v = localStorage.getItem('mingDiff'); return v === null ? 1 : Math.max(0, Math.min(3, +v | 0)); } catch (e) { return 1; } }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -14443,7 +14443,7 @@ function cmdCamUpdate(dt) {
 // ---------- game ----------
 function startGame(msg, me, net, delay) {
   if (msg.mode === 'beacon') msg = Object.assign({}, msg, { mode: 'campaign', mission: 'beacon' });
-  if (msg.mode === 'stand') msg = Object.assign({}, msg, { mode: 'campaign', mission: 'laststand', battle: 'field' });
+  if (msg.mode === 'stand') msg = Object.assign({}, msg, { mode: 'campaign', mission: 'laststand', battle: msg.standMap || 'field' });
   // a story battle: the weapons you chose from your arsenal come with you (solo; the choice rides in the config)
   if (!net && msg.mode === 'campaign' && typeof arsKitFor === 'function' && S.MISSIONS[msg.mission] && S.MISSIONS[msg.mission].soldier) { const wk = arsKitFor(msg.mission); if (wk && msg.players[me | 0]) msg = Object.assign({}, msg, { players: msg.players.map((p, i) => i === (me | 0) ? Object.assign({}, p, { wkit: wk }) : p) }); }
   if (msg.mode === 'siege') msg = Object.assign({}, msg, { mode: 'assault', op: S.OPS[msg.op] && S.OPS[msg.op].siege ? msg.op : 'ningyuan_siege' }); // the Siege menu mode is an assault operation fought over a walled town
@@ -17629,6 +17629,8 @@ const STD = { sim: null, n: 0, sum: false, open: false, best: 0, lastLog: 0 };
 function standBestGet() { try { return +(localStorage.getItem('mingStandBest') || 0); } catch (e) { return 0; } }
 function standBestSet(n) { try { localStorage.setItem('mingStandBest', String(n)); } catch (e) { } }
 // ---- menu ----
+const STAND_MAPS = [['field', '界凡 · Jiefan Hill', 'Open hill country above the Hun River.'], ['zroad', '道 · The road village', 'A winter cart road; houses to hide behind.'], ['hakodate', '寧遠 · The Ningyuan plain', 'Frozen flat ground by the sea: nowhere to hide.'],
+  ['nagaoka', '揚州 · The paddies', 'Jiangnan rice fields in a thunderstorm: wet powder, short sight.'], ['djzhen', '鎮江 · Inside Zhenjiang', 'The camp inside a walled town: the raiders come through the gates.']];
 function standMenu(on) {
   let el = $('standPanel');
   if (!el) { el = document.createElement('div'); el.id = 'standPanel'; el.hidden = true; $('personal').appendChild(el); }
@@ -17638,9 +17640,11 @@ function standMenu(on) {
   el.innerHTML = `<h3 class="sect">闖營 · Last Stand</h3>
     <p class="sdbrief">A palisade camp on the open field, and raiders from every side. Each raid is bigger and harder than the last, and every fifth brings a banner officer and his guard. When a raid breaks, choose one of three boons; the next comes on the moment you choose. Three lives. How long can you hold?</p>
     <div class="sdbest">${best ? `Your best: held ${best} raid${best === 1 ? '' : 's'}` : 'No stand made yet'}</div>
+    <h3 class="sect">The field</h3><div class="chapters roles" id="sdmaps">${STAND_MAPS.map(m => `<button type="button" class="chap${m[0] === (state.standMap || 'field') ? ' on' : ''}" data-m="${m[0]}"><b>${m[1]}</b><small>${m[2]}</small></button>`).join('')}</div>
     <h3 class="sect">Your troops</h3><div class="chapters roles" id="sdroles">${ROLE_INFO.map(r => `<button type="button" class="chap${r[0] === state.role ? ' on' : ''}" data-r="${r[0]}"><b>${r[1]} · ${r[2]}</b><small>${r[3]}</small></button>`).join('')}</div>
     <p class="note sdkeys">Between raids pick a boon: <b>1 2 3</b> or click · F follow · C charge · H hold. Host a room to make the stand together (up to 4): the raids grow with you.</p>`;
   el.querySelectorAll('#sdroles button').forEach(b => b.onclick = () => { state.role = b.dataset.r; AUDIO.init(); AUDIO.play('ui'); standMenu(true); });
+  el.querySelectorAll('#sdmaps button').forEach(b => b.onclick = () => { state.standMap = b.dataset.m; AUDIO.init(); AUDIO.play('ui'); standMenu(true); });
 }
 // ---- the golden line in the top bar ----
 function standLeft(sim) { const T = sim.st; let n = 0; for (const gid of T.wave || []) { const g = sim.mg[gid]; if (!g || g.broken) continue; n += sim.standAlive(gid); } return n; }
@@ -21735,7 +21739,9 @@ function wBattle(mission) {
   const M = SIM.MISSIONS[mission]; if (!M) return wScene();
   WB = { mission }; WZ = null; ZC = null; ZB = null;
   const cards = wBattleCards(mission);
-  zCards(cards, () => { startGame({ seed: (Math.random() * 0x7fffffff) | 0, battle: M.battle, mode: 'campaign', mission, players: [{ name: WS.name.zh, team: M.side | 0, connected: true }] }, 0, null, 1); });
+  zCards(cards, () => { startGame({ seed: (Math.random() * 0x7fffffff) | 0, battle: M.battle, mode: 'campaign', mission, players: [{ name: WS.name.zh, team: M.side | 0, connected: true }] }, 0, null, 1);
+    // what your life made you: arms and a blade of your own forging carry into the fight (solo: the sim is yours alone)
+    const sim = state.sim, h = sim && sim.units[sim.players[0].heroId]; if (h) { const k = 1 + Math.min(0.6, WS.arms / 160) + (WCORE.inv(WS, 'sword') ? 0.15 * ((WS.quality && WS.quality.sword) || 1) : 0); h.hp = Math.round(h.hp * k); if (k > 1.1) toast(`Your years ${WS.arms >= 40 ? 'of drill and battle' : 'at the anvil'}${WCORE.inv(WS, 'sword') ? ' and the sword you made' : ''} are with you (+${Math.round((k - 1) * 100)}% endurance).`); } });
 }
 function wFinish(winner) {
   const sim = state.sim, M = sim.mission, me = sim.players[state.localIdx], h = sim.units[me.heroId]; const won = winner === (M.side | 0), alive = !!(h && !h.dead);
