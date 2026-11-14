@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v174</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v175</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -460,6 +460,7 @@ body.deploying #sgbar, body.deploying #sgprompt { visibility: hidden; }
 #zgrid .zc.talk i { box-shadow: 0 0 0 2px #ffe08a, 0 0 10px 2px rgba(255,210,110,.8); border-color: #ffe08a; } #zgrid .zc.talk b { color: #ffe08a; }
 @keyframes zgPulse { to { box-shadow: 0 0 10px 3px rgba(255,70,50,.85); } }
 body.zgrid #comms { top: 158px; }
+.medal { font-size: 11px; font-weight: 600; color: #8a6a1a; background: #f6e7b6; border: 1px solid #d8bb6a; border-radius: 3px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }
 </style>
 <div id="app">
   <canvas id="c"></canvas>
@@ -469,7 +470,7 @@ body.zgrid #comms { top: 158px; }
       <p class="sub">The Ming Dynasty against the rising Manchu Later Jin. Build an army squad by squad, ride in at its head, fight with dao and rifle in first person, or climb to a bird's-eye view and give orders. Deterministic lockstep keeps every peer's battle identical.</p>
       <p class="sub" style="font-size:12px">Sound: instrument recordings from the Versilian Community Sample Library and VSCO-2 Community Edition (CC0, Versilian Studios); erhu and suona are physical models written for this game; battle effects and the war-drum recordings and the Han-civilization pieces “Red Dawn” and “Hill of Sorrows” (music by Omri Lahav) from <a href="https://play0ad.com" target="_blank" rel="noopener">0 A.D.</a> © Wildfire Games, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>, trimmed and re-encoded. Soldiers' voices: cries of pain and death from Warfork and the “80 CC0 creature SFX” packs via the <a href="https://github.com/lavenderdotpet/CC0-Public-Domain-Sounds" target="_blank" rel="noopener">CC0 Public Domain Sounds</a> collection (CC0). <label style="white-space:nowrap"><input type="checkbox" id="optVoice" checked> soldiers' voices</label></p>
       <h3 class="sect">Mode</h3>
-      <div class="seg modes" id="modeSeg"><button type="button" data-m="standard" class="on"><b>Field battle</b><small>Your army against theirs</small></button><button type="button" data-m="duel"><b>Duel · 決鬥</b><small>Players alone in a ring, each in the kit of his post. Rounds, first to five. Online or against a swordsman.</small></button><button type="button" data-m="grand"><b>Grand battle</b><small>A council of AI commanders on each side. Command your allies.</small></button><button type="button" data-m="chaos"><b>Chaos</b><small>No orders, no fear, no deployment. Earthquakes, fleets and fire.</small></button><button type="button" data-m="officers"><b>Officers · co-op</b><small>Every player leads one squad in person beside AI generals. Peer-to-peer.</small></button><button type="button" data-m="heroes"><b>Heroes</b><small>Be a champion in a phased historical siege. No orders, only your blade and abilities. Co-op or versus.</small></button><button type="button" data-m="soldier"><b>小兵之路 · Path of a Soldier</b><small>One man in the ranks. Lethal muskets, long reloads, drums and gongs. A career from recruit to general, or co-op with friends.</small></button><button type="button" data-m="campaign"><b>Co-op campaign</b><small>Historical missions in phases: ambushes, relief, sieges and break-outs. Each player leads a squad they choose, beside AI generals.</small></button><button type="button" data-m="assault"><b>Assault</b><small>Attackers with limited manpower storm fortified lines point by point; defenders fall back to the next. You fight as a soldier.</small></button><button type="button" data-m="siege"><b>攻守城 · Siege</b><small>A walled town in stages: fill the ditch, raise ladders and towers, ram the gate, fight through the streets. Attack or defend as a soldier.</small></button><button type="button" data-m="beacon"><b>烽火 · Hold the Beacon</b><small>Co-op tower defence on the Liaodong wall, 1618. Hold off the raids, hire men with silver, light five fires to bring the relief.</small></button><button type="button" data-m="stand"><b>闖營 · Last Stand</b><small>Endless raids from every side, harder each time. Pick a boon between raids. Three lives; beat your best. Solo or co-op.</small></button><button type="button" data-m="campaigns"><b>戰記 · Story campaigns</b><small>Three campaigns of camp life and real battles: the Zhejiang Company, the Divine Engine Division, the Plain White Niru.</small></button><button type="button" data-m="story"><b>Story</b><small>Seven battles from Sarhu to Yangzhou, as the Ming or the Jin.</small></button></div>
+      <div class="seg modes" id="modeSeg"><button type="button" data-m="standard" class="on"><b>Field battle</b><small>Your army against theirs</small></button><button type="button" data-m="duel"><b>Duel · 決鬥</b><small>Players alone in a ring, each in the kit of his post. Rounds, first to five. Online or against a swordsman.</small></button><button type="button" data-m="grand"><b>Grand battle</b><small>A council of AI commanders on each side. Command your allies.</small></button><button type="button" data-m="chaos"><b>Chaos</b><small>No orders, no fear, no deployment. Earthquakes, fleets and fire.</small></button><button type="button" data-m="officers"><b>Officers · co-op</b><small>Every player leads one squad in person beside AI generals. Peer-to-peer.</small></button><button type="button" data-m="heroes"><b>Heroes</b><small>Be a champion in a phased historical siege. No orders, only your blade and abilities. Co-op or versus.</small></button><button type="button" data-m="soldier"><b>小兵之路 · Path of a Soldier</b><small>One man in the ranks. Lethal muskets, long reloads, drums and gongs. A career from recruit to general, or co-op with friends.</small></button><button type="button" data-m="campaign"><b>Co-op campaign</b><small>Historical missions in phases: ambushes, relief, sieges and break-outs. Each player leads a squad they choose, beside AI generals.</small></button><button type="button" data-m="assault"><b>Assault</b><small>Attackers with limited manpower storm fortified lines point by point; defenders fall back to the next. You fight as a soldier.</small></button><button type="button" data-m="siege"><b>攻守城 · Siege</b><small>A walled town in stages: fill the ditch, raise ladders and towers, ram the gate, fight through the streets. Attack or defend as a soldier.</small></button><button type="button" data-m="beacon"><b>烽火 · Hold the Beacon</b><small>Co-op tower defence on the Liaodong wall, 1618. Hold off the raids, hire men with silver, light five fires to bring the relief.</small></button><button type="button" data-m="stand"><b>闖營 · Last Stand</b><small>Endless raids from every side, harder each time. Pick a boon between raids. Three lives; beat your best. Solo or co-op.</small></button><button type="button" data-m="campaigns"><b>戰記 · Story campaigns</b><small>Four campaigns of camp life and real battles (the Zhejiang Company, the Divine Engine Division, the Plain White Niru, the East River), and an open world: live a life in Liaodong from 1618.</small></button><button type="button" data-m="story"><b>Story</b><small>Seven battles from Sarhu to Yangzhou, as the Ming or the Jin.</small></button></div>
       <p class="note" id="modeNote" style="margin:-6px 0 12px"></p>
       <div id="campPanel" hidden>
       <div id="zheCta"><div><b>浙兵 · The Zhejiang Company</b><small>A story campaign. Spring 1619: a mandarin duck team of Yiwu miners marches into the mountains of Liaodong with Liu Ting's column. Live with your file in camp, fight the battles as they really happened, and bring home whoever you can.</small></div><div class="btns"><button class="btn primary" id="btnZhe" type="button">Begin</button><button class="btn" id="btnZheNew" type="button" hidden>New</button></div></div>
@@ -2688,6 +2689,7 @@ class Sim {
     if (killerId >= 0 && this.units[killerId] && this.units[killerId].champ && u.team !== this.units[killerId].team && u.type !== 'horse') { const k = this.units[killerId]; k.hp = Math.min(k.def.hp, k.hp + (u.champ ? 250 : 35)); k.streak = (k.streak || 0) + 1; if (k.streak % 10 === 0) this.events.push({ t: 'streak', id: k.id, n: k.streak }); }
     if (u.champ) u.streak = 0;
     if (this.heroMode && u.type !== 'horse' && (u.champ || (u.squad >= 0 && this.squads[u.squad].unitIds[0] === u.id))) this.pickups.push({ x: u.x, z: u.z, t: this.tick + 30 * 45 });
+    if (killerId >= 0 && u.type !== 'horse') { const k = this.units[killerId]; if (k && k.team !== u.team && k.squad >= 0 && this.squads[k.squad]) this.squads[k.squad].kills = (this.squads[k.squad].kills | 0) + 1; } /* the after-action report counts each company's kills */
     if (killerId >= 0) { const k = this.units[killerId]; if (k && k.ctrl >= 0 && k.team !== u.team && u.type !== 'horse') { const pl = this.players[k.ctrl]; pl.kills++; if (k.frenzyT <= 0 || k.frenzyT === undefined) pl.fury = Math.min(FURY_MAX, pl.fury + (cause === 'melee' || cause === 'counter' ? 20 : 12)); } }
     if (this.phase === 1 && u.type !== 'horse' && !this.heroMode) { if (u.type === 'hero') { this.score[1 - u.team] += 40; this.events.push({ t: 'bounty', team: 1 - u.team, pts: 40 }); } else if (u.squad >= 0 && this.squads[u.squad].unitIds[0] === u.id) this.score[1 - u.team] += 10; }
     this.squadLoss(u, cause);
@@ -14593,7 +14595,19 @@ function finish(winner) {
     else if (won) $('resultTitle').textContent = '勝 · The war is yours'; }
   if (sim.real && typeof soldierFinish === 'function') soldierFinish(winner);
   if (sim.mission && typeof missionFinish === 'function') missionFinish(winner);
+  try { aarShow(sim, me); } catch (e) { }
   setTimeout(() => { $('result').hidden = false; $('btnReplay').hidden = !state.replay || state.replay.inputs.length < 60; if (document.pointerLockElement) document.exitPointerLock(); }, 3600);
+}
+// ---------- after-action report: your companies, what each did and what it cost ----------
+function aarShow(sim, me) {
+  let box = $('resultAAR'); if (!box) { box = document.createElement('div'); box.id = 'resultAAR'; $('resultText').after(box); const st = document.createElement('style');
+    st.textContent = '#resultAAR{margin:6px 0 10px;font-size:12.5px;max-height:34vh;overflow:auto}#resultAAR table{border-collapse:collapse;margin:0 auto}#resultAAR td,#resultAAR th{padding:2px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08)}#resultAAR th{font-weight:600;opacity:.75}#resultAAR .best{color:#e8c76a}#resultAAR p{margin:4px 0;opacity:.85}'; document.head.appendChild(st); }
+  const mine = me.squads.map(id => sim.squads[id]).filter(Boolean); if (!mine.length) { box.innerHTML = ''; return; }
+  const rows = mine.map(q => { const D = S.DEFS[q.type] || {}; const n0 = q.unitIds.length, left = q.unitIds.filter(id => { const u = sim.units[id]; return u && !u.dead; }).length; return { q, name: D.name || q.type, n0, left, k: q.kills | 0 }; });
+  const best = rows.reduce((a, r) => r.k > a.k ? r : a, rows[0]); const lost = rows.reduce((a, r) => a + r.n0 - r.left, 0), killed = rows.reduce((a, r) => a + r.k, 0) + (me.kills | 0);
+  const mins = Math.max(1, Math.round(((sim.tick - (sim.battleTick | 0)) / 30) / 60));
+  box.innerHTML = `<p>${mins} minute${mins > 1 ? 's' : ''} of battle. Your command lost ${lost} men and killed ${killed} (${me.kills | 0} by your own hand).${best.k ? ` Best company: ${best.name}, ${best.k} kills.` : ''}</p>
+<table><tr><th>Company</th><th>Men left</th><th>Kills</th></tr>${rows.map(r => `<tr${r === best && r.k ? ' class="best"' : ''}><td>${escapeHtml(r.name)}</td><td>${r.left}/${r.n0}${r.left === 0 ? ' · lost' : ''}</td><td>${r.k}</td></tr>`).join('')}</table>`;
 }
 // ---------- replay ----------
 function startReplay() {
@@ -15282,7 +15296,7 @@ function renderMissions() {
   if (as && (!L[state.op] || !!L[state.op].siege !== sgm)) state.op = Object.keys(L).find(k => !L[k].hidden && !!L[k].siege === sgm);
   const cur = as ? state.op : state.mission;
   $('missionHead').textContent = as ? 'Operation' : 'Mission';
-  $('missionList').innerHTML = Object.keys(L).filter(k => !L[k].hidden && (!as || !!L[k].siege === sgm)).map(k => { const M = L[k]; return `<button type="button" class="chap${k === cur ? ' on' : ''}" data-k="${k}"><b>${M.title}</b><small>${M.year} · ${M.brief}</small></button>`; }).join('');
+  $('missionList').innerHTML = Object.keys(L).filter(k => !L[k].hidden && (!as || !!L[k].siege === sgm)).map(k => { const M = L[k]; return `<button type="button" class="chap${k === cur ? ' on' : ''}" data-k="${k}"><b>${M.title}${medalTag(as ? 'op:' + k : k)}</b><small>${M.year} · ${M.brief}</small></button>`; }).join('');
   if (!as) { diffUI($('missionList'), 'diffRowMis'); yyUI($('missionList'), 'yyRowMis'); } else { if ($('diffRowMis')) $('diffRowMis').remove(); if ($('yyRowMis')) $('yyRowMis').remove(); }
   $('missionList').querySelectorAll('button').forEach(b => b.onclick = () => { if (as) state.op = b.dataset.k; else state.mission = b.dataset.k; AUDIO.init(); AUDIO.play('ui'); renderMissions(); });
   const side = as ? state.faction : 0; const list = side === 1 ? ROLE_INFO_JIN : ROLE_INFO; if (!list.some(r => r[0] === state.role)) state.role = list[0][0];
@@ -15377,7 +15391,15 @@ function missionFinish(winner) {
   const sim = state.sim, me = sim.players[state.localIdx]; const won = winner === me.team; $('mobj').hidden = true; $('radio').hidden = true;
   if (MIS && MIS.endText) $('resultText').textContent = sim.mode === 'assault' ? `${MIS.endText} ${won ? 'Your side carries the day.' : 'Your side is beaten.'} You killed ${me.kills}.` : `${MIS.endText} You killed ${me.kills}.`;
   $('resultTitle').textContent = won ? '勝 · Mission accomplished' : '敗 · Mission failed';
+  if (won) { const key = sim.mode === 'assault' ? 'op:' + (sim.cfg.op || '') : sim.cfg.mission, secs = Math.round((sim.tick - (sim.battleTick | 0)) / 30), r = medalSave(key, sim.diff | 0, secs);
+    if (r) $('resultText').textContent += ` ${r}`; }
 }
+// medals: the best difficulty each mission or operation was won at, and the fastest time, kept on this machine
+const MEDAL = ['銅 Recruit', '銀 Soldier', '金 Veteran', '玉 Lone banner'];
+function medalsAll() { try { return JSON.parse(localStorage.getItem('mingMedals') || '{}'); } catch (e) { return {}; } }
+function medalSave(key, diff, secs) { const A = medalsAll(), o = A[key] || { d: -1, t: 1e9 }; const better = diff > o.d, faster = secs < o.t; A[key] = { d: Math.max(o.d, diff), t: Math.min(o.t, secs) }; try { localStorage.setItem('mingMedals', JSON.stringify(A)); } catch (e) { }
+  const mm = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`; return better ? `New medal: ${MEDAL[diff]} (${mm(secs)}).` : faster ? `A new best time: ${mm(secs)}.` : ''; }
+function medalTag(key) { const o = medalsAll()[key]; if (!o) return ''; const mm = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`; return ` <span class="medal" title="Best: ${MEDAL[o.d]}, ${mm(o.t)}">${MEDAL[o.d].split(' ')[0]} ${mm(o.t)}</span>`; }
 // ---------- assault: deployment screen (pick a soldier from a gallery and where to enter the fight) ----------
 const DEP = { open: false, ti: 0, si: 0, el: null, por: {}, porT: {}, t: 0, key: '' };
 function depBuild() {
@@ -17626,8 +17648,10 @@ const STD = { sim: null, n: 0, sum: false, open: false, best: 0, lastLog: 0 };
 #sdhead small { display: block; font: 400 12px Georgia, serif; color: #d8ccb0; margin-top: 3px; }
 `; document.head.appendChild(st);
 })();
-function standBestGet() { try { return +(localStorage.getItem('mingStandBest') || 0); } catch (e) { return 0; } }
-function standBestSet(n) { try { localStorage.setItem('mingStandBest', String(n)); } catch (e) { } }
+// the best is kept per field (Jiefan Hill keeps the old key)
+function standKey() { return 'mingStandBest' + (state.standMap && state.standMap !== 'field' ? ':' + state.standMap : ''); }
+function standBestGet() { try { return +(localStorage.getItem(standKey()) || 0); } catch (e) { return 0; } }
+function standBestSet(n) { try { localStorage.setItem(standKey(), String(n)); } catch (e) { } }
 // ---- menu ----
 function standMaps() { return [['field', '界凡 · Jiefan Hill', 'Open hill country above the Hun River.'], ['zroad', '道 · The road village', 'A winter cart road; houses to hide behind.'], ['hakodate', '寧遠 · The Ningyuan plain', 'Frozen flat ground by the sea: nowhere to hide.'],
   ['nagaoka', '揚州 · The paddies', 'Jiangnan rice fields in a thunderstorm: wet powder, short sight.'], ['djzhen', '鎮江 · Inside Zhenjiang', 'The camp inside a walled town: the raiders come through the gates.']]; }
@@ -17640,7 +17664,7 @@ function standMenu(on) {
   el.innerHTML = `<h3 class="sect">闖營 · Last Stand</h3>
     <p class="sdbrief">A palisade camp on the open field, and raiders from every side. Each raid is bigger and harder than the last, and every fifth brings a banner officer and his guard. When a raid breaks, choose one of three boons; the next comes on the moment you choose. Three lives. How long can you hold?</p>
     <div class="sdbest">${best ? `Your best: held ${best} raid${best === 1 ? '' : 's'}` : 'No stand made yet'}</div>
-    <h3 class="sect">The field</h3><div class="chapters roles" id="sdmaps">${standMaps().map(m => `<button type="button" class="chap${m[0] === (state.standMap || 'field') ? ' on' : ''}" data-m="${m[0]}"><b>${m[1]}</b><small>${m[2]}</small></button>`).join('')}</div>
+    <h3 class="sect">The field</h3><div class="chapters roles" id="sdmaps">${standMaps().map(m => `<button type="button" class="chap${m[0] === (state.standMap || 'field') ? ' on' : ''}" data-m="${m[0]}"><b>${m[1]}</b><small>${m[2]}${(() => { try { const b = +(localStorage.getItem('mingStandBest' + (m[0] !== 'field' ? ':' + m[0] : '')) || 0); return b ? ` Best: ${b} raids.` : ''; } catch (e) { return ''; } })()}</small></button>`).join('')}</div>
     <h3 class="sect">Your troops</h3><div class="chapters roles" id="sdroles">${ROLE_INFO.map(r => `<button type="button" class="chap${r[0] === state.role ? ' on' : ''}" data-r="${r[0]}"><b>${r[1]} · ${r[2]}</b><small>${r[3]}</small></button>`).join('')}</div>
     <p class="note sdkeys">Between raids pick a boon: <b>1 2 3</b> or click · F follow · C charge · H hold. Host a room to make the stand together (up to 4): the raids grow with you.</p>`;
   el.querySelectorAll('#sdroles button').forEach(b => b.onclick = () => { state.role = b.dataset.r; AUDIO.init(); AUDIO.play('ui'); standMenu(true); });
