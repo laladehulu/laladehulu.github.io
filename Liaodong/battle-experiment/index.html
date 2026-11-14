@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v168</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v169</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -20990,12 +20990,14 @@ const WCORE = (() => {
     if (g === 'ginseng' && place !== 'fushun' && S.day >= D(1618, 4, 15)) p *= 1.6; /* the Jurchen markets are closed */
     if ((g === 'iron' || g === 'knife' || g === 'sword') && S.day >= D(1618, 5, 1) && LIAO[place]) p *= 1.25; /* the army buys all the iron */
     return Math.max(1, Math.round(p)); }
+  const repOf = (S, place) => (S.rep && S.rep[place]) | 0;
+  const addRep = (S, place, n) => { S.rep = S.rep || {}; S.rep[place] = Math.max(-20, Math.min(30, (S.rep[place] | 0) + n)); };
   const inv = (S, g) => (S.inv && S.inv[g]) | 0;
   const give = (S, g, n) => { S.inv = S.inv || {}; S.inv[g] = Math.max(0, (S.inv[g] | 0) + n); if (!S.inv[g]) delete S.inv[g]; };
   const WT = { letter: 0, horse: 0, tea: 0, crib: 0, book: 0.5, medicine: 0.2 };
   const load = (S) => Object.entries(S.inv || {}).reduce((a, [g, n]) => a + (WT[g] !== undefined ? WT[g] : 1) * n, 0);
   const cap = (S) => inv(S, 'horse') ? 60 : 20;
-  function buy(S, place, g, n) { n = n || 1; if (g !== 'tea' && load(S) + (WT[g] !== undefined ? WT[g] : 1) * n > cap(S)) return [false, `Your pack is full (${Math.round(load(S))} of ${cap(S)}${inv(S, 'horse') ? '' : '; a horse would carry more'}).`]; const p = price(S, place, g) * n; if (S.cash < p) return [false, `You have not got ${p} wen.`]; S.cash -= p; give(S, g, n); return [true, `Bought ${GOODS[g][1]} for ${p} wen.`]; }
+  function buy(S, place, g, n) { n = n || 1; if (g !== 'tea' && load(S) + (WT[g] !== undefined ? WT[g] : 1) * n > cap(S)) return [false, `Your pack is full (${Math.round(load(S))} of ${cap(S)}${inv(S, 'horse') ? '' : '; a horse would carry more'}).`]; const p = Math.round(price(S, place, g) * n * (1 - Math.min(0.1, Math.max(0, repOf(S, place)) * 0.01))); if (S.cash < p) return [false, `You have not got ${p} wen.`]; S.cash -= p; give(S, g, n); return [true, `Bought ${GOODS[g][1]} for ${p} wen.`]; }
   function sell(S, place, g, n) { n = n || 1; if (inv(S, g) < n) return [false, 'You have none to sell.']; const q = (S.quality && S.quality[g]) || 1, p = Math.round(price(S, place, g) * 0.7 * q) * n; S.cash += p; give(S, g, -n); return [true, `Sold ${GOODS[g][1]} for ${p} wen.`]; }
 
   // ---------------- the forge: what you can make, from what, in how long ----------------
@@ -21139,6 +21141,11 @@ const WCORE = (() => {
   DIL.push({ k: 'jinexam', when: (S) => jinLand(S) && S.jin && S.day >= D(1629, 9, 1) && S.day < D(1629, 12, 1) && S.learning >= 30, title: ['天聰三年考試', 'The Khan\'s examination of 1629'],
       text: [['', 'Hong Taiji, the new Khan, has ordered that the Han scholars held as bondservants be examined; those who pass will be freed from their masters and given posts. You can still write.']],
       opts: [['Sit it', (S) => S.flags.jinPassed ? 'Two hundred pass, and you among them. You are freed, given two oxen and made a scribe (bithesi) of the Jin court.' : 'You do not pass.', (S) => { if (S.learning >= 42 || Math.random() < 0.3) { S.flags.jinPassed = 1; S.flags.jinManor = 0; S.office = { zh: '筆帖式', en: 'a scribe (bithesi) of the Jin court', rank: 30, since: S.day, jin: 1 }; } }], ['Stay a smith', 'You stay a smith.', () => { }]] });
+  DIL.push({ k: 'grab', when: (S) => S.place === 'lijia' && S.day >= D(1620, 4, 1) && S.day < D(1621, 3, 1) && !(S.dead && S.dead.father) && S.home === 'lijia', title: ['佔地', 'The land grab'],
+      text: [['你爹：佟家的人把咱家北坡那塊地的界石挪了。說是他家的。', 'Your father: The Tong family\'s men moved the boundary stones on our north slope. They say it\'s theirs.'], ['', 'The Tongs are rich, and the magistrate dines with them.']],
+      opts: [['Write a plaint and take it to the yamen (300 wen in fees)', (S) => S.flags.grabWon ? 'The magistrate walks the field himself and finds for you. The Tongs\' steward glares at you in the market.' : 'The magistrate finds for the Tongs. Your father does not say anything for a week.', (S) => { S.cash -= 300; if (S.status !== 'none' || S.learning > 50 || Math.random() < 0.35) { S.flags.grabWon = 1; } else S.xiao = (S.xiao | 0) - 1; }],
+        ['Bribe the yamen clerks (1500 wen)', 'The plaint goes to the top of the pile and the Tongs\' stones go back where they were.', (S) => { S.cash -= 1500; S.flags.grabWon = 1; S.karma = (S.karma | 0) - 1; }],
+        ['Go with your father at night and move the stones back', (S) => S.flags.grabFight ? 'The Tongs\' men are waiting. Your father\'s arm is broken.' : 'The stones are back. The Tongs pretend not to notice.', (S) => { if (Math.random() < 0.4) { S.flags.grabFight = 1; S.health -= 15; } }], ['Let it go', 'Your father lets it go too. It is only a slope.', () => { }]] });
   function dilemmaNow(S) { for (const d of DIL) if (!(S.dil && S.dil[d.k]) && d.when(S)) return d; return null; }
   function dilemmaChoose(S, d, i) { S.dil = S.dil || {}; S.dil[d.k] = i + 1; const o = d.opts[i]; o[2](S); S.cash = Math.max(0, S.cash); return typeof o[1] === 'function' ? o[1](S) : o[1]; }
 
@@ -21147,7 +21154,7 @@ const WCORE = (() => {
   const ROAD = [
     ['bandits', (S) => true, ['響馬', 'Bandits'], [['（林子裡出來五個人，拿著棍子和刀。）', '(Five men come out of the trees with clubs and knives.)'], ['為首的：留下錢，留下命。', 'Their leader: Leave the money and keep your life.']],
       [['Hand over a third of your money', (S) => { const n = Math.floor(S.cash / 3); S.cash -= n; return `They take ${n} wen and let you go.`; }],
-        ['Fight', (S) => { const win = (S.arms + (S.inv && S.inv.sword ? 25 : S.inv && S.inv.knife ? 10 : 0)) / 100 + rngFor(S, 21)() * 0.5 > 0.55; if (win) { S.cash += 120; S.arms += 1; return 'You break the leader\'s arm and the rest run. In his bag: 120 wen.'; } S.health -= 35; S.cash -= Math.floor(S.cash / 2); return 'They beat you senseless and take half of what you have.'; }],
+        ['Fight', (S) => { const win = (S.arms + (S.inv && S.inv.sword ? 25 : S.inv && S.inv.knife ? 10 : 0) + (S.brothers && S.brothers.length ? 20 : 0)) / 100 + rngFor(S, 21)() * 0.5 > 0.55; if (win) { S.cash += 120; S.arms += 1; return 'You break the leader\'s arm and the rest run. In his bag: 120 wen.'; } S.health -= 35; S.cash -= Math.floor(S.cash / 2); return 'They beat you senseless and take half of what you have.'; }],
         ['Run', (S) => { if (rngFor(S, 22)() < 0.6) return 'You outrun them into the hills.'; S.cash -= Math.floor(S.cash / 4); return 'They catch your bag and you lose a quarter of your money.'; }]]],
     ['hungry', (S) => S.day >= D(1618, 4, 15), ['路邊', 'By the road'], [['（一個抱著孩子的女人坐在路邊。孩子不哭了。）', '(A woman with a child in her arms sits by the road. The child has stopped crying.)']],
       [['Give her 30 wen and your cakes', (S) => { S.cash -= 30; S.karma = (S.karma | 0) + 1; return 'She does not say anything. She holds the money in her fist.'; }], ['Walk on', () => 'You walk on.']]],
@@ -21213,6 +21220,7 @@ const WCORE = (() => {
     if (S.letters && S.letters.length && S.folk) L.push(['信', 'Letters to deliver', S.letters.map(x => `to ${S.folk[x.to] ? S.folk[x.to].en : '?'} in ${x.place}`).join('; ')]);
     { const P = []; for (const pl in S.land || {}) if (S.land[pl]) P.push(`${S.land[pl]} mu at ${pl === 'lijia' ? 'Lijia' : 'Baodi county'}`); if (S.shop) P.push('a smithy rented in Liaoyang'); if (P.length) L.push(['產', 'Property', P.join('; ') + '.']); }
     { const M = []; for (const d of S.debt || []) M.push(`a note for ${d.n} wen, due ${DT(d.due).y}/${DT(d.due).m}/${DT(d.due).d} (now ${owed(S, d)})`); for (const t of S.pawns || []) M.push(`pawned: ${GOODS[t.g][1]} (redeem by ${DT(t.day + 90).m}/${DT(t.day + 90).d})`); if (S.contract) M.push(`a contract: ${S.contract.n} knives to the ironmonger in Liaoyang by ${DT(S.contract.due).m}/${DT(S.contract.due).d}, ${S.contract.each} wen each`); if (M.length) L.push(['債', 'Debts and dealings', M.join('; ') + '.']); }
+    { const B = brothers(S).map(k => S.folk[k].en); const R = Object.entries(S.rep || {}).filter(([, v]) => Math.abs(v) >= 3).map(([p, v]) => `${p}: ${v >= 8 ? 'well thought of' : v >= 3 ? 'liked' : v <= -5 ? 'known as a thief' : 'distrusted'}`); if (B.length || R.length) L.push(['義', 'Brothers and name', [B.length ? `Sworn brothers: ${B.join(', ')}.` : '', R.length ? `Your name: ${R.join('; ')}.` : ''].join(' ')]); }
     const dead = S.folk ? Object.values(S.folk).filter(f => !f.alive && f.died && S.day - f.died < 360 && (f.place === S.place || relOf(S, f.k) > 5)).slice(-6) : []; if (dead.length) L.push(['故', 'The dead you knew', dead.map(f => `${f.en} (${f.how})`).join('; ')]);
     return L; }
 
@@ -21292,7 +21300,21 @@ const WCORE = (() => {
   // a contract: the Commission (or a merchant) wants blades by a date
   function contractOffer(S) { if (S.contract || (S.smith || 0) < 25 || S.day >= D(1621, 3, 1)) return null; const r = rngFor(S, 101); const n = 5 + Math.floor(r() * 6), each = Math.round(price(S, 'liaoyang', 'knife') * (1.1 + r() * 0.3)); return { g: 'knife', n, each, due: S.day + 40 }; }
   function contractDeliver(S) { const c = S.contract; if (!c || inv(S, c.g) < c.n) return null; give(S, c.g, -c.n); const pay = c.n * c.each; S.cash += pay; S.contract = null; S.smith = Math.min(100, (S.smith || 0) + 2); return pay; }
-  return { landPrice, buyLand, sellLand, landYear, pawn, redeemCost, redeem, borrow, owed, repay, moneyDay, contractOffer, contractDeliver, NIGHT, nightEvent, makeMates, festNow, CELL, BAGU, epitaph, load, cap, SPREAD, D, DT, season, biome, TR, POP, makeFolk, folkAt, GOODS, price, inv, give, buy, sell, RECIPES, craft, JOBS, jobsFor, work, relOf, addRel, giftTo, letterAsk, letterTake, letterDeliver, matchOffer, marry, folkDay, folkHistory,
+  // ---------------- standing, crime, rumour, brotherhood ----------------
+  function steal(S, place, g) { const r = rngFor(S, 111 + (S.thefts = (S.thefts | 0) + 1)); const caught = r() < 0.35 - Math.min(0.2, S.arms / 300);
+    if (!caught) { give(S, g, 1); addRep(S, place, -1); S.karma = (S.karma | 0) - 1; return [true, `Nobody saw. ${GOODS[g][1][0].toUpperCase() + GOODS[g][1].slice(1)} is in your sleeve.`]; }
+    S.health = Math.max(5, S.health - 20); addRep(S, place, -5); S.karma = (S.karma | 0) - 2; let w = 'He grabs your wrist and shouts for the runners. Twenty strokes of the light bamboo in the yamen yard.';
+    if (S.status === 'shengyuan' && r() < 0.4) { S.status = 'none'; w += ' The Director of Studies hears of it and strikes your name from the rolls of licentiates.'; } return [false, w]; }
+  // what people say about the people you know
+  function gossip(S, f) { if (!S.folk) return null; const r = rngFor(S, f.k.length * 7 + 3); const o = Object.values(S.folk).filter(x => x.k !== f.k && (x.place === f.place || relOf(S, x.k) > 4) && (x.died ? S.day - x.died < 120 : (x.spouse || x.drafted || x.trade === 'refugee')));
+    if (!o.length) return null; const x = pick(r, o);
+    if (x.died) return [`聽說${x.zh}死了。`, `Did you hear? ${x.en} is dead, ${x.how}.`];
+    if (x.trade === 'refugee') return [`${x.zh}現在要飯了。`, `${x.en} is begging in the street now. Lost everything.`];
+    if (x.drafted) return [`${x.zh}被抓去當兵了。`, `${x.en} was taken in the levy. His mother cries every night.`];
+    return [`${x.zh}娶了媳婦，是個厲害的。`, `${x.en} got married. A fierce one, they say: she keeps the money.`]; }
+  function swear(S, k) { S.brothers = (S.brothers || []).concat([k]); addRel(S, k, 20); }
+  const brothers = (S) => (S.brothers || []).filter(k => S.folk && S.folk[k] && S.folk[k].alive);
+  return { repOf, addRep, steal, gossip, swear, brothers, landPrice, buyLand, sellLand, landYear, pawn, redeemCost, redeem, borrow, owed, repay, moneyDay, contractOffer, contractDeliver, NIGHT, nightEvent, makeMates, festNow, CELL, BAGU, epitaph, load, cap, SPREAD, D, DT, season, biome, TR, POP, makeFolk, folkAt, GOODS, price, inv, give, buy, sell, RECIPES, craft, JOBS, jobsFor, work, relOf, addRel, giftTo, letterAsk, letterTake, letterDeliver, matchOffer, marry, folkDay, folkHistory,
     DIL, dilemmaNow, dilemmaChoose, ROAD, roadDay, STICKS, drawStick, TALES, tale, dice, CASES, caseNow, judge, LADDER, evaluate, MEMOS, memosNow, memo, purge, journal, rngFor, age };
 })();
 if (typeof module !== 'undefined') module.exports = WCORE;
@@ -21817,10 +21839,16 @@ const wSays = (zh, en) => ({ lines: [[zh, en]] });
 // ---------------- talking with the townsfolk ----------------
 function wTalkFolk(p, u) {
   const f = p.folk, T = WCORE.TR[f.trade], me = wRank(), rel = p.rank - me, h = localHero(); if (h && u) Input.yaw = Math.atan2(u.x - h.x, u.z - h.z);
-  const like = WCORE.relOf(WS, f.k), line = T.talk[(WS.day + f.k.length) % T.talk.length];
+  if (f.trade === 'tea' && WS.flags.fightDay !== WS.day && Math.random() < 0.12) { WS.flags.fightDay = WS.day; return wChoice(wTeaFight()); }
+  const like = WCORE.relOf(WS, f.k), line0 = T.talk[(WS.day + f.k.length) % T.talk.length], rp = WCORE.repOf(WS, WS.place);
+  const line = rp <= -5 ? ['又是你。手放在我看得見的地方。', 'You again. Keep your hands where I can see them.'] : rp >= 8 && like >= 0 ? [`是${WS.name.zh}啊，好後生。` + line0[0], `Ah, it's ${WS.name.en}, the good young man. ` + line0[1]] : line0;
   const greet = me >= 40 && p.rank < 40 ? ['老爺。', 'Your Honour.'] : me >= 10 && p.rank < 10 ? ['相公。' + line[0], 'Sir. ' + line[1]] : rel >= 8 ? ['有事？', 'What is it?'] : like > 20 ? [`${WS.name.zh}兄弟！${line[0]}`, `Brother ${WS.name.en.split(' ')[1]}! ${line[1]}`] : line;
   const mk = () => { const O = [], say = (q, fx, off) => O.push({ q, fx, off });
     say('Who are you?', () => wSays(`我叫${f.zh}，${T.zh}。`, `${f.en}, ${T.en}. ${WCORE.age(WS, f.born)} years old${f.spouse ? ', married' : ''}${f.drafted ? '; taken for the army in the levy' : ''}${f.trade === 'refugee' ? '; lost everything in the war' : ''}.`));
+    { const g = WCORE.gossip(WS, f); if (g) say('"Any gossip?"', () => ({ lines: [g] })); }
+    if (like >= 40 && !f.woman && !(WS.brothers || []).includes(f.k) && f.trade !== 'bannerman') say('Swear brotherhood with him (結拜)', () => { WCORE.swear(WS, f.k); wLog('結拜。', `Swore brotherhood with ${f.en}.`); return { lines: [['', `You kneel together before Guan Yu's image, burn incense and drink wine with a drop of each other's blood in it. "Not born on the same day, we ask to die on the same day." ${f.en} is your sworn brother.`]], opts: mk() }; });
+    if ((WS.brothers || []).includes(f.k) && WS.cash < 300) say('"Brother, I am in a bad way"', () => { if (WS.flags.brotherHelp === WS.day) return wSays('', 'He has nothing more to give today.'); WS.flags.brotherHelp = WS.day; const n = 200 + Math.floor(Math.random() * 400); WS.cash += n; return { lines: [['兄弟有難，說什麼借不借的。', 'When my brother is in trouble, don\'t talk to me about lending.'], ['', `He presses ${n} wen into your hand.`]], opts: mk() }; });
+    for (const g of (f.trade === 'vendor' ? ['cake'] : f.trade === 'clothier' ? ['cloth'] : f.trade === 'bookseller' ? ['book'] : [])) say(`Steal ${WCORE.GOODS[g][1]} while he looks away`, () => { const r = WCORE.steal(WS, WS.place, g); wLog('偷東西。', r[0] ? `Stole ${WCORE.GOODS[g][1]}.` : 'Caught stealing in the market.'); return { lines: [['', r[1]]], opts: mk() }; });
     { const N = wNews(WS.place); if (N.length) { const e = N[N.length - 1 - ((f.k.length + WS.day) % Math.min(3, N.length))]; say('What news?', () => { WS.heard[e[1]] = 1; return wSays(e[2], e[3]); }); } }
     // work for him
     for (const j of WCORE.jobsFor(WS, f.trade)) say(`Work: ${j[6].replace(/\.$/, '')} (+${j[4]} wen)`, () => { wPass(j[3], () => { const r = WCORE.work(WS, j); WCORE.addRel(WS, f.k, 1); toast(r[1]); }); });
@@ -21841,7 +21869,7 @@ function wTalkFolk(p, u) {
     if (f.trade === 'doctor') say(`Be treated (150 wen)${WS.health < 70 ? '' : ': you are well'}`, () => { if (WS.cash < 150) return wSays('', 'You have not got 150 wen.'); WS.cash -= 150; WS.health = Math.min(100, WS.health + 40); return { lines: [['伸手來。', 'He takes your pulse at three places on each wrist, looks at your tongue, and writes a prescription: ginseng, angelica, licorice. Your health is ' + Math.round(WS.health) + '.']], opts: mk() }; }, WS.cash < 150);
     if (f.trade === 'scribe') say('Have a letter written home (20 wen)', () => { if (WS.cash < 20) return wSays('', 'No money.'); WS.cash -= 20; WS.flags.wroteHome = WS.day; return { lines: [['', '"Father, mother: I am well..." He writes it in a fine hand and promises it will go with the next carter east.']], opts: mk() }; });
     if (f.trade === 'matchmaker' && !WS.spouse) { const o = WCORE.matchOffer(WS); if (o) say('"Find me a wife"', () => ({ lines: [['', `"There is ${o.en}, of ${o.from}. Good hips, a good worker, can embroider. Betrothal gifts: ${o.gifts} wen, and my fee ${o.fee}."`]], opts: [{ q: `Agree (${o.gifts + o.fee} wen)`, off: WS.cash < o.gifts + o.fee, fx: () => { const r = WCORE.marry(WS, o); if (r[0]) { WS.spouse.home = WS.home; WS.spouse.temper = ['thrifty', 'sharp', 'gentle'][Math.floor(Math.random() * 3)]; wNote('成親了。', r[1] + ` She is ${({ thrifty: 'thrifty: the house money goes further in her hands', sharp: 'sharp-tongued and quick', gentle: 'gentle; the house is quieter for her' })[WS.spouse.temper]}.`); } return { lines: [['', r[1]]], opts: [] }; } }, { q: 'Not yet', fx: () => wSays('', '"Don\'t leave it too long, young man."') }] })); }
-    if (f.trade === 'beggar' || f.trade === 'refugee') say('Give him 5 wen', () => { if (WS.cash < 5) return wSays('', 'You have nothing to give.'); WS.cash -= 5; WS.karma = (WS.karma | 0) + 1; WCORE.addRel(WS, f.k, 2); return { lines: [['好人有好報。', 'May good come to the good.']], opts: mk() }; });
+    if (f.trade === 'beggar' || f.trade === 'refugee') say('Give him 5 wen', () => { if (WS.cash < 5) return wSays('', 'You have nothing to give.'); WS.cash -= 5; WS.karma = (WS.karma | 0) + 1; WCORE.addRel(WS, f.k, 2); WCORE.addRep(WS, WS.place, 1); return { lines: [['好人有好報。', 'May good come to the good.']], opts: mk() }; });
     if (f.trade === 'candidate') say('Talk about the classics (an hour)', () => { WS.hour += 1; const g = WS.learning < 50 ? 0.8 : 0.3; WS.learning = Math.min(100, WS.learning + g); WCORE.addRel(WS, f.k, 2); return { lines: [['', WS.learning < 40 ? 'He is kind about how little you know, and lends you his notes on the Doctrine of the Mean.' : 'You argue about whether 格物 means investigating things or rectifying the mind, until the lamp oil runs out.']], opts: mk() }; });
     if (f.trade === 'soldier') say('"What is it like, the army?"', () => wSays('', WS.day < D(1619, 3, 2) ? '"Bad food, no pay, and the officers sell our rations. But they say the four armies will finish Nurhaci in a month."' : '"I was at Sarhu. Don\'t join. Or join, and run at the right moment."'));
     if (f.trade === 'clerk' && WS.office) say('Go over the county accounts (two hours)', () => { wPass(2, () => { WS.office.favor = (WS.office.favor | 0) + 1; toast('The tax registers balance, almost. Your superiors will be pleased.'); }); });
@@ -22072,6 +22100,12 @@ function wMoneyTopics(who, add) {
 // a smithy of your own in Liaoyang, rented from Innkeeper Qian's cousin
 function wShopTopic(p, say) { if (p.k === 'innkeep' && WS.place === 'liaoyang' && WS.day < D(1621, 3, 1) && !WS.shop && (WS.smith || 0) >= 25) say('Ask about renting a shop front for a smithy (500 wen a month)', [['我表弟有間鋪面，靠著鐵匠街。一個月五百文。', 'My cousin has a shop front on the smiths\' street. Five hundred a month.']], () => { if (WS.cash < 500) return toast('You need the first month\'s rent.'); WS.cash -= 500; WS.shop = { place: 'liaoyang', since: WS.day }; wLog('租了鋪子。', 'Rented a smithy in Liaoyang.'); toast('The smithy is yours. Work it (E) when you are in Liaoyang.'); wScene(); }); }
 function wShopWork() { const inc = Math.round((30 + (WS.smith || 0) * 1.8) * (WS.flags.jinManor ? 0.5 : 1)); wPass(4, () => { WS.cash += inc; WS.smith = Math.min(100, (WS.smith || 0) + 0.6); toast(`Four hours at your own anvil: hinges, hoes, a horse's shoes. +${inc} wen.`); }); }
+
+// ===================== R6: standing and trouble =====================
+function wTeaFight() { return { k: 'tea' + WS.day, title: ['茶館', 'Trouble in the teahouse'], text: [['', 'A drunk soldier knocks your bowl into your lap and laughs. "Country boy. Say sorry for getting in my way."'], ['', 'The teahouse goes quiet.']],
+  opts: [['Say sorry', 'He laughs and goes back to his table. Someone at the back snorts.', (S) => { WCORE.addRep(S, S.place, -1); }],
+    ['Throw your tea in his face', (S) => S.flags.teaWon ? 'He swings, misses, and goes over a bench. The teahouse cheers. The keeper gives you a fresh bowl free.' : 'He beats you across three tables before his friends pull him off.', (S) => { S.flags.teaWon = S.arms + Math.random() * 40 > 45 ? 1 : 0; if (S.flags.teaWon) { WCORE.addRep(S, S.place, 3); S.arms += 0.5; } else S.health -= 18; }],
+    ['Buy him a jug of wine (25 wen)', '"Now that\'s a proper country boy." He tells you about Sarhu until he falls asleep.', (S) => { S.cash -= 25; }]] }; }
 
 })();
 </script>
