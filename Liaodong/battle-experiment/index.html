@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v177</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v178</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -13827,12 +13827,24 @@ function menuLayout(field, soldier, mis, heroes, story, duel) {
   $('btnSolo').textContent = story ? SOLO_LABEL.story : 'Set up the battle →'; $('btnHost').hidden = true;
   const inRoom = state.screen === 'lobby'; if (inRoom) $('btnSolo').parentElement.hidden = true; $('personalHead').textContent = inRoom ? 'Your side · ' + (({ standard: 'Field battle', duel: 'Duel', grand: 'Grand battle', chaos: 'Chaos', officers: 'Officers', heroes: 'Heroes', soldier: 'Path of a Soldier', campaign: 'Co-op campaign', assault: 'Assault', siege: 'Siege', beacon: 'Hold the Beacon', stand: 'Last Stand' })[m] || m) : 'Your side';
 }
+// saved armies: three slots per side, and the last army you built (and the mode and field you chose) come back next time
+function armyStore() { try { return JSON.parse(localStorage.getItem('mingArmies') || '{}'); } catch (e) { return {}; } }
+function armyPresets() { const A = armyStore(), f = state.faction | 0, slots = (A['s' + f] || [null, null, null]).slice(0, 3); while (slots.length < 3) slots.push(null);
+  try { A['last' + f] = state.army.slice(); A.menu = { mode: state.mode, battle: state.battle }; localStorage.setItem('mingArmies', JSON.stringify(A)); } catch (e) { }
+  let box = $('armyPre'); if (!box) { box = document.createElement('div'); box.id = 'armyPre'; box.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 0;font-size:12px;align-items:center'; $('armyList').after(box); }
+  const ok = (a) => a && a.every(k => S.ROSTER[f].includes(k)) && armyCost(a) <= S.BUDGET;
+  box.innerHTML = '<span style="opacity:.7">Saved armies:</span>' + slots.map((a, i) => `<span style="display:inline-flex;gap:2px"><button type="button" class="btn sm" data-ld="${i}"${ok(a) ? '' : ' disabled'} title="${a ? a.map(k => S.defFor(k, f).name).join(', ') : 'empty'}">${i + 1}${a ? ` · ${a.length} sq` : ' · empty'}</button><button type="button" class="btn sm" data-sv="${i}" title="Save the army above in slot ${i + 1}"${state.army.length ? '' : ' disabled'}>save</button></span>`).join('');
+  box.querySelectorAll('[data-ld]').forEach(b => b.onclick = () => { const a = slots[+b.dataset.ld]; if (!ok(a)) return; state.army = state.mode === 'officers' ? a.slice(0, 1) : a.slice(); AUDIO.init(); AUDIO.play('ui'); renderMenu(); });
+  box.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => { slots[+b.dataset.sv] = state.army.slice(); const B = armyStore(); B['s' + f] = slots; try { localStorage.setItem('mingArmies', JSON.stringify(B)); } catch (e) { } AUDIO.init(); AUDIO.play('ui'); renderMenu(); }); }
+function armyRestore() { const A = armyStore(), f = state.faction | 0, a = A['last' + f]; if (a && a.length && a.every(k => S.ROSTER[f].includes(k)) && armyCost(a) <= S.BUDGET) state.army = a.slice();
+  if (A.menu && S.BATTLES[A.menu.battle] && !S.BATTLES[A.menu.battle].hidden) state.battle = A.menu.battle; }
 function renderMenu() {
   renderBattles(); renderStory(); renderScen(); const story = state.mode === 'story', heroes = state.mode === 'heroes', duel = state.mode === 'duel', soldier = state.mode === 'soldier' || duel, mis = state.mode === 'campaign' || state.mode === 'assault' || state.mode === 'siege'; $('missionPanel').hidden = !mis; if (mis && typeof renderMissions === 'function') renderMissions(); $('storyPanel').hidden = !story; $('heroPanel').hidden = !heroes; $('soldierPanel').hidden = !soldier; const camp = state.mode === 'campaigns'; $('campPanel').hidden = !camp; const field = !(story || heroes || soldier || mis || camp || state.mode === 'beacon' || state.mode === 'stand'); $('fieldPanel').hidden = !field; menuLayout(field, soldier, mis, heroes, story, duel); if (typeof beaconMenu === 'function') beaconMenu(state.mode === 'beacon'); if (typeof standMenu === 'function') standMenu(state.mode === 'stand'); { const sp = $('soldierPanel'); const cta = sp && sp.querySelector('.career-cta'), oi = $('officerIn'); if (cta) cta.hidden = duel; if (sp) sp.hidden = !soldier || duel; if (oi && oi.parentElement) oi.parentElement.hidden = duel; const hd = $('roleHead'); if (hd) hd.textContent = duel ? 'Duel · your arms' : 'Your post'; } if (soldier && typeof renderRoles === 'function') renderRoles(); $('modeNote').textContent = state.mode === 'campaigns' ? 'Story campaigns: pick a difficulty and your place in the team, then begin or continue a campaign. Your progress is kept in this browser.' : state.mode === 'officers' ? 'Officers: you lead a single squad in person (the first one in your army) beside AI generals. Host a room so friends can each lead a squad too.' : state.mode === 'grand' ? 'Grand battle: AI generals fill out both sides. Command your allies from the command view.' : state.mode === 'chaos' ? 'Chaos: no orders and no fear, and the gods take a hand.' : story ? 'Story: seven battles of the Ming–Jin war. Your faction choice sets which side you fight for.' : heroes ? 'Heroes: you are a lone champion; AI armies fight a phased siege. Faction sets your side. Host a room so each friend plays a champion.' : '';
   $('modeSeg').querySelectorAll('button').forEach(bt => bt.classList.toggle('on', bt.dataset.m === state.mode));
   const ros = S.ROSTER[state.faction]; const cost = armyCost(state.army), left = S.BUDGET - cost;
   const b = $('budget'); b.textContent = `${left} / ${S.BUDGET} taels`; b.classList.toggle('over', left < 0);
   $('armyCount').textContent = `${state.army.length} squad${state.army.length === 1 ? '' : 's'} · ${state.army.reduce((s, k) => s + S.DEFS[k].count, 0)} men`;
+  armyPresets();
   const r = $('roster'); r.innerHTML = '';
   for (const k of ros) {
     const d = S.defFor(k, state.faction); const el = document.createElement('div'); el.className = 'unit';
@@ -14947,6 +14959,7 @@ window.__boshin = { startGame, state, Input, Drag, boxSelect, layoutLine, handle
 document.addEventListener('pointerdown', () => { AUDIO.init(); if (!MUSIC.track && state.screen !== 'game' && $('musicIn').checked) MUSIC.play('menu'); }, { once: false });
 $('musicIn').addEventListener('change', () => { MUSIC.setMuted(!$('musicIn').checked); if ($('musicIn').checked && !MUSIC.track) MUSIC.play(state.screen === 'game' ? 'battle' : 'menu'); });
 try { const r = JSON.parse(localStorage.getItem('mingResume') || 'null'); if (r) { localStorage.removeItem('mingResume'); state.mode = 'story'; state.chapter = r.chapter; state.faction = r.side; state.storyUnlocked = r.chapter; } } catch (e) { }
+try { armyRestore(); } catch (e) { }
 renderMenu();
 requestAnimationFrame(frame);
 
