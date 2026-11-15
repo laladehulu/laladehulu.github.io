@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v181</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v182</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1048,6 +1048,10 @@ class Sim {
     if (this.vets && this.vets.length && this.players[0]) { // veterans of earlier chapters: their losses and their stars march with them
       const used = {}; this.vets.forEach((v) => { const sid = this.players[0].squads.find(id => !used[id] && this.squads[id].type === v.type); if (sid === undefined) return; used[sid] = 1; const sq = this.squads[sid]; const xp = clamp(v.xp | 0, 0, 200); sq.xp = xp; sq.stars = xp >= 30 ? 3 : xp >= 15 ? 2 : xp >= 6 ? 1 : 0; sq.moraleMax = (sq.def.morale || 100) + sq.stars * 10; sq.morale = sq.moraleMax; sq.veteran = true;
         const keep = clamp(v.n | 0, 1, sq.count); for (let k = keep; k < sq.unitIds.length; k++) { const u = this.units[sq.unitIds[k]]; u.dead = true; u.hp = 0; this.total[u.team]--; } sq.aliveCount = keep; }); }
+    // against the AI alone: the difficulty you chose hardens or softens the side no human plays (field, grand, officers, chaos, story, heroes; 1 is even)
+    if (!this.mission && this.mode !== 'duel' && cfg.diff !== undefined) { const hum = [0, 0]; for (const p of this.players) if (!p.ai) hum[p.team]++;
+      if ((hum[0] > 0) !== (hum[1] > 0)) { const foe = hum[0] ? 1 : 0, k = [0.75, 1, 1.12, 1.25][this.diff]; if (k !== 1) { const cache = new Map();
+        for (const u of this.units) { if (u.team !== foe || u.type === 'horse') continue; let d = cache.get(u.def); if (!d) { d = Object.assign({}, u.def, { hp: u.def.hp * k, dmg: u.def.dmg ? u.def.dmg.map(x => x * k) : u.def.dmg }); cache.set(u.def, d); } u.def = d; u.hp = d.hp; } } } }
     if (this.heroMode) { const S2 = this.scen; this.objectives = [{ id: 0, x: S2.bridge[0], z: S2.bridge[1], r: 11, name: 'Moat bridge', ctrl: 100, owner: 0 }, { id: 1, x: S2.citadel[0], z: S2.citadel[1], r: S2.citadel[2], name: 'Citadel', ctrl: 100, owner: 0 }];
       this.phase = 1; this.battleTick = 0; for (const p of this.players) p.ready = true; this.heroDirectives(); }
     if (this.mission) { this.phase = 1; this.battleTick = 0; for (const p of this.players) p.ready = true; }
@@ -13836,6 +13840,13 @@ function armyPresets() { const A = armyStore(), f = state.faction | 0, slots = (
   box.innerHTML = '<span style="opacity:.7">Saved armies:</span>' + slots.map((a, i) => `<span style="display:inline-flex;gap:2px"><button type="button" class="btn sm" data-ld="${i}"${ok(a) ? '' : ' disabled'} title="${a ? a.map(k => S.defFor(k, f).name).join(', ') : 'empty'}">${i + 1}${a ? ` · ${a.length} sq` : ' · empty'}</button><button type="button" class="btn sm" data-sv="${i}" title="Save the army above in slot ${i + 1}"${state.army.length ? '' : ' disabled'}>save</button></span>`).join('');
   box.querySelectorAll('[data-ld]').forEach(b => b.onclick = () => { const a = slots[+b.dataset.ld]; if (!ok(a)) return; state.army = state.mode === 'officers' ? a.slice(0, 1) : a.slice(); AUDIO.init(); AUDIO.play('ui'); renderMenu(); });
   box.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => { slots[+b.dataset.sv] = state.army.slice(); const B = armyStore(); B['s' + f] = slots; try { localStorage.setItem('mingArmies', JSON.stringify(B)); } catch (e) { } AUDIO.init(); AUDIO.play('ui'); renderMenu(); }); }
+// difficulty against the AI in the open modes (the same choice the campaigns keep)
+const SKD = [['新兵', 'Recruit', 'The enemy\'s men are a quarter softer.'], ['兵', 'Soldier', 'Even: both armies as they are.'], ['老兵', 'Veteran', 'The enemy\'s men are an eighth harder.'], ['孤旗', 'Lone banner', 'The enemy\'s men are a quarter harder.']];
+function skDiffRow() { const on = /^(standard|grand|officers|chaos|heroes|story)$/.test(state.mode); let el = $('skDiff'); const host = $('roster'); if (!host) return;
+  if (!el) { el = document.createElement('div'); el.id = 'skDiff'; el.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 10px;font-size:12px'; host.parentNode.insertBefore(el, host); }
+  el.hidden = !on; if (!on) return; const cur = diffPref();
+  el.innerHTML = '<span style="font:700 11px sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-right:4px">Against the AI</span>' + SKD.map((d, i) => `<button type="button" class="btn sm${i === cur ? ' primary' : ''}" data-d="${i}">${d[0]} ${d[1]}</button>`).join('') + `<small style="opacity:.75">${SKD[cur][2]}</small>`;
+  el.querySelectorAll('button').forEach(b => b.onclick = () => { try { localStorage.setItem('mingDiff', b.dataset.d); } catch (e) { } AUDIO.init(); AUDIO.play('ui'); skDiffRow(); }); }
 function armyRestore() { const A = armyStore(), f = state.faction | 0, a = A['last' + f]; if (a && a.length && a.every(k => S.ROSTER[f].includes(k)) && armyCost(a) <= S.BUDGET) state.army = a.slice();
   if (A.menu && S.BATTLES[A.menu.battle] && !S.BATTLES[A.menu.battle].hidden) state.battle = A.menu.battle; }
 function renderMenu() {
@@ -13844,7 +13855,7 @@ function renderMenu() {
   const ros = S.ROSTER[state.faction]; const cost = armyCost(state.army), left = S.BUDGET - cost;
   const b = $('budget'); b.textContent = `${left} / ${S.BUDGET} taels`; b.classList.toggle('over', left < 0);
   $('armyCount').textContent = `${state.army.length} squad${state.army.length === 1 ? '' : 's'} · ${state.army.reduce((s, k) => s + S.DEFS[k].count, 0)} men`;
-  armyPresets();
+  armyPresets(); try { skDiffRow(); } catch (e) { }
   const r = $('roster'); r.innerHTML = '';
   for (const k of ros) {
     const d = S.defFor(k, state.faction); const el = document.createElement('div'); el.className = 'unit';
