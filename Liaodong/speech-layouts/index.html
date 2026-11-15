@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v179</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v180</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -15404,6 +15404,7 @@ function missionHUD(dt) {
   $('mobj').innerHTML = h; $('mobj').hidden = !!M.soldier;
 }
 function missionFinish(winner) {
+  if (typeof WB !== 'undefined' && WB && typeof wFinish === 'function') { $('mobj').hidden = true; $('radio').hidden = true; return wFinish(winner); } /* a battle of the open world (a commander's mission such as Ningyuan) goes back to the life */
   if (state.sim.mission.soldier && typeof arsRecord === 'function') { try { arsRecord(); } catch (e) { } }
   if (state.sim.mission.soldier && typeof zheFinish === 'function') { $('mobj').hidden = true; $('radio').hidden = true; return zheFinish(winner); }
   const sim = state.sim, me = sim.players[state.localIdx]; const won = winner === me.team; $('mobj').hidden = true; $('radio').hidden = true;
@@ -21778,7 +21779,8 @@ function wExam(ex) {
 
 // ---------------- battles: when history comes for your company ----------------
 function wBattle(mission) {
-  const M = SIM.MISSIONS[mission]; if (!M) return wScene();
+  try { CH.missions(); CH.missions2(); CH.missions3(); } catch (e) { } /* the story variants (the Hun River's north bank, Juehua...) are installed on first use */
+  const M = SIM.MISSIONS[mission]; if (!M) { console.warn('world: no mission', mission); return wScene(); }
   WB = { mission }; WZ = null; ZC = null; ZB = null;
   const cards = wBattleCards(mission);
   zCards(cards, () => { startGame({ seed: (Math.random() * 0x7fffffff) | 0, battle: M.battle, mode: 'campaign', mission, players: [{ name: WS.name.zh, team: M.side | 0, connected: true }] }, 0, null, 1);
@@ -21829,7 +21831,7 @@ function wMenu() {
   zheHUD = function (dt) { if (WZ && WS && state.sim && state.sim.cfg.camp && state.sim.cfg.camp.world) return wHUD(dt); return hud(dt); };
   zheFinish = function (w) { if (WB) return wFinish(w); return fin(w); }; }
 setTimeout(() => { try { wMenu(); } catch (e) { } }, 400);
-window.__world = { wBunk, wAfterFall, wArmyMoment, WCORE, wLifeDay, wTalkFolk, wJournal, wForge, wCourt, wChoice, wPeopleHere, wStart, wFresh, wTurnDays, wGo, wSleep, wScene, wBoard, wExam, wTalk, wLook, wPerson, WEX, WPL, get WS() { return WS; }, set WS(v) { WS = v; } }; // test hooks
+window.__world = { wBattleTest: (m) => { wBattle(m); const b = [...document.querySelectorAll("button")].find(b => /Continue/.test(b.textContent) && b.offsetParent); if (b) b.click(); }, wBunk, wAfterFall, wArmyMoment, WCORE, wLifeDay, wTalkFolk, wJournal, wForge, wCourt, wChoice, wPeopleHere, wStart, wFresh, wTurnDays, wGo, wSleep, wScene, wBoard, wExam, wTalk, wLook, wPerson, WEX, WPL, get WS() { return WS; }, set WS(v) { WS = v; } }; // test hooks
 
 // ===================== 人間 · the life of the world, on screen: townsfolk, family, the forge, the court, the road, the journal =====================
 // world_core.js keeps the rules (and is tested in node); this file puts them in front of you. Spliced into main.js's scope after world.js.
@@ -22286,7 +22288,7 @@ function wEndNow() {
       ['Hide in the cellar of a friend\'s house', 'Forty days in the dark. When you come up the Qing are in the city.', (S) => { S.health -= 15; }],
       ['Die for the dynasty (殉節)', 'You write a last poem on the wall in your own blood and hang yourself from the beam, as two dozen officials do that week. Your name goes into the histories.', (S) => { S.flags.diedFor = 'for the Ming, in Beijing, in the spring of 1644, by his own hand'; S.health = 0; }]] };
   if (d >= D(1644, 4, 18) && d < D(1644, 4, 23) && WS.place === 'shanhai' && !done('pass1644')) return { k: 'pass1644', title: ['山海關', 'The Pass, the twenty-second day'], text: [['', 'Li Zicheng\'s army is coming up the road from Beijing. Wu Sangui has sent to the Qing regent Dorgon. Tomorrow the gates may open to the people you have fought all your life.']],
-    opts: [['Fight on the Pass with Wu Sangui\'s men', 'You are given a horse.', (S) => { S.flags.pendingBattle = 'shanhai'; }], ['Slip away inside the Wall before the battle', 'You walk to Yongping and do not look back.', (S) => { S.place = 'tongzhou'; S.from = 'shanhai'; S.day += 5; }]] };
+    opts: [['Fight on the Pass with Wu Sangui\'s men', (S) => S.health > 0 ? 'You fight at the Yipianshi from dawn. When Li Zicheng\'s men are spent, the Qing cavalry come out of the dust behind a wall of banners, and by evening the Shun army is running for Beijing. You are alive. The Ming you fought for is gone.' : 'You go down in the first charge at the Yipianshi, under the hooves.', (S) => { if (Math.random() > 0.62 + S.arms / 250) { S.flags.diedFor = 'at the Shanhai Pass, in the battle of 1644'; S.health = 0; } else { S.health = Math.max(10, S.health - 25); if (S.army) S.army.heads = (S.army.heads | 0) + 2; } }], ['Slip away inside the Wall before the battle', 'You walk to Yongping and do not look back.', (S) => { S.place = 'tongzhou'; S.from = 'shanhai'; S.day += 5; }]] };
   if (d >= D(1645, 6, 15) && !done('queue1645') && WS.place !== 'jin') return { k: 'queue1645', title: ['剃髮令', 'Keep your hair, lose your head'], text: [['', 'The Qing order has come here too: every man to shave the front of his head and wear the queue within ten days, on pain of death.'], ['留頭不留髮，留髮不留頭。', 'Keep your head and lose your hair; keep your hair and lose your head.']],
     opts: [['Shave', 'You shave. Your father\'s generation would not know you.', (S) => { S.jin = 1; }], ['Become a monk: a shaven head under no one\'s order', 'You take the tonsure at the temple. The Qing leave monks alone.', (S) => { S.flags.monk = 1; S.office = null; S.army = null; }], ['Refuse', 'They take your head at the market cross.', (S) => { S.flags.diedFor = 'in 1645, refusing to shave his head for the Qing'; S.health = 0; }]] };
   return null; }
