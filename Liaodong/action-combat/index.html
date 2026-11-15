@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v200</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v201</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -17950,7 +17950,8 @@ function ddRoll() {
   zTalk = function (k, night) { return ddAugment(_talk(k, night), k); }; }
 function ddFrame(dt) {
   const sim = state.sim; if (!sim || !sim.mission) return;
-  if (ZB && sim.mission.soldier && DD.zb !== ZB) { DD.zb = ZB; DD.B = ddFresh(sim); DD.fx = { cool: 0, charge: 0, aloneT: 0, blk: 0, start: false, mark: 0 }; DD.fileKills = 0; DD.killers = {}; DD.firstShot = true; DD.placeSince = 0; DD.acc = 0; }
+  if (ZB && sim.mission.soldier && DD.zb !== ZB) { { const C0 = ddCtx(), D0 = C0 && ddDD(C0.S); if (D0 && D0.flags && D0.flags.advised) { toast(D0.flags.advised === 'bold' ? 'As you advised, the chief has put your file at the front.' : 'As you advised, the chief has sent men round first.'); D0.flags.advised = null; C0.save(); } }
+    DD.zb = ZB; DD.B = ddFresh(sim); DD.fx = { cool: 0, charge: 0, aloneT: 0, blk: 0, start: false, mark: 0 }; DD.fileKills = 0; DD.killers = {}; DD.firstShot = true; DD.placeSince = 0; DD.acc = 0; }
   if (ZB && DD.B) ddSample(dt);
   if (ZC && sim.mission.camp && DD.zc !== ZC) { DD.zc = ZC; DD.obj = null; ddCampObjects(); DD.sc = { q: [], cur: null, wait: 0 }; ddPlanScenes();
     // the Jin chapters keep their talk in JCH: wrap each chapter's table once
