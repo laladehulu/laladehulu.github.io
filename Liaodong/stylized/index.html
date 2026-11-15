@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v183</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Stylized · v184</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_STYLE = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f4ead2;background:#3a2c1ecc;border:1px solid #9a7a4c;border-radius:4px;padding:3px 8px;pointer-events:none">畫 · Stylized edition · 實驗 combat</div>
 <title>Stylized · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -22364,6 +22364,13 @@ function codexOpen(tab) {
 { const t = document.querySelector('#menu h1') || document.querySelector('#menu .title') || null; const host = $('modeSeg') && $('modeSeg').previousElementSibling;
   if (host) { const a = document.createElement('button'); a.type = 'button'; a.className = 'btn sm'; a.textContent = '典 · Codex: the people, soldiers, fields and years'; a.style.cssText = 'float:right;margin-top:-4px'; a.onclick = () => codexOpen(); host.appendChild(a); } }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('codex') && !$('codex').hidden) { $('codex').hidden = true; e.stopPropagation(); } }, true);
+// 速戰 · Quick battle: one click from the menu to a field battle on a random field, with your saved army (or a random one) against the AI
+function quickBattle() { AUDIO.init(); AUDIO.play('ui'); state.mode = 'standard'; const B = Object.keys(S.BATTLES).filter(k => !S.BATTLES[k].hidden && !/^dj/.test(k)); state.battle = B[Math.floor(Math.random() * B.length)];
+  const f = state.faction | 0, ros = S.ROSTER[f]; if (!state.army.length || armyCost(state.army) > S.BUDGET || !state.army.every(k => ros.includes(k))) { const a = []; let left = S.BUDGET, guard = 0;
+    while (a.length < 7 && guard++ < 60) { const k = ros[Math.floor(Math.random() * ros.length)], c = S.DEFS[k].cost; if (c <= left && !(S.DEFS[k].cannon && a.some(x => S.DEFS[x].cannon))) { a.push(k); left -= c; } } state.army = a; }
+  state.aiSlots = []; renderMenu(); soloStart(); }
+{ const host = $('modeSeg') && $('modeSeg').previousElementSibling; if (host) { const a = document.createElement('button'); a.type = 'button'; a.className = 'btn sm primary'; a.textContent = '速戰 · Quick battle'; a.title = 'A field battle now: a random field, your army (or a random one), against the AI';
+    a.style.cssText = 'float:right;margin:-4px 6px 0 0'; a.onclick = quickBattle; host.appendChild(a); } }
 
 // ===================== 鍵 · the controls, on one card: F1 (or ?) in any battle, camp or the open world =====================
 // The keys here are the ones the handlers in main.js actually read; the card shows the set for where you are (first person,
