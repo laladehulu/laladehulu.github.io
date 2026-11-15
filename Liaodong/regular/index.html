@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v193</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v194</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -14663,7 +14663,7 @@ function finish(winner) {
 function aarShow(sim, me) {
   let box = $('resultAAR'); if (!box) { box = document.createElement('div'); box.id = 'resultAAR'; $('resultText').after(box); const st = document.createElement('style');
     st.textContent = '#resultAAR{margin:6px 0 10px;font-size:12.5px;max-height:34vh;overflow:auto}#resultAAR table{border-collapse:collapse;margin:0 auto}#resultAAR td,#resultAAR th{padding:2px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08)}#resultAAR th{font-weight:600;opacity:.75}#resultAAR .best{color:#e8c76a}#resultAAR p{margin:4px 0;opacity:.85}'; document.head.appendChild(st); }
-  const mine = me.squads.map(id => sim.squads[id]).filter(Boolean); if (!mine.length) { box.innerHTML = ''; return; }
+  const mine = me.squads.map(id => sim.squads[id]).filter(Boolean); if (!mine.length) { const mins = Math.max(1, Math.round(((sim.tick - (sim.battleTick | 0)) / 30) / 60)), h = sim.units[me.heroId]; box.innerHTML = `<p>${mins} minute${mins > 1 ? 's' : ''} of battle. You killed ${me.kills | 0} with your own hands${h && h.streak ? `; ${h.streak} of them since you last fell` : ''}. ${h && !h.dead ? 'You came through it on your feet.' : 'You did not come through it standing.'}</p>`; return; }
   const rows = mine.map(q => { const D = S.DEFS[q.type] || {}; const n0 = q.unitIds.length, left = q.unitIds.filter(id => { const u = sim.units[id]; return u && !u.dead; }).length; return { q, name: D.name || q.type, n0, left, k: q.kills | 0 }; });
   const best = rows.reduce((a, r) => r.k > a.k ? r : a, rows[0]); const lost = rows.reduce((a, r) => a + r.n0 - r.left, 0), killed = rows.reduce((a, r) => a + r.k, 0) + (me.kills | 0);
   const mins = Math.max(1, Math.round(((sim.tick - (sim.battleTick | 0)) / 30) / 60));
