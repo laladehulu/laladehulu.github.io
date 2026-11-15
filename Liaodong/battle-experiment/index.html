@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v190</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v191</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -2116,7 +2116,7 @@ class Sim {
       let best = -1; for (let r = 1; r < 6 && best < 0; r++) for (let dj = -r; dj <= r && best < 0; dj++) for (let di = -r; di <= r; di++) { const gi = (g % W) + di, gj = ((g / W) | 0) + dj; if (gi < 0 || gj < 0 || gi >= W || gj >= W) continue; const c = gj * W + gi; if (!bl[c]) { best = c; break; } } if (best < 0) return null; g = best; }
     let f = this.flows.get(g); if (f) return f;
     if (this.flowBudget <= 0) return null; this.flowBudget--;
-    f = new Int32Array(W * W).fill(-1); const q = new Int32Array(W * W); let qh = 0, qt = 0; f[g] = 0; q[qt++] = g;
+    f = new Int32Array(W * W).fill(-1); const q = this._flowQ && this._flowQ.length >= W * W ? this._flowQ : (this._flowQ = new Int32Array(W * W)); let qh = 0, qt = 0; /* one queue, reused */ f[g] = 0; q[qt++] = g;
     while (qh < qt) { const c = q[qh++], ci = c % W, cj = (c / W) | 0, dv = f[c] + 1;
       if (ci > 0 && f[c - 1] < 0 && !bl[c - 1]) { f[c - 1] = dv; q[qt++] = c - 1; } if (ci < W - 1 && f[c + 1] < 0 && !bl[c + 1]) { f[c + 1] = dv; q[qt++] = c + 1; }
       if (cj > 0 && f[c - W] < 0 && !bl[c - W]) { f[c - W] = dv; q[qt++] = c - W; } if (cj < W - 1 && f[c + W] < 0 && !bl[c + W]) { f[c + W] = dv; q[qt++] = c + W; } }
@@ -2209,7 +2209,7 @@ class Sim {
     if (u.duelWith >= 0 && u.duelWith !== undefined) { const o = this.units[u.duelWith]; if (o && !o.dead) return o.id; }
     const enemies = this.teamAlive[1 - u.team]; let best = -1, bd = range * range;
     const eng = (!ranged && !u.mounted) ? this.engaged() : null; // men already swarming a foe make him a worse pick: spread out along the enemy line
-    for (let i = 0; i < enemies.length; i++) { const v = enemies[i]; if (v.inactive || (v.duelWith >= 0 && v.duelWith !== undefined)) continue; const dx = v.x - u.x, dz = v.z - u.z; let d2 = dx * dx + dz * dz;
+    for (let i = 0; i < enemies.length; i++) { const v = enemies[i]; if (v.inactive || (v.duelWith >= 0 && v.duelWith !== undefined)) continue; const dx = v.x - u.x, dz = v.z - u.z; let d2 = dx * dx + dz * dz; if (d2 * 0.157 >= bd) continue; /* exact early out: the weights below can shrink a distance by 0.35 × 0.45 at most */
       if (eng) { const n = eng[v.id] - (u.target === v.id ? 1 : 0); if (n >= 3) d2 *= 9; else if (n === 2) d2 *= 4; else if (n === 1) d2 *= 1.6; } /* spread along the enemy line: a man already fought by two or three is a poor pick */
       if (this.xc && eng && this.spN && u.spaceOf !== v.id && (this.spN[v.id] || 0) >= this.xcLim(v)) d2 *= 4; // every space round him is taken: look along the line for a free one
       if (this.xc && u.weapon === 'yari' && !u.mounted && u.squad >= 0 && d2 < (u.def.reach + 0.6) * (u.def.reach + 0.6)) { const t0 = v.target >= 0 ? this.units[v.target] : null; if (t0 && t0 !== u && t0.squad === u.squad && len(t0.x - v.x, t0.z - v.z) < 1.9) d2 *= 0.35; } /* the file guards its own: a man who has got inside a file-mate's point is the next man's business */
