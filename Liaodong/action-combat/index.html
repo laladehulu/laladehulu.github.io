@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v184</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v185</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -5016,7 +5016,7 @@ Sim.prototype.duelSetup = function (teams, aiPl) {
     let rc = [0, 0]; search: for (let r = 0; r <= 110; r += 10) for (let k = 0; k < Math.max(1, r / 5); k++) { const a = k / Math.max(1, r / 5) * PI * 2; const x = sin(a) * r, z = cos(a) * r; if (Math.abs(x) < HALF - 20 && Math.abs(z) < HALF - 20 && open(x, z)) { rc = [x, z]; break search; } }
     this.duelC = rc; }
   for (const p of this.players) { const k = cnt[p.team]++; this.placeArmy({ player: p, army: [] }, p.team, 0, 0, p.team === 0 ? 0 : PI); const h = this.units[p.heroId]; if (!h) continue;
-    const c = this.cfg.players[p.idx] || {}; const type = p.duelBot ? (p.team === 0 ? 'samurai' : 'samurai') : roleType(c.role || 'shield', p.team); const d = defFor(type, p.team);
+    const c = this.cfg.players[p.idx] || {}; const foe = p.duelBot && this.cfg.duelFoe && DEFS[this.cfg.duelFoe.type] ? this.cfg.duelFoe : null; const type = p.duelBot ? (foe ? foe.type : 'samurai') : roleType(c.role || 'shield', p.team); let d = defFor(type, p.team); if (foe) { const k = +foe.k || 1; d = Object.assign({}, d, { hp: d.hp * k, dmg: d.dmg ? d.dmg.map(x => x * k) : d.dmg }); if (foe.name) p.name = foe.name; } /* the duel ladder: a named opponent of his own kind and strength */
     h.type = type; h.def = d; h.weapon = (d.weapons || ['katana'])[0]; const g = gunOf(d, h.weapon); h.ammo = g ? (g.mag || 1) : 1; h.loaded = true; if (d.revolver) h.ammoR = d.revolver.mag; h.hp = d.hp; h.bombs = 0; p.bombs = 0;
     if (p.horseId >= 0 && this.units[p.horseId]) { const hr = this.units[p.horseId]; hr.dead = true; hr.inactive = true; hr.x = hr.px = -HALF + 1; hr.z = hr.pz = -HALF + 1; p.horseId = -1; } /* no horses in the ring */
     h.duelSpot = this.freeSpot(this.duelC[0] + (k - (this.players.filter(q => q.team === p.team).length - 1) / 2) * 3, this.duelC[1] + (p.team === 0 ? -7 : 7)); this.duelPlace(h); }
@@ -13847,6 +13847,15 @@ function skDiffRow() { const on = /^(standard|grand|officers|chaos|heroes|story)
   el.hidden = !on; if (!on) return; const cur = diffPref();
   el.innerHTML = '<span style="font:700 11px sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-right:4px">Against the AI</span>' + SKD.map((d, i) => `<button type="button" class="btn sm${i === cur ? ' primary' : ''}" data-d="${i}">${d[0]} ${d[1]}</button>`).join('') + `<small style="opacity:.75">${SKD[cur][2]}</small>`;
   el.querySelectorAll('button').forEach(b => b.onclick = () => { try { localStorage.setItem('mingDiff', b.dataset.d); } catch (e) { } AUDIO.init(); AUDIO.play('ui'); skDiffRow(); }); }
+// 擂台 · the duel ladder (solo): five opponents in turn, each of his own kind and harder; beat one to meet the next
+const DUEL_LADDER = [{ name: 'Zhao Dahu, a village wrestler with a dao', type: 'samurai', k: 0.75 }, { name: 'Sun Er, a spearman of Cangzhou', type: 'ashigaru', k: 1.0 }, { name: 'Tong Ala, an armoured bannerman', type: 'samurai', k: 1.0 },
+  { name: 'Liu the horse-cutter, with the zhanmadao', type: 'jigen', k: 1.12 }, { name: 'Esen, a Bayara of the Khan\'s guard', type: 'shinsengumi', k: 1.25 }];
+function duelRung() { try { return Math.max(0, Math.min(DUEL_LADDER.length, +(localStorage.getItem('mingDuelRung') || 0))); } catch (e) { return 0; } }
+function duelFoeNow() { const r = state.duelPick !== undefined ? state.duelPick : duelRung(); return DUEL_LADDER[Math.min(r, DUEL_LADDER.length - 1)]; }
+function duelRow() { let el = $('duelLad'); const host = $('roster'); if (!host) return; if (!el) { el = document.createElement('div'); el.id = 'duelLad'; el.style.cssText = 'margin:0 0 12px;font-size:12.5px'; host.parentNode.insertBefore(el, host); }
+  el.hidden = state.mode !== 'duel'; if (el.hidden) return; const r = duelRung(), cur = state.duelPick !== undefined ? state.duelPick : Math.min(r, DUEL_LADDER.length - 1);
+  el.innerHTML = `<div style="font:700 11px sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-bottom:4px">擂台 · The ladder (alone against the swordsman)${r >= DUEL_LADDER.length ? ' · all five beaten' : ''}</div>` + DUEL_LADDER.map((f, i) => `<button type="button" class="btn sm${i === cur ? ' primary' : ''}" data-r="${i}"${i > r ? ' disabled' : ''} style="margin:0 4px 4px 0">${i + 1}. ${f.name}${i < r ? ' ✓' : ''}</button>`).join('');
+  el.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { state.duelPick = +b.dataset.r; AUDIO.init(); AUDIO.play('ui'); duelRow(); }); }
 function armyRestore() { const A = armyStore(), f = state.faction | 0, a = A['last' + f]; if (a && a.length && a.every(k => S.ROSTER[f].includes(k)) && armyCost(a) <= S.BUDGET) state.army = a.slice();
   if (A.menu && S.BATTLES[A.menu.battle] && !S.BATTLES[A.menu.battle].hidden) state.battle = A.menu.battle; }
 function renderMenu() {
@@ -13855,7 +13864,7 @@ function renderMenu() {
   const ros = S.ROSTER[state.faction]; const cost = armyCost(state.army), left = S.BUDGET - cost;
   const b = $('budget'); b.textContent = `${left} / ${S.BUDGET} taels`; b.classList.toggle('over', left < 0);
   $('armyCount').textContent = `${state.army.length} squad${state.army.length === 1 ? '' : 's'} · ${state.army.reduce((s, k) => s + S.DEFS[k].count, 0)} men`;
-  armyPresets(); try { skDiffRow(); } catch (e) { }
+  armyPresets(); try { skDiffRow(); duelRow(); } catch (e) { }
   const r = $('roster'); r.innerHTML = '';
   for (const k of ros) {
     const d = S.defFor(k, state.faction); const el = document.createElement('div'); el.className = 'unit';
@@ -13907,7 +13916,7 @@ function soloStart() {
   const cfg = myCfg(); const seed = (Math.random() * 0x7fffffff) | 0;
   state.lowfx = $('lowfxIn').checked; state.fog = false;
   if (state.mode === 'story') { const c = campFor(state.faction, state.chapter); if (c) { cfg.veterans = c.veterans; cfg.recruits = state.recruits.slice(); } }
-  startGame({ seed, battle: state.battle, standMap: state.standMap, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op, diff: diffPref(), ai: aiFor(state.mode), players: [{ ...cfg, connected: true }] }, 0, null, 1);
+  startGame({ seed, battle: state.battle, standMap: state.standMap, duelFoe: state.mode === 'duel' ? duelFoeNow() : undefined, mode: state.mode, chapter: state.chapter, scen: state.scen, mission: state.mission, op: state.op, diff: diffPref(), ai: aiFor(state.mode), players: [{ ...cfg, connected: true }] }, 0, null, 1);
 }
 // ---- the war council: every mode but Story is set up here. On its own it is a room on this computer (you and any AI generals
 // you add); "Invite friends" opens it online with a code, keeping everything chosen so far
@@ -14625,6 +14634,7 @@ function finish(winner) {
   if (sim.real && typeof soldierFinish === 'function') soldierFinish(winner);
   if (sim.mission && typeof missionFinish === 'function') missionFinish(winner);
   try { aarShow(sim, me); } catch (e) { }
+  if (sim.mode === 'duel' && !state.net && sim.cfg.duelFoe && won) { const i = DUEL_LADDER.findIndex(f => f.name === sim.cfg.duelFoe.name); if (i >= 0 && i === duelRung()) { try { localStorage.setItem('mingDuelRung', String(i + 1)); } catch (e) { } state.duelPick = undefined; $('resultText').textContent += i + 1 < DUEL_LADDER.length ? ` You beat ${sim.cfg.duelFoe.name}. Next on the ladder: ${DUEL_LADDER[i + 1].name}.` : ' You have beaten all five. The ladder is yours.'; } }
   // your record against the AI in the open modes, kept per mode and difficulty
   if (!sim.mission && !state.net && winner !== 2 && /^(standard|grand|officers|chaos|heroes|duel)$/.test(sim.mode)) { try { const R = JSON.parse(localStorage.getItem('mingRecord') || '{}'), k = sim.mode + ':' + (sim.diff | 0), o = R[k] || { w: 0, l: 0 }; if (won) o.w++; else o.l++; R[k] = o; localStorage.setItem('mingRecord', JSON.stringify(R));
     const nm = { standard: 'field battles', grand: 'grand battles', officers: 'officers battles', chaos: 'chaos', heroes: 'Heroes', duel: 'duels' }[sim.mode]; $('resultText').textContent += ` Your record in ${nm} at ${['Recruit', 'Soldier', 'Veteran', 'Lone banner'][sim.diff | 0]}: ${o.w} won, ${o.l} lost.`; } catch (e) { } }
