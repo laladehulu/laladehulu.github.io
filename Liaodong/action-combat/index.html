@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v195</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Action combat · v196</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_ACTION = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#ffd9a8;background:#2a1410cc;border:1px solid #9a5a3c;border-radius:4px;padding:3px 8px;pointer-events:none">武 · Action combat (experimental)</div>
 <title>Action Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -17994,6 +17994,11 @@ function ddPlanScenes() {
   else if (B.kills >= 4 || B.off || B.last || B.lad >= 2 || B.avenge.length) q.push({ id: 'toast', who: keys.filter(k => k !== C.S.me).sort((a, b) => (C.S.bond[b] || 0) - (C.S.bond[a] || 0))[0] });
   const st = ddStyle(B); if (st && !D.nick && q.length < 2) q.push({ id: 'nick', who: keys[ddHash(st + B.n) % keys.length], style: st });
   const R = D.rep; if (q.length < 2 && !D.rank && R.valor + R.care >= 14 && R.coward === 0 && !(B.ran > 6)) q.push({ id: 'rank', who: ddPickChief() });
+  // it3: the man you got up in two different battles asks you to swear brotherhood; the chief asks the advice of a man with a good record; the cook's ladle
+  { const cnt = {}; for (const L of D.log) for (const k of ddUniq((L.help || []).concat(L.rev || [], L.aid || []))) cnt[k] = (cnt[k] || 0) + 1;
+    const bro = Object.keys(cnt).find(k => cnt[k] >= 2 && here(k) && k !== C.S.me && !(D.bros || []).includes(k)); if (bro && q.length < 2) q.push({ id: 'brother', who: bro }); }
+  if (q.length < 2 && R.valor + R.care >= 10 && R.coward === 0 && D.log.length >= 2 && !(D.adv || {})[B.n]) q.push({ id: 'advice', who: ddPickChief() });
+  if (q.length < 2 && (B.kills >= 3 || saved.length || (B.ran > 6 && !B.rally))) { const others = keys.filter(k => k !== C.S.me); if (others.length) q.push({ id: 'cook', who: others[ddHash('cook' + B.n) % others.length], meat: !(B.ran > 6 && !B.rally) }); }
   DD.sc.q = q.filter(s => s.who).slice(0, 2); DD.sc.wait = 8;
 }
 // the dialogue panel: the same box and keys as camp talk (#zheDlg, state.zheDlg)
@@ -18060,6 +18065,24 @@ function ddRunScene(s) {
     ddDlg(who, sub, [ddL(`欸，你們看——${N[0]}來了！`, `Hey, look — here comes ${N[1]}!`), N[2], ddL('（火邊的人都笑了。）', '(The men at the fire laugh.)')], [
       { q: `Fine. ${N[1]} it is.`, a: [ddL(`${N[0]}！${N[0]}！`, `${N[1]}! ${N[1]}!`)], fx: () => { D.nick = { zh: N[0], en: N[1], style: s.style }; bond(s.who, 1); } },
       { q: 'Don\'t call me that.', a: ddHash(s.style + me.en) % 2 ? [ddL('好好好，不叫。', 'All right, all right. We won\'t.')] : [ddL(`越不讓叫，越要叫。${N[0]}！`, `The more you mind, the more we'll say it. ${N[1]}!`)], fx: () => { if (!(ddHash(s.style + me.en) % 2)) D.nick = { zh: N[0], en: N[1], style: s.style }; } },
+    ], done);
+  } else if (s.id === 'brother') {
+    const L2 = D.log.filter(L => ddUniq((L.help || []).concat(L.rev || [], L.aid || [])).includes(s.who)).length;
+    ddDlg(who, sub, [ddL(`你拉過我${L2 === 2 ? '兩' : L2}回了。`, `You've got me up ${L2 === 2 ? 'twice' : L2 + ' times'} now.`), ddL('我沒什麼給你的。咱們拜個把子吧，在關老爺面前。', 'I have nothing to give you. Let\'s swear brotherhood, before Lord Guan.')], [
+      { q: 'Swear it.', a: [ddL('（你們跪在一張關公像前，割破手指，滴在酒裡，一人一口。）', '(You kneel before a paper image of Guan Yu, cut your fingers, let the blood into the wine, and each drink half.)'), ddL('不求同年同月同日生，但求同年同月同日死。', '"Not born on the same day; we ask to die on the same day."')], fx: () => { D.bros = (D.bros || []).concat([s.who]); bond(s.who, 5); } },
+      { q: 'We\'re brothers already. No need for wine.', a: [ddL('……也是。', '...True enough.')], fx: () => bond(s.who, 2) },
+    ], done);
+  } else if (s.id === 'advice') {
+    D.adv = D.adv || {}; D.adv[B.n] = 1;
+    const plan = jin ? [['先打門', 'the gate, all at once'], ['先繞後', 'round behind them first']] : [['正面穩穩地打', 'straight at them, steady, in good order'], ['先派人摸過去', 'send men round first, quietly']];
+    ddDlg(who, sub, [ddL('你過來。明天怎麼打，我想聽聽你的。', 'Come here. Tomorrow\'s fight: I want to hear what you think.'), ddL('你看過他們怎麼打的。', 'You have seen how they fight.')], [
+      { q: `${plan[0][1][0].toUpperCase() + plan[0][1].slice(1)}.`, a: [ddL('嗯。我也是這麼想的。', 'Mm. I was thinking the same.'), ddL('（他沒再說什麼，可第二天他把你們這一伍放在最前頭。）', '(He says nothing more, but the next day he puts your file at the front.)')], fx: () => { bond(s.who, 2); D.flags = D.flags || {}; D.flags.advised = 'bold'; } },
+      { q: `${plan[1][1][0].toUpperCase() + plan[1][1].slice(1)}.`, a: [ddL('……有道理。你這小子，腦子好使。', '...That makes sense. You have a head on you, boy.')], fx: () => { bond(s.who, 2); D.flags = D.flags || {}; D.flags.advised = 'careful'; } },
+      { q: 'It\'s not for me to say, sir.', a: [ddL('我問你，你就說。……算了。', 'When I ask, you answer. ...Never mind.')], fx: () => bond(s.who, -1) },
+    ], done);
+  } else if (s.id === 'cook') {
+    ddDlg(who, sub, s.meat ? [ddL('（輪到你，他把勺子往鍋底一沉，撈上來一大塊肉。）', '(When your turn comes he sinks the ladle to the bottom of the pot and brings up a big piece of meat.)'), ddL('吃吧。今天你該吃這塊。', 'Eat. Today this piece is yours.')] : [ddL('（輪到你，他把勺子在湯面上一撇，給你一碗清湯。）', '(When your turn comes he skims the top of the pot and gives you a bowl of thin broth.)'), ddL('跑得快的，吃得少。', 'A man who runs fast eats light.')], [
+      { q: s.meat ? 'Share it with the man next to you.' : 'Say nothing, and drink it.', a: [s.meat ? ddL('（他咧嘴笑了，你們一人一半。）', '(He grins; you split it.)') : ddL('（湯是熱的，至少。）', '(It is hot, at least.)')], fx: () => { bond(s.who, s.meat ? 1 : 0); } },
     ], done);
   } else if (s.id === 'rank') {
     const t = jin ? ['巴圖魯', 'baturu — "hero"', '汗賜你巴圖魯之號。', 'The Khan grants you the name baturu.'] : sj ? ['伍長', 'file leader', '從今天起，你帶這一伍。', 'From today you lead this file of five.'] : ['伍長', 'file leader', '把總給你的腰牌。從今天起你帶一伍。', 'The captain sends you a waist tag. From today you lead a file of five.'];
@@ -18300,6 +18323,7 @@ setInterval(() => {
 }, 250);
 { const q = new URLSearchParams(location.search).get('debug'); if (q === '1') dbgEnable(true); else if (q === '0') dbgEnable(false); else if (dbgLS('mingDebug') === '1') dbgEnable(true); }
 dbgBoot();
+window.__dbg = { dbgFlows, dbgJump, dbgLoad, dbgFresh };
 
 // ===================== the arsenal: weapons you carried off the field =====================
 // In the story campaigns a weapon you pick up and still carry when the battle ends goes into your arsenal (kept in the
@@ -22465,6 +22489,8 @@ function codexRecord() { const J = (k, d) => { try { return JSON.parse(localStor
   const rung = +(localStorage.getItem('mingDuelRung') || 0); sec('擂 · The duel ladder', [`${Math.min(rung, 5)} of 5 opponents beaten${rung >= 5 ? ': the ladder is yours' : ''}.`]);
   const sb = []; for (const m of [['field', 'Jiefan Hill'], ['zroad', 'The road village'], ['hakodate', 'The Ningyuan plain'], ['nagaoka', 'The paddies'], ['djzhen', 'Inside Zhenjiang']]) { const v = +(localStorage.getItem('mingStandBest' + (m[0] !== 'field' ? ':' + m[0] : '')) || 0); if (v) sb.push(`<b>${m[1]}</b> · ${v} raids held`); } sec('闖 · Last Stand', sb);
   const camps = [['mingZhe', '浙兵 · The Zhejiang Company'], ['mingShenji', '神機 · The Divine Engine Division'], ['mingJin', '正白 · The Plain White Niru'], ['mingDongjiang', '東江 · The East River']].map(([k, t]) => { const v = J(k, null); return v ? `<b>${t}</b> · begun${v.stage ? ` (at ${String(v.stage).replace(/^c/, 'chapter ')})` : ''}` : null; }).filter(Boolean); sec('記 · The campaigns', camps);
+  { const c = J('mingSoldier', null); const RK = ['Recruit', 'Veteran', 'Leader of five', 'Section chief', 'Company officer', 'Captain', 'Major', 'Colonel', 'General'];
+    sec('兵 · Path of a Soldier', c ? [`<b>${c.name || ''}</b> · ${RK[c.rank | 0] || 'rank ' + c.rank} · ${c.battles | 0} battles, ${c.kills | 0} killed, merit ${c.merit | 0}${(c.fallen || []).length ? ` · comrades fallen: ${c.fallen.length}` : ''}`] : []); }
   const lives = J('mingLives', []); sec('人間 · Lives lived in the open world', lives.map(h => h.e.slice(0, 1).concat(h.e.filter(x => /^What he came to/.test(x))).join(' ')));
   return out.join(''); }
 
