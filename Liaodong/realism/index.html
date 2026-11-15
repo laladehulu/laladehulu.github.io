@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v178</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Realism · v179</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8e2d6;background:#1d1b19cc;border:1px solid #6a645a;border-radius:4px;padding:3px 8px;pointer-events:none">寫實 · Realism edition · 實驗 combat</div>
 <title>Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -22290,6 +22290,63 @@ function wEndNow() {
   if (d >= D(1645, 6, 15) && !done('queue1645') && WS.place !== 'jin') return { k: 'queue1645', title: ['剃髮令', 'Keep your hair, lose your head'], text: [['', 'The Qing order has come here too: every man to shave the front of his head and wear the queue within ten days, on pain of death.'], ['留頭不留髮，留髮不留頭。', 'Keep your head and lose your hair; keep your hair and lose your head.']],
     opts: [['Shave', 'You shave. Your father\'s generation would not know you.', (S) => { S.jin = 1; }], ['Become a monk: a shaven head under no one\'s order', 'You take the tonsure at the temple. The Qing leave monks alone.', (S) => { S.flags.monk = 1; S.office = null; S.army = null; }], ['Refuse', 'They take your head at the market cross.', (S) => { S.flags.diedFor = 'in 1645, refusing to shave his head for the Qing'; S.health = 0; }]] };
   return null; }
+
+// ===================== 典 · the codex: the people, the soldiers, the fields and the years of the war =====================
+// One panel from the menu: who the men in the game were, what each kind of soldier is, where each battlefield is and when,
+// and the war year by year (the open world's calendar). Read-only, built from the game's own data plus short lives below.
+const CODEX_PEOPLE = [
+  ['努爾哈赤', 'Nurhaci', '1559–1626', 'Jin', 'Chieftain of the Jianzhou Jurchens who united the Jurchen tribes, created the banner system and founded the Later Jin in 1616. He declared war on the Ming with the Seven Grievances in 1618, destroyed the Ming armies at Sarhu in 1619 and took Shenyang and Liaoyang in 1621. Ningyuan in 1626 was the first defeat of his life; he died that autumn.'],
+  ['皇太極', 'Hong Taiji', '1592–1643', 'Jin', 'Nurhaci\'s eighth son and successor as Khan (1626). He brought Han officials and Han and Mongol banners into the state, renamed the Jurchens Manchus (1635) and proclaimed the Great Qing (1636). He broke through the Wall to the gates of Beijing in 1629 and invaded Korea twice.'],
+  ['代善', 'Daišan', '1583–1648', 'Jin', 'Nurhaci\'s second son, one of the four senior beile; he commanded at Sarhu and in the campaigns that followed, and later stood aside for Hong Taiji.'],
+  ['多爾袞', 'Dorgon', '1612–1650', 'Jin', 'Hong Taiji\'s half-brother and, after him, regent for the child Shunzhi Emperor. In 1644 he brought the Qing army through the Shanhai Pass with Wu Sangui and took Beijing.'],
+  ['李永芳', 'Li Yongfang', 'd. 1634', 'Jin', 'The Ming commander at Fushun who surrendered it to Nurhaci in 1618, the first Ming general to go over. He married a granddaughter of the Khan and led Han troops for the Jin.'],
+  ['孔有德', 'Kong Youde', 'd. 1652', 'Jin', 'One of Mao Wenlong\'s officers from Liaodong. In 1631 his troops mutinied at Wuqiao on the march to Dalinghe; after the siege of Dengzhou he went over to the Jin by sea in 1633, bringing Western-style cannon and the men who could cast and fire them.'],
+  ['楊鎬', 'Yang Hao', 'd. 1629', 'Ming', 'Military Commissioner for Liaodong who planned the four-column campaign of 1619. Three of the four columns were destroyed one by one at Sarhu, Shangjiaan and Abudali. He was imprisoned and executed in 1629.'],
+  ['杜松', 'Du Song', 'd. 1619', 'Ming', 'Commander of the western column in 1619, a brave and impetuous general. He crossed the Hun River ahead of the plan and was killed with most of his column at Sarhu and Jiefan.'],
+  ['劉綎', 'Liu Ting', '1558–1619', 'Ming', 'A veteran of the wars in Korea and the southwest, famous for his heavy sword. He led the eastern column through the mountains and was killed at Abudali in the spring of 1619 when the Jin turned on him with their whole army.'],
+  ['李如柏', 'Li Rubai', '1553–1621', 'Ming', 'A son of the great Li Chengliang, commander of the southern column in 1619, which withdrew without fighting. Impeached for it, he took his own life in 1621.'],
+  ['熊廷弼', 'Xiong Tingbi', '1569–1625', 'Ming', 'Commissioner for Liaodong in 1619–20 and again in 1621–22, who argued for defence before attack. After Guangning was lost in 1622 he was blamed with Wang Huazhen; in the purges of 1625 he was executed and his head sent round the frontier.'],
+  ['孫承宗', 'Sun Chengzong', '1563–1638', 'Ming', 'Grand Secretary and tutor of the Tianqi Emperor, who supervised the Liaodong defence in 1622–25 and built the line of forts beyond the Shanhai Pass on which Ningyuan stood. He died defending his home town of Gaoyang against a Qing raid in 1638.'],
+  ['袁崇煥', 'Yuan Chonghuan', '1584–1630', 'Ming', 'A jinshi of 1619 from Guangdong who rode alone beyond the Pass to see the ground. He held Ningyuan in 1626 with Western cannon against Nurhaci, and Ningjin in 1627. He executed Mao Wenlong in 1629 and raced to save Beijing that winter; accused of treason, he was put to death by slicing in 1630.'],
+  ['滿桂', 'Man Gui', 'd. 1630', 'Ming', 'A Mongol-born Ming general who fought beside Yuan Chonghuan at Ningyuan. He was killed outside Beijing in the winter of 1629–30.'],
+  ['祖大壽', 'Zu Dashou', 'd. 1656', 'Ming', 'One of Yuan Chonghuan\'s Liaodong officers. Besieged at Dalinghe in 1631 until his men were eating each other, he surrendered, slipped back to Jinzhou, and finally gave up Jinzhou to the Qing in 1642.'],
+  ['毛文龍', 'Mao Wenlong', '1576–1629', 'Ming', 'A Zhejiang adventurer who in 1621 raided Zhenjiang behind the Jin lines and then held Pi Island and the coast (the East River command) with the refugees of Liaodong, a thorn in the Jin side for eight years. Yuan Chonghuan executed him on Shuangdao in 1629.'],
+  ['秦良玉', 'Qin Liangyu', '1574–1648', 'Ming', 'A woman general of the Shizhu tusi in Sichuan who led her "White Pole" spearmen for the Ming for forty years. Her brothers Qin Bangping and Qin Minping fought at the Hun River in 1621, where Bangping was killed.'],
+  ['陳策', 'Chen Ce', 'd. 1621', 'Ming', 'Commander of the Zhejiang troops in the relief of Shenyang in 1621, killed at the Hun River with Tong Zhongkui and most of the southern soldiers.'],
+  ['戚繼光', 'Qi Jiguang', '1528–1588', 'Ming', 'The general who destroyed the coastal pirates of the 1550s with miners and farmers of Yiwu drilled in the mandarin-duck formation, and wrote the drill books the Zhejiang troops still carried in 1619.'],
+  ['徐光啟', 'Xu Guangqi', '1562–1633', 'Ming', 'A scholar-official baptised Paul, who translated Euclid with Matteo Ricci (1607), trained new troops at Tongzhou in 1619–21 and argued for buying Portuguese cannon from Macao. He became a Grand Secretary in 1632.'],
+  ['魏忠賢', 'Wei Zhongxian', '1568–1627', 'Ming', 'The eunuch who dominated the court of the Tianqi Emperor, purged the Donglin party and had living shrines built to himself. When the Chongzhen Emperor came to the throne in 1627 he was sent away and hanged himself on the road.'],
+  ['楊漣', 'Yang Lian', '1572–1625', 'Ming', 'A Donglin censor who in 1624 accused Wei Zhongxian of twenty-four great crimes. He was arrested and died under torture in the Imperial Prison in 1625.'],
+  ['朱由檢', 'The Chongzhen Emperor', '1611–1644', 'Ming', 'The last Ming emperor (r. 1627–1644). He destroyed Wei Zhongxian\'s faction but distrusted his generals and changed his ministers fifty times. When Li Zicheng took Beijing he hanged himself on Coal Hill.'],
+  ['李自成', 'Li Zicheng', '1606–1645', 'Rebel', 'A former postal courier from Shaanxi who became the greatest of the rebel leaders of the famine years. He took Beijing in the spring of 1644 and proclaimed the Great Shun, was beaten at the Shanhai Pass a few weeks later, and died in flight in 1645.'],
+  ['吳三桂', 'Wu Sangui', '1612–1678', 'Ming', 'Commander of the Ming army at the Shanhai Pass in 1644. Caught between Li Zicheng and the Qing, he opened the Pass to Dorgon; he later served the Qing, and rebelled against them in 1673.'],
+  ['利瑪竇', 'Matteo Ricci', '1552–1610', 'Jesuit', 'The Italian Jesuit who learned the classics, wore a scholar\'s robes and was allowed to live in Beijing from 1601. His friends among the officials, Xu Guangqi first, carried Western mathematics, maps and later guns into the Ming state.'],
+];
+function codexOpen(tab) {
+  let box = $('codex'); if (!box) { box = document.createElement('div'); box.id = 'codex'; document.body.appendChild(box); const st = document.createElement('style');
+    st.textContent = `#codex { position: fixed; inset: 0; z-index: 80; background: rgba(14,12,10,.8); display: flex; align-items: center; justify-content: center; }
+#codex .pp { width: min(980px, 95vw); height: min(86vh, 900px); display: flex; flex-direction: column; background: #efe6cf; color: #2a2018; border: 1px solid #8a6a3a; box-shadow: 0 10px 40px #000; font: 14px/1.5 Georgia, serif; }
+#codex .hd { display: flex; align-items: center; gap: 6px; padding: 12px 18px 8px; border-bottom: 1px solid #c8b48a; } #codex .hd h3 { margin: 0 12px 0 0; font: 700 20px Georgia, serif; }
+#codex .tab { border: 1px solid #b89a6a; background: #f6eedb; color: #2a2018; padding: 3px 10px; cursor: pointer; font: 13px Georgia, serif; } #codex .tab.on { background: #2a2018; color: #f6eedb; } #codex .x { margin-left: auto; }
+#codex .bd { overflow: auto; padding: 10px 18px 18px; } #codex .it { padding: 8px 0; border-bottom: 1px solid #d8c8a2; } #codex .it b { font-size: 15px; } #codex .it small { color: #6a5a46; margin-left: 6px; }
+#codex .side { display: inline-block; font-size: 11px; padding: 0 5px; margin-left: 6px; border-radius: 3px; background: #e0d2ae; } #codex .yr { font-weight: 700; margin: 12px 0 2px; color: #7a3a1a; }`; document.head.appendChild(st);
+    box.addEventListener('mousedown', (e) => { if (e.target === box) box.hidden = true; }); }
+  tab = tab || 'people'; const tabs = [['people', '人 · People'], ['units', '兵 · Soldiers'], ['fields', '地 · Battlefields'], ['years', '年 · The years']];
+  let body = '';
+  if (tab === 'people') body = CODEX_PEOPLE.map(p => `<div class="it"><b>${p[0]} · ${p[1]}</b><small>${p[2]}</small><span class="side">${p[3]}</span><div>${p[4]}</div></div>`).join('');
+  if (tab === 'units') body = [0, 1].map(f => `<div class="yr">${f ? '後金 · The Later Jin' : '大明 · The Ming'}</div>` + S.ROSTER[f].map(k => { const d = S.defFor(k, f); const role = d.gun ? 'machine gun' : d.cannon ? 'artillery' : d.bow ? 'archers' : d.ai === 'ranged' ? 'firearms' : d.mounted ? 'cavalry' : 'foot, hand to hand';
+    return `<div class="it"><b>${d.jp} · ${d.name}</b><small>${role} · ${d.count} men · ${d.cost} taels · ${d.hp} hp${d.shield ? ' · shield' : ''}${d.armor ? ' · armoured' : ''}</small><div>${d.desc || ''}</div></div>`; }).join('')).join('');
+  if (tab === 'fields') body = Object.keys(S.BATTLES).filter(k => !S.BATTLES[k].hidden && S.BATTLES[k].desc).map(k => { const b = S.BATTLES[k]; return `<div class="it"><b>${b.jp || ''} · ${b.name}</b><small>${b.when || ''}${b.biome ? ' · ' + b.biome : ''}</small><div>${b.desc}</div></div>`; }).join('');
+  if (tab === 'years') { const E = (typeof WEV !== 'undefined' ? WEV : []).slice().sort((a, b) => a[0] - b[0]); let y = 0, out = '';
+    for (const e of E) { const T = wDate(e[0]); if (T.y !== y) { y = T.y; out += `<div class="yr">${y}</div>`; } out += `<div class="it"><small style="margin:0 8px 0 0">${T.m}/${T.d}</small>${e[3]}<div style="color:#6a5a46;font-size:13px">${e[2]}</div></div>`; }
+    body = out + '<p><small>Months are lunar, as people counted them; the game\'s calendar keeps thirty days to the month.</small></p>'; }
+  box.hidden = false; box.innerHTML = `<div class="pp"><div class="hd"><h3>典 · Codex</h3>${tabs.map(t => `<button type="button" class="tab${t[0] === tab ? ' on' : ''}" data-t="${t[0]}">${t[1]}</button>`).join('')}<button type="button" class="tab x">Close</button></div><div class="bd">${body}</div></div>`;
+  box.querySelectorAll('[data-t]').forEach(b => b.onclick = () => codexOpen(b.dataset.t)); box.querySelector('.x').onclick = () => { box.hidden = true; };
+}
+// the codex link sits under the title on the menu
+{ const t = document.querySelector('#menu h1') || document.querySelector('#menu .title') || null; const host = $('modeSeg') && $('modeSeg').previousElementSibling;
+  if (host) { const a = document.createElement('button'); a.type = 'button'; a.className = 'btn sm'; a.textContent = '典 · Codex: the people, soldiers, fields and years'; a.style.cssText = 'float:right;margin-top:-4px'; a.onclick = () => codexOpen(); host.appendChild(a); } }
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('codex') && !$('codex').hidden) { $('codex').hidden = true; e.stopPropagation(); } }, true);
 
 })();
 </script>
