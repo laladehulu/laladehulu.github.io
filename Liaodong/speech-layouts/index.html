@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v185</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v186</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -21457,10 +21457,10 @@ const WPL = {
     at: { liaoyang: [0, 120], start: [10, 22] }, exits: [{ to: 'liaoyang', x: 0, z: 132, sign: '遼', days: 1 }],
     spots: { forge: [7, 25], home: [16, 18], hearth: [9, 19], school: [-7, 22], fieldW: [-44, 4], fieldE: [44, -12], well: [-4, 40], road: [0, 60] } },
   liaoyang: { zh: '遼陽', en: 'Liaoyang', map: 'djliao', biome: 'spring', desc: 'The seat of the Liaodong Regional Military Commission: the west quarter, its streets, the Commission, the school, the recruiting yard.',
-    at: { lijia: [0, -128], west: [-100, 40], fushun: [40, -116] }, exits: [{ to: 'lijia', x: 0, z: -136, sign: '李', days: 1 }, { to: 'shanhai', x: -104, z: 40, sign: '京', days: 12, via: 'Guangning' }, { to: 'fushun', x: 40, z: -132, sign: '撫', days: 2, via: 'Shenyang' }],
+    at: { lijia: [0, -128], west: [-100, 40], shanhai: [-100, 40], fushun: [40, -116] }, exits: [{ to: 'lijia', x: 0, z: -136, sign: '李', days: 1 }, { to: 'shanhai', x: -104, z: 40, sign: '京', days: 12, via: 'Guangning' }, { to: 'fushun', x: 40, z: -132, sign: '撫', days: 2, via: 'Shenyang' }],
     spots: { yamen: [-40, 14], yamenGate: [-40, 4], school: [40, -40], yard: [-88, 40], drill: [-80, 52], inn: [12, -14], market: [0, 0], barracks: [-92, 30], market2: [10, 8], teahouse: [22, 12], temple: [60, 24], physician: [-14, -22], smithy: [-22, -8], scribe: [-28, 2], street: [24, 30], gate: [0, -122], wall: [-96, 20], bookshop: [30, -28] } },
   shanhai: { zh: '山海關', en: 'Shanhai Pass', map: 'bonari', biome: 'spring', desc: 'The First Pass Under Heaven, between the mountains and the sea: the road from Liaodong into China.',
-    at: { liaoyang: [0, -118], beijing: [0, 118] }, exits: [{ to: 'liaoyang', x: 0, z: -132, sign: '遼', days: 12, via: 'Guangning' }, { to: 'tongzhou', x: 0, z: 132, sign: '通', days: 5, via: 'Yongping' }],
+    at: { liaoyang: [0, -118], beijing: [0, 118], tongzhou: [0, 118] }, exits: [{ to: 'liaoyang', x: 0, z: -132, sign: '遼', days: 12, via: 'Guangning' }, { to: 'tongzhou', x: 0, z: 132, sign: '通', days: 5, via: 'Yongping' }],
     spots: { gate: [0, 0], guard: [4, -6], inn: [-14, 30], yard: [10, -20], market: [-10, 20], wall: [16, 6], road: [0, 50] } },
   beijing: { zh: '京師', en: 'Beijing, outside the Guangqu Gate', map: 'bjgate', biome: 'spring', desc: 'The suburb outside the outer wall of the capital: inns, carters, the gate.',
     at: { shanhai: [6, -128], tongzhou: [6, -128], city: [6, 128] }, exits: [{ to: 'tongzhou', x: 6, z: -136, sign: '通', days: 1 }, { to: 'city', x: 6, z: 138, sign: '門', days: 0 }],
@@ -21856,7 +21856,7 @@ function wMenu() {
   zheHUD = function (dt) { if (WZ && WS && state.sim && state.sim.cfg.camp && state.sim.cfg.camp.world) return wHUD(dt); return hud(dt); };
   zheFinish = function (w) { if (WB) return wFinish(w); return fin(w); }; }
 setTimeout(() => { try { wMenu(); } catch (e) { } }, 400);
-window.__world = { wBattleTest: (m) => { wBattle(m); const b = [...document.querySelectorAll("button")].find(b => /Continue/.test(b.textContent) && b.offsetParent); if (b) b.click(); }, wBunk, wAfterFall, wArmyMoment, WCORE, wLifeDay, wTalkFolk, wJournal, wForge, wCourt, wChoice, wPeopleHere, wStart, wFresh, wTurnDays, wGo, wSleep, wScene, wBoard, wExam, wTalk, wLook, wPerson, WEX, WPL, get WS() { return WS; }, set WS(v) { WS = v; } }; // test hooks
+window.__world = { WPP, WEV, wThings, wMoreThings, wBattleTest: (m) => { wBattle(m); const b = [...document.querySelectorAll("button")].find(b => /Continue/.test(b.textContent) && b.offsetParent); if (b) b.click(); }, wBunk, wAfterFall, wArmyMoment, WCORE, wLifeDay, wTalkFolk, wJournal, wForge, wCourt, wChoice, wPeopleHere, wStart, wFresh, wTurnDays, wGo, wSleep, wScene, wBoard, wExam, wTalk, wLook, wPerson, WEX, WPL, get WS() { return WS; }, set WS(v) { WS = v; } }; // test hooks
 
 // ===================== 人間 · the life of the world, on screen: townsfolk, family, the forge, the court, the road, the journal =====================
 // world_core.js keeps the rules (and is tested in node); this file puts them in front of you. Spliced into main.js's scope after world.js.
