@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v192</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Battle experiment · v193</div><script>window.MING_XCOMBAT = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">實驗 · Experimental combat</div>
 <title>Experimental Combat · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -21705,7 +21705,7 @@ function wKeyE() {
   if (wThingUse(T)) return true;
   if (T.k === 'books' || T.k === 'desk') { wPass(3, () => { const g = Math.max(0.4, 2.6 - WS.learning / 40) * (WCORE.inv(WS, 'book') ? 1.5 : 1); WS.learning = Math.min(100, WS.learning + g); toast(`You read the Four Books for three hours. Learning ${WS.learning.toFixed(0)}.`); }); return true; }
   if (T.k === 'bunk') { wBunk(); return true; }
-  if (T.k === 'bed') { wSleep(); return true; }
+  if (T.k === 'bed') { wBed(); return true; }
   if (T.k === 'inn') { if (WS.cash < 40) { toast('You have not got forty wen.'); return true; } WS.cash -= 40; wSleep(); return true; }
   if (T.k === 'board') { wBoard(); return true; }
   return true;
@@ -21876,7 +21876,7 @@ function wMenu() {
   zheHUD = function (dt) { if (WZ && WS && state.sim && state.sim.cfg.camp && state.sim.cfg.camp.world) return wHUD(dt); return hud(dt); };
   zheFinish = function (w) { if (WB) return wFinish(w); return fin(w); }; }
 setTimeout(() => { try { wMenu(); } catch (e) { } }, 400);
-window.__world = { WPP, WEV, wThings, wMoreThings, wBattleTest: (m) => { wBattle(m); const b = [...document.querySelectorAll("button")].find(b => /Continue/.test(b.textContent) && b.offsetParent); if (b) b.click(); }, wBunk, wAfterFall, wArmyMoment, WCORE, wLifeDay, wTalkFolk, wJournal, wForge, wCourt, wChoice, wPeopleHere, wStart, wFresh, wTurnDays, wGo, wSleep, wScene, wBoard, wExam, wTalk, wLook, wPerson, WEX, WPL, get WS() { return WS; }, set WS(v) { WS = v; } }; // test hooks
+window.__world = { wBed, WPP, WEV, wThings, wMoreThings, wBattleTest: (m) => { wBattle(m); const b = [...document.querySelectorAll("button")].find(b => /Continue/.test(b.textContent) && b.offsetParent); if (b) b.click(); }, wBunk, wAfterFall, wArmyMoment, WCORE, wLifeDay, wTalkFolk, wJournal, wForge, wCourt, wChoice, wPeopleHere, wStart, wFresh, wTurnDays, wGo, wSleep, wScene, wBoard, wExam, wTalk, wLook, wPerson, WEX, WPL, get WS() { return WS; }, set WS(v) { WS = v; } }; // test hooks
 
 // ===================== 人間 · the life of the world, on screen: townsfolk, family, the forge, the court, the road, the journal =====================
 // world_core.js keeps the rules (and is tested in node); this file puts them in front of you. Spliced into main.js's scope after world.js.
@@ -22351,6 +22351,22 @@ WPP.push({ k: 'qinly', zh: '秦良玉', en: 'Qin Liangyu', t: 'commander of the 
     say('Ask about the calendar', [['欽天監的曆法差了。日食，他們算錯了一個時辰；我們算得準。', 'The Directorate\'s calendar is out. They miscalculated the last eclipse by two hours; ours was right.'], ['徐閣老要修新曆。你懂算學嗎？', 'Grand Secretary Xu wants a new calendar. Do you know mathematics?']], () => { if ((WS.flags.xixue | 0) >= 2 && WS.learning >= 50) { WS.flags.calendar = 1; WS.cash += 1200; wLog('入曆局。', 'Worked on the new calendar with the Jesuits.'); toast('Three months of calculations for the new calendar. 1,200 wen, and your name in the preface.'); } }); }
 }; }
 
+// the bed: sleep the night, or live quietly for a while (working for your keep) until something happens
+function wBed() {
+  const home = WS.place === WS.home, forge = home && WS.place === 'lijia' && !WS.jin;
+  const perDay = forge ? (WS.dead.father ? 30 : 40) : WS.office ? 0 : WS.army ? 0 : 15, keep = home || WS.army || WS.office ? 0 : 20;
+  const what = forge ? 'working the forge' : WS.office ? 'at your duties' : WS.army ? 'drilling with the company' : home ? 'doing odd jobs' : 'doing odd jobs for your keep';
+  const live = (maxDays) => { let n = 0, why = '';
+    for (; n < maxDays; n++) { WS.hour = 6; wTurnDays(1); WS.cash = Math.max(0, WS.cash + perDay - keep); if (forge) WS.smith = Math.min(100, (WS.smith || 0) + 0.15);
+      if (!WS.alive) return wDie(); if (WS.flags.pendingBattle || (WS.flags.fallHere && !WS.flags.fallDone)) { why = 'the war came to you'; n++; break; }
+      const d = WCORE.dilemmaNow(WS) || wSiegeNow() || wEndNow() || WCORE.festNow(WS, WS.home); if (d) { why = 'something needs you'; n++; break; }
+      const ex = WEX.find(e => e[2] === WS.place && Math.abs(e[1] - WS.day) <= 1); if (ex) { why = `${ex[9]} is about to be held here`; n++; break; } }
+    wSave(); if (WS.flags.pendingBattle) { const m = WS.flags.pendingBattle; WS.flags.pendingBattle = null; return wBattle(m); } if (WS.flags.fallHere && !WS.flags.fallDone) { WS.flags.fallDone = 1; return wBattle('dj1'); }
+    const F = wFmt(WS.day); zCards([{ title: F.zh, year: F.en, p: [`${n} day${n > 1 ? 's' : ''} pass, ${what}.${why ? ` Then ${why}.` : ''}`, wMorning()].concat(wLifeNews()) }], () => wScene()); };
+  wPanel({ zh: '床', en: 'Your bed', t: `${wFmt(WS.day).en} · ${WS.cash} wen` }, [['', 'Sleep, or let the days go by until something happens (a choice, a festival, an exam here, the war).']],
+    [{ q: 'Sleep the night', fx: () => { wSleep(); } }, { q: `Live quietly for up to a week (${what})`, fx: () => { live(7); } }, { q: `Live quietly for up to a month (${what})`, fx: () => { live(30); } }]);
+}
+
 // ===================== 典 · the codex: the people, the soldiers, the fields and the years of the war =====================
 // One panel from the menu: who the men in the game were, what each kind of soldier is, where each battlefield is and when,
 // and the war year by year (the open world's calendar). Read-only, built from the game's own data plus short lives below.
@@ -22380,6 +22396,7 @@ const CODEX_PEOPLE = [
   ['朱由檢', 'The Chongzhen Emperor', '1611–1644', 'Ming', 'The last Ming emperor (r. 1627–1644). He destroyed Wei Zhongxian\'s faction but distrusted his generals and changed his ministers fifty times. When Li Zicheng took Beijing he hanged himself on Coal Hill.'],
   ['李自成', 'Li Zicheng', '1606–1645', 'Rebel', 'A former postal courier from Shaanxi who became the greatest of the rebel leaders of the famine years. He took Beijing in the spring of 1644 and proclaimed the Great Shun, was beaten at the Shanhai Pass a few weeks later, and died in flight in 1645.'],
   ['吳三桂', 'Wu Sangui', '1612–1678', 'Ming', 'Commander of the Ming army at the Shanhai Pass in 1644. Caught between Li Zicheng and the Qing, he opened the Pass to Dorgon; he later served the Qing, and rebelled against them in 1673.'],
+  ['湯若望', 'Johann Adam Schall von Bell', '1592–1666', 'Jesuit', 'A German Jesuit who reached Beijing in 1623, predicted eclipses better than the Directorate of Astronomy, worked with Xu Guangqi on the Chongzhen calendar and cast cannon for the Ming in its last years. He stayed on under the Qing and headed their astronomical bureau.'],
   ['利瑪竇', 'Matteo Ricci', '1552–1610', 'Jesuit', 'The Italian Jesuit who learned the classics, wore a scholar\'s robes and was allowed to live in Beijing from 1601. His friends among the officials, Xu Guangqi first, carried Western mathematics, maps and later guns into the Ming state.'],
 ];
 function codexOpen(tab) {
