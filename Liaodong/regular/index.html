@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v197</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Regular · v198</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -17999,6 +17999,8 @@ function ddPlanScenes() {
     const bro = Object.keys(cnt).find(k => cnt[k] >= 2 && here(k) && k !== C.S.me && !(D.bros || []).includes(k)); if (bro && q.length < 2) q.push({ id: 'brother', who: bro }); }
   if (q.length < 2 && R.valor + R.care >= 10 && R.coward === 0 && D.log.length >= 2 && !(D.adv || {})[B.n]) q.push({ id: 'advice', who: ddPickChief() });
   if (q.length < 2 && (B.kills >= 3 || saved.length || (B.ran > 6 && !B.rally))) { const others = keys.filter(k => k !== C.S.me); if (others.length) q.push({ id: 'cook', who: others[ddHash('cook' + B.n) % others.length], meat: !(B.ran > 6 && !B.rally) }); }
+  // the man you left behind in an earlier battle, alive after all, and back in the camp
+  if (q.length < 2) { const old = D.log.slice(0, -1).reduce((a, L) => a.concat(L.left || []), []); const back = ddUniq(old).find(k => here(k) && k !== C.S.me && C.S.alive && C.S.alive[k] && !(D.met || {})[k]); if (back) q.push({ id: 'back', who: back }); }
   // the night watch with the man who trusts you most (every third camp), and the mood of the fire after a good or a bad day
   if (q.length < 2 && D.log.length >= 2 && D.log.length % 3 === 0 && !(D.watch || {})[B.n]) { const w = keys.filter(k => k !== C.S.me).sort((a, b) => (C.S.bond[b] || 0) - (C.S.bond[a] || 0))[0]; if (w) q.push({ id: 'watch', who: w }); }
   if (q.length < 2) { const good = B.kills >= 2 && !(B.ran > 6), bad = (B.left || []).length > 0 || B.fell > 0 || (B.ran > 6 && !B.rally); if (good || bad) { const others = keys.filter(k => k !== C.S.me); if (others.length) q.push({ id: 'mood', who: others[ddHash('mood' + B.n) % others.length], good: good && !bad }); } }
@@ -18101,6 +18103,13 @@ function ddRunScene(s) {
     ddDlg(who, sub, s.good ? [ddL(song[0], song[1]), ddL('來！一起唱！', 'Come on! Sing!')] : [ddL('（火邊很安靜。沒人說話。有人在補鞋，有人看著火。）', '(It is quiet at the fire. Nobody talks. Someone mends a shoe; someone watches the flames.)'), ddL('……今天不好。', '...Today was bad.')], s.good ? [
       { q: 'Sing.', a: [ddL('（你唱得很難聽，大家笑得更大聲了。）', '(You sing badly, and they laugh louder.)')], fx: () => bond(s.who, 1) }, { q: 'Listen.', a: [ddL('（歌聲飄到很遠。）', '(The song carries a long way.)')], fx: () => { } }] : [
       { q: 'Sit down beside him.', a: [ddL('（你們一起看著火，直到火滅。）', '(You watch the fire together until it is out.)')], fx: () => bond(s.who, 2) }, { q: 'Go to your bedroll.', a: [ddL('（你睡不著。）', '(You cannot sleep.)')], fx: () => { } }], done);
+  } else if (s.id === 'back') {
+    D.met = D.met || {}; D.met[s.who] = 1;
+    ddDlg(who, sub, [ddL('（他走路還瘸著。他看了你很久。）', '(He still limps. He looks at you a long time.)'), ddL('你走的時候，我看見你了。我叫你了。', 'When you went, I saw you. I called after you.'), ddL('我爬了一夜。', 'I crawled all night.')], [
+      { q: 'I\'m sorry. I thought you were dead.', a: [ddL('……我也以為。', '...So did I.'), ddL('（他沒原諒你，可他坐下了。）', '(He hasn\'t forgiven you, but he sits down.)')], fx: () => { bond(s.who, 1); } },
+      { q: 'There were five of them. I would have died with you.', a: [ddL('也許。也許不會。', 'Maybe. Maybe not.'), ddL('（他轉身走了。）', '(He turns and goes.)')], fx: () => { bond(s.who, -2); } },
+      { q: 'Say nothing, and give him your ration.', a: [ddL('（他看著那碗飯，最後還是吃了。）', '(He looks at the bowl a long time, and then he eats.)')], fx: () => { bond(s.who, 2); D.rep.care += 1; } },
+    ], done);
   } else if (s.id === 'rank') {
     const t = jin ? ['巴圖魯', 'baturu — "hero"', '汗賜你巴圖魯之號。', 'The Khan grants you the name baturu.'] : sj ? ['伍長', 'file leader', '從今天起，你帶這一伍。', 'From today you lead this file of five.'] : ['伍長', 'file leader', '把總給你的腰牌。從今天起你帶一伍。', 'The captain sends you a waist tag. From today you lead a file of five.'];
     ddDlg(who, sub, [ddL(t[2], t[3]), ddL('別讓我們後悔。', 'Don\'t make us regret it.')], [
