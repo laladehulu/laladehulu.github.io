@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v196</div>
+</head><body><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0d38a;background:#2a1d14cc;border:1px solid #8a6a3c;border-radius:4px;padding:3px 8px;pointer-events:none">話 · Speech layouts: press F9 in battle to cycle A ranked stack / B speaker card + ticker / C film subtitles + edge bubbles</div><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · Speech layout experiment · v197</div>
 <title>Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -17999,6 +17999,9 @@ function ddPlanScenes() {
     const bro = Object.keys(cnt).find(k => cnt[k] >= 2 && here(k) && k !== C.S.me && !(D.bros || []).includes(k)); if (bro && q.length < 2) q.push({ id: 'brother', who: bro }); }
   if (q.length < 2 && R.valor + R.care >= 10 && R.coward === 0 && D.log.length >= 2 && !(D.adv || {})[B.n]) q.push({ id: 'advice', who: ddPickChief() });
   if (q.length < 2 && (B.kills >= 3 || saved.length || (B.ran > 6 && !B.rally))) { const others = keys.filter(k => k !== C.S.me); if (others.length) q.push({ id: 'cook', who: others[ddHash('cook' + B.n) % others.length], meat: !(B.ran > 6 && !B.rally) }); }
+  // the night watch with the man who trusts you most (every third camp), and the mood of the fire after a good or a bad day
+  if (q.length < 2 && D.log.length >= 2 && D.log.length % 3 === 0 && !(D.watch || {})[B.n]) { const w = keys.filter(k => k !== C.S.me).sort((a, b) => (C.S.bond[b] || 0) - (C.S.bond[a] || 0))[0]; if (w) q.push({ id: 'watch', who: w }); }
+  if (q.length < 2) { const good = B.kills >= 2 && !(B.ran > 6), bad = (B.left || []).length > 0 || B.fell > 0 || (B.ran > 6 && !B.rally); if (good || bad) { const others = keys.filter(k => k !== C.S.me); if (others.length) q.push({ id: 'mood', who: others[ddHash('mood' + B.n) % others.length], good: good && !bad }); } }
   DD.sc.q = q.filter(s => s.who).slice(0, 2); DD.sc.wait = 8;
 }
 // the dialogue panel: the same box and keys as camp talk (#zheDlg, state.zheDlg)
@@ -18084,6 +18087,20 @@ function ddRunScene(s) {
     ddDlg(who, sub, s.meat ? [ddL('（輪到你，他把勺子往鍋底一沉，撈上來一大塊肉。）', '(When your turn comes he sinks the ladle to the bottom of the pot and brings up a big piece of meat.)'), ddL('吃吧。今天你該吃這塊。', 'Eat. Today this piece is yours.')] : [ddL('（輪到你，他把勺子在湯面上一撇，給你一碗清湯。）', '(When your turn comes he skims the top of the pot and gives you a bowl of thin broth.)'), ddL('跑得快的，吃得少。', 'A man who runs fast eats light.')], [
       { q: s.meat ? 'Share it with the man next to you.' : 'Say nothing, and drink it.', a: [s.meat ? ddL('（他咧嘴笑了，你們一人一半。）', '(He grins; you split it.)') : ddL('（湯是熱的，至少。）', '(It is hot, at least.)')], fx: () => { bond(s.who, s.meat ? 1 : 0); } },
     ], done);
+  } else if (s.id === 'watch') {
+    D.watch = D.watch || {}; D.watch[B.n] = 1; const R = D.rep;
+    const conf = R.coward > 0 ? [ddL('跟你說件事。第一仗，我也跑過。跑了五十步，回頭看見沒人追我，才又回來。', 'I\'ll tell you something. In my first fight I ran too. Fifty paces, then I looked back and saw nobody was chasing me, and came back.'), ddL('沒人知道。現在你知道了。', 'Nobody knows. Now you do.')]
+      : R.care >= 6 ? [ddL('我要是哪天倒了，別拉我。你拉別人。', 'If I go down one day, don\'t come for me. Go for someone else.'), ddL('……要是我回不去，你把這個帶給我娘。', '...If I don\'t get home, take this to my mother.')]
+      : [ddL('我家門口有棵棗樹。這時候，棗該熟了。', 'There is a jujube tree by our door at home. The dates will be ripe about now.'), ddL('你家呢？', 'What about yours?')];
+    ddDlg(who, sub, [ddL('（後半夜，你們兩個守營門。火快滅了。）', '(The small hours. The two of you have the gate. The fire is nearly out.)')].concat(conf), [
+      { q: R.care >= 6 && !R.coward ? 'Give it to her yourself.' : 'Tell him about home.', a: [ddL('（他笑了一下，沒說話。天快亮了。）', '(He smiles a little and says nothing. It is nearly dawn.)')], fx: () => { bond(s.who, 3); if (R.care >= 6 && !R.coward) { D.keep.push({ k: s.who, zh: '家書', en: 'a letter for his mother', n: B.n }); } } },
+      { q: 'Say nothing; keep watch.', a: [ddL('（你們一直看著黑處，直到換崗。）', '(You both watch the dark until the relief comes.)')], fx: () => bond(s.who, 1) },
+    ], done);
+  } else if (s.id === 'mood') {
+    const song = jin ? ['（有人唱起了薩滿的歌，大家都跟著哼。）', '(Someone starts a shaman\'s song and the others hum along.)'] : ['（有人唱起了家鄉的小調，浙江話，北方人聽不懂，也跟著拍手。）', '(Someone starts a song from home in the Zhejiang dialect; the northerners can\'t follow a word of it and clap along anyway.)'];
+    ddDlg(who, sub, s.good ? [ddL(song[0], song[1]), ddL('來！一起唱！', 'Come on! Sing!')] : [ddL('（火邊很安靜。沒人說話。有人在補鞋，有人看著火。）', '(It is quiet at the fire. Nobody talks. Someone mends a shoe; someone watches the flames.)'), ddL('……今天不好。', '...Today was bad.')], s.good ? [
+      { q: 'Sing.', a: [ddL('（你唱得很難聽，大家笑得更大聲了。）', '(You sing badly, and they laugh louder.)')], fx: () => bond(s.who, 1) }, { q: 'Listen.', a: [ddL('（歌聲飄到很遠。）', '(The song carries a long way.)')], fx: () => { } }] : [
+      { q: 'Sit down beside him.', a: [ddL('（你們一起看著火，直到火滅。）', '(You watch the fire together until it is out.)')], fx: () => bond(s.who, 2) }, { q: 'Go to your bedroll.', a: [ddL('（你睡不著。）', '(You cannot sleep.)')], fx: () => { } }], done);
   } else if (s.id === 'rank') {
     const t = jin ? ['巴圖魯', 'baturu — "hero"', '汗賜你巴圖魯之號。', 'The Khan grants you the name baturu.'] : sj ? ['伍長', 'file leader', '從今天起，你帶這一伍。', 'From today you lead this file of five.'] : ['伍長', 'file leader', '把總給你的腰牌。從今天起你帶一伍。', 'The captain sends you a waist tag. From today you lead a file of five.'];
     ddDlg(who, sub, [ddL(t[2], t[3]), ddL('別讓我們後悔。', 'Don\'t make us regret it.')], [
