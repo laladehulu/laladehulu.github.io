@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v199</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v200</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
 <title>New Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -22449,6 +22449,19 @@ function wBed() {
 // ===================== 典 · the codex: the people, the soldiers, the fields and the years of the war =====================
 // One panel from the menu: who the men in the game were, what each kind of soldier is, where each battlefield is and when,
 // and the war year by year (the open world's calendar). Read-only, built from the game's own data plus short lives below.
+// what changed lately, newest first (kept short: what a player would want to try)
+const CODEX_NEW = [
+  ['Last Stand', 'Five fields to hold, a best for each, and three new boons: rattan shields, thunder-crash bombs, hot wine.'],
+  ['Story campaigns', 'Camp nights answer more of what you did: a sworn brother, the chief asking your advice, the cook\'s ladle, the night watch, the mood of the fire, the man you left coming back.'],
+  ['Story', 'Nine battles now: Ningjin (1627) and the fort on the Daling (1631) between Ningyuan and Songshan.'],
+  ['Duels', 'A ladder of five named opponents. Mirror fights are even now (the side that moved first used to land the first blow).'],
+  ['Field battles', 'Difficulty against the AI, saved armies, a won–lost record, Quick battle from the menu, and Fight again on the result screen.'],
+  ['Assault and Siege', 'The defence can hold now: defenders on their own line fight from cover, and their reserves come up faster.'],
+  ['Every battle', 'An after-action report on the result screen, and medals for missions, operations and the Story battles.'],
+  ['Path of a Soldier', 'The career\'s battles are fought on their own historical fields.'],
+  ['The open world', 'A living town (townsfolk with trades and lives), festivals, trade, the forge, the army, the family, life under the Jin, money and land, office and factions, heirs, weather, and history to 1645. Press J for your journal; your bed can let the days go by.'],
+  ['Codex and controls', 'This codex (people, soldiers, fields, years, your record), and F1 anywhere for the controls.'],
+];
 const CODEX_PEOPLE = [
   ['努爾哈赤', 'Nurhaci', '1559–1626', 'Jin', 'Chieftain of the Jianzhou Jurchens who united the Jurchen tribes, created the banner system and founded the Later Jin in 1616. He declared war on the Ming with the Seven Grievances in 1618, destroyed the Ming armies at Sarhu in 1619 and took Shenyang and Liaoyang in 1621. Ningyuan in 1626 was the first defeat of his life; he died that autumn.'],
   ['皇太極', 'Hong Taiji', '1592–1643', 'Jin', 'Nurhaci\'s eighth son and successor as Khan (1626). He brought Han officials and Han and Mongol banners into the state, renamed the Jurchens Manchus (1635) and proclaimed the Great Qing (1636). He broke through the Wall to the gates of Beijing in 1629 and invaded Korea twice.'],
@@ -22487,7 +22500,7 @@ function codexOpen(tab) {
 #codex .bd { overflow: auto; padding: 10px 18px 18px; } #codex .it { padding: 8px 0; border-bottom: 1px solid #d8c8a2; } #codex .it b { font-size: 15px; } #codex .it small { color: #6a5a46; margin-left: 6px; }
 #codex .side { display: inline-block; font-size: 11px; padding: 0 5px; margin-left: 6px; border-radius: 3px; background: #e0d2ae; } #codex .yr { font-weight: 700; margin: 12px 0 2px; color: #7a3a1a; }`; document.head.appendChild(st);
     box.addEventListener('mousedown', (e) => { if (e.target === box) box.hidden = true; }); }
-  tab = tab || 'people'; const tabs = [['people', '人 · People'], ['units', '兵 · Soldiers'], ['fields', '地 · Battlefields'], ['years', '年 · The years'], ['record', '功 · Your record']];
+  tab = tab || 'people'; const tabs = [['people', '人 · People'], ['units', '兵 · Soldiers'], ['fields', '地 · Battlefields'], ['years', '年 · The years'], ['record', '功 · Your record'], ['new', '新 · What\'s new']];
   let body = '';
   if (tab === 'people') body = CODEX_PEOPLE.map(p => `<div class="it"><b>${p[0]} · ${p[1]}</b><small>${p[2]}</small><span class="side">${p[3]}</span><div>${p[4]}</div></div>`).join('');
   if (tab === 'units') body = [0, 1].map(f => `<div class="yr">${f ? '後金 · The Later Jin' : '大明 · The Ming'}</div>` + S.ROSTER[f].map(k => { const d = S.defFor(k, f); const role = d.gun ? 'machine gun' : d.cannon ? 'artillery' : d.bow ? 'archers' : d.ai === 'ranged' ? 'firearms' : d.mounted ? 'cavalry' : 'foot, hand to hand';
@@ -22497,12 +22510,13 @@ function codexOpen(tab) {
     for (const e of E) { const T = wDate(e[0]); if (T.y !== y) { y = T.y; out += `<div class="yr">${y}</div>`; } out += `<div class="it"><small style="margin:0 8px 0 0">${T.m}/${T.d}</small>${e[3]}<div style="color:#6a5a46;font-size:13px">${e[2]}</div></div>`; }
     body = out + '<p><small>Months are lunar, as people counted them; the game\'s calendar keeps thirty days to the month.</small></p>'; }
   if (tab === 'record') body = codexRecord();
+  if (tab === 'new') body = CODEX_NEW.map(n => `<div class="it"><b>${n[0]}</b><div>${n[1]}</div></div>`).join('');
   box.hidden = false; box.innerHTML = `<div class="pp"><div class="hd"><h3>典 · Codex</h3>${tabs.map(t => `<button type="button" class="tab${t[0] === tab ? ' on' : ''}" data-t="${t[0]}">${t[1]}</button>`).join('')}<button type="button" class="tab x">Close</button></div><div class="bd">${body}</div></div>`;
   box.querySelectorAll('[data-t]').forEach(b => b.onclick = () => codexOpen(b.dataset.t)); box.querySelector('.x').onclick = () => { box.hidden = true; };
 }
 // the codex link sits under the title on the menu
 { const t = document.querySelector('#menu h1') || document.querySelector('#menu .title') || null; const host = $('modeSeg') && $('modeSeg').previousElementSibling;
-  if (host) { const a = document.createElement('button'); a.type = 'button'; a.className = 'btn sm'; a.textContent = '典 · Codex: the people, soldiers, fields and years'; a.style.cssText = 'float:right;margin-top:-4px'; a.onclick = () => codexOpen(); host.appendChild(a); } }
+  if (host) { const a = document.createElement('button'); a.type = 'button'; a.className = 'btn sm'; a.textContent = '典 · Codex · what\'s new'; a.style.cssText = 'float:right;margin-top:-4px'; a.onclick = () => codexOpen(localStorage.getItem('mingSeenNew') === String(CODEX_NEW.length) ? 'people' : (localStorage.setItem('mingSeenNew', String(CODEX_NEW.length)), 'new')); host.appendChild(a); } }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('codex') && !$('codex').hidden) { $('codex').hidden = true; e.stopPropagation(); } }, true);
 // 速戰 · Quick battle: one click from the menu to a field battle on a random field, with your saved army (or a random one) against the AI
 function quickBattle() { AUDIO.init(); AUDIO.play('ui'); state.mode = 'standard'; const B = Object.keys(S.BATTLES).filter(k => !S.BATTLES[k].hidden && !/^dj/.test(k)); state.battle = B[Math.floor(Math.random() * B.length)];
