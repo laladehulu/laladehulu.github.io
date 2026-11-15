@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v182</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
+</head><body><div style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#e8dcc0;background:#1d1814cc;border:1px solid #6a5a44;border-radius:4px;padding:3px 8px;pointer-events:none">遼東 Liaodong · New realism · v183</div><script>window.MING_REAL = 1; window.MING_XCOMBAT = 1; window.MING_NEWMODEL = 1;</script><div style="position:fixed;right:10px;bottom:8px;z-index:99;font:600 11px sans-serif;color:#f0e2c4;background:#2a2016cc;border:1px solid #7a6444;border-radius:4px;padding:3px 8px;pointer-events:none">New Realism · new soldier model (F6 grime)</div>
 <title>New Realism · Ming Dynasty 1619</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -13720,7 +13720,7 @@ $('warchest').addEventListener('click', (e) => { const b = e.target.closest('[da
 function renderStory() { setTimeout(renderChest, 0);
   const box = $('storyList'); const prog = storyProgress(); const side = state.faction; const open = Math.max(state.storyUnlocked || 0, prog[side] || 0);
   box.innerHTML = STORY_TEXT.map((c, i) => { const ch = S.STORY[i]; const me = (side === 0 ? ch.ming : ch.jin)[0][0]; const lock = i > open;
-    return `<button type="button" class="chapter${state.chapter === i ? ' on' : ''}${lock ? ' locked' : ''}" data-c="${i}" ${lock ? 'disabled' : ''}><span class="cn">${i + 1}. ${c.title}<small>${c.year}</small></span><span class="cw">You are ${me}</span><span class="cd">${lock ? 'Win the previous chapter to unlock.' : c.intro[side]}</span></button>`; }).join('');
+    return `<button type="button" class="chapter${state.chapter === i ? ' on' : ''}${lock ? ' locked' : ''}" data-c="${i}" ${lock ? 'disabled' : ''}><span class="cn">${i + 1}. ${c.title}<small>${c.year}</small>${typeof medalTag === 'function' ? medalTag('story:' + i + ':' + side) : ''}</span><span class="cw">You are ${me}</span><span class="cd">${lock ? 'Win the previous chapter to unlock.' : c.intro[side]}</span></button>`; }).join('');
 }
 // the strike cue (no text): for every man winding up a blow on you within reach, a mark at his bearing closes on the
 // crosshair as his wind-up runs - an arc for a cut, a point for a thrust - and turns white at the moment to parry.
@@ -14622,9 +14622,13 @@ function finish(winner) {
       if (won && ch + 1 < STORY_TEXT.length) { saveCampaign({ side: me.team, chapter: ch + 1, veterans: vets, chest }); $('resultText').textContent += ` Your host marches on: ${vets.length} squads, ${vets.reduce((a, v) => a + v.n, 0)} men, ${chest} taels in the war chest for reinforcements.`; } }
     if (won && ch + 1 < STORY_TEXT.length) { saveStory(me.team, ch + 1); state.storyUnlocked = Math.max(state.storyUnlocked || 0, ch + 1); $('btnNext').hidden = false; $('btnNext').textContent = `Chapter ${ch + 2}: ${STORY_TEXT[ch + 1].title} →`; $('btnNext').onclick = () => { try { localStorage.setItem('mingResume', JSON.stringify({ chapter: ch + 1, side: me.team })); } catch (e) { } location.reload(); }; $('btnNext').textContent = `War chest & Chapter ${ch + 2}: ${STORY_TEXT[ch + 1].title} →`; }
     else if (won) $('resultTitle').textContent = '勝 · The war is yours'; }
+  if (sim.mode === 'story' && won && typeof medalSave === 'function') { const r = medalSave('story:' + (sim.cfg.chapter | 0) + ':' + me.team, sim.diff | 0, Math.round((sim.tick - (sim.battleTick | 0)) / 30)); if (r) $('resultText').textContent += ' ' + r; }
   if (sim.real && typeof soldierFinish === 'function') soldierFinish(winner);
   if (sim.mission && typeof missionFinish === 'function') missionFinish(winner);
   try { aarShow(sim, me); } catch (e) { }
+  // your record against the AI in the open modes, kept per mode and difficulty
+  if (!sim.mission && !state.net && winner !== 2 && /^(standard|grand|officers|chaos|heroes|duel)$/.test(sim.mode)) { try { const R = JSON.parse(localStorage.getItem('mingRecord') || '{}'), k = sim.mode + ':' + (sim.diff | 0), o = R[k] || { w: 0, l: 0 }; if (won) o.w++; else o.l++; R[k] = o; localStorage.setItem('mingRecord', JSON.stringify(R));
+    const nm = { standard: 'field battles', grand: 'grand battles', officers: 'officers battles', chaos: 'chaos', heroes: 'Heroes', duel: 'duels' }[sim.mode]; $('resultText').textContent += ` Your record in ${nm} at ${['Recruit', 'Soldier', 'Veteran', 'Lone banner'][sim.diff | 0]}: ${o.w} won, ${o.l} lost.`; } catch (e) { } }
   setTimeout(() => { $('result').hidden = false; $('btnReplay').hidden = !state.replay || state.replay.inputs.length < 60; if (document.pointerLockElement) document.exitPointerLock(); }, 3600);
 }
 // ---------- after-action report: your companies, what each did and what it cost ----------
